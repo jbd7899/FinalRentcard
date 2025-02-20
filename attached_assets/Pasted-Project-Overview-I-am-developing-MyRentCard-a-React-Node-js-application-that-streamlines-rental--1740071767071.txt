@@ -1,0 +1,58 @@
+Project Overview:
+I am developing MyRentCard, a React + Node.js application that streamlines rental applications for tenants and landlords. The project is being built in Replit using React (Frontend) and Node.js/Express (Backend) with a MongoDB database (or PostgreSQL, if recommended).
+
+1. File Structure
+I need a scalable and maintainable project structure that follows best practices. Here’s what I need:
+
+✅ Frontend (React)
+
+Use Vite or Create React App for performance.
+Maintain separate folders for components, hooks, pages, and context API.
+Implement TailwindCSS for styling.
+Store icons/images/assets separately.
+Use React Router for navigation.
+Keep API requests in a separate service file.
+✅ Backend (Node.js & Express)
+
+Organize routes, controllers, services, and models properly.
+Use MVC (Model-View-Controller) structure.
+Implement JWT authentication.
+Use bcrypt for password hashing.
+Include error handling middleware.
+✅ Global Config
+
+A .env file to store sensitive keys.
+A config folder to manage environment settings.
+✅ Testing
+
+Use Jest or Mocha/Chai for testing APIs.
+Include React Testing Library for frontend testing.
+✅ Backup Strategy
+
+Database backups: Schedule automated backups (MongoDB Atlas or PostgreSQL Dump).
+Replit backups: Ensure a separate GitHub repo with daily commits.
+Implement Cloudinary/AWS S3 for image storage (for tenant RentCards).
+2. Database Structure (MongoDB or PostgreSQL)
+I need a well-designed schema to handle the following:
+
+For Tenants:
+
+Personal details: name, email, phone, move-in date, max rent, employment info, income
+RentCard details: rental history, references, credit score, verification status
+Application tracking: applied_properties, application_status
+Secure authentication: hashed passwords
+For Landlords:
+
+Landlord profile: name, email, phone, company_name
+Properties: property_address, screening_criteria (min credit, min income, eviction history)
+Screening pages: custom links to receive RentCard submissions
+Applications: submitted RentCards, match percentage, status
+3. Features I Need in the Generated Code
+A starter project with a clear folder structure.
+Pre-configured authentication (JWT, bcrypt)
+Environment variables setup (.env)
+Database schema models (MongoDB with Mongoose OR PostgreSQL with Sequelize)
+Express.js API boilerplate
+React Frontend with TailwindCSS & React Router
+API Service for fetching data (frontend/backend separation)
+Backup strategy with GitHub versioning and database dumps.
