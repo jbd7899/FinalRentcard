@@ -11,8 +11,11 @@ import {
   Mail,
   Phone,
   ExternalLink,
-  Info
+  Info,
+  LogOut,
+  Loader2
 } from 'lucide-react';
+import { useAuth } from "@/hooks/use-auth";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +32,7 @@ import {
 
 const LandlordDashboard = () => {
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const { logoutMutation } = useAuth();
 
   // Demo data
   const generalPage = {
@@ -113,10 +117,24 @@ const LandlordDashboard = () => {
           <h1 className="text-2xl font-semibold">Landlord Dashboard</h1>
           <p className="text-muted-foreground">Manage your screening pages and applications</p>
         </div>
-        <Button onClick={() => setShowRequestModal(true)}>
-          <Send className="w-4 h-4 mr-2" />
-          Request RentCard
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={() => setShowRequestModal(true)}>
+            <Send className="w-4 h-4 mr-2" />
+            Request RentCard
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+          >
+            {logoutMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4 mr-2" />
+            )}
+            Logout
+          </Button>
+        </div>
       </div>
 
       {/* Quick Stats */}
