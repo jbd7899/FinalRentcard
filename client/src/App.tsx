@@ -26,11 +26,11 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/create-screening" component={ScreeningPage} />
 
       {/* Landlord Routes */}
       <ProtectedRoute path="/landlord/dashboard" component={LandlordDashboard} />
       <ProtectedRoute path="/landlord/applications" component={LandlordApplications} />
-      <ProtectedRoute path="/landlord/screening" component={ScreeningPage} />
 
       {/* Sample Pages */}
       <Route path="/samples/rentcard" component={SampleRentCard} />

@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertScreeningPageSchema, type InsertScreeningPage } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Form,
   FormControl,
@@ -29,8 +30,10 @@ import {
 
 export default function ScreeningPage() {
   const [step, setStep] = useState(1);
+  const [screeningPageUrl, setScreeningPageUrl] = useState<string>();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const form = useForm<InsertScreeningPage>({
     resolver: zodResolver(insertScreeningPageSchema),
@@ -49,12 +52,13 @@ export default function ScreeningPage() {
 
   const createScreeningPage = useMutation({
     mutationFn: async (data: InsertScreeningPage) => {
-      const res = await apiRequest("POST", "/api/landlord/screening", data);
+      const res = await apiRequest("POST", "/api/screening", data);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setStep(3);
-      queryClient.invalidateQueries({ queryKey: ["/api/landlord/screening"] });
+      setScreeningPageUrl(data.url);
+      queryClient.invalidateQueries({ queryKey: ["/api/screening"] });
       toast({
         title: "Success!",
         description: "Your screening page has been created.",
@@ -228,46 +232,60 @@ export default function ScreeningPage() {
 
       <h2 className="text-2xl font-semibold mb-4">Pre-Screening Page Created!</h2>
       <p className="text-gray-600 mb-8">
-        Complete your account setup to activate your screening page and start receiving applications
+        Your screening page is ready to receive applications
       </p>
 
       <div className="bg-gray-50 p-4 rounded-lg mb-8">
         <div className="flex items-center justify-between bg-white p-2 rounded border">
-          <span className="text-gray-600 truncate">rentcard.com/screen/your-business</span>
-          <Button variant="ghost" size="icon" className="hover:bg-blue-50">
+          <span className="text-gray-600 truncate">{screeningPageUrl || 'Loading...'}</span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="hover:bg-blue-50"
+            onClick={() => {
+              if (screeningPageUrl) {
+                navigator.clipboard.writeText(screeningPageUrl);
+                toast({
+                  description: "URL copied to clipboard",
+                });
+              }
+            }}
+          >
             <Copy className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      <div className="bg-blue-50 p-6 rounded-lg border border-blue-100 mb-8">
-        <div className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full w-fit mx-auto mb-2">
-          Required Next Step
+      {!user && (
+        <div className="bg-blue-50 p-6 rounded-lg border border-blue-100 mb-8">
+          <div className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full w-fit mx-auto mb-2">
+            Recommended Next Step
+          </div>
+          <h3 className="font-medium mb-2">Create a Free Account</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Sign up to access additional features and manage your screening page more effectively.
+          </p>
+          <div className="text-left space-y-2 mb-6">
+            {[
+              "Track and manage applicant responses",
+              "Create multiple screening pages",
+              "Customize screening criteria",
+              "Access detailed analytics",
+            ].map((text, i) => (
+              <div key={i} className="flex items-center">
+                <CheckCircle className="w-4 h-4 text-blue-600 mr-2" />
+                <span>{text}</span>
+              </div>
+            ))}
+          </div>
+          <Button className="w-full" onClick={() => setLocation("/auth")}>
+            Create Account
+          </Button>
+          <p className="text-xs text-center text-gray-500 mt-3">
+            No credit card required
+          </p>
         </div>
-        <h3 className="font-medium mb-2">Create Your Free Account</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          To activate your screening page and start receiving applications, you'll need to create a free account.
-        </p>
-        <div className="text-left space-y-2 mb-6">
-          {[
-            "Activate and manage your screening page",
-            "View and process tenant applications",
-            "Create property-specific screening pages",
-            "Access application analytics and insights",
-          ].map((text, i) => (
-            <div key={i} className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-blue-600 mr-2" />
-              <span>{text}</span>
-            </div>
-          ))}
-        </div>
-        <Button className="w-full" onClick={() => setLocation("/auth")}>
-          Complete Account Setup
-        </Button>
-        <p className="text-xs text-center text-gray-500 mt-3">
-          This only takes a minute and is required to use the screening page
-        </p>
-      </div>
+      )}
     </div>
   );
 
