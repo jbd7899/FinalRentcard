@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import Dashboard from "@/pages/dashboard";
 import HomePage from "@/pages/home-page";
 import CreateRentCard from "@/pages/create-rentcard";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -17,6 +16,9 @@ import SampleScreeningPage from "@/pages/samples/screening-page";
 // Landlord Pages
 import LandlordDashboard from "@/pages/landlord/dashboard";
 import LandlordApplications from "@/pages/landlord/applications";
+
+// Tenant Pages
+import TenantDashboard from "@/pages/tenant/dashboard";
 
 function Router() {
   return (
@@ -34,7 +36,7 @@ function Router() {
         <Route path="/samples/screening-page" component={SampleScreeningPage} />
 
         {/* Tenant Routes */}
-        <ProtectedRoute path="/dashboard" component={Dashboard} />
+        <ProtectedRoute path="/dashboard" component={TenantDashboard} />
         <Route path="/create-rentcard" component={CreateRentCard} />
 
         <Route component={NotFound} />

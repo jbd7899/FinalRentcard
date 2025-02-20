@@ -8,10 +8,15 @@ import {
   Clock, 
   Building2, 
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  LogOut,
+  Loader2
 } from 'lucide-react';
+import { useAuth } from "@/hooks/use-auth";
 
 const TenantDashboard = () => {
+  const { logoutMutation } = useAuth();
+
   // Demo data
   const rentCardStatus = {
     score: 4.8,
@@ -40,9 +45,23 @@ const TenantDashboard = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">Tenant Dashboard</h1>
-          <p className="text-muted-foreground">Manage your RentCard and applications</p>
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-semibold">Tenant Dashboard</h1>
+            <p className="text-muted-foreground">Manage your RentCard and applications</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+          >
+            {logoutMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4 mr-2" />
+            )}
+            Logout
+          </Button>
         </div>
 
         {/* RentCard Status */}
