@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -35,6 +35,13 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      queryClient.setQueryData(["token"], token);
+    }
+  }, []);
+
   const {
     data: user,
     error,
@@ -47,7 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      const data = await res.json();
+      localStorage.setItem("token", data.token);
+      queryClient.setQueryData(["token"], data.token);
+      return data.user;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -68,7 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterData) => {
       const res = await apiRequest("POST", "/api/register", data);
-      return await res.json();
+      const resData = await res.json();
+      localStorage.setItem("token", resData.token);
+      queryClient.setQueryData(["token"], resData.token);
+      return resData.user;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -88,10 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      localStorage.removeItem("token");
+      queryClient.setQueryData(["token"], null);
+      queryClient.setQueryData(["/api/user"], null);
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
