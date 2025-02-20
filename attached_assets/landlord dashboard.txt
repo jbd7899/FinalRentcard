@@ -1,0 +1,271 @@
+import React, { useState } from 'react';
+import { 
+  Plus,
+  Building,
+  Users,
+  Link,
+  Eye,
+  Edit,
+  Send,
+  X,
+  Mail,
+  Phone,
+  ExternalLink,
+  Info
+} from 'lucide-react';
+
+const LandlordDashboard = () => {
+  const [showRequestModal, setShowRequestModal] = useState(false);
+
+  // Demo data
+  const generalPage = {
+    link: "rentcard.com/screen/johndoe",
+    submissions: 12,
+    requirements: "Min credit: 650, Income: 3x rent, No evictions"
+  };
+
+  const properties = [
+    {
+      id: 1,
+      name: "123 Main Street Unit A",
+      requirements: "Min credit: 650, Income: 3x rent",
+      submissions: 4,
+      link: "rentcard.com/screen/123main-a"
+    },
+    {
+      id: 2,
+      name: "456 Oak Avenue",
+      requirements: "Min credit: 700, Income: 3.5x rent",
+      submissions: 2,
+      link: "rentcard.com/screen/456oak"
+    }
+  ];
+
+  // Request RentCard Modal
+  const RequestModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg w-full max-w-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Request RentCard</h2>
+          <button onClick={() => setShowRequestModal(false)}>
+            <X className="w-6 h-6 text-gray-500" />
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tenant Name
+            </label>
+            <input 
+              type="text"
+              className="w-full p-2 border rounded-lg"
+              placeholder="Enter tenant's name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Contact Method
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <Mail className="w-5 h-5 text-blue-600 mr-2" />
+                <span>Email</span>
+              </div>
+              <div className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <Phone className="w-5 h-5 text-blue-600 mr-2" />
+                <span>SMS</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email or Phone Number
+            </label>
+            <input 
+              type="text"
+              className="w-full p-2 border rounded-lg"
+              placeholder="Enter contact information"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Message (Optional)
+            </label>
+            <textarea
+              className="w-full p-2 border rounded-lg"
+              rows="3"
+              placeholder="Add a personal message..."
+              defaultValue="Hi! Please complete your RentCard profile to apply for my property."
+            />
+          </div>
+
+          <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center">
+            <Send className="w-4 h-4 mr-2" />
+            Send Request
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <div className="max-w-6xl mx-auto flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Landlord Dashboard</h1>
+          <p className="text-gray-600">Manage your screening pages and applications</p>
+        </div>
+        <button 
+          onClick={() => setShowRequestModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <Send className="w-4 h-4" />
+          Request RentCard
+        </button>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600">Page Views</p>
+              <p className="text-2xl font-semibold mt-1">124</p>
+              <p className="text-sm text-green-600">↑ 12% this week</p>
+            </div>
+            <Eye className="w-8 h-8 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600">Total Submissions</p>
+              <p className="text-2xl font-semibold mt-1">{generalPage.submissions + properties.reduce((sum, p) => sum + p.submissions, 0)}</p>
+              <p className="text-sm text-green-600">↑ 3 new today</p>
+            </div>
+            <Users className="w-8 h-8 text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600">Active Properties</p>
+              <p className="text-2xl font-semibold mt-1">{properties.length}</p>
+              <p className="text-sm text-blue-600">+ Add Property</p>
+            </div>
+            <Building className="w-8 h-8 text-blue-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Getting Started Guide */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center">
+            <Info className="w-5 h-5 mr-2 text-blue-600" />
+            How to Use Your Screening Pages
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="font-medium mb-2">1. Share Your Links</h3>
+              <p className="text-sm text-gray-600">Add your screening page link to listings or share directly with potential tenants.</p>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">2. Request RentCards</h3>
+              <p className="text-sm text-gray-600">Send requests to prospects via email or SMS to get their completed RentCard.</p>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">3. Review Applications</h3>
+              <p className="text-sm text-gray-600">Get instant access to verified tenant profiles that match your requirements.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* General Screening Page */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <h2 className="text-lg font-semibold mb-4">General Screening Page</h2>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-gray-600 mb-2">Your default screening page for all rental inquiries</p>
+              <p className="text-sm text-gray-600">Requirements: {generalPage.requirements}</p>
+            </div>
+            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+              <Edit className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <span className="text-gray-600">
+              {generalPage.submissions} total submissions
+            </span>
+            <button className="text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <Link className="w-4 h-4" />
+              Copy Screening Link
+            </button>
+            <button className="text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <ExternalLink className="w-4 h-4" />
+              View Submissions
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Property Screening Pages */}
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Property Screening Pages</h2>
+          <button className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+            <Plus className="w-4 h-4" />
+            Add Property
+          </button>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6 space-y-6">
+            {properties.map((property) => (
+              <div key={property.id} className="border rounded-lg p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-medium">{property.name}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{property.requirements}</p>
+                  </div>
+                  <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                    <Edit className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <span className="text-gray-600">
+                    {property.submissions} submissions
+                  </span>
+                  <button className="text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                    <Link className="w-4 h-4" />
+                    Copy Screening Link
+                  </button>
+                  <button className="text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                    <ExternalLink className="w-4 h-4" />
+                    View Submissions
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Request RentCard Modal */}
+      {showRequestModal && <RequestModal />}
+    </div>
+  );
+};
+
+export default LandlordDashboard;

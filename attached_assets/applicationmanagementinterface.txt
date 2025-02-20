@@ -1,0 +1,330 @@
+import React, { useState } from 'react';
+import {
+  Building2,
+  Star,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Mail,
+  Phone,
+  DollarSign,
+  FileText,
+  Filter,
+  ArrowUpDown,
+  Archive,
+  ExternalLink
+} from 'lucide-react';
+
+const ApplicationManagement = () => {
+  const [selectedProperty, setSelectedProperty] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [showReferences, setShowReferences] = useState(false);
+
+  // Demo data
+  const applications = [
+    {
+      id: 1,
+      tenant: {
+        name: "Sarah Anderson",
+        email: "sarah@email.com",
+        phone: "(555) 123-4567",
+        creditScore: "720-750",
+        income: "85,000",
+        score: 4.9,
+        references: [
+          {
+            name: "Robert Wilson",
+            property: "Parkview Apartments",
+            dates: "Jan 2023 - Dec 2024",
+            rating: 5,
+            payment: "Always on time",
+            propertyCondition: "Excellent",
+            comments: "Excellent tenant, kept property in pristine condition.",
+            verified: true
+          },
+          {
+            name: "Emily Davis",
+            property: "Riverfront Residences",
+            dates: "Mar 2020 - Dec 2022",
+            rating: 4.8,
+            payment: "Always on time",
+            propertyCondition: "Good",
+            comments: "Very responsible tenant, would rent to again.",
+            verified: true
+          }
+        ],
+        employment: "Full-time (3+ years)",
+        moveIn: "March 1, 2025"
+      },
+      property: "123 Main Street Unit A",
+      status: "new",
+      submittedAt: "2025-02-19T10:30:00",
+      matchScore: 95
+    },
+    // ... other applications
+  ];
+
+  const ReferencesSection = ({ references }) => (
+    <div className="space-y-4">
+      {references.map((ref, index) => (
+        <div key={index} className="border rounded-lg p-4">
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <h4 className="font-medium">{ref.name}</h4>
+              <p className="text-sm text-gray-600">{ref.property}</p>
+              <p className="text-sm text-gray-600">{ref.dates}</p>
+            </div>
+            <div className="flex items-center">
+              {ref.verified && (
+                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full flex items-center">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Verified
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <div>
+              <p className="text-sm text-gray-600">Payment History</p>
+              <p className="font-medium">{ref.payment}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Property Condition</p>
+              <p className="font-medium">{ref.propertyCondition}</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm text-gray-600">Landlord Comments</p>
+            <p className="text-sm mt-1">{ref.comments}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-semibold">Application Management</h1>
+            <p className="text-gray-600">Review and process RentCard applications</p>
+          </div>
+          <div className="flex gap-4">
+            <select 
+              className="border rounded-lg px-4 py-2"
+              value={selectedProperty}
+              onChange={(e) => setSelectedProperty(e.target.value)}
+            >
+              <option value="all">All Properties</option>
+              <option value="123-main">123 Main Street Unit A</option>
+              <option value="456-oak">456 Oak Avenue</option>
+            </select>
+            <select
+              className="border rounded-lg px-4 py-2"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="all">All Statuses</option>
+              <option value="new">New</option>
+              <option value="reviewing">Under Review</option>
+              <option value="approved">Approved</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+        {/* Applications List */}
+        <div className="col-span-5 bg-white rounded-lg shadow">
+          {/* ... List header and filtering remains the same ... */}
+          
+          <div className="divide-y">
+            {applications.map((app) => (
+              <div 
+                key={app.id}
+                onClick={() => {
+                  setSelectedApplication(app);
+                  setShowReferences(false);
+                }}
+                className={`p-4 cursor-pointer hover:bg-gray-50 ${
+                  selectedApplication?.id === app.id ? 'bg-blue-50' : ''
+                }`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-medium">{app.tenant.name}</h3>
+                    <p className="text-sm text-gray-600">{app.property}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span className="ml-1">{app.tenant.score}</span>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className={`
+                      px-2 py-1 rounded-full text-xs
+                      ${app.status === 'new' ? 'bg-green-100 text-green-800' : ''}
+                      ${app.status === 'reviewing' ? 'bg-blue-100 text-blue-800' : ''}
+                    `}>
+                      {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                    </span>
+                    {app.tenant.references?.length > 0 && (
+                      <span className="text-xs text-gray-500">
+                        {app.tenant.references.length} references
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm">
+                    <span className="text-blue-600 font-medium">{app.matchScore}%</span>
+                    <span className="text-gray-500 ml-1">match</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Application Details */}
+        {selectedApplication ? (
+          <div className="col-span-7 bg-white rounded-lg shadow">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-xl font-semibold">{selectedApplication.tenant.name}</h2>
+                    <span className="bg-green-100 text-green-800 text-sm px-2 py-1 rounded-full">
+                      Verified Profile
+                    </span>
+                  </div>
+                  <p className="text-gray-600">{selectedApplication.property}</p>
+                </div>
+                <div className="flex gap-2">
+                  <a 
+                    href={`mailto:${selectedApplication.tenant.email}`}
+                    className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Email
+                  </a>
+                  <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <FileText className="w-4 h-4" />
+                    View RentCard
+                  </button>
+                </div>
+              </div>
+
+              {/* Contact Info */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <span>{selectedApplication.tenant.email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span>{selectedApplication.tenant.phone}</span>
+                </div>
+              </div>
+
+              {/* Qualifications Summary */}
+              <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Credit Score</p>
+                  <div className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    <span>{selectedApplication.tenant.creditScore}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Annual Income</p>
+                  <div className="flex items-center">
+                    <DollarSign className="w-4 h-4 text-blue-600 mr-1" />
+                    <span>${selectedApplication.tenant.income}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Employment</p>
+                  <span>{selectedApplication.tenant.employment}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* References or Details */}
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium">
+                  {showReferences ? 'Landlord References' : 'Application Details'}
+                </h3>
+                {selectedApplication.tenant.references?.length > 0 && (
+                  <button 
+                    onClick={() => setShowReferences(!showReferences)}
+                    className="text-blue-600 text-sm hover:underline"
+                  >
+                    {showReferences ? 'View Details' : 'View References'}
+                  </button>
+                )}
+              </div>
+
+              {showReferences ? (
+                <ReferencesSection references={selectedApplication.tenant.references} />
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-blue-600" />
+                      <span>Desired Move-in Date</span>
+                    </div>
+                    <span>{selectedApplication.tenant.moveIn}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-4 h-4 text-yellow-400" />
+                      <span>Rental Score</span>
+                    </div>
+                    <span>{selectedApplication.tenant.score} / 5.0</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-blue-600" />
+                      <span>Verified References</span>
+                    </div>
+                    <span>{selectedApplication.tenant.references?.length || 0} references</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-8 flex gap-4">
+                <button className="flex-1 bg-gray-100 text-gray-600 py-2 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2">
+                  <Archive className="w-4 h-4" />
+                  Archive
+                </button>
+                <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                  Approve Application
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="col-span-7 bg-white rounded-lg shadow flex items-center justify-center p-12">
+            <div className="text-center">
+              <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No Application Selected</h3>
+              <p className="text-gray-600">Select an application from the list to view details</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ApplicationManagement;

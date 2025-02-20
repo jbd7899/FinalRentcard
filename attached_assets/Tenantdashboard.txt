@@ -1,0 +1,253 @@
+  import React, { useState } from 'react';
+import { 
+  Share2, 
+  Star, 
+  User,
+  Home,
+  DollarSign,
+  CheckCircle
+} from 'lucide-react';
+
+const TenantDashboard = () => {
+  const [activeTab, setActiveTab] = useState('profile');
+  const [profile, setProfile] = useState({
+    basic: false,
+    preQual: false,
+    full: false
+  });
+
+  return (
+    <div className="bg-gray-50 min-h-screen p-6">
+      {/* Header */}
+      <div className="max-w-6xl mx-auto flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">My RentCard</h1>
+          <p className="text-gray-600">Manage your rental profile</p>
+        </div>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+          <Share2 className="w-4 h-4" />
+          Share RentCard
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <p className="text-gray-600">Profile Completion</p>
+          <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full" 
+              style={{ 
+                width: `${Object.values(profile).filter(Boolean).length * 33.33}%` 
+              }}
+            ></div>
+          </div>
+          <p className="mt-1 text-sm text-gray-600">
+            {Object.values(profile).filter(Boolean).length} of 3 sections complete
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <p className="text-gray-600">Active Applications</p>
+          <p className="text-2xl font-semibold mt-2">3</p>
+          <p className="text-sm text-gray-600">In progress</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <p className="text-gray-600">Reference Score</p>
+          <div className="flex items-center mt-2">
+            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+            <span className="ml-1 text-2xl font-semibold">4.8</span>
+          </div>
+          <p className="text-sm text-gray-600">2 references</p>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto">
+        {/* Tabs */}
+        <div className="flex space-x-4 mb-6">
+          {['profile', 'applications', 'references'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-lg ${
+                activeTab === tab 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <div className="bg-white rounded-lg shadow">
+          {activeTab === 'profile' && (
+            <div className="p-6">
+              {/* Progress Steps */}
+              <div className="flex justify-between mb-8">
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    profile.basic ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                  }`}>
+                    <User className="w-4 h-4" />
+                  </div>
+                  <span className="ml-2 text-sm">Basic Info</span>
+                </div>
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    profile.preQual ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                  }`}>
+                    <Home className="w-4 h-4" />
+                  </div>
+                  <span className="ml-2 text-sm">Pre-Qualification</span>
+                </div>
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    profile.full ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                  }`}>
+                    <Star className="w-4 h-4" />
+                  </div>
+                  <span className="ml-2 text-sm">Full Profile</span>
+                </div>
+              </div>
+
+              {/* Profile Sections */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center">
+                    <CheckCircle className={`w-5 h-5 ${profile.basic ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span className="ml-2">Basic Profile</span>
+                  </div>
+                  <button 
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                    onClick={() => setProfile({...profile, basic: !profile.basic})}
+                  >
+                    {profile.basic ? 'Edit' : 'Complete'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center">
+                    <CheckCircle className={`w-5 h-5 ${profile.preQual ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span className="ml-2">Pre-Qualification Info</span>
+                  </div>
+                  <button 
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                    onClick={() => setProfile({...profile, preQual: !profile.preQual})}
+                  >
+                    {profile.preQual ? 'Edit' : 'Complete'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center">
+                    <CheckCircle className={`w-5 h-5 ${profile.full ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span className="ml-2">Full Application Details</span>
+                  </div>
+                  <button 
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                    onClick={() => setProfile({...profile, full: !profile.full})}
+                  >
+                    {profile.full ? 'Edit' : 'Complete'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Benefits Card */}
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h3 className="font-medium mb-2">Why complete your RentCard?</h3>
+                <ul className="text-sm text-gray-600 space-y-2">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2" />
+                    One-click submission to any property
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2" />
+                    Save time on repetitive forms
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2" />
+                    Get pre-qualified faster
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'applications' && (
+            <div className="p-6">
+              <div className="space-y-4">
+                {[
+                  {
+                    property: "123 Main Street Apartments",
+                    date: "Feb 18, 2025",
+                    status: "Under Review"
+                  },
+                  {
+                    property: "The Highland Residences",
+                    date: "Feb 15, 2025",
+                    status: "Viewing Scheduled"
+                  }
+                ].map((application, index) => (
+                  <div key={index} className="flex justify-between items-center border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                    <div>
+                      <p className="font-medium">{application.property}</p>
+                      <p className="text-sm text-gray-600">Applied: {application.date}</p>
+                    </div>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      {application.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'references' && (
+            <div className="p-6">
+              <div className="space-y-4">
+                {[
+                  {
+                    name: "Robert Wilson",
+                    property: "Willow Creek Apartments",
+                    date: "Dec 15, 2024",
+                    status: "Verified"
+                  },
+                  {
+                    name: "Emily Davis",
+                    property: "The Madison",
+                    date: "Feb 19, 2025",
+                    status: "Pending"
+                  }
+                ].map((reference, index) => (
+                  <div key={index} className="flex justify-between items-center border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+                    <div>
+                      <p className="font-medium">{reference.name}</p>
+                      <p className="text-sm text-gray-600">{reference.property}</p>
+                      <p className="text-sm text-gray-600">Received: {reference.date}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm ${
+                      reference.status === 'Verified' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {reference.status}
+                    </span>
+                  </div>
+                ))}
+                <button className="mt-4 w-full border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50">
+                  Request New Reference
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TenantDashboard;
