@@ -35,12 +35,14 @@ export default function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem className="gap-2">
-                  <User className="h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
+                <Link href={user.userType === "landlord" ? "/landlord/dashboard" : "/dashboard"}>
+                  <DropdownMenuItem className="gap-2 cursor-pointer">
+                    <User className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem
-                  className="gap-2 text-red-600"
+                  className="gap-2 text-red-600 cursor-pointer"
                   onClick={() => logoutMutation.mutate()}
                 >
                   <LogOut className="h-4 w-4" />
