@@ -9,10 +9,8 @@ const Navbar = () => {
     <nav className="border-b">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-            <img src="/logo.svg" alt="RentCard Logo" className="w-6 h-6" />
-          </div>
-          <span className="font-semibold">MyRentCard</span>
+          <Building2 className="w-8 h-8 text-blue-600" />
+          <span className="text-xl font-semibold text-blue-600">MyRentCard</span>
         </Link>
 
         {user && (

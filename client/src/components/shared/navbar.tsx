@@ -17,8 +17,8 @@ export default function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/">
           <div className="flex items-center space-x-2 cursor-pointer">
-            <Building2 className="w-8 h-8 text-primary" />
-            <span className="font-bold text-xl">MyRentCard</span>
+            <Building2 className="w-8 h-8 text-blue-600" />
+            <span className="text-xl font-semibold text-blue-600">MyRentCard</span>
           </div>
         </Link>
 
