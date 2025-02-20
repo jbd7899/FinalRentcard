@@ -8,6 +8,7 @@ import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import CreateRentCard from "@/pages/create-rentcard";
 import { ProtectedRoute } from "./lib/protected-route";
+import Navbar from "@/components/ui/navbar";
 
 // Sample Pages
 import SampleRentCard from "@/pages/samples/rentcard";
@@ -23,6 +24,7 @@ import TenantDashboard from "@/pages/tenant/dashboard";
 function Router() {
   return (
     <>
+      <Navbar />
       <Switch>
         <Route path="/" component={HomePage} />
         <Route path="/auth" component={AuthPage} />
