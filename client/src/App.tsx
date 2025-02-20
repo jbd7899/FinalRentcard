@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import HomePage from "@/pages/home-page";
+import CreateRentCard from "@/pages/create-rentcard";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
@@ -16,7 +17,7 @@ function Router() {
         <Route path="/" component={HomePage} />
         <ProtectedRoute path="/dashboard" component={Dashboard} />
         <Route path="/auth" component={AuthPage} />
-        <Route path="/create-rentcard" component={() => <div>Create RentCard</div>} />
+        <Route path="/create-rentcard" component={CreateRentCard} />
         <Route path="/screening" component={() => <div>Screening Page</div>} />
         <Route path="/sample-rentcard" component={() => <div>Sample RentCard</div>} />
         <Route path="/sample-screening" component={() => <div>Sample Screening</div>} />
