@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -36,6 +37,7 @@ const createRentCardSchema = z.object({
 type CreateRentCardForm = z.infer<typeof createRentCardSchema>;
 
 export default function CreateRentCard() {
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const form = useForm<CreateRentCardForm>({
     resolver: zodResolver(createRentCardSchema),
@@ -56,14 +58,54 @@ export default function CreateRentCard() {
     }
   });
 
+  const onSubmit = async (data: CreateRentCardForm) => {
+    if (step < 4) {
+      const currentFields = {
+        1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
+        2: ['currentAddress', 'currentRent', 'hasRoommates'],
+        3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome']
+      }[step] as Array<keyof CreateRentCardForm>;
+
+      const isStepValid = currentFields.every(field => {
+        const value = form.getValues(field);
+        return value !== undefined && value !== '';
+      });
+
+      if (!isStepValid) {
+        toast({
+          title: "Please complete all fields",
+          description: "All fields in this section are required.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setStep(step + 1);
+    } else {
+      try {
+        console.log('Form submitted:', data);
+        toast({
+          title: "RentCard Created!",
+          description: "Your RentCard has been successfully created.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to create RentCard. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
 
   const StepIndicator = () => (
     <div className="flex items-center justify-center space-x-4 mb-8">
       {[User, Home, CreditCard, CheckCircle].map((Icon, index) => (
-        <div key={index} className={`w-10 h-10 rounded-full flex items-center justify-center ${
-          step >= index + 1 ? 'bg-primary text-primary-foreground' : 'bg-muted'
+        <div key={index} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200 ${
+          step >= index + 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
         }`}>
           <Icon className="w-5 h-5" />
         </div>
@@ -74,7 +116,7 @@ export default function CreateRentCard() {
   const ProgressBar = () => (
     <div className="mb-8">
       <div className="w-full bg-muted rounded-full h-2">
-        <div 
+        <div
           className="bg-primary h-2 rounded-full transition-all duration-300"
           style={{ width: `${progress}%` }}
         />
@@ -364,7 +406,7 @@ export default function CreateRentCard() {
       <Card className="max-w-3xl mx-auto">
         <CardContent className="p-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(() => setStep(Math.min(step + 1, 4)))}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <ProgressBar />
               <StepIndicator />
               <ValueProposition />
@@ -384,13 +426,21 @@ export default function CreateRentCard() {
                     Back
                   </Button>
                 )}
-                {step < 4 && (
+                {step < 4 ? (
                   <Button
                     type="submit"
                     className="ml-auto"
                   >
                     Next
                     <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="ml-auto"
+                  >
+                    Complete
+                    <CheckCircle className="w-4 h-4 ml-2" />
                   </Button>
                 )}
               </div>
