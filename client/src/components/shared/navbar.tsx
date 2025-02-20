@@ -16,14 +16,14 @@ export default function Navbar() {
     <nav className="border-b">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/">
-          <a className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 cursor-pointer">
             {user?.userType === "tenant" ? (
               <Home className="h-6 w-6 text-primary" />
             ) : (
               <Building className="h-6 w-6 text-primary" />
             )}
             <span className="font-bold text-xl">MyRentCard</span>
-          </a>
+          </div>
         </Link>
 
         {user ? (
