@@ -17,11 +17,9 @@ export default function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/">
           <div className="flex items-center space-x-2 cursor-pointer">
-            {user?.userType === "tenant" ? (
-              <Home className="h-6 w-6 text-primary" />
-            ) : (
-              <Building className="h-6 w-6 text-primary" />
-            )}
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+              <img src="/logo.svg" alt="RentCard Logo" className="w-6 h-6" />
+            </div>
             <span className="font-bold text-xl">MyRentCard</span>
           </div>
         </Link>
