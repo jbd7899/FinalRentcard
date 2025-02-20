@@ -1,8 +1,4 @@
 import { User, TenantProfile, LandlordProfile, Property, Application } from "@shared/schema";
-import session from "express-session";
-import createMemoryStore from "memorystore";
-
-const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   // User operations
@@ -30,8 +26,6 @@ export interface IStorage {
   getApplications(tenantId?: number, propertyId?: number): Promise<Application[]>;
   createApplication(application: Omit<Application, "id" | "submittedAt">): Promise<Application>;
   updateApplicationStatus(id: number, status: string): Promise<Application>;
-
-  sessionStore: session.SessionStore;
 }
 
 export class MemStorage implements IStorage {
@@ -41,7 +35,6 @@ export class MemStorage implements IStorage {
   private properties: Map<number, Property>;
   private applications: Map<number, Application>;
   private currentId: number;
-  readonly sessionStore: session.SessionStore;
 
   constructor() {
     this.users = new Map();
@@ -50,9 +43,6 @@ export class MemStorage implements IStorage {
     this.properties = new Map();
     this.applications = new Map();
     this.currentId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // 24h
-    });
   }
 
   async getUser(id: number): Promise<User | undefined> {
