@@ -1,40 +1,3 @@
-# MyRentCard - Rental Management Platform
-
-## Project Overview
-MyRentCard is a comprehensive rental management platform that streamlines the connection between tenants and landlords. The application provides a modern, secure web interface for property screening, application management, and communication between parties.
-
-### Key Features
-- Role-based authentication (Tenant/Landlord)
-- Property screening and application management
-- RentCard creation and management
-- Landlord reference forms
-- Interactive dashboards for both tenants and landlords
-- Real-time application status tracking
-
-## Tech Stack
-
-### Frontend
-- React 18+ with Vite for build tooling
-- TanStack React Query for server state management
-- Wouter for client-side routing
-- Tailwind CSS with shadcn/ui components for styling
-- React Hook Form with Zod for form validation
-
-### Backend
-- Express.js server
-- PostgreSQL database with Drizzle ORM
-- JWT-based authentication
-- Session management with express-session
-- Passport.js for authentication strategies
-
-### Development Tools
-- TypeScript for type safety
-- Drizzle Kit for database migrations
-- Zod for runtime type validation
-- ESLint and Prettier for code formatting
-
-## File Structure
-```
 ├── client/                 # Frontend application
 │   ├── src/
 │   │   ├── components/    # Reusable UI components
@@ -93,7 +56,6 @@ POST   /api/landlord/reference-form      # Submit reference form
 ```
 
 ## Getting Started
-
 1. Clone the repository
 2. Install dependencies: `npm install`
 3. Set up environment variables (see `.env.example`)
@@ -110,9 +72,15 @@ POST   /api/landlord/reference-form      # Submit reference form
 2. Make your changes
 3. Submit a pull request
 
+## Documentation Maintenance
+This README serves as a living document that is automatically updated with each significant change to the project. Key areas that are regularly reviewed and updated include:
+- API endpoints when new routes are added or modified
+- Authentication flows when security measures are updated
+- File structure when new components or services are added
+- Tech stack when new dependencies are introduced
+
 ## License
 This project is proprietary and confidential.
 
 ---
 Last updated: February 20, 2025
-```
