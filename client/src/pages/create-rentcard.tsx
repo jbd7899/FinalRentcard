@@ -60,29 +60,38 @@ export default function CreateRentCard() {
 
   const onSubmit = async (data: CreateRentCardForm) => {
     if (step < 4) {
-      const currentFields = {
+      const stepFields = {
         1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
         2: ['currentAddress', 'currentRent', 'hasRoommates'],
-        3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome']
+        3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate']
       }[step] as Array<keyof CreateRentCardForm>;
 
-      const isStepValid = currentFields.every(field => {
-        const value = form.getValues(field);
-        return value !== undefined && value !== '';
-      });
+      const stepData = Object.fromEntries(
+        stepFields.map(field => [field, form.getValues(field)])
+      );
 
-      if (!isStepValid) {
-        toast({
-          title: "Please complete all fields",
-          description: "All fields in this section are required.",
-          variant: "destructive",
-        });
+      try {
+        // Validate only the current step's fields
+        await createRentCardSchema.pick(
+          stepFields.reduce((acc, field) => ({ ...acc, [field]: true }), {})
+        ).parseAsync(stepData);
+
+        setStep(step + 1);
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          error.errors.forEach(err => {
+            toast({
+              title: "Validation Error",
+              description: err.message,
+              variant: "destructive",
+            });
+          });
+        }
         return;
       }
-
-      setStep(step + 1);
     } else {
       try {
+        // Here you would typically submit the form data to your backend
         console.log('Form submitted:', data);
         toast({
           title: "RentCard Created!",
@@ -334,6 +343,32 @@ export default function CreateRentCard() {
           )}
         />
       </div>
+      <FormField
+        control={form.control}
+        name="maxRent"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Maximum Rent</FormLabel>
+            <FormControl>
+              <Input placeholder="Enter amount" type="number" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="moveInDate"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Move-in Date</FormLabel>
+            <FormControl>
+              <Input placeholder="Enter date" type="date" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 
