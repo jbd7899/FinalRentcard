@@ -58,12 +58,12 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="flex justify-center gap-8 text-blue-600">
-            <Link href="/sample-rentcard">
+            <Link href="/samples/rentcard">
               <a className="hover:underline flex items-center gap-1">
                 View Sample RentCard →
               </a>
             </Link>
-            <Link href="/sample-screening">
+            <Link href="/samples/screening-page">
               <a className="hover:underline flex items-center gap-1">
                 View Sample Screening Page →
               </a>
