@@ -1,0 +1,228 @@
+import React, { useState } from 'react';
+import { Check, AlertCircle } from 'lucide-react';
+
+const LandlordReferenceForm = () => {
+  const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    confirmIdentity: false,
+    tenancyPeriod: '',
+    rentAmount: '',
+    paymentHistory: '',
+    propertyCondition: '',
+    noiseComplaints: '',
+    rentAgain: '',
+    additionalComments: ''
+  });
+
+  // Demo data - in real app, would be passed through URL params
+  const tenantInfo = {
+    name: "Sarah Johnson",
+    propertyAddress: "123 Main Street, Apt 4B",
+    tenancyDates: "Jan 2023 - Dec 2024"
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-semibold mb-2">Thank You!</h2>
+          <p className="text-gray-600">Your reference for {tenantInfo.name} has been submitted successfully.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-lg mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <img src="/api/placeholder/48/48" alt="RentCard Logo" className="w-12 h-12" />
+            <div>
+              <h1 className="text-xl font-semibold">Tenant Reference Request</h1>
+              <p className="text-gray-600">via RentCard</p>
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+            <h2 className="font-medium mb-2">Tenant Information</h2>
+            <p className="text-gray-600">Name: {tenantInfo.name}</p>
+            <p className="text-gray-600">Property: {tenantInfo.propertyAddress}</p>
+            <p className="text-gray-600">Period: {tenantInfo.tenancyDates}</p>
+          </div>
+        </div>
+
+        {/* Reference Form */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Identity Confirmation */}
+            <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4">
+              <label className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={formData.confirmIdentity}
+                  onChange={(e) => setFormData({...formData, confirmIdentity: e.target.checked})}
+                  required
+                />
+                <div>
+                  <p className="font-medium">Identity Confirmation</p>
+                  <p className="text-sm text-gray-600">
+                    I confirm I was/am the landlord/property manager for this tenant during the specified period
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {/* Basic Info */}
+            <div>
+              <label className="block font-medium mb-2">
+                Length of Tenancy
+              </label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={formData.tenancyPeriod}
+                onChange={(e) => setFormData({...formData, tenancyPeriod: e.target.value})}
+                required
+              >
+                <option value="">Select period</option>
+                <option value="less-than-6">Less than 6 months</option>
+                <option value="6-12">6-12 months</option>
+                <option value="1-2-years">1-2 years</option>
+                <option value="more-than-2">More than 2 years</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-medium mb-2">
+                Monthly Rent Amount
+              </label>
+              <input
+                type="number"
+                className="w-full p-2 border rounded"
+                placeholder="e.g., 1500"
+                value={formData.rentAmount}
+                onChange={(e) => setFormData({...formData, rentAmount: e.target.value})}
+                required
+              />
+            </div>
+
+            {/* Payment History */}
+            <div>
+              <label className="block font-medium mb-2">
+                Rent Payment History
+              </label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={formData.paymentHistory}
+                onChange={(e) => setFormData({...formData, paymentHistory: e.target.value})}
+                required
+              >
+                <option value="">Select option</option>
+                <option value="always-on-time">Always on time</option>
+                <option value="mostly-on-time">Mostly on time (1-2 late payments)</option>
+                <option value="sometimes-late">Sometimes late (3-5 late payments)</option>
+                <option value="often-late">Often late (more than 5 late payments)</option>
+              </select>
+            </div>
+
+            {/* Property Condition */}
+            <div>
+              <label className="block font-medium mb-2">
+                Property Condition Upon Move-Out
+              </label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={formData.propertyCondition}
+                onChange={(e) => setFormData({...formData, propertyCondition: e.target.value})}
+                required
+              >
+                <option value="">Select condition</option>
+                <option value="excellent">Excellent - Better than move-in</option>
+                <option value="good">Good - Normal wear and tear</option>
+                <option value="fair">Fair - Some damage beyond wear and tear</option>
+                <option value="poor">Poor - Significant damage</option>
+              </select>
+            </div>
+
+            {/* Noise/Disturbance */}
+            <div>
+              <label className="block font-medium mb-2">
+                Noise or Disturbance Complaints
+              </label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={formData.noiseComplaints}
+                onChange={(e) => setFormData({...formData, noiseComplaints: e.target.value})}
+                required
+              >
+                <option value="">Select option</option>
+                <option value="none">None</option>
+                <option value="few">Few (1-2 incidents)</option>
+                <option value="several">Several (3+ incidents)</option>
+                <option value="frequent">Frequent issues</option>
+              </select>
+            </div>
+
+            {/* Rent Again */}
+            <div>
+              <label className="block font-medium mb-2">
+                Would you rent to this tenant again?
+              </label>
+              <select 
+                className="w-full p-2 border rounded"
+                value={formData.rentAgain}
+                onChange={(e) => setFormData({...formData, rentAgain: e.target.value})}
+                required
+              >
+                <option value="">Select answer</option>
+                <option value="definitely">Yes, definitely</option>
+                <option value="probably">Yes, probably</option>
+                <option value="maybe">Maybe</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            {/* Additional Comments */}
+            <div>
+              <label className="block font-medium mb-2">
+                Additional Comments (Optional)
+              </label>
+              <textarea
+                className="w-full p-2 border rounded"
+                rows="4"
+                placeholder="Any additional information you'd like to share about this tenant..."
+                value={formData.additionalComments}
+                onChange={(e) => setFormData({...formData, additionalComments: e.target.value})}
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button 
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            >
+              Submit Reference
+            </button>
+
+            <p className="text-sm text-gray-500 text-center mt-4">
+              This reference will be added to {tenantInfo.name}'s RentCard profile.
+              Their future potential landlords may contact you to verify this reference.
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LandlordReferenceForm;
