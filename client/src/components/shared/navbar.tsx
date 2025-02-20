@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Building, User, LogOut } from "lucide-react";
+import { Home, Building, User, LogOut, Building2 } from "lucide-react";
 
 export default function Navbar() {
   const { user, logoutMutation } = useAuth();
@@ -17,9 +17,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/">
           <div className="flex items-center space-x-2 cursor-pointer">
-            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-              <img src="/logo.svg" alt="RentCard Logo" className="w-6 h-6" />
-            </div>
+            <Building2 className="w-8 h-8 text-primary" />
             <span className="font-bold text-xl">MyRentCard</span>
           </div>
         </Link>
