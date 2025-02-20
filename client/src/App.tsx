@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import CreateRentCard from "@/pages/create-rentcard";
+import ScreeningPage from "@/pages/screening-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 // Sample Pages
@@ -29,6 +30,7 @@ function Router() {
       {/* Landlord Routes */}
       <ProtectedRoute path="/landlord/dashboard" component={LandlordDashboard} />
       <ProtectedRoute path="/landlord/applications" component={LandlordApplications} />
+      <ProtectedRoute path="/landlord/screening" component={ScreeningPage} />
 
       {/* Sample Pages */}
       <Route path="/samples/rentcard" component={SampleRentCard} />
