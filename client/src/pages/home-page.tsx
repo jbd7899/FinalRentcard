@@ -1,0 +1,109 @@
+import { Building2, ArrowRight, Clock, Shield, LogIn } from 'lucide-react';
+import { Link } from 'wouter';
+import { useAuth } from '@/hooks/use-auth';
+
+export default function HomePage() {
+  const { user } = useAuth();
+  
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 max-w-7xl mx-auto">
+        <div className="flex items-center space-x-2">
+          <Building2 className="w-8 h-8 text-blue-600" />
+          <span className="text-xl font-semibold">MyRentCard</span>
+        </div>
+        <nav className="flex items-center space-x-6">
+          <a href="#how-it-works" className="hidden md:inline text-gray-600 hover:text-blue-600">How It Works</a>
+          <a href="#benefits" className="hidden md:inline text-gray-600 hover:text-blue-600">Benefits</a>
+          {user ? (
+            <Link href="/dashboard">
+              <a className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <ArrowRight className="w-4 h-4" />
+                <span>Go to Dashboard</span>
+              </a>
+            </Link>
+          ) : (
+            <Link href="/auth">
+              <a className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <LogIn className="w-4 h-4" />
+                <span>Log In</span>
+              </a>
+            </Link>
+          )}
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <main className="max-w-7xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            One Form. Rent Anywhere.
+            <span className="block text-2xl md:text-3xl text-blue-600 mt-2">100% Free to Use</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            Fill out your rental profile once and instantly apply to multiple properties. 
+            No account needed to start.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
+            <Link href="/create-rentcard">
+              <a className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 shadow-lg">
+                Create Free RentCard
+              </a>
+            </Link>
+            <Link href="/screening">
+              <a className="border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg font-medium hover:bg-blue-50">
+                Request Tenant Info
+              </a>
+            </Link>
+          </div>
+          <div className="flex justify-center gap-8 text-blue-600">
+            <Link href="/sample-rentcard">
+              <a className="hover:underline flex items-center gap-1">
+                View Sample RentCard →
+              </a>
+            </Link>
+            <Link href="/sample-screening">
+              <a className="hover:underline flex items-center gap-1">
+                View Sample Screening Page →
+              </a>
+            </Link>
+          </div>
+        </div>
+
+        {/* Quick Benefits */}
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <Clock className="w-12 h-12 text-blue-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Save Hours</h3>
+            <p className="text-gray-600">Fill out one form and use it everywhere. No more repetitive applications.</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <Shield className="w-12 h-12 text-blue-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Secure & Private</h3>
+            <p className="text-gray-600">You control what information to share with each landlord.</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <Clock className="w-12 h-12 text-blue-600 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Pre-Qualify Fast</h3>
+            <p className="text-gray-600">Get instant responses from properties that match your criteria.</p>
+          </div>
+        </div>
+
+        {/* Social Proof */}
+        <div className="text-center bg-blue-50 p-8 rounded-lg">
+          <div className="mb-4">
+            <p className="text-lg font-semibold">Core features are completely free</p>
+            <p className="text-gray-600">Optional premium features available for power users</p>
+          </div>
+          <p className="text-lg mb-4">Trusted by thousands of renters and landlords nationwide</p>
+          <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-600">
+            <div>★★★★★ "Got approved in 2 days!"</div>
+            <div>★★★★★ "Saved hours of paperwork"</div>
+            <div>★★★★★ "Best rental tool ever"</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
