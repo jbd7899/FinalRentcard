@@ -53,7 +53,8 @@ export default function AuthPage() {
   });
 
   if (user) {
-    return <Redirect to="/" />;
+    // Redirect based on user type
+    return <Redirect to={user.userType === 'landlord' ? '/landlord/dashboard' : '/dashboard'} />;
   }
 
   return (

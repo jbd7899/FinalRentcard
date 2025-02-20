@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function HomePage() {
   const { user } = useAuth();
-  
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -17,7 +17,7 @@ export default function HomePage() {
           <a href="#how-it-works" className="hidden md:inline text-gray-600 hover:text-blue-600">How It Works</a>
           <a href="#benefits" className="hidden md:inline text-gray-600 hover:text-blue-600">Benefits</a>
           {user ? (
-            <Link href="/dashboard">
+            <Link href={user.userType === 'landlord' ? '/landlord/dashboard' : '/dashboard'}>
               <a className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                 <ArrowRight className="w-4 h-4" />
                 <span>Go to Dashboard</span>
