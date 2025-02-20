@@ -33,9 +33,7 @@ const LoginPage = () => {
       <header className="px-4 py-3 border-b bg-white">
         <div className="max-w-xl mx-auto flex items-center">
           <Link href="/" className="flex items-center text-blue-600">
-            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-              <img src="/logo.svg" alt="RentCard Logo" className="w-6 h-6" />
-            </div>
+            <Building2 className="w-8 h-8 mr-2" />
             <span className="text-xl font-semibold">MyRentCard</span>
           </Link>
         </div>
