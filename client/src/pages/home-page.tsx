@@ -22,27 +22,19 @@ export default function HomePage() {
             No account needed to start.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-6">
-            <Link href="/create-rentcard">
-              <a className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 shadow-lg">
-                Create Free RentCard
-              </a>
+            <Link href="/create-rentcard" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 shadow-lg">
+              Create Free RentCard
             </Link>
-            <Link href="/screening">
-              <a className="border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg font-medium hover:bg-blue-50">
-                Request Tenant Info
-              </a>
+            <Link href="/create-screening" className="border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg font-medium hover:bg-blue-50">
+              Request Tenant Info
             </Link>
           </div>
           <div className="flex justify-center gap-8 text-blue-600">
-            <Link href="/samples/rentcard">
-              <a className="hover:underline flex items-center gap-1">
-                View Sample RentCard →
-              </a>
+            <Link href="/samples/rentcard" className="hover:underline flex items-center gap-1">
+              View Sample RentCard →
             </Link>
-            <Link href="/samples/screening-page">
-              <a className="hover:underline flex items-center gap-1">
-                View Sample Screening Page →
-              </a>
+            <Link href="/samples/screening-page" className="hover:underline flex items-center gap-1">
+              View Sample Screening Page →
             </Link>
           </div>
         </div>
