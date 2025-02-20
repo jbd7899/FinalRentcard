@@ -1,40 +1,16 @@
-import { Building2, ArrowRight, Clock, Shield, LogIn } from 'lucide-react';
+import { Building2, ArrowRight, Clock, Shield } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import Navbar from '@/components/shared/navbar';
 
 export default function HomePage() {
   const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="flex items-center justify-between p-4 max-w-7xl mx-auto">
-        <div className="flex items-center space-x-2">
-          <Building2 className="w-8 h-8 text-blue-600" />
-          <span className="text-xl font-semibold">MyRentCard</span>
-        </div>
-        <nav className="flex items-center space-x-6">
-          <a href="#how-it-works" className="hidden md:inline text-gray-600 hover:text-blue-600">How It Works</a>
-          <a href="#benefits" className="hidden md:inline text-gray-600 hover:text-blue-600">Benefits</a>
-          {user ? (
-            <Link href={user.userType === 'landlord' ? '/landlord/dashboard' : '/dashboard'}>
-              <a className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                <ArrowRight className="w-4 h-4" />
-                <span>Go to Dashboard</span>
-              </a>
-            </Link>
-          ) : (
-            <Link href="/auth">
-              <a className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                <LogIn className="w-4 h-4" />
-                <span>Log In</span>
-              </a>
-            </Link>
-          )}
-        </nav>
-      </header>
+      <Navbar />
 
-      {/* Hero Section */}
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">

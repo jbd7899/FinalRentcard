@@ -8,7 +8,6 @@ import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import CreateRentCard from "@/pages/create-rentcard";
 import { ProtectedRoute } from "./lib/protected-route";
-import Navbar from "@/components/ui/navbar";
 
 // Sample Pages
 import SampleRentCard from "@/pages/samples/rentcard";
@@ -23,27 +22,24 @@ import TenantDashboard from "@/pages/tenant/dashboard";
 
 function Router() {
   return (
-    <>
-      <Navbar />
-      <Switch>
-        <Route path="/" component={HomePage} />
-        <Route path="/auth" component={AuthPage} />
+    <Switch>
+      <Route path="/" component={HomePage} />
+      <Route path="/auth" component={AuthPage} />
 
-        {/* Landlord Routes */}
-        <ProtectedRoute path="/landlord/dashboard" component={LandlordDashboard} />
-        <ProtectedRoute path="/landlord/applications" component={LandlordApplications} />
+      {/* Landlord Routes */}
+      <ProtectedRoute path="/landlord/dashboard" component={LandlordDashboard} />
+      <ProtectedRoute path="/landlord/applications" component={LandlordApplications} />
 
-        {/* Sample Pages */}
-        <Route path="/samples/rentcard" component={SampleRentCard} />
-        <Route path="/samples/screening-page" component={SampleScreeningPage} />
+      {/* Sample Pages */}
+      <Route path="/samples/rentcard" component={SampleRentCard} />
+      <Route path="/samples/screening-page" component={SampleScreeningPage} />
 
-        {/* Tenant Routes */}
-        <ProtectedRoute path="/dashboard" component={TenantDashboard} />
-        <Route path="/create-rentcard" component={CreateRentCard} />
+      {/* Tenant Routes */}
+      <ProtectedRoute path="/dashboard" component={TenantDashboard} />
+      <Route path="/create-rentcard" component={CreateRentCard} />
 
-        <Route component={NotFound} />
-      </Switch>
-    </>
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
