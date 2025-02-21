@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -32,19 +32,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Props type for PropertyDetailsModal
+interface PropertyDetailsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  property: any; // Will be properly typed once we have the full property type
+}
+
 // Custom hooks for data fetching
-const usePropertyDetails = (propertyId: string) => {
+const usePropertyDetails = (slug: string) => {
   return useQuery({
-    queryKey: ["/api/properties", propertyId],
+    queryKey: ["/api/properties/screening", slug],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/properties/${propertyId}`);
+      const response = await apiRequest("GET", `/api/properties/screening/${slug}`);
       return response.json();
     },
+    enabled: !!slug,
   });
 };
 
 // Property Details Modal Component
-const PropertyDetailsModal = ({ isOpen, onClose, property }) => {
+const PropertyDetailsModal = ({ isOpen, onClose, property }: PropertyDetailsModalProps) => {
   if (!isOpen || !property) return null;
 
   return (
@@ -96,23 +104,23 @@ const PropertyDetailsModal = ({ isOpen, onClose, property }) => {
 
 // Main Component
 const ScreeningPage = () => {
-  const { propertyId } = useParams();
+  const { slug } = useParams();
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: property, isLoading, error } = usePropertyDetails(propertyId);
+  const { data: property, isLoading, error } = usePropertyDetails(slug || '');
 
   const rentCardMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/property-interests", {
-        propertyId,
+        propertyId: property?.id,
         userId: user?.id,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/properties", propertyId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/properties/screening", slug] });
       toast({
         title: "Success",
         description: "Your RentCard has been shared with the landlord.",
@@ -130,13 +138,13 @@ const ScreeningPage = () => {
   const preScreeningMutation = useMutation({
     mutationFn: async (formData) => {
       const response = await apiRequest("POST", "/api/prescreening", {
-        propertyId,
+        propertyId: property?.id,
         ...formData,
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/properties", propertyId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/properties/screening", slug] });
       toast({
         title: "Success",
         description: "Your pre-screening form has been submitted.",
@@ -236,7 +244,7 @@ const ScreeningPage = () => {
               <div>
                 <h3 className="font-medium mb-3">Basic Requirements:</h3>
                 <div className="space-y-3">
-                  {property.requirements.map((requirement, index) => (
+                  {property.requirements?.map((requirement: any, index: number) => (
                     <div key={index} className="flex items-start gap-3">
                       <requirement.icon className="w-5 h-5 text-muted-foreground mt-1" />
                       <div>
@@ -248,7 +256,6 @@ const ScreeningPage = () => {
               </div>
 
               <div>
-                {/* Pre-screening form will be implemented here */}
                 <div className="space-y-4">
                   <div>
                     <Label>Monthly Income</Label>

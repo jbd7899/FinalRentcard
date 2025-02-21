@@ -27,6 +27,7 @@ export interface IStorage {
   // Property operations
   getProperties(landlordId?: number): Promise<Property[]>;
   getProperty(id: number): Promise<Property | undefined>;
+  getPropertyBySlug(slug: string): Promise<Property | undefined>;
   createProperty(property: Omit<Property, "id">): Promise<Property>;
   updateProperty(id: number, property: Partial<Property>): Promise<Property>;
 
@@ -110,6 +111,14 @@ export class DatabaseStorage implements IStorage {
 
   async getProperty(id: number): Promise<Property | undefined> {
     const [property] = await db.select().from(properties).where(eq(properties.id, id));
+    return property;
+  }
+
+  async getPropertyBySlug(slug: string): Promise<Property | undefined> {
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.screeningPageSlug, slug));
     return property;
   }
 
