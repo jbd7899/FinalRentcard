@@ -23,6 +23,7 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
+// Middleware to verify JWT token
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -41,25 +42,12 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 
 export function setupAuth(app: Express) {
   passport.use(
-    new LocalStrategy({
-      usernameField: 'email',
-      passwordField: 'password'
-    }, async (email, password, done) => {
+    new LocalStrategy(async (username, password, done) => {
       try {
-        // Try to find user by email first, then by username if email fails
-        let user = await storage.getUserByEmail(email);
-        if (!user) {
-          user = await storage.getUserByUsername(email); // Allow username login as fallback
+        const user = await storage.getUserByUsername(username);
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false);
         }
-
-        if (!user) {
-          return done(null, false, { message: "Invalid credentials" });
-        }
-
-        if (!(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Invalid credentials" });
-        }
-
         return done(null, user);
       } catch (err) {
         return done(err);
@@ -69,39 +57,29 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res) => {
     try {
-      const { email, username } = req.body;
-
-      // Check for existing email or username
-      const existingUser = await storage.getUserByEmail(email) || 
-                          await storage.getUserByUsername(username);
-
+      const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
-        return res.status(400).json({ 
-          message: "User already exists with this email or username" 
-        });
+        return res.status(400).send("Username already exists");
       }
 
-      const hashedPassword = await hashPassword(req.body.password);
       const user = await storage.createUser({
         ...req.body,
-        password: hashedPassword,
+        password: await hashPassword(req.body.password),
       });
 
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
       res.status(201).json({ user, token });
     } catch (err) {
-      console.error('Registration error:', err);
-      res.status(500).json({ message: "Server error during registration" });
+      res.status(500).json({ message: "Server error" });
     }
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error, user: SelectUser, info: any) => {
+    passport.authenticate("local", (err, user) => {
       if (err) return next(err);
       if (!user) {
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        return res.status(401).json({ message: "Invalid credentials" });
       }
-
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
       res.json({ user, token });
     })(req, res, next);
@@ -115,8 +93,7 @@ export function setupAuth(app: Express) {
       }
       res.json(user);
     } catch (err) {
-      console.error('Get user error:', err);
-      res.status(500).json({ message: "Server error while fetching user" });
+      res.status(500).json({ message: "Server error" });
     }
   });
 }
