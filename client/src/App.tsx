@@ -18,6 +18,7 @@ import SampleScreeningPage from "@/pages/samples/screening-page";
 import LandlordDashboard from "@/pages/landlord/dashboard";
 import LandlordApplications from "@/pages/landlord/applications";
 import AddProperty from "@/pages/landlord/add-property";
+import PropertyScreeningPage from "@/pages/landlord/screening-page";
 
 // Tenant Pages
 import TenantDashboard from "@/pages/tenant/dashboard";
@@ -33,6 +34,7 @@ function Router() {
       <ProtectedRoute path="/landlord/dashboard" component={LandlordDashboard} />
       <ProtectedRoute path="/landlord/applications" component={LandlordApplications} />
       <ProtectedRoute path="/landlord/add-property" component={AddProperty} />
+      <Route path="/landlord/screening/:slug" component={PropertyScreeningPage} />
 
       {/* Sample Pages */}
       <Route path="/samples/rentcard" component={SampleRentCard} />
