@@ -1,0 +1,207 @@
+import React, { useState } from 'react';
+import { QrCode, Copy, ExternalLink, CheckCircle } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+/**
+ * Database Schema Suggestions:
+ * 
+ * 1. Screening Links Table:
+ * - id: uuid (primary key)
+ * - property_id: uuid (foreign key to properties table, nullable for general screening)
+ * - landlord_id: uuid (foreign key to users table)
+ * - link_code: string (unique identifier for the URL)
+ * - requirements: jsonb (screening requirements)
+ * - created_at: timestamp
+ * - updated_at: timestamp
+ * - is_active: boolean
+ * 
+ * 2. Submissions Table:
+ * - id: uuid (primary key)
+ * - screening_link_id: uuid (foreign key to screening_links table)
+ * - applicant_id: uuid (foreign key to applicants table)
+ * - status: enum ('pending', 'reviewed', 'approved', 'rejected')
+ * - submitted_at: timestamp
+ * - reviewed_at: timestamp
+ * 
+ * 3. QR Code Scans Table (Optional - for analytics):
+ * - id: uuid (primary key)
+ * - screening_link_id: uuid (foreign key to screening_links table)
+ * - scanned_at: timestamp
+ * - device_type: string
+ * - location: jsonb (if collecting geographic data)
+ */
+
+const ScreeningActions = ({ screeningLink, propertyId, submissionCount }) => {
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [showCopyAlert, setShowCopyAlert] = useState(false);
+  
+  /**
+   * Implementation Note - Link Generation:
+   * 1. Generate unique, hard-to-guess link codes using nanoid or similar
+   * 2. Store in screening_links table with associated property/landlord
+   * 3. Create API endpoint: GET /api/screening/{link_code}
+   * 4. Implement rate limiting and validation middleware
+   * 
+   * Example API call:
+   * const generateScreeningLink = async (propertyId) => {
+   *   const response = await fetch('/api/screening/generate', {
+   *     method: 'POST',
+   *     body: JSON.stringify({ propertyId })
+   *   });
+   *   return response.json();
+   * };
+   */
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(screeningLink);
+      setShowCopyAlert(true);
+      setTimeout(() => setShowCopyAlert(false), 2000);
+      
+      // Suggested Analytics Implementation:
+      // await fetch('/api/analytics/link-copied', {
+      //   method: 'POST',
+      //   body: JSON.stringify({
+      //     screeningLinkId: screeningLink,
+      //     propertyId,
+      //     timestamp: new Date()
+      //   })
+      // });
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
+
+  /**
+   * Implementation Note - Submissions:
+   * 1. Create API endpoint: GET /api/submissions?screeningLinkId={id}
+   * 2. Implement pagination and filtering
+   * 3. Add webhooks for real-time updates
+   * 4. Consider caching strategies for frequently accessed data
+   * 
+   * Example API integration:
+   * const fetchSubmissions = async () => {
+   *   const response = await fetch(`/api/submissions?propertyId=${propertyId}`);
+   *   const data = await response.json();
+   *   return data.submissions;
+   * };
+   */
+
+  /**
+   * Implementation Note - QR Codes:
+   * 1. Use a QR code generation library (qrcode.react recommended)
+   * 2. Implement tracking system for QR code scans
+   * 3. Create short URLs for better QR code density
+   * 4. Consider implementing dynamic QR codes for better tracking
+   * 
+   * Example QR code tracking:
+   * const trackQRScan = async () => {
+   *   await fetch('/api/qr-scans', {
+   *     method: 'POST',
+   *     body: JSON.stringify({
+   *       screeningLinkId: screeningLink,
+   *       timestamp: new Date(),
+   *       deviceInfo: getUserDeviceInfo()
+   *     })
+   *   });
+   * };
+   */
+
+  return (
+    <div className="flex flex-wrap items-center gap-4 text-sm">
+      <span className="text-muted-foreground">
+        {submissionCount} submissions
+      </span>
+      
+      {/* Copy Link Button */}
+      <Button 
+        variant="link" 
+        className="p-0 h-auto flex items-center"
+        onClick={handleCopyLink}
+      >
+        {showCopyAlert ? (
+          <CheckCircle className="w-4 h-4 mr-1 text-green-500" />
+        ) : (
+          <Copy className="w-4 h-4 mr-1" />
+        )}
+        Copy Screening Link
+      </Button>
+
+      {/* View Submissions Link */}
+      <Button variant="link" className="p-0 h-auto">
+        <Link 
+          href={`/landlord/property/${propertyId}/submissions`} 
+          className="flex items-center"
+        >
+          <ExternalLink className="w-4 h-4 mr-1" />
+          View Submissions
+        </Link>
+      </Button>
+
+      {/* QR Code Button */}
+      <Button 
+        variant="link" 
+        className="p-0 h-auto"
+        onClick={() => setShowQRCode(true)}
+      >
+        <QrCode className="w-4 h-4 mr-1" />
+        View QR Code
+      </Button>
+
+      {/* QR Code Dialog */}
+      <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Screening Page QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 p-4">
+            <div className="bg-white p-4 rounded-lg">
+              {/* Production Note: Replace with qrcode.react
+                  Example implementation:
+                  <QRCode 
+                    value={screeningLink}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                  /> 
+              */}
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(screeningLink)}`}
+                alt="QR Code"
+                className="w-48 h-48"
+              />
+            </div>
+            <p className="text-sm text-center text-muted-foreground">
+              Scan this QR code to access the screening page
+            </p>
+            <Button 
+              className="w-full"
+              onClick={handleCopyLink}
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Link
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy Success Alert */}
+      {showCopyAlert && (
+        <Alert className="fixed bottom-4 right-4 w-auto bg-green-50">
+          <AlertDescription className="text-green-600">
+            Link copied to clipboard!
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+};
+
+export default ScreeningActions;
