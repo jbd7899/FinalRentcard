@@ -38,12 +38,6 @@ const AuthPage = () => {
   const { loginMutation, registerMutation, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Redirect if already logged in
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
   const loginForm = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -73,6 +67,12 @@ const AuthPage = () => {
   const onRegister = (data: z.infer<typeof registerSchema>) => {
     registerMutation.mutate(data);
   };
+
+  // Redirect if already logged in - moved after hook declarations
+  if (user) {
+    setLocation("/");
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
