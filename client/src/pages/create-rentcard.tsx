@@ -13,12 +13,25 @@ import { insertRentCardSchema, type InsertRentCard } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { z } from "zod";
+
+// Schema for the registration form
+const registrationSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type RegistrationForm = z.infer<typeof registrationSchema>;
 
 export default function CreateRentCard() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [, setLocation] = useLocation();
   const { registerMutation, user } = useAuth();
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   const form = useForm<InsertRentCard>({
     resolver: zodResolver(insertRentCardSchema),
@@ -40,6 +53,14 @@ export default function CreateRentCard() {
     }
   });
 
+  const passwordForm = useForm<RegistrationForm>({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: ''
+    }
+  });
+
   // Step field mapping
   const stepFields = {
     1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
@@ -51,7 +72,7 @@ export default function CreateRentCard() {
     mutationFn: async (data: InsertRentCard) => {
       const response = await apiRequest('POST', '/api/tenant/rentcard', {
         ...data,
-        userId: user?.id // Add userId if user is logged in
+        userId: user?.id
       });
       if (!response.ok) {
         throw new Error('Failed to create RentCard');
@@ -90,49 +111,6 @@ export default function CreateRentCard() {
     }
 
     createRentCardMutation.mutate(data);
-  };
-
-  const totalSteps = 4;
-  const progress = (step / totalSteps) * 100;
-
-  const StepIndicator = () => (
-    <div className="flex items-center justify-center space-x-4 mb-8">
-      {[User, Home, CreditCard, CheckCircle].map((Icon, index) => (
-        <div key={index} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200 ${
-          step >= index + 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-        }`}>
-          <Icon className="w-5 h-5" />
-        </div>
-      ))}
-    </div>
-  );
-
-  const ProgressBar = () => (
-    <div className="mb-8">
-      <div className="w-full bg-muted rounded-full h-2">
-        <div
-          className="bg-primary h-2 rounded-full transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      <p className="text-center text-sm text-muted-foreground mt-2">{progress}% Complete</p>
-    </div>
-  );
-
-  const ValueProposition = () => {
-    const messages = {
-      1: "Start your rental journey in minutes. No account needed!",
-      2: "Help landlords understand your rental history and reliability.",
-      3: "Show landlords you're a qualified tenant with verified income details.",
-      4: "Your RentCard is ready to help you secure your next home!"
-    };
-
-    return (
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-semibold mb-2">Create My Free RentCard</h1>
-        <p className="text-muted-foreground">{messages[step as keyof typeof messages]}</p>
-      </div>
-    );
   };
 
   const PersonalInfoStep = () => (
@@ -331,11 +309,16 @@ export default function CreateRentCard() {
     const formData = form.getValues();
 
     const handleCreateAccount = async () => {
+      setShowPasswordForm(true);
+    };
+
+    const handlePasswordSubmit = async (passwordData: RegistrationForm) => {
       setIsCreatingAccount(true);
       try {
+        // Register the user with the provided password
         await registerMutation.mutateAsync({
           email: formData.email,
-          password: '', // This will be set in the registration modal
+          password: passwordData.password,
           userType: 'tenant',
           phone: formData.phone
         });
@@ -351,8 +334,69 @@ export default function CreateRentCard() {
         });
       } finally {
         setIsCreatingAccount(false);
+        setShowPasswordForm(false);
       }
     };
+
+    if (showPasswordForm) {
+      return (
+        <div className="max-w-md mx-auto">
+          <h2 className="text-2xl font-semibold mb-6">Create Your Account</h2>
+          <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                {...passwordForm.register('password')}
+              />
+              {passwordForm.formState.errors.password && (
+                <p className="text-destructive text-sm mt-1">
+                  {passwordForm.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                {...passwordForm.register('confirmPassword')}
+              />
+              {passwordForm.formState.errors.confirmPassword && (
+                <p className="text-destructive text-sm mt-1">
+                  {passwordForm.formState.errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-4 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPasswordForm(false)}
+                disabled={isCreatingAccount}
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={isCreatingAccount}
+              >
+                {isCreatingAccount ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      );
+    }
 
     return (
       <div className="text-center">
@@ -372,8 +416,8 @@ export default function CreateRentCard() {
             <p className="text-sm text-muted-foreground mb-4">
               Start using your RentCard immediately without creating an account. Perfect for one-time use.
             </p>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               variant="default"
               onClick={() => createRentCardMutation.mutate(formData)}
               disabled={createRentCardMutation.isPending}
@@ -397,7 +441,7 @@ export default function CreateRentCard() {
             <p className="text-sm text-muted-foreground mb-4">
               Save your RentCard and access premium features to make your rental search even easier.
             </p>
-            <Button 
+            <Button
               className="w-full"
               onClick={handleCreateAccount}
               disabled={isCreatingAccount || registerMutation.isPending}
@@ -434,6 +478,47 @@ export default function CreateRentCard() {
       </div>
     );
   };
+
+  const StepIndicator = () => (
+    <div className="flex items-center justify-center space-x-4 mb-8">
+      {[User, Home, CreditCard, CheckCircle].map((Icon, index) => (
+        <div key={index} className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200 ${
+          step >= index + 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+        }`}>
+          <Icon className="w-5 h-5" />
+        </div>
+      ))}
+    </div>
+  );
+
+  const ProgressBar = () => (
+    <div className="mb-8">
+      <div className="w-full bg-muted rounded-full h-2">
+        <div
+          className="bg-primary h-2 rounded-full transition-all duration-300"
+          style={{ width: `${(step / 4) * 100}%` }}
+        />
+      </div>
+      <p className="text-center text-sm text-muted-foreground mt-2">{(step / 4) * 100}% Complete</p>
+    </div>
+  );
+
+  const ValueProposition = () => {
+    const messages = {
+      1: "Start your rental journey in minutes. No account needed!",
+      2: "Help landlords understand your rental history and reliability.",
+      3: "Show landlords you're a qualified tenant with verified income details.",
+      4: "Your RentCard is ready to help you secure your next home!"
+    };
+
+    return (
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-semibold mb-2">Create My Free RentCard</h1>
+        <p className="text-muted-foreground">{messages[step as keyof typeof messages]}</p>
+      </div>
+    );
+  };
+
 
   return (
     <div className="min-h-screen bg-background p-6">
