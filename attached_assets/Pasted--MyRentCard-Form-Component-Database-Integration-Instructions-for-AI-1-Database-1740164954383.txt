@@ -1,0 +1,228 @@
+/**
+ * MyRentCard Form Component
+ * 
+ * Database Integration Instructions for AI:
+ * 
+ * 1. Database Schema (Create in src/lib/db/schema.ts):
+ * ```typescript
+ * import { pgTable, serial, text, boolean, timestamp, integer } from 'drizzle-orm/pg-core';
+ * 
+ * export const rentCards = pgTable('rent_cards', {
+ *   id: serial('id').primaryKey(),
+ *   userId: integer('user_id'),
+ *   firstName: text('first_name').notNull(),
+ *   lastName: text('last_name').notNull(),
+ *   email: text('email').notNull(),
+ *   phone: text('phone').notNull(),
+ *   hasPets: boolean('has_pets').notNull(),
+ *   currentEmployer: text('current_employer').notNull(),
+ *   yearsEmployed: text('years_employed').notNull(),
+ *   monthlyIncome: integer('monthly_income').notNull(),
+ *   currentAddress: text('current_address').notNull(),
+ *   currentRent: integer('current_rent').notNull(),
+ *   moveInDate: text('move_in_date').notNull(),
+ *   maxRent: integer('max_rent').notNull(),
+ *   hasRoommates: boolean('has_roommates').notNull(),
+ *   creditScore: integer('credit_score').notNull(),
+ *   createdAt: timestamp('created_at').defaultNow(),
+ *   updatedAt: timestamp('updated_at').defaultNow(),
+ * });
+ * ```
+ * 
+ * 2. API Integration (Create in src/lib/api/rentcard.ts):
+ * ```typescript
+ * import { db, rentCards } from '../db/schema';
+ * 
+ * export async function createRentCard(data: RentCardInput) {
+ *   return await db.insert(rentCards).values({
+ *     ...data,
+ *     monthlyIncome: parseInt(data.monthlyIncome),
+ *     currentRent: parseInt(data.currentRent),
+ *     maxRent: parseInt(data.maxRent),
+ *     creditScore: parseInt(data.creditScore),
+ *   }).returning();
+ * }
+ * ```
+ * 
+ * 3. Error Handling:
+ * - Implement form validation before submission
+ * - Add proper error boundaries
+ * - Handle API errors gracefully
+ * - Show appropriate error messages to users
+ * 
+ * 4. Authentication:
+ * - Integrate with JWT token system
+ * - Add auth headers to API requests
+ * - Handle unauthorized responses
+ * 
+ * 5. View Tracking:
+ * - Implement view count tracking for RentCards
+ * - Update view_count field in database
+ * - Add analytics events
+ * 
+ * 6. Performance Considerations:
+ * - Add proper indexes to database
+ * - Implement caching where appropriate
+ * - Use connection pooling
+ * - Add request rate limiting
+ * 
+ * 7. Security Measures:
+ * - Sanitize all inputs
+ * - Validate data types
+ * - Use prepared statements
+ * - Implement CSRF protection
+ */
+
+import React, { useState, useCallback } from 'react';
+import { User, Home, CreditCard, CheckCircle, ArrowRight, Building2, Loader2 } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
+// Type definitions for form data and API responses
+type FormData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  hasPets: boolean;
+  currentEmployer: string;
+  yearsEmployed: string;
+  monthlyIncome: string;
+  currentAddress: string;
+  currentRent: string;
+  moveInDate: string;
+  maxRent: string;
+  hasRoommates: boolean;
+  creditScore: string;
+};
+
+// API response type
+type ApiResponse = {
+  id: number;
+  // ... other fields from database
+};
+
+[...existing component code remains the same...]
+
+export default function RentCardPreview() {
+  const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Initialize form data with proper types
+  const [formData, setFormData] = useState<FormData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    hasPets: false,
+    currentEmployer: '',
+    yearsEmployed: '',
+    monthlyIncome: '',
+    currentAddress: '',
+    currentRent: '',
+    moveInDate: '',
+    maxRent: '',
+    hasRoommates: false,
+    creditScore: ''
+  });
+
+  // Memoized input handler to prevent re-renders
+  const handleInputChange = useCallback((field: string, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  /**
+   * Form submission handler
+   * Integration Point: This is where database integration should be implemented
+   * 
+   * Steps for AI:
+   * 1. Validate form data
+   * 2. Format data for API
+   * 3. Make API call
+   * 4. Handle response
+   * 5. Show success/error message
+   * 6. Navigate on success
+   */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (step < 4) {
+        setStep(step + 1);
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+
+      // TODO: AI Implementation - Add API call here
+      // const response = await createRentCard(formData);
+      console.log('Form submitted with data:', formData);
+
+      // TODO: AI Implementation - Add success handling
+      // if (response.ok) {
+      //   toast({
+      //     title: "Success!",
+      //     description: "Your RentCard has been created successfully.",
+      //   });
+      //   router.push('/dashboard');
+      // }
+
+    } catch (error) {
+      // TODO: AI Implementation - Add error handling
+      setError(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const totalSteps = 4;
+  const progress = (step / totalSteps) * 100;
+
+  return (
+    <div className="min-h-screen bg-background p-6">
+      [...existing JSX remains the same...]
+    </div>
+  );
+}
+
+/**
+ * AI Maintenance Notes:
+ * 
+ * 1. Form Validation:
+ * - Add client-side validation before submission
+ * - Implement proper error messages for each field
+ * - Add validation rules based on business requirements
+ * 
+ * 2. State Management:
+ * - Consider using React Context for global state
+ * - Implement proper loading states
+ * - Add error boundaries
+ * 
+ * 3. Performance:
+ * - Use React.memo for components that don't need frequent updates
+ * - Implement proper cleanup in useEffect hooks
+ * - Add proper TypeScript types for all props
+ * 
+ * 4. Testing:
+ * - Add unit tests for form validation
+ * - Add integration tests for API calls
+ * - Test error scenarios
+ * 
+ * 5. Accessibility:
+ * - Ensure proper ARIA labels
+ * - Implement keyboard navigation
+ * - Add proper focus management
+ * 
+ * 6. Security:
+ * - Sanitize all inputs
+ * - Implement CSRF protection
+ * - Add rate limiting
+ */
