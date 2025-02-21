@@ -45,6 +45,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(properties);
   });
 
+  // New route to get property by screening page slug
+  app.get("/api/properties/screening/:slug", async (req, res) => {
+    try {
+      const property = await storage.getPropertyBySlug(req.params.slug);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      res.json(property);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching property details", error });
+    }
+  });
+
   app.post("/api/landlord/properties", requireAuth, async (req, res) => {
     try {
       const validatedData = insertPropertySchema.parse(req.body);
