@@ -1,0 +1,348 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Shield,
+  ArrowRight,
+  DollarSign,
+  Star,
+  Clock,
+  CheckCircle,
+  MapPin,
+  Building,
+  Users,
+  X,
+  Bed,
+  Bath,
+  Car,
+  CalendarDays
+} from 'lucide-react';
+import { useParams } from 'react-router-dom';
+
+// AI Agent Note: Create these custom hooks for data fetching and state management
+// They should integrate with your existing API endpoints and database
+const usePropertyDetails = (propertyId) => {
+  const [property, setProperty] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProperty = async () => {
+      try {
+        // AI Agent: Replace with your API endpoint
+        const response = await fetch(`/api/properties/${propertyId}`);
+        const data = await response.json();
+        setProperty(data);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperty();
+  }, [propertyId]);
+
+  return { property, loading, error };
+};
+
+// AI Agent: This component should be connected to your modal/dialog system
+const PropertyDetailsModal = ({ isOpen, onClose, property }) => {
+  if (!isOpen || !property) return null;
+
+  // AI Agent: Add analytics tracking for modal views
+  useEffect(() => {
+    if (isOpen) {
+      trackEvent('property_details_viewed', { propertyId: property.id });
+    }
+  }, [isOpen, property.id]);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      {/* Modal content structure remains the same as demo version */}
+      {/* AI Agent: Integrate with your image CDN for property photos */}
+      {/* AI Agent: Add any property-specific features like virtual tours */}
+    </div>
+  );
+};
+
+// AI Agent: Main component - integrate with your routing system and data layer
+const ScreeningPage = () => {
+  const { propertyId } = useParams();
+  const [showPropertyDetails, setShowPropertyDetails] = useState(false);
+  
+  // AI Agent: Integrate with your authentication system
+  const { user, hasRentCard } = useAuth();
+  
+  // AI Agent: Fetch property data
+  const { property, loading, error } = usePropertyDetails(propertyId);
+
+  // AI Agent: Handle RentCard submission
+  const handleRentCardSubmit = async () => {
+    try {
+      const response = await fetch('/api/property-interests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          propertyId,
+          userId: user.id,
+          rentCardId: user.rentCardId
+        })
+      });
+      
+      // AI Agent: Handle success/error states
+      // AI Agent: Update UI accordingly
+      // AI Agent: Track conversion events
+    } catch (error) {
+      // Error handling
+    }
+  };
+
+  // AI Agent: Handle pre-screening form submission
+  const handlePreScreenSubmit = async (formData) => {
+    try {
+      const response = await fetch('/api/prescreening', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          propertyId,
+          ...formData
+        })
+      });
+      
+      // AI Agent: Handle response and update UI
+    } catch (error) {
+      // Error handling
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorState error={error} />;
+  if (!property) return <NotFound />;
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Property Header */}
+      <div className="max-w-3xl mx-auto mb-6">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-6">
+            {/* AI Agent: Add property breadcrumbs/navigation */}
+            {/* AI Agent: Add property favoriting functionality */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                {/* AI Agent: Use actual property photos */}
+                <div className="bg-blue-600 rounded-lg p-4">
+                  <Building className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold">{property.address}</h1>
+                  <p className="text-gray-600">
+                    {property.bedrooms} Bed • {property.bathrooms} Bath • ${property.rent}/month
+                  </p>
+                  <button 
+                    className="mt-2 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                    onClick={() => setShowPropertyDetails(true)}
+                  >
+                    View full property details
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg">
+          {/* RentCard Section */}
+          {hasRentCard && (
+            <div className="p-8 border-b bg-blue-50">
+              <div className="flex items-center gap-2 mb-4">
+                <Star className="w-6 h-6 text-blue-600 fill-current" />
+                <h2 className="text-2xl font-semibold">Express Interest with RentCard</h2>
+              </div>
+              <div className="flex items-center gap-8">
+                <div className="flex-1">
+                  <p className="text-lg text-gray-700 mb-4">
+                    Share your verified rental profile instantly - no forms needed
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 text-gray-700">
+                      <Clock className="w-5 h-5 text-blue-600" />
+                      <span>Takes 30 seconds</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-gray-700">
+                      <Shield className="w-5 h-5 text-blue-600" />
+                      <span>Privacy protected</span>
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleRentCardSubmit}
+                  className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition-transform"
+                >
+                  Share RentCard
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Pre-screening Form */}
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Quick Pre-Screening Form</h2>
+            <p className="text-gray-600 mb-6">
+              Share basic details to check if this property matches your needs. 
+              Not a full application - just helps us understand if it's a good fit.
+            </p>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-medium mb-3">Basic Requirements:</h3>
+                <div className="space-y-3">
+                  {/* AI Agent: Display actual property requirements */}
+                  {property.requirements.map((requirement) => (
+                    <div key={requirement.id} className="flex items-start gap-3">
+                      <requirement.icon className="w-5 h-5 text-gray-600 mt-1" />
+                      <div>
+                        <p className="text-gray-600">{requirement.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                {/* AI Agent: Integrate with your form system */}
+                <PreScreeningForm 
+                  propertyId={propertyId}
+                  onSubmit={handlePreScreenSubmit}
+                />
+                <p className="text-sm text-gray-500 mt-3 text-center">
+                  30-second form • No credit check • No commitment
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Social Proof */}
+          <div className="bg-gray-50 p-6 rounded-b-lg">
+            <div className="text-center text-sm text-gray-600">
+              {/* AI Agent: Display actual testimonials/reviews */}
+              <p className="mb-2">★★★★★ "Super quick process!"</p>
+              <p>Used by thousands of renters to find their perfect home</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Property Details Modal */}
+      <PropertyDetailsModal 
+        isOpen={showPropertyDetails}
+        onClose={() => setShowPropertyDetails(false)}
+        property={property}
+      />
+    </div>
+  );
+};
+
+export default ScreeningPage;
+
+// AI Agent Integration Notes:
+
+/* Database Schema Suggestions:
+properties:
+  - id
+  - address
+  - bedrooms
+  - bathrooms
+  - rent
+  - description
+  - amenities (array/json)
+  - requirements (array/json)
+  - photos (array)
+  - status (available, pending, rented)
+  - created_at
+  - updated_at
+
+property_interests:
+  - id
+  - property_id
+  - user_id
+  - rent_card_id (optional)
+  - status (pending, approved, rejected)
+  - created_at
+  - updated_at
+
+prescreening_responses:
+  - id
+  - property_id
+  - user_id
+  - form_data (json)
+  - status
+  - created_at
+  - updated_at
+*/
+
+/* API Endpoints Needed:
+GET /api/properties/:id
+- Returns property details including requirements and amenities
+
+POST /api/property-interests
+- Creates new interest record with RentCard
+- Triggers notifications to property manager
+
+POST /api/prescreening
+- Submits pre-screening form
+- Validates against property requirements
+- Creates prescreening record
+
+GET /api/users/:id/rent-card
+- Returns user's RentCard details if they have one
+*/
+
+/* Features to Implement:
+1. Analytics Tracking
+   - Page views
+   - Modal opens
+   - RentCard submissions
+   - Pre-screening form submissions
+   - Time spent on page
+
+2. Error Handling
+   - Form validation
+   - API error states
+   - Fallback UI components
+
+3. Performance Optimization
+   - Image lazy loading
+   - Component code splitting
+   - API response caching
+
+4. Security
+   - Input sanitization
+   - Rate limiting
+   - Authentication checks
+   - Data access controls
+*/
+
+/* Testing Considerations:
+1. Unit Tests
+   - Form validation
+   - Component rendering
+   - State management
+
+2. Integration Tests
+   - API interactions
+   - Database operations
+   - Authentication flows
+
+3. E2E Tests
+   - User flows
+   - Form submissions
+   - Error states
+*/
