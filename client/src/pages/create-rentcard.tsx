@@ -319,12 +319,15 @@ export default function CreateRentCard() {
         await registerMutation.mutateAsync({
           email: formData.email,
           password: passwordData.password,
-          userType: 'tenant',
+          userType: 'tenant', // Explicitly set userType to 'tenant'
           phone: formData.phone
         });
 
         // After successful registration, create RentCard
         await createRentCardMutation.mutateAsync(formData);
+
+        // Redirect to tenant dashboard
+        setLocation('/tenant/dashboard');
       } catch (error) {
         console.error('Account creation error:', error);
         toast({
