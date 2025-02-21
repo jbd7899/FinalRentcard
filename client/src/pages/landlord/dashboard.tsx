@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { 
+import {
   Plus,
   Building,
   Users,
@@ -21,7 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import Navbar from "@/components/shared/navbar";
 import { QRCodeSVG } from 'qrcode.react';
-import { Property } from "@shared/schema";
+import { Property, Application } from "@shared/schema";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ import { Link } from "wouter";
 
 interface ScreeningActionsProps {
   screeningLink: string;
-  propertyId: string | number;
+  propertyId: number;
   submissionCount: number;
 }
 
@@ -71,8 +71,8 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
       </span>
 
       {/* Copy Link Button */}
-      <Button 
-        variant="link" 
+      <Button
+        variant="link"
         className="p-0 h-auto flex items-center"
         onClick={handleCopyLink}
       >
@@ -86,8 +86,8 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
 
       {/* View Submissions Link */}
       <Button variant="link" className="p-0 h-auto">
-        <Link 
-          href={`/landlord/property/${propertyId}/submissions`} 
+        <Link
+          href={`/landlord/property/${propertyId}/submissions`}
           className="flex items-center"
         >
           <ExternalLink className="w-4 h-4 mr-1" />
@@ -96,8 +96,8 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
       </Button>
 
       {/* QR Code Button */}
-      <Button 
-        variant="link" 
+      <Button
+        variant="link"
         className="p-0 h-auto"
         onClick={() => setShowQRCode(true)}
       >
@@ -113,7 +113,7 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 p-4">
             <div className="bg-white p-4 rounded-lg">
-              <QRCodeSVG 
+              <QRCodeSVG
                 value={getScreeningPageUrl(screeningLink)}
                 size={200}
                 level="H"
@@ -123,7 +123,7 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
             <p className="text-sm text-center text-muted-foreground">
               Scan this QR code to access the screening page
             </p>
-            <Button 
+            <Button
               className="w-full"
               onClick={handleCopyLink}
             >
@@ -161,7 +161,9 @@ const LandlordDashboard = () => {
   });
 
   // Get aggregate stats
-  const totalSubmissions = properties?.reduce((sum, p) => sum + (p.applications?.length || 0), 0) || 0;
+  const totalSubmissions = properties?.reduce((sum, property) => {
+    return sum + (property.applications?.length || 0);
+  }, 0) || 0;
   const activeProperties = properties?.length || 0;
 
   // Request RentCard Modal
@@ -230,8 +232,8 @@ const LandlordDashboard = () => {
               <Send className="w-4 h-4 mr-2" />
               Request RentCard
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => logoutMutation.mutate()}
               disabled={logoutMutation.isPending}
             >
@@ -361,7 +363,7 @@ const LandlordDashboard = () => {
                         <ScreeningActions
                           screeningLink={property.screeningPageSlug || `property-${property.id}`}
                           propertyId={property.id}
-                          submissionCount={property.applications?.length || 0}
+                          submissionCount={0} // We'll update this once we implement the applications query
                         />
                       </CardContent>
                     </Card>
