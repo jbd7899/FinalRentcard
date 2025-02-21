@@ -18,7 +18,8 @@ import {
   Bed,
   Bath,
   Car,
-  CalendarDays
+  CalendarDays,
+  LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +32,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+// Icon mapping
+const iconMap: Record<string, LucideIcon> = {
+  Shield,
+  DollarSign,
+  CheckCircle,
+  Users,
+  Clock
+};
 
 // Props type for PropertyDetailsModal
 interface PropertyDetailsModalProps {
@@ -198,7 +208,7 @@ const ScreeningPage = () => {
       <div className="max-w-3xl mx-auto">
         <Card>
           {/* RentCard Section */}
-          {user?.hasRentCard && (
+          {user?.userType === 'tenant' && (
             <CardContent className="pt-6 bg-primary/5">
               <div className="flex items-center gap-2 mb-4">
                 <Star className="w-6 h-6 text-primary fill-current" />
@@ -244,14 +254,17 @@ const ScreeningPage = () => {
               <div>
                 <h3 className="font-medium mb-3">Basic Requirements:</h3>
                 <div className="space-y-3">
-                  {property.requirements?.map((requirement: any, index: number) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <requirement.icon className="w-5 h-5 text-muted-foreground mt-1" />
-                      <div>
-                        <p className="text-muted-foreground">{requirement.description}</p>
+                  {property.requirements?.map((requirement: any, index: number) => {
+                    const IconComponent = iconMap[requirement.icon];
+                    return (
+                      <div key={index} className="flex items-start gap-3">
+                        {IconComponent && <IconComponent className="w-5 h-5 text-muted-foreground mt-1" />}
+                        <div>
+                          <p className="text-muted-foreground">{requirement.description}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
