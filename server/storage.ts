@@ -1,7 +1,7 @@
 import { User, TenantProfile, LandlordProfile, Property, Application } from "@shared/schema";
 import { users, tenantProfiles, landlordProfiles, properties, applications } from "@shared/schema";
 import { db, sql } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -148,12 +148,19 @@ export class DatabaseStorage implements IStorage {
 
   async getApplications(tenantId?: number, propertyId?: number): Promise<Application[]> {
     let query = db.select().from(applications);
-    if (tenantId) {
+
+    // Combine conditions into a single where clause if both params exist
+    if (tenantId && propertyId) {
+      query = query.where(and(
+        eq(applications.tenantId, tenantId),
+        eq(applications.propertyId, propertyId)
+      ));
+    } else if (tenantId) {
       query = query.where(eq(applications.tenantId, tenantId));
-    }
-    if (propertyId) {
+    } else if (propertyId) {
       query = query.where(eq(applications.propertyId, propertyId));
     }
+
     return query;
   }
 
