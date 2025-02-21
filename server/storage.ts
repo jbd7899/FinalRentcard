@@ -1,6 +1,6 @@
 import { User, TenantProfile, LandlordProfile, Property, Application } from "@shared/schema";
 import { users, tenantProfiles, landlordProfiles, properties, applications } from "@shared/schema";
-import { db } from "./db";
+import { db, sql } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -30,6 +30,7 @@ export interface IStorage {
   getPropertyBySlug(slug: string): Promise<Property | undefined>;
   createProperty(property: Omit<Property, "id">): Promise<Property>;
   updateProperty(id: number, property: Partial<Property>): Promise<Property>;
+  incrementPropertyViewCount(id: number): Promise<void>;
 
   // Application operations
   getApplications(tenantId?: number, propertyId?: number): Promise<Application[]>;
@@ -134,6 +135,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.id, id))
       .returning();
     return updatedProperty;
+  }
+
+  async incrementPropertyViewCount(id: number): Promise<void> {
+    await db
+      .update(properties)
+      .set({ 
+        viewCount: sql`${properties.viewCount} + 1` 
+      })
+      .where(eq(properties.id, id));
   }
 
   async getApplications(tenantId?: number, propertyId?: number): Promise<Application[]> {
