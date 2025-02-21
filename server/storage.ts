@@ -12,7 +12,6 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: Omit<User, "id" | "createdAt">): Promise<User>;
 
   // Tenant profile operations
@@ -59,9 +58,14 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
+  async createUser(user: Omit<User, "id" | "createdAt">): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async getTenantProfile(userId: number): Promise<TenantProfile | undefined> {
+    const [profile] = await db.select().from(tenantProfiles).where(eq(tenantProfiles.userId, userId));
+    return profile;
   }
 
   async createTenantProfile(profile: Omit<TenantProfile, "id">): Promise<TenantProfile> {
@@ -149,14 +153,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(applications.id, id))
       .returning();
     return updatedApplication;
-  }
-  async getTenantProfile(userId: number): Promise<TenantProfile | undefined> {
-    const [profile] = await db.select().from(tenantProfiles).where(eq(tenantProfiles.userId, userId));
-    return profile;
-  }
-
-  createUser(user: Omit<User, "id" | "createdAt">): Promise<User> {
-    throw new Error("Method not implemented.");
   }
 }
 
