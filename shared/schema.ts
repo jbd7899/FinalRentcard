@@ -6,7 +6,6 @@ import { relations } from "drizzle-orm";
 // Base user table for authentication
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   userType: text("user_type").notNull(), // 'tenant' or 'landlord'
@@ -124,8 +123,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true
 }).extend({
   password: z.string().min(8, "Password must be at least 8 characters"),
-  email: z.string().email("Invalid email address"),
-  username: z.string().min(3, "Username must be at least 3 characters")
+  email: z.string().email("Invalid email address")
 });
 
 export const insertTenantProfileSchema = createInsertSchema(tenantProfiles).omit({
