@@ -108,6 +108,7 @@ MyRentCard simplifies the rental application process by allowing tenants to crea
 - `GET /api/landlord/applications` → List rental applications
 - `POST /api/landlord/screening` → Create screening page
 - `GET /api/landlord/screening/:id` → Get screening page
+- `GET /api/properties` → Get all properties with application counts
 - `GET /api/properties/screening/:slug` → Get property details by screening page slug
 - `POST /api/landlord/reference-form` → Submit reference form
 
@@ -159,4 +160,4 @@ Example:
 This project is proprietary and confidential.
 
 ---
-**Last updated:** February 20, 2025
+**Last updated:** February 21, 2025
