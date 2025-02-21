@@ -146,23 +146,27 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
   );
 };
 
+interface PropertyWithCount extends Property {
+  applicationCount?: number;
+}
+
 const LandlordDashboard = () => {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const { logoutMutation, user } = useAuth();
 
   // Fetch properties data
   const { data: properties, isLoading: propertiesLoading } = useQuery({
-    queryKey: ['/api/landlord/properties'],
+    queryKey: ['/api/properties'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/landlord/properties');
-      return response.json() as Promise<Property[]>;
+      const response = await apiRequest('GET', '/api/properties');
+      return response.json() as Promise<PropertyWithCount[]>;
     },
     enabled: !!user?.id
   });
 
   // Get aggregate stats
   const totalSubmissions = properties?.reduce((sum, property) => {
-    return sum + (property.applications?.length || 0);
+    return sum + (property.applicationCount || 0);
   }, 0) || 0;
   const activeProperties = properties?.length || 0;
 
@@ -363,7 +367,7 @@ const LandlordDashboard = () => {
                         <ScreeningActions
                           screeningLink={property.screeningPageSlug || `property-${property.id}`}
                           propertyId={property.id}
-                          submissionCount={0} // We'll update this once we implement the applications query
+                          submissionCount={property.applicationCount || 0}
                         />
                       </CardContent>
                     </Card>
