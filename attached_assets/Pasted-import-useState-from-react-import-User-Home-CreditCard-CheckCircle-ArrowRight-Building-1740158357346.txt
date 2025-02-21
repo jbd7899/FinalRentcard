@@ -1,0 +1,370 @@
+import { useState } from 'react';
+import { User, Home, CreditCard, CheckCircle, ArrowRight, Building2 } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+const createRentCardSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  hasPets: z.enum(["yes", "no"]),
+  currentEmployer: z.string().min(1, "Current employer is required"),
+  yearsEmployed: z.string().min(1, "Years employed is required"),
+  monthlyIncome: z.string().min(1, "Monthly income is required"),
+  currentAddress: z.string().min(1, "Current address is required"),
+  currentRent: z.string().min(1, "Current rent is required"),
+  moveInDate: z.string().min(1, "Move-in date is required"),
+  maxRent: z.string().min(1, "Maximum rent is required"),
+  hasRoommates: z.enum(["yes", "no"])
+});
+
+type CreateRentCardForm = z.infer<typeof createRentCardSchema>;
+
+const CreateRentCard = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  
+  const form = useForm<CreateRentCardForm>({
+    resolver: zodResolver(createRentCardSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      hasPets: 'no',
+      currentEmployer: '',
+      yearsEmployed: '',
+      monthlyIncome: '',
+      currentAddress: '',
+      currentRent: '',
+      moveInDate: '',
+      maxRent: '',
+      hasRoommates: 'no'
+    }
+  });
+
+  const handleNextStep = () => {
+    const fields = getFieldsForStep(currentStep);
+    const isValid = fields.every(field => form.getFieldState(field).isDirty && !form.getFieldState(field).error);
+    
+    if (isValid) {
+      setCurrentStep(prev => Math.min(prev + 1, 4));
+    } else {
+      // Trigger validation for the current step's fields
+      fields.forEach(field => form.trigger(field));
+    }
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const getFieldsForStep = (step: number): Array<keyof CreateRentCardForm> => {
+    switch (step) {
+      case 1:
+        return ['firstName', 'lastName', 'email', 'phone'];
+      case 2:
+        return ['currentEmployer', 'yearsEmployed', 'monthlyIncome'];
+      case 3:
+        return ['currentAddress', 'currentRent', 'moveInDate', 'maxRent'];
+      case 4:
+        return ['hasPets', 'hasRoommates'];
+      default:
+        return [];
+    }
+  };
+
+  const onSubmit = (data: CreateRentCardForm) => {
+    console.log(data);
+    // Handle form submission
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input type="tel" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="currentEmployer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Employer</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="yearsEmployed"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Years Employed</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="monthlyIncome"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Monthly Income</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="currentAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Address</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="currentRent"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Rent</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="moveInDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Desired Move-in Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="maxRent"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Maximum Rent</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="hasPets"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Do you have pets?</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="pets-yes" />
+                        <Label htmlFor="pets-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="pets-no" />
+                        <Label htmlFor="pets-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="hasRoommates"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Will you have roommates?</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="roommates-yes" />
+                        <Label htmlFor="roommates-yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="roommates-no" />
+                        <Label htmlFor="roommates-no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-lg mx-auto">
+      <CardContent className="p-6">
+        <div className="flex justify-between mb-8">
+          <div className="flex items-center space-x-2">
+            <User className={currentStep >= 1 ? "text-primary" : "text-gray-300"} />
+            <Building2 className={currentStep >= 2 ? "text-primary" : "text-gray-300"} />
+            <Home className={currentStep >= 3 ? "text-primary" : "text-gray-300"} />
+            <CheckCircle className={currentStep >= 4 ? "text-primary" : "text-gray-300"} />
+          </div>
+          <div className="text-sm text-gray-500">
+            Step {currentStep} of 4
+          </div>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            {renderStep()}
+
+            <div className="flex justify-between mt-8">
+              {currentStep > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrevStep}
+                >
+                  Previous
+                </Button>
+              )}
+              {currentStep < 4 ? (
+                <Button
+                  type="button"
+                  className={currentStep === 1 ? "ml-auto" : ""}
+                  onClick={handleNextStep}
+                >
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  className={currentStep === 1 ? "ml-auto" : ""}
+                >
+                  Submit
+                </Button>
+              )}
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default CreateRentCard;
