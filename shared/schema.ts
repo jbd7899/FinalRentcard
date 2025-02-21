@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Base user table for authentication
 export const users = pgTable("users", {
@@ -45,6 +46,7 @@ export const landlordProfiles = pgTable("landlord_profiles", {
   }>(),
 });
 
+// Update the properties table definition to include applications relation
 export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
   landlordId: integer("landlord_id").references(() => landlordProfiles.id),
@@ -62,6 +64,11 @@ export const properties = pgTable("properties", {
     description: string;
   }[]>(),
 });
+
+// Add explicit relation between properties and applications
+export const propertyRelations = relations(properties, ({ many }) => ({
+  applications: many(applications)
+}));
 
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
