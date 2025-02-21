@@ -78,6 +78,7 @@ export default function CreateRentCard() {
     try {
       if (step < 4) {
         await handleNextStep();
+        return; // Add return statement to prevent continuing with submission
       } else {
         setIsSubmitting(true);
         // Format data for API submission
