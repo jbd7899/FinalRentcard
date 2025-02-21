@@ -1,112 +1,290 @@
-import React, { useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useParams } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "@/hooks/use-toast";
+import {
+  Shield,
+  ArrowRight,
+  DollarSign,
+  Star,
+  Clock,
+  CheckCircle,
+  MapPin,
+  Building,
+  Users,
+  X,
+  Bed,
+  Bath,
+  Car,
+  CalendarDays
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, Link, Copy, ExternalLink } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-const ScreeningPage = () => {
-  const [copied, setCopied] = useState(false);
-
-  // Demo data
-  const screeningInfo = {
-    pageUrl: "rentcard.com/screen/123main-a",
-    requirements: {
-      creditScore: 650,
-      income: "3x rent",
-      employment: "Verified employment",
-      references: "2 landlord references"
+// Custom hooks for data fetching
+const usePropertyDetails = (propertyId: string) => {
+  return useQuery({
+    queryKey: ["/api/properties", propertyId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/properties/${propertyId}`);
+      return response.json();
     },
-    property: {
-      name: "123 Main Street Unit A",
-      rent: 2500,
-      bedrooms: 2,
-      bathrooms: 1.5
-    }
-  };
+  });
+};
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(screeningInfo.pageUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+// Property Details Modal Component
+const PropertyDetailsModal = ({ isOpen, onClose, property }) => {
+  if (!isOpen || !property) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Property Details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="aspect-video bg-muted rounded-lg">
+            {/* Property Image Placeholder */}
+            <div className="w-full h-full flex items-center justify-center">
+              <Building className="w-12 h-12 text-muted-foreground" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex items-center gap-2">
+              <Bed className="w-4 h-4" />
+              <span>{property.bedrooms} Beds</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Bath className="w-4 h-4" />
+              <span>{property.bathrooms} Baths</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Car className="w-4 h-4" />
+              <span>{property.parking || 'N/A'}</span>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-medium mb-2">Description</h3>
+            <p className="text-muted-foreground">{property.description}</p>
+          </div>
+
+          <div>
+            <h3 className="font-medium mb-2">Available From</h3>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              <span>{new Date(property.availableFrom).toLocaleDateString()}</span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Main Component
+const ScreeningPage = () => {
+  const { propertyId } = useParams();
+  const [showPropertyDetails, setShowPropertyDetails] = useState(false);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: property, isLoading, error } = usePropertyDetails(propertyId);
+
+  const rentCardMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/property-interests", {
+        propertyId,
+        userId: user?.id,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/properties", propertyId] });
+      toast({
+        title: "Success",
+        description: "Your RentCard has been shared with the landlord.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const preScreeningMutation = useMutation({
+    mutationFn: async (formData) => {
+      const response = await apiRequest("POST", "/api/prescreening", {
+        propertyId,
+        ...formData,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/properties", propertyId] });
+      toast({
+        title: "Success",
+        description: "Your pre-screening form has been submitted.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (isLoading) return <div className="p-8 text-center">Loading...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error loading property details</div>;
+  if (!property) return <div className="p-8 text-center">Property not found</div>;
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold mb-2">Property Screening Page</h1>
-          <p className="text-muted-foreground">
-            Share this page with potential tenants to collect their RentCards
-          </p>
-        </div>
-
-        {/* Screening Link Card */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Building2 className="w-5 h-5 text-primary" />
-                <div>
-                  <h2 className="font-medium">{screeningInfo.property.name}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    ${screeningInfo.property.rent}/month · {screeningInfo.property.bedrooms}bd · {screeningInfo.property.bathrooms}ba
-                  </p>
-                </div>
-              </div>
-              <Button variant="outline" onClick={copyLink}>
-                {copied ? (
-                  <Copy className="w-4 h-4 mr-2 text-green-500" />
-                ) : (
-                  <Link className="w-4 h-4 mr-2" />
-                )}
-                {copied ? 'Copied!' : 'Copy Link'}
-              </Button>
-            </div>
-
-            <div className="bg-muted/50 p-4 rounded-lg mb-4">
-              <Label>Screening Page URL</Label>
-              <div className="flex gap-2 mt-1">
-                <Input value={screeningInfo.pageUrl} readOnly />
-                <Button variant="outline" size="icon">
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Requirements Card */}
+      {/* Property Header */}
+      <div className="max-w-3xl mx-auto mb-6">
         <Card>
           <CardContent className="pt-6">
-            <h3 className="font-medium mb-4">Screening Requirements</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Minimum Credit Score</Label>
-                  <Input value={screeningInfo.requirements.creditScore} />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="bg-primary rounded-lg p-4">
+                  <Building className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <div>
-                  <Label>Income Requirement</Label>
-                  <Input value={screeningInfo.requirements.income} />
+                  <h1 className="text-2xl font-bold">{property.address}</h1>
+                  <p className="text-muted-foreground">
+                    {property.bedrooms} Bed • {property.bathrooms} Bath • ${property.rent}/month
+                  </p>
+                  <Button 
+                    variant="link" 
+                    className="px-0 h-auto"
+                    onClick={() => setShowPropertyDetails(true)}
+                  >
+                    View full property details
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
                 </div>
               </div>
-              <div>
-                <Label>Employment Verification</Label>
-                <Input value={screeningInfo.requirements.employment} />
-              </div>
-              <div>
-                <Label>References Required</Label>
-                <Input value={screeningInfo.requirements.references} />
-              </div>
-              <Button className="w-full">
-                Update Requirements
-              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Main Content */}
+      <div className="max-w-3xl mx-auto">
+        <Card>
+          {/* RentCard Section */}
+          {user?.hasRentCard && (
+            <CardContent className="pt-6 bg-primary/5">
+              <div className="flex items-center gap-2 mb-4">
+                <Star className="w-6 h-6 text-primary fill-current" />
+                <h2 className="text-2xl font-semibold">Express Interest with RentCard</h2>
+              </div>
+              <div className="flex items-center gap-8">
+                <div className="flex-1">
+                  <p className="text-lg text-muted-foreground mb-4">
+                    Share your verified rental profile instantly - no forms needed
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Clock className="w-5 h-5 text-primary" />
+                      <span>Takes 30 seconds</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Shield className="w-5 h-5 text-primary" />
+                      <span>Privacy protected</span>
+                    </div>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => rentCardMutation.mutate()}
+                  disabled={rentCardMutation.isPending}
+                  className="px-8"
+                >
+                  Share RentCard
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          )}
+
+          {/* Pre-screening Form */}
+          <CardContent className="pt-6">
+            <h2 className="text-xl font-semibold mb-4">Quick Pre-Screening Form</h2>
+            <p className="text-muted-foreground mb-6">
+              Share basic details to check if this property matches your needs. 
+              Not a full application - just helps us understand if it's a good fit.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-medium mb-3">Basic Requirements:</h3>
+                <div className="space-y-3">
+                  {property.requirements.map((requirement, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <requirement.icon className="w-5 h-5 text-muted-foreground mt-1" />
+                      <div>
+                        <p className="text-muted-foreground">{requirement.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                {/* Pre-screening form will be implemented here */}
+                <div className="space-y-4">
+                  <div>
+                    <Label>Monthly Income</Label>
+                    <Input type="number" placeholder="Enter your monthly income" />
+                  </div>
+                  <div>
+                    <Label>Credit Score Range</Label>
+                    <Input type="number" placeholder="Enter your credit score" />
+                  </div>
+                  <Button className="w-full" onClick={() => preScreeningMutation.mutate()}>
+                    Submit Pre-Screening
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-3 text-center">
+                  30-second form • No credit check • No commitment
+                </p>
+              </div>
+            </div>
+          </CardContent>
+
+          {/* Social Proof */}
+          <CardContent className="bg-muted/50">
+            <div className="text-center text-sm text-muted-foreground">
+              <p className="mb-2">★★★★★ "Super quick process!"</p>
+              <p>Used by thousands of renters to find their perfect home</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Property Details Modal */}
+      <PropertyDetailsModal 
+        isOpen={showPropertyDetails}
+        onClose={() => setShowPropertyDetails(false)}
+        property={property}
+      />
     </div>
   );
 };
