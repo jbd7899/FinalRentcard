@@ -1,5 +1,5 @@
 import { Building2, ArrowRight, Mail, Lock } from 'lucide-react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
@@ -14,20 +14,26 @@ const loginSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
+type LoginFormData = z.infer<typeof loginSchema>;
+
 const LoginPage = () => {
-  const { login } = useAuth();
-  const [loginError, setLoginError] = useState('');
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { loginMutation, user } = useAuth();
+  const [, setLocation] = useLocation();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data) => {
-    try {
-      setLoginError('');
-      await login(data);
-    } catch (error) {
-      setLoginError('Invalid email or password');
-    }
+  // Redirect if already logged in
+  if (user) {
+    setLocation("/");
+    return null;
+  }
+
+  const onSubmit = async (data: LoginFormData) => {
+    loginMutation.mutate({
+      username: data.email,
+      password: data.password,
+    });
   };
 
   return (
@@ -51,9 +57,9 @@ const LoginPage = () => {
               <p className="text-gray-600">Sign in to manage your RentCard</p>
             </div>
 
-            {loginError && (
+            {loginMutation.error && (
               <div className="mb-4 p-3 bg-red-50 text-red-700 rounded">
-                {loginError}
+                {loginMutation.error.message}
               </div>
             )}
 
@@ -106,10 +112,17 @@ const LoginPage = () => {
 
               <Button 
                 type="submit"
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center"
+                className="w-full"
+                disabled={loginMutation.isPending}
               >
-                <span>Sign In</span>
-                <ArrowRight className="w-4 h-4 ml-2" />
+                {loginMutation.isPending ? (
+                  <span>Signing in...</span>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
             </form>
           </div>
