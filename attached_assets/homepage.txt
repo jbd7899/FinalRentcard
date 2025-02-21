@@ -15,10 +15,10 @@ const LandingPage = () => {
           <a href="#benefits" className="hidden md:inline text-gray-600 hover:text-blue-600">Benefits</a>
           <button 
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            onClick={() => window.location.href = '/login'}
+            onClick={() => window.location.href = '/auth'}
           >
             <LogIn className="w-4 h-4" />
-            <span>Log In</span>
+            <span>Sign In</span>
           </button>
         </nav>
       </header>
