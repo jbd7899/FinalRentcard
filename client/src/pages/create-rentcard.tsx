@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Extending the schema to match backend requirements
+// Simplifying the schema to prevent transformation issues
 const createRentCardSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -65,40 +65,48 @@ export default function CreateRentCard() {
     }
   });
 
-  const onSubmit = async (data: CreateRentCardForm) => {
-    if (step < 4) {
-      const stepFields = {
-        1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
-        2: ['currentAddress', 'currentRent', 'hasRoommates'],
-        3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore']
-      }[step] as Array<keyof CreateRentCardForm>;
+  const handleNextStep = async (data: Partial<CreateRentCardForm>) => {
+    const stepValidation = {
+      1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
+      2: ['currentAddress', 'currentRent', 'hasRoommates'],
+      3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore']
+    }[step] as Array<keyof CreateRentCardForm>;
 
-      const stepData = Object.fromEntries(
-        stepFields.map(field => [field, form.getValues(field)])
-      );
+    const stepData = stepValidation.reduce((acc, field) => ({
+      ...acc,
+      [field]: data[field]
+    }), {});
 
-      try {
-        const validatedData = await createRentCardSchema.pick(
-          stepFields.reduce((acc, field) => ({ ...acc, [field]: true }), {})
-        ).parseAsync(stepData);
-
-        // If validation passes, move to next step
-        setStep(step + 1);
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          error.errors.forEach(err => {
-            toast({
-              title: "Validation Error",
-              description: err.message,
-              variant: "destructive",
-            });
-          });
-        }
-        return;
+    let isValid = true;
+    for (const field of stepValidation) {
+      const value = data[field];
+      if (!value || value.toString().trim() === '') {
+        form.setError(field, {
+          type: 'required',
+          message: `${field} is required`
+        });
+        isValid = false;
       }
-    } else {
-      try {
-        // Convert numeric strings to numbers before sending to API
+    }
+
+    if (!isValid) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setStep(step + 1);
+  };
+
+  const onSubmit = async (data: CreateRentCardForm) => {
+    try {
+      if (step < 4) {
+        await handleNextStep(data);
+      } else {
+        // Final submission
         const formattedData = {
           ...data,
           monthlyIncome: Number(data.monthlyIncome),
@@ -110,20 +118,21 @@ export default function CreateRentCard() {
         const response = await apiRequest('POST', '/api/tenant/rentcard', formattedData);
         if (response.ok) {
           toast({
-            title: "RentCard Created!",
-            description: "Your RentCard has been successfully created.",
+            title: "Success!",
+            description: "Your RentCard has been created successfully.",
           });
           setLocation('/tenant/dashboard');
         } else {
           throw new Error('Failed to create RentCard');
         }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to create RentCard. Please try again.",
-          variant: "destructive",
-        });
       }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
     }
   };
 
