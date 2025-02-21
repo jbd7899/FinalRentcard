@@ -61,7 +61,9 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (user) {
-      setLocation("/");
+      // Redirect based on user type
+      const dashboardPath = user.userType === 'tenant' ? '/tenant/dashboard' : '/landlord/dashboard';
+      setLocation(dashboardPath);
     }
   }, [user, setLocation]);
 
@@ -72,7 +74,6 @@ const AuthPage = () => {
   const onRegister = async (data: RegisterFormData) => {
     await registerMutation.mutateAsync(data);
   };
-
 
   if (user) {
     return null;
