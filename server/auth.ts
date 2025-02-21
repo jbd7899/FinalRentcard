@@ -5,7 +5,14 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import jwt from "jsonwebtoken";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, insertUserSchema } from "@shared/schema";
+
+// Fix the type error by declaring the User interface
+declare global {
+  namespace Express {
+    interface User extends SelectUser {}
+  }
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || "development_secret";
 const scryptAsync = promisify(scrypt);
@@ -48,7 +55,7 @@ export function setupAuth(app: Express) {
         try {
           const user = await storage.getUserByEmail(email);
           if (!user || !(await comparePasswords(password, user.password))) {
-            return done(null, false);
+            return done(null, false, { message: 'Invalid credentials' });
           }
           return done(null, user);
         } catch (err) {
@@ -60,28 +67,36 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res) => {
     try {
-      const existingUser = await storage.getUserByEmail(req.body.email);
+      // Validate the request body using the schema
+      const validatedData = insertUserSchema.parse(req.body);
+
+      const existingUser = await storage.getUserByEmail(validatedData.email);
       if (existingUser) {
-        return res.status(400).send("Email already registered");
+        return res.status(400).json({ message: "Email already registered" });
       }
 
+      const hashedPassword = await hashPassword(validatedData.password);
       const user = await storage.createUser({
-        ...req.body,
-        password: await hashPassword(req.body.password),
+        ...validatedData,
+        password: hashedPassword,
       });
 
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
       res.status(201).json({ user, token });
     } catch (err) {
-      res.status(500).json({ message: "Server error" });
+      console.error('Registration error:', err);
+      res.status(400).json({ 
+        message: "Invalid registration data",
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
     }
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error | null, user: SelectUser | false) => {
+    passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: any) => {
       if (err) return next(err);
       if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
       res.json({ user, token });
@@ -96,6 +111,7 @@ export function setupAuth(app: Express) {
       }
       res.json(user);
     } catch (err) {
+      console.error('Get user error:', err);
       res.status(500).json({ message: "Server error" });
     }
   });
