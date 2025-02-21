@@ -2,7 +2,6 @@ import { Building2, ArrowRight, Mail, Lock } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/use-auth';
-import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,7 @@ const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     loginMutation.mutate({
-      username: data.email,
+      email: data.email, // Changed from username to email
       password: data.password,
     });
   };
