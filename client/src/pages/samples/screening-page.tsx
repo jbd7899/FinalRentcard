@@ -1,175 +1,260 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Info,
   Shield,
   ArrowRight,
   DollarSign,
   Star,
-  Lock,
+  Clock,
   CheckCircle,
   MapPin,
-  Phone,
-  Mail,
-  Image,
-  Building
+  Building,
+  Users,
+  X,
+  Bed,
+  Bath,
+  Car,
+  CalendarDays
 } from 'lucide-react';
 
+interface PropertyDetailsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const PropertyDetailsModal = ({ isOpen, onClose }: PropertyDetailsModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b">
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-2xl font-bold">123 Ocean Avenue, Unit 2B</h2>
+            <button 
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Property Images */}
+          <div className="bg-gray-100 h-64 rounded-lg mb-6 flex items-center justify-center">
+            <div className="text-gray-400 text-center">
+              <Building className="w-12 h-12 mx-auto mb-2" />
+              <p>Property Photos</p>
+            </div>
+          </div>
+
+          {/* Key Details */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Bed className="w-5 h-5 text-blue-600" />
+              <span>2 Bedrooms</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Bath className="w-5 h-5 text-blue-600" />
+              <span>2 Bathrooms</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Car className="w-5 h-5 text-blue-600" />
+              <span>1 Parking</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-blue-600" />
+              <span>Available Now</span>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="mb-6">
+            <h3 className="font-semibold mb-2">Description</h3>
+            <p className="text-gray-600">
+              Beautiful 2-bedroom apartment in prime Santa Monica location. Recently renovated with modern 
+              appliances and finishes. Bright and spacious with plenty of natural light. Walking distance 
+              to beach, restaurants, and shopping.
+            </p>
+          </div>
+
+          {/* Amenities */}
+          <div className="mb-6">
+            <h3 className="font-semibold mb-2">Amenities</h3>
+            <div className="grid grid-cols-2 gap-2 text-gray-600">
+              <div>• In-unit Washer/Dryer</div>
+              <div>• Central AC/Heat</div>
+              <div>• Dishwasher</div>
+              <div>• Balcony</div>
+              <div>• Pool Access</div>
+              <div>• Gym Access</div>
+            </div>
+          </div>
+
+          {/* Location */}
+          <div>
+            <h3 className="font-semibold mb-2">Location</h3>
+            <div className="flex items-center gap-2 text-gray-600">
+              <MapPin className="w-5 h-5" />
+              <span>Santa Monica, CA 90405</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-gray-50 rounded-b-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-bold">$2,400/month</p>
+              <p className="text-gray-600">First, last & security deposit required</p>
+            </div>
+            <button 
+              onClick={onClose}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Close Details
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SampleScreeningPage = () => {
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [showInterestForm, setShowInterestForm] = useState(false);
+  const [showPropertyDetails, setShowPropertyDetails] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Demo Banner */}
-      <div className="max-w-3xl mx-auto mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4">
-        <div className="flex items-start">
-          <Info className="w-5 h-5 text-blue-600 mr-2 mt-1" />
-          <div>
-            <h1 className="font-semibold mb-1">Sample Property Screening Page</h1>
-            <p className="text-gray-600 text-sm">
-              This is a demo showing how your screening page will be customized with your company branding 
-              and property details. All branding and property information can be easily updated from your dashboard.
-            </p>
+      <div className="max-w-3xl mx-auto mb-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2">
+          <Info className="w-5 h-5 text-amber-600" />
+          <p className="text-amber-800">
+            This is a demo page showing how your rental listing will appear to potential tenants.
+            <span className="hidden sm:inline"> Customize all property details and requirements from your dashboard.</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Property Header */}
+      <div className="max-w-3xl mx-auto mb-6">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-600 rounded-lg p-4">
+                  <Building className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold">123 Ocean Avenue, Unit 2B</h1>
+                  <p className="text-gray-600">2 Bed • 2 Bath • $2,400/month</p>
+                  <button 
+                    className="mt-2 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                    onClick={() => setShowPropertyDetails(true)}
+                  >
+                    View full property details
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow">
-        {/* Company Branding */}
-        <div className="p-6 border-b bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="bg-gray-200 rounded-lg p-4 mr-4">
-                <Image className="w-8 h-8 text-gray-400" />
-                <span className="text-sm text-gray-500">Your Logo</span>
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg">
+          {/* Quick Interest Section */}
+          <div className="p-8 border-b bg-blue-50">
+            <div className="flex items-center gap-2 mb-4">
+              <Star className="w-6 h-6 text-blue-600 fill-current" />
+              <h2 className="text-2xl font-semibold">Express Interest with RentCard</h2>
+            </div>
+            <div className="flex items-center gap-8">
+              <div className="flex-1">
+                <p className="text-lg text-gray-700 mb-4">Share your verified rental profile instantly - no forms needed</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <Clock className="w-5 h-5 text-blue-600" />
+                    <span>Takes 30 seconds</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <Shield className="w-5 h-5 text-blue-600" />
+                    <span>Privacy protected</span>
+                  </div>
+                </div>
               </div>
+              <button className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition-transform">
+                Share RentCard
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Basic Interest Form */}
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Quick Pre-Screening Form</h2>
+            <p className="text-gray-600 mb-6">
+              Share basic details to check if this property matches your needs. 
+              Not a full application - just helps us understand if it's a good fit.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h2 className="text-xl font-semibold">Oceanview Property Management</h2>
-                <p className="text-gray-600">Professional Property Management Since 1995</p>
+                <h3 className="font-medium mb-3">Basic Requirements:</h3>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <DollarSign className="w-5 h-5 text-gray-600 mt-1" />
+                    <div>
+                      <p className="text-gray-600">Minimum Income: $7,200/month</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Users className="w-5 h-5 text-gray-600 mt-1" />
+                    <div>
+                      <p className="text-gray-600">Max Occupants: 4 people</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-gray-600 mt-1" />
+                    <div>
+                      <p className="text-gray-600">Move-in: Available Now</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="text-right text-sm text-gray-600">
-              <div className="flex items-center justify-end mb-1">
-                <Phone className="w-4 h-4 mr-1" />
-                <span>(555) 123-4567</span>
-              </div>
-              <div className="flex items-center justify-end">
-                <Mail className="w-4 h-4 mr-1" />
-                <span>leasing@oceanview.com</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Property Details */}
-        <div className="p-6 border-b">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center mb-4">
-                <Building className="w-12 h-12 text-gray-400" />
-                <span className="text-sm text-gray-500 ml-2">Property Photos</span>
-              </div>
-              <h2 className="text-xl font-semibold">The Oceanview Residences</h2>
-              <div className="flex items-center text-gray-600 mt-1">
-                <MapPin className="w-4 h-4 mr-1" />
-                <span>123 Coastal Drive, Seaside CA 90210</span>
-              </div>
-            </div>
-            <div>
-              <h3 className="font-medium mb-3">Unit Details</h3>
-              <div className="space-y-2 text-gray-600">
-                <p>Unit Type: 2 Bed / 2 Bath</p>
-                <p>Square Footage: 1,200 sq ft</p>
-                <p>Rent: $2,800/month</p>
-                <p>Available: March 2025</p>
-                <p>Parking: 1 Assigned Space</p>
-                <p>Pets: Cats Only (with deposit)</p>
+              <div>
+                <button 
+                  onClick={() => setShowInterestForm(true)}
+                  className="w-full bg-gray-100 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 flex items-center justify-center gap-2"
+                >
+                  Start Quick Pre-Screen
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <p className="text-sm text-gray-500 mt-3 text-center">
+                  30-second form • No credit check • No commitment
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 mt-6">
-            <h3 className="font-medium mb-3">Property Requirements</h3>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 text-blue-600 mr-2" />
-                <span>Credit Score: 650+</span>
-              </div>
-              <div className="flex items-center">
-                <DollarSign className="w-4 h-4 text-blue-600 mr-2" />
-                <span>Income: 3x Monthly Rent</span>
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-blue-600 mr-2" />
-                <span>No Evictions</span>
-              </div>
+          {/* Bottom Trust Section */}
+          <div className="bg-gray-50 p-6 rounded-b-lg">
+            <div className="text-center text-sm text-gray-600">
+              <p className="mb-2">★★★★★ "Super quick process!"</p>
+              <p>Used by thousands of renters to find their perfect home</p>
             </div>
           </div>
-        </div>
-
-        {/* Option 1: RentCard */}
-        <div className="p-6 border-b bg-blue-50">
-          <div className="mb-4">
-            <h3 className="font-medium mb-1">Option 1: Apply with RentCard (Recommended)</h3>
-            <p className="text-sm text-gray-600">Send your verified rental profile instantly</p>
-          </div>
-
-          <button className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 flex items-center justify-center mb-3">
-            <span>1-Click Submit with RentCard</span>
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </button>
-
-          <p className="text-sm text-center text-gray-600">
-            Don't have a RentCard?{' '}
-            <a href="/create-rentcard" className="text-blue-600 hover:underline">Create one now</a>
-          </p>
-        </div>
-
-        {/* Option 2: Traditional */}
-        <div className="p-6 border-b">
-          <div className="mb-4">
-            <h3 className="font-medium mb-1">Option 2: Traditional Application</h3>
-            <p className="text-sm text-gray-600">Complete a standard rental application form</p>
-          </div>
-
-          <button 
-            onClick={() => setShowApplicationForm(!showApplicationForm)}
-            className="w-full border-2 border-gray-200 text-gray-700 p-3 rounded-lg hover:bg-gray-50 flex items-center justify-center"
-          >
-            Show Application Form
-          </button>
-        </div>
-
-        {/* Security Info */}
-        <div className="p-6">
-          <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
-            <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 text-blue-600 mr-1" />
-              <span>RentCard Verified</span>
-            </div>
-            <div className="flex items-center">
-              <Lock className="w-4 h-4 text-blue-600 mr-1" />
-              <span>256-bit SSL Encryption</span>
-            </div>
-            <div className="flex items-center">
-              <Shield className="w-4 h-4 text-blue-600 mr-1" />
-              <span>Privacy Protected</span>
-            </div>
-          </div>
-
-          <p className="text-center text-sm text-gray-600 mt-4">
-            Your information is secure and will only be shared with Oceanview Property Management
-          </p>
         </div>
       </div>
 
-      {/* Bottom CTA */}
-      <div className="max-w-3xl mx-auto mt-6 text-center">
-        <p className="text-gray-600 mb-4">Ready to create your own branded screening page?</p>
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-          Create Screening Page
-        </button>
-      </div>
+      {/* Property Details Modal */}
+      <PropertyDetailsModal 
+        isOpen={showPropertyDetails}
+        onClose={() => setShowPropertyDetails(false)}
+      />
     </div>
   );
 };
