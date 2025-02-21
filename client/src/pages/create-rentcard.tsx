@@ -8,38 +8,18 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
+import { insertRentCardSchema, type InsertRentCard } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-
-// Updated schema to use boolean instead of enum for yes/no fields
-const createRentCardSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  hasPets: z.boolean(),
-  currentEmployer: z.string().min(1, "Current employer is required"),
-  yearsEmployed: z.string().min(1, "Years employed is required"),
-  monthlyIncome: z.string().min(1, "Monthly income is required"),
-  currentAddress: z.string().min(1, "Current address is required"),
-  currentRent: z.string().min(1, "Current rent is required"),
-  moveInDate: z.string().min(1, "Move-in date is required"),
-  maxRent: z.string().min(1, "Maximum rent is required"),
-  hasRoommates: z.boolean(),
-  creditScore: z.string().min(1, "Credit score is required")
-});
-
-type CreateRentCardForm = z.infer<typeof createRentCardSchema>;
 
 export default function CreateRentCard() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setLocation] = useLocation();
 
-  const form = useForm<CreateRentCardForm>({
-    resolver: zodResolver(createRentCardSchema),
+  const form = useForm<InsertRentCard>({
+    resolver: zodResolver(insertRentCardSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -65,6 +45,30 @@ export default function CreateRentCard() {
     3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore']
   } as const;
 
+  const createRentCardMutation = useMutation({
+    mutationFn: async (data: InsertRentCard) => {
+      const response = await apiRequest('POST', '/api/tenant/rentcard', data);
+      if (!response.ok) {
+        throw new Error('Failed to create RentCard');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success!",
+        description: "Your RentCard has been created successfully.",
+      });
+      setLocation('/tenant/dashboard');
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleNextStep = async () => {
     const fields = stepFields[step as keyof typeof stepFields];
     const result = await form.trigger(fields);
@@ -74,43 +78,13 @@ export default function CreateRentCard() {
     }
   };
 
-  const onSubmit = async (data: CreateRentCardForm) => {
-    try {
-      if (step < 4) {
-        await handleNextStep();
-        return;
-      } else {
-        setIsSubmitting(true);
-        // Format data for API submission
-        const formattedData = {
-          ...data,
-          monthlyIncome: Number(data.monthlyIncome),
-          currentRent: Number(data.currentRent),
-          maxRent: Number(data.maxRent),
-          creditScore: Number(data.creditScore)
-        };
-
-        const response = await apiRequest('POST', '/api/tenant/rentcard', formattedData);
-        if (response.ok) {
-          toast({
-            title: "Success!",
-            description: "Your RentCard has been created successfully.",
-          });
-          setLocation('/tenant/dashboard');
-        } else {
-          throw new Error('Failed to create RentCard');
-        }
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+  const onSubmit = async (data: InsertRentCard) => {
+    if (step < 4) {
+      await handleNextStep();
+      return;
     }
+
+    createRentCardMutation.mutate(data);
   };
 
   const totalSteps = 4;
@@ -276,8 +250,8 @@ export default function CreateRentCard() {
           {...form.register('currentEmployer')}
         />
         {form.formState.errors.currentEmployer && (
-            <p className="text-destructive text-sm mt-1">{form.formState.errors.currentEmployer.message}</p>
-          )}
+          <p className="text-destructive text-sm mt-1">{form.formState.errors.currentEmployer.message}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -341,8 +315,8 @@ export default function CreateRentCard() {
           {...form.register('moveInDate')}
         />
         {form.formState.errors.moveInDate && (
-            <p className="text-destructive text-sm mt-1">{form.formState.errors.moveInDate.message}</p>
-          )}
+          <p className="text-destructive text-sm mt-1">{form.formState.errors.moveInDate.message}</p>
+        )}
       </div>
     </div>
   );
@@ -431,7 +405,7 @@ export default function CreateRentCard() {
                   type="button"
                   variant="outline"
                   onClick={() => setStep(step - 1)}
-                  disabled={isSubmitting}
+                  disabled={createRentCardMutation.isPending}
                 >
                   Back
                 </Button>
@@ -440,9 +414,9 @@ export default function CreateRentCard() {
                 <Button
                   type="submit"
                   className="ml-auto"
-                  disabled={isSubmitting}
+                  disabled={createRentCardMutation.isPending}
                 >
-                  {isSubmitting ? (
+                  {createRentCardMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Processing...
@@ -458,9 +432,9 @@ export default function CreateRentCard() {
                 <Button
                   type="submit"
                   className="ml-auto"
-                  disabled={isSubmitting}
+                  disabled={createRentCardMutation.isPending}
                 >
-                  {isSubmitting ? (
+                  {createRentCardMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Creating...
