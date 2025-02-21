@@ -2,10 +2,33 @@ import { Building2, ArrowRight, Mail, Lock } from 'lucide-react';
 import { Link } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/hooks/use-auth';
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
 const LoginPage = () => {
   const { login } = useAuth();
-  const form = useForm();
+  const [loginError, setLoginError] = useState('');
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data) => {
+    try {
+      setLoginError('');
+      await login(data);
+    } catch (error) {
+      setLoginError('Invalid email or password');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -28,35 +51,47 @@ const LoginPage = () => {
               <p className="text-gray-600">Sign in to manage your RentCard</p>
             </div>
 
-            <form className="space-y-4" onSubmit={form.handleSubmit(login)}>
+            {loginError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 rounded">
+                {loginError}
+              </div>
+            )}
+
+            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address
-                </label>
+                </Label>
                 <div className="relative">
                   <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
+                  <Input
                     type="email"
-                    {...form.register('email')}
+                    {...register('email')}
                     className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your email"
                   />
                 </div>
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Label className="block text-sm font-medium text-gray-700 mb-1">
                   Password
-                </label>
+                </Label>
                 <div className="relative">
                   <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
+                  <Input
                     type="password"
-                    {...form.register('password')}
+                    {...register('password')}
                     className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your password"
                   />
                 </div>
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                )}
               </div>
 
               <div className="flex items-center justify-between">
@@ -69,13 +104,13 @@ const LoginPage = () => {
                 </Link>
               </div>
 
-              <button 
+              <Button 
                 type="submit"
                 className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center"
               >
                 <span>Sign In</span>
                 <ArrowRight className="w-4 h-4 ml-2" />
-              </button>
+              </Button>
             </form>
           </div>
 
