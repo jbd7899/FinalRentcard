@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -40,6 +41,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 const AuthPage = () => {
   const { loginMutation, registerMutation, user } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -61,22 +63,39 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (user) {
-      // Redirect based on user type
       const dashboardPath = user.userType === 'tenant' ? '/tenant/dashboard' : '/landlord/dashboard';
       setLocation(dashboardPath);
     }
   }, [user, setLocation]);
 
   const onLogin = async (data: LoginFormData) => {
-    await loginMutation.mutateAsync(data);
+    try {
+      await loginMutation.mutateAsync(data);
+      // Redirection will be handled by the useEffect hook
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const onRegister = async (data: RegisterFormData) => {
-    await registerMutation.mutateAsync(data);
+    try {
+      await registerMutation.mutateAsync(data);
+      // Redirection will be handled by the useEffect hook
+    } catch (error) {
+      toast({
+        title: "Registration failed",
+        description: "An error occurred during registration. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (user) {
-    return null;
+    return null; // Prevents flash of content during redirect
   }
 
   return (
@@ -240,8 +259,14 @@ const AuthPage = () => {
                       className="w-full"
                       disabled={registerMutation.isPending}
                     >
-                      Create Account
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      {registerMutation.isPending ? (
+                        <span>Creating Account...</span>
+                      ) : (
+                        <>
+                          <span>Create Account</span>
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
                     </Button>
                   </form>
                 </CardContent>
