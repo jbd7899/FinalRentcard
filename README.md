@@ -6,7 +6,7 @@ This project is maintained **exclusively by AI**. Follow these instructions stri
 
 ## Project Overview
 
-MyRentCard simplifies the rental application process by allowing tenants to create a reusable rental profile ("RentCard") that can be instantly shared with potential landlords. The AI is responsible for maintaining all aspects of the project, including updates, bug fixes, optimizations, and feature additions.
+MyRentCard simplifies the rental application process by allowing tenants to create a reusable rental profile ("RentCard") that can be instantly shared with potential landlords. The AI is responsible for maintaining all aspects of the project, including updates, bug fixes, optimizations, and feature additions.  This includes tracking property view counts.
 
 ## Tech Stack
 
@@ -107,9 +107,9 @@ MyRentCard simplifies the rental application process by allowing tenants to crea
 - `GET /api/landlord/dashboard` → Get landlord dashboard data
 - `GET /api/landlord/applications` → List rental applications
 - `POST /api/landlord/screening` → Create screening page
-- `GET /api/landlord/screening/:id` → Get screening page
-- `GET /api/properties` → Get all properties with application counts
-- `GET /api/properties/screening/:slug` → Get property details by screening page slug
+- `GET /api/landlord/screening/:id` → Get screening page (includes view count tracking)
+- `GET /api/properties` → Get all properties with application and view counts
+- `GET /api/properties/screening/:slug` → Get property details by screening page slug (auto-increments view count)
 - `POST /api/landlord/reference-form` → Submit reference form
 
 ## Property Requirements Format
