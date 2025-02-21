@@ -6,16 +6,19 @@ import {
   Eye,
   Edit,
   Send,
-  X,
   Mail,
   Phone,
   ExternalLink,
   Info,
   LogOut,
-  Loader2
+  Loader2,
+  QrCode,
+  Copy,
+  CheckCircle
 } from 'lucide-react';
 import { useAuth } from "@/hooks/use-auth";
 import Navbar from "@/components/shared/navbar";
+import { QRCodeSVG } from 'qrcode.react';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,13 +32,117 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "wouter";
+
+interface ScreeningActionsProps {
+  screeningLink: string;
+  propertyId: string | number;
+  submissionCount: number;
+}
+
+// ScreeningActions Component
+const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, propertyId, submissionCount }) => {
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [showCopyAlert, setShowCopyAlert] = useState(false);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(screeningLink);
+      setShowCopyAlert(true);
+      setTimeout(() => setShowCopyAlert(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-4 text-sm">
+      <span className="text-muted-foreground">
+        {submissionCount} submissions
+      </span>
+
+      {/* Copy Link Button */}
+      <Button 
+        variant="link" 
+        className="p-0 h-auto flex items-center"
+        onClick={handleCopyLink}
+      >
+        {showCopyAlert ? (
+          <CheckCircle className="w-4 h-4 mr-1 text-green-500" />
+        ) : (
+          <Copy className="w-4 h-4 mr-1" />
+        )}
+        Copy Screening Link
+      </Button>
+
+      {/* View Submissions Link */}
+      <Button variant="link" className="p-0 h-auto">
+        <Link 
+          href={`/landlord/property/${propertyId}/submissions`} 
+          className="flex items-center"
+        >
+          <ExternalLink className="w-4 h-4 mr-1" />
+          View Submissions
+        </Link>
+      </Button>
+
+      {/* QR Code Button */}
+      <Button 
+        variant="link" 
+        className="p-0 h-auto"
+        onClick={() => setShowQRCode(true)}
+      >
+        <QrCode className="w-4 h-4 mr-1" />
+        View QR Code
+      </Button>
+
+      {/* QR Code Dialog */}
+      <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Screening Page QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 p-4">
+            <div className="bg-white p-4 rounded-lg">
+              <QRCodeSVG 
+                value={screeningLink}
+                size={200}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+            <p className="text-sm text-center text-muted-foreground">
+              Scan this QR code to access the screening page
+            </p>
+            <Button 
+              className="w-full"
+              onClick={handleCopyLink}
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Link
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy Success Alert */}
+      {showCopyAlert && (
+        <Alert className="fixed bottom-4 right-4 w-auto bg-green-50">
+          <AlertDescription className="text-green-600">
+            Link copied to clipboard!
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+};
 
 const LandlordDashboard = () => {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const { logoutMutation } = useAuth();
 
-  // Demo data
+  // Demo data - Replace with API data later
   const generalPage = {
     link: "rentcard.com/screen/johndoe",
     submissions: 12,
@@ -66,7 +173,7 @@ const LandlordDashboard = () => {
         <DialogHeader>
           <DialogTitle>Request RentCard</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div>
             <Label>Tenant Name</Label>
@@ -236,24 +343,12 @@ const LandlordDashboard = () => {
                   <Edit className="w-4 h-4" />
                 </Button>
               </div>
-              
-              <div className="flex flex-wrap items-center gap-4 text-sm">
-                <span className="text-muted-foreground">
-                  {generalPage.submissions} total submissions
-                </span>
-                <Button variant="link" className="p-0 h-auto">
-                  <Link href={generalPage.link} className="flex items-center">
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Copy Screening Link
-                  </Link>
-                </Button>
-                <Button variant="link" className="p-0 h-auto">
-                  <Link href={`/landlord/property/general/submissions`} className="flex items-center">
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    View Submissions
-                  </Link>
-                </Button>
-              </div>
+
+              <ScreeningActions
+                screeningLink={generalPage.link}
+                propertyId="general"
+                submissionCount={generalPage.submissions}
+              />
             </CardContent>
           </Card>
         </div>
@@ -269,7 +364,7 @@ const LandlordDashboard = () => {
               </Button>
             </Link>
           </div>
-          
+
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-6">
@@ -287,24 +382,12 @@ const LandlordDashboard = () => {
                           <Edit className="w-4 h-4" />
                         </Button>
                       </div>
-                      
-                      <div className="flex flex-wrap items-center gap-4 text-sm">
-                        <span className="text-muted-foreground">
-                          {property.submissions} submissions
-                        </span>
-                        <Button variant="link" className="p-0 h-auto">
-                          <Link href={property.link} className="flex items-center">
-                            <ExternalLink className="w-4 h-4 mr-1" />
-                            Copy Screening Link
-                          </Link>
-                        </Button>
-                        <Button variant="link" className="p-0 h-auto">
-                          <Link href={`/landlord/property/${property.id}/submissions`} className="flex items-center">
-                            <ExternalLink className="w-4 h-4 mr-1" />
-                            View Submissions
-                          </Link>
-                        </Button>
-                      </div>
+
+                      <ScreeningActions
+                        screeningLink={property.link}
+                        propertyId={property.id}
+                        submissionCount={property.submissions}
+                      />
                     </CardContent>
                   </Card>
                 ))}
