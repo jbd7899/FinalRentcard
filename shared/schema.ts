@@ -52,6 +52,15 @@ export const properties = pgTable("properties", {
   rent: integer("rent").notNull(),
   description: text("description"),
   available: boolean("available").default(true),
+  bedrooms: integer("bedrooms").notNull(),
+  bathrooms: integer("bathrooms").notNull(),
+  parking: text("parking"),
+  availableFrom: timestamp("available_from"),
+  screeningPageSlug: text("screening_page_slug"),
+  requirements: json("requirements").$type<{
+    icon: string;
+    description: string;
+  }[]>(),
 });
 
 export const applications = pgTable("applications", {

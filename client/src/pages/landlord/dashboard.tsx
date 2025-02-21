@@ -46,9 +46,14 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
   const [showQRCode, setShowQRCode] = useState(false);
   const [showCopyAlert, setShowCopyAlert] = useState(false);
 
+  const getScreeningPageUrl = (slug: string) => {
+    return `${window.location.origin}/landlord/screening/${slug}`;
+  };
+
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(screeningLink);
+      const fullUrl = getScreeningPageUrl(screeningLink);
+      await navigator.clipboard.writeText(fullUrl);
       setShowCopyAlert(true);
       setTimeout(() => setShowCopyAlert(false), 2000);
     } catch (err) {
@@ -106,7 +111,7 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
           <div className="flex flex-col items-center gap-4 p-4">
             <div className="bg-white p-4 rounded-lg">
               <QRCodeSVG 
-                value={screeningLink}
+                value={getScreeningPageUrl(screeningLink)}
                 size={200}
                 level="H"
                 includeMargin={true}
