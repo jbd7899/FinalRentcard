@@ -5,20 +5,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-// Schema definition remains unchanged
+// Updated schema to use boolean instead of enum for yes/no fields
 const createRentCardSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  hasPets: z.enum(["yes", "no"]),
+  hasPets: z.boolean(),
   currentEmployer: z.string().min(1, "Current employer is required"),
   yearsEmployed: z.string().min(1, "Years employed is required"),
   monthlyIncome: z.string().min(1, "Monthly income is required"),
@@ -26,7 +26,7 @@ const createRentCardSchema = z.object({
   currentRent: z.string().min(1, "Current rent is required"),
   moveInDate: z.string().min(1, "Move-in date is required"),
   maxRent: z.string().min(1, "Maximum rent is required"),
-  hasRoommates: z.enum(["yes", "no"]),
+  hasRoommates: z.boolean(),
   creditScore: z.string().min(1, "Credit score is required")
 });
 
@@ -45,7 +45,7 @@ export default function CreateRentCard() {
       lastName: '',
       email: '',
       phone: '',
-      hasPets: "no",
+      hasPets: false,
       currentEmployer: '',
       yearsEmployed: '',
       monthlyIncome: '',
@@ -53,7 +53,7 @@ export default function CreateRentCard() {
       currentRent: '',
       moveInDate: '',
       maxRent: '',
-      hasRoommates: "no",
+      hasRoommates: false,
       creditScore: ''
     }
   });
@@ -78,7 +78,7 @@ export default function CreateRentCard() {
     try {
       if (step < 4) {
         await handleNextStep();
-        return; // Add return statement to prevent continuing with submission
+        return;
       } else {
         setIsSubmitting(true);
         // Format data for API submission
@@ -210,22 +210,13 @@ export default function CreateRentCard() {
         </div>
       </div>
 
-      <div>
-        <Label>Do you have pets?</Label>
-        <RadioGroup
-          value={form.watch('hasPets')}
-          onValueChange={(value) => form.setValue('hasPets', value as "yes" | "no")}
-          className="flex gap-4"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="yes" id="pets-yes" />
-            <Label htmlFor="pets-yes">Yes</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="no" id="pets-no" />
-            <Label htmlFor="pets-no">No</Label>
-          </div>
-        </RadioGroup>
+      <div className="flex items-center justify-between">
+        <Label htmlFor="hasPets">Do you have pets?</Label>
+        <Switch
+          id="hasPets"
+          checked={form.watch('hasPets')}
+          onCheckedChange={(checked) => form.setValue('hasPets', checked)}
+        />
         {form.formState.errors.hasPets && (
           <p className="text-destructive text-sm mt-1">{form.formState.errors.hasPets.message}</p>
         )}
@@ -260,22 +251,13 @@ export default function CreateRentCard() {
             <p className="text-destructive text-sm mt-1">{form.formState.errors.currentRent.message}</p>
           )}
         </div>
-        <div>
-          <Label>Do you have roommates?</Label>
-          <RadioGroup
-            value={form.watch('hasRoommates')}
-            onValueChange={(value) => form.setValue('hasRoommates', value as "yes" | "no")}
-            className="flex gap-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="yes" id="roommates-yes" />
-              <Label htmlFor="roommates-yes">Yes</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="no" id="roommates-no" />
-              <Label htmlFor="roommates-no">No</Label>
-            </div>
-          </RadioGroup>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="hasRoommates">Do you have roommates?</Label>
+          <Switch
+            id="hasRoommates"
+            checked={form.watch('hasRoommates')}
+            onCheckedChange={(checked) => form.setValue('hasRoommates', checked)}
+          />
           {form.formState.errors.hasRoommates && (
             <p className="text-destructive text-sm mt-1">{form.formState.errors.hasRoommates.message}</p>
           )}
