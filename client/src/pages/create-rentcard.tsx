@@ -29,13 +29,13 @@ const createRentCardSchema = z.object({
   hasPets: z.enum(["yes", "no"]),
   currentEmployer: z.string().min(1, "Current employer is required"),
   yearsEmployed: z.string().min(1, "Years employed is required"),
-  monthlyIncome: z.string().min(1, "Monthly income is required").transform(Number),
+  monthlyIncome: z.string().min(1, "Monthly income is required"),
   currentAddress: z.string().min(1, "Current address is required"),
-  currentRent: z.string().min(1, "Current rent is required").transform(Number),
+  currentRent: z.string().min(1, "Current rent is required"),
   moveInDate: z.string().min(1, "Move-in date is required"),
-  maxRent: z.string().min(1, "Maximum rent is required").transform(Number),
+  maxRent: z.string().min(1, "Maximum rent is required"),
   hasRoommates: z.enum(["yes", "no"]),
-  creditScore: z.string().min(1, "Credit score is required").transform(Number)
+  creditScore: z.string().min(1, "Credit score is required")
 });
 
 type CreateRentCardForm = z.infer<typeof createRentCardSchema>;
@@ -78,10 +78,11 @@ export default function CreateRentCard() {
       );
 
       try {
-        await createRentCardSchema.pick(
+        const validatedData = await createRentCardSchema.pick(
           stepFields.reduce((acc, field) => ({ ...acc, [field]: true }), {})
         ).parseAsync(stepData);
 
+        // If validation passes, move to next step
         setStep(step + 1);
       } catch (error) {
         if (error instanceof z.ZodError) {
@@ -97,7 +98,16 @@ export default function CreateRentCard() {
       }
     } else {
       try {
-        const response = await apiRequest('POST', '/api/tenant/rentcard', data);
+        // Convert numeric strings to numbers before sending to API
+        const formattedData = {
+          ...data,
+          monthlyIncome: Number(data.monthlyIncome),
+          currentRent: Number(data.currentRent),
+          maxRent: Number(data.maxRent),
+          creditScore: Number(data.creditScore)
+        };
+
+        const response = await apiRequest('POST', '/api/tenant/rentcard', formattedData);
         if (response.ok) {
           toast({
             title: "RentCard Created!",
