@@ -11,16 +11,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 
-// Schema definition remains unchanged as it's properly defined
+// Schema definition remains unchanged
 const createRentCardSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -73,11 +65,9 @@ export default function CreateRentCard() {
     3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore']
   } as const;
 
-  const handleNextStep = async (data: CreateRentCardForm) => {
+  const handleNextStep = async () => {
     const fields = stepFields[step as keyof typeof stepFields];
-    const result = await form.trigger(fields as Array<keyof CreateRentCardForm>, {
-      shouldFocus: true,
-    });
+    const result = await form.trigger(fields);
 
     if (result) {
       setStep(step + 1);
@@ -87,7 +77,7 @@ export default function CreateRentCard() {
   const onSubmit = async (data: CreateRentCardForm) => {
     try {
       if (step < 4) {
-        await handleNextStep(data);
+        await handleNextStep();
       } else {
         setIsSubmitting(true);
         // Format data for API submission
@@ -168,239 +158,209 @@ export default function CreateRentCard() {
   const PersonalInfoStep = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="firstName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>First Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter first name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <div>
+          <Label htmlFor="firstName">First Name</Label>
+          <Input
+            id="firstName"
+            placeholder="Enter first name"
+            {...form.register('firstName')}
+          />
+          {form.formState.errors.firstName && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.firstName.message}</p>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Last Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter last name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        </div>
+        <div>
+          <Label htmlFor="lastName">Last Name</Label>
+          <Input
+            id="lastName"
+            placeholder="Enter last name"
+            {...form.register('lastName')}
+          />
+          {form.formState.errors.lastName && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.lastName.message}</p>
           )}
-        />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter email" type="email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <div>
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="Enter email"
+            {...form.register('email')}
+          />
+          {form.formState.errors.email && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.email.message}</p>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter phone number" type="tel" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        </div>
+        <div>
+          <Label htmlFor="phone">Phone</Label>
+          <Input
+            id="phone"
+            type="tel"
+            placeholder="Enter phone number"
+            {...form.register('phone')}
+          />
+          {form.formState.errors.phone && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.phone.message}</p>
           )}
-        />
+        </div>
       </div>
 
-      <FormField
-        control={form.control}
-        name="hasPets"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Do you have pets?</FormLabel>
-            <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="pets-yes" />
-                  <Label htmlFor="pets-yes">Yes</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="pets-no" />
-                  <Label htmlFor="pets-no">No</Label>
-                </div>
-              </RadioGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+      <div>
+        <Label>Do you have pets?</Label>
+        <RadioGroup
+          value={form.watch('hasPets')}
+          onValueChange={(value) => form.setValue('hasPets', value as "yes" | "no")}
+          className="flex gap-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="yes" id="pets-yes" />
+            <Label htmlFor="pets-yes">Yes</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="no" id="pets-no" />
+            <Label htmlFor="pets-no">No</Label>
+          </div>
+        </RadioGroup>
+        {form.formState.errors.hasPets && (
+          <p className="text-destructive text-sm mt-1">{form.formState.errors.hasPets.message}</p>
         )}
-      />
+      </div>
     </div>
   );
 
   const RentalHistoryStep = () => (
     <div className="space-y-6">
-      <FormField
-        control={form.control}
-        name="currentAddress"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Current Address</FormLabel>
-            <FormControl>
-              <Input placeholder="Enter your current address" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
+      <div>
+        <Label htmlFor="currentAddress">Current Address</Label>
+        <Input
+          id="currentAddress"
+          placeholder="Enter your current address"
+          {...form.register('currentAddress')}
+        />
+        {form.formState.errors.currentAddress && (
+          <p className="text-destructive text-sm mt-1">{form.formState.errors.currentAddress.message}</p>
         )}
-      />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="currentRent"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Current Monthly Rent</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter amount" type="number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <div>
+          <Label htmlFor="currentRent">Current Monthly Rent</Label>
+          <Input
+            id="currentRent"
+            type="number"
+            placeholder="Enter amount"
+            {...form.register('currentRent')}
+          />
+          {form.formState.errors.currentRent && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.currentRent.message}</p>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="hasRoommates"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Do you have roommates?</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="roommates-yes" />
-                    <Label htmlFor="roommates-yes">Yes</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="roommates-no" />
-                    <Label htmlFor="roommates-no">No</Label>
-                  </div>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        </div>
+        <div>
+          <Label>Do you have roommates?</Label>
+          <RadioGroup
+            value={form.watch('hasRoommates')}
+            onValueChange={(value) => form.setValue('hasRoommates', value as "yes" | "no")}
+            className="flex gap-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="yes" id="roommates-yes" />
+              <Label htmlFor="roommates-yes">Yes</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="no" id="roommates-no" />
+              <Label htmlFor="roommates-no">No</Label>
+            </div>
+          </RadioGroup>
+          {form.formState.errors.hasRoommates && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.hasRoommates.message}</p>
           )}
-        />
+        </div>
       </div>
     </div>
   );
 
   const IncomeStep = () => (
     <div className="space-y-6">
-      <FormField
-        control={form.control}
-        name="currentEmployer"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Current Employer</FormLabel>
-            <FormControl>
-              <Input placeholder="Enter employer name" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="yearsEmployed"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Years in Current Job</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter years" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+      <div>
+        <Label htmlFor="currentEmployer">Current Employer</Label>
+        <Input
+          id="currentEmployer"
+          placeholder="Enter employer name"
+          {...form.register('currentEmployer')}
         />
-        <FormField
-          control={form.control}
-          name="monthlyIncome"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Monthly Income</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter amount" type="number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        {form.formState.errors.currentEmployer && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.currentEmployer.message}</p>
           )}
-        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="maxRent"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Maximum Rent Budget</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter amount" type="number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <div>
+          <Label htmlFor="yearsEmployed">Years in Current Job</Label>
+          <Input
+            id="yearsEmployed"
+            placeholder="Enter years"
+            {...form.register('yearsEmployed')}
+          />
+          {form.formState.errors.yearsEmployed && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.yearsEmployed.message}</p>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="creditScore"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Credit Score</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter credit score" type="number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        </div>
+        <div>
+          <Label htmlFor="monthlyIncome">Monthly Income</Label>
+          <Input
+            id="monthlyIncome"
+            type="number"
+            placeholder="Enter amount"
+            {...form.register('monthlyIncome')}
+          />
+          {form.formState.errors.monthlyIncome && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.monthlyIncome.message}</p>
           )}
-        />
+        </div>
       </div>
 
-      <FormField
-        control={form.control}
-        name="moveInDate"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Desired Move-in Date</FormLabel>
-            <FormControl>
-              <Input type="date" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="maxRent">Maximum Rent Budget</Label>
+          <Input
+            id="maxRent"
+            type="number"
+            placeholder="Enter amount"
+            {...form.register('maxRent')}
+          />
+          {form.formState.errors.maxRent && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.maxRent.message}</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="creditScore">Credit Score</Label>
+          <Input
+            id="creditScore"
+            type="number"
+            placeholder="Enter credit score"
+            {...form.register('creditScore')}
+          />
+          {form.formState.errors.creditScore && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.creditScore.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="moveInDate">Desired Move-in Date</Label>
+        <Input
+          id="moveInDate"
+          type="date"
+          {...form.register('moveInDate')}
+        />
+        {form.formState.errors.moveInDate && (
+            <p className="text-destructive text-sm mt-1">{form.formState.errors.moveInDate.message}</p>
+          )}
+      </div>
     </div>
   );
 
@@ -472,68 +432,66 @@ export default function CreateRentCard() {
 
       <Card className="max-w-3xl mx-auto">
         <CardContent className="p-8">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <ProgressBar />
-              <StepIndicator />
-              <ValueProposition />
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <ProgressBar />
+            <StepIndicator />
+            <ValueProposition />
 
-              {step === 1 && <PersonalInfoStep />}
-              {step === 2 && <RentalHistoryStep />}
-              {step === 3 && <IncomeStep />}
-              {step === 4 && <CompletionStep />}
+            {step === 1 && <PersonalInfoStep />}
+            {step === 2 && <RentalHistoryStep />}
+            {step === 3 && <IncomeStep />}
+            {step === 4 && <CompletionStep />}
 
-              <div className="flex justify-between mt-8">
-                {step > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep(step - 1)}
-                    disabled={isSubmitting}
-                  >
-                    Back
-                  </Button>
-                )}
-                {step < 4 ? (
-                  <Button
-                    type="submit"
-                    className="ml-auto"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        Next
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    className="ml-auto"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        Complete
-                        <CheckCircle className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            </form>
-          </Form>
+            <div className="flex justify-between mt-8">
+              {step > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(step - 1)}
+                  disabled={isSubmitting}
+                >
+                  Back
+                </Button>
+              )}
+              {step < 4 ? (
+                <Button
+                  type="submit"
+                  className="ml-auto"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      Next
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  className="ml-auto"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      Complete
+                      <CheckCircle className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
