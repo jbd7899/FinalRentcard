@@ -1,4 +1,4 @@
-import { Building2, ArrowRight, Mail, Lock, User, Phone } from 'lucide-react';
+import { Building2, ArrowRight, Mail, Lock, Phone } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useForm } from 'react-hook-form';
@@ -27,7 +27,6 @@ const loginSchema = z.object({
 });
 
 const registerSchema = z.object({
-  username: z.string().min(3),
   email: z.string().email(),
   password: z.string().min(6),
   phone: z.string().min(10),
@@ -49,7 +48,6 @@ const AuthPage = () => {
   const registerForm = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: '',
       email: '',
       password: '',
       phone: '',
@@ -59,7 +57,7 @@ const AuthPage = () => {
 
   const onLogin = (data: z.infer<typeof loginSchema>) => {
     loginMutation.mutate({
-      username: data.email,
+      email: data.email,
       password: data.password,
     });
   };
@@ -68,7 +66,7 @@ const AuthPage = () => {
     registerMutation.mutate(data);
   };
 
-  // Redirect if already logged in - moved after hook declarations
+  // Redirect if already logged in
   if (user) {
     setLocation("/");
     return null;
@@ -139,8 +137,14 @@ const AuthPage = () => {
                       className="w-full"
                       disabled={loginMutation.isPending}
                     >
-                      Sign In
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      {loginMutation.isPending ? (
+                        <span>Signing in...</span>
+                      ) : (
+                        <>
+                          <span>Sign In</span>
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
                     </Button>
                   </form>
                 </CardContent>
@@ -155,21 +159,6 @@ const AuthPage = () => {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
-                    <div>
-                      <Label>Username</Label>
-                      <div className="relative">
-                        <User className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <Input
-                          {...registerForm.register('username')}
-                          className="pl-10"
-                          placeholder="Choose a username"
-                        />
-                      </div>
-                      {registerForm.formState.errors.username && (
-                        <p className="text-red-500 text-sm mt-1">{registerForm.formState.errors.username.message}</p>
-                      )}
-                    </div>
-
                     <div>
                       <Label>Email Address</Label>
                       <div className="relative">

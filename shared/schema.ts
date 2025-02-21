@@ -5,10 +5,9 @@ import { z } from "zod";
 // Base user table for authentication
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
   userType: text("user_type").notNull(), // 'tenant' or 'landlord'
-  email: text("email").notNull(),
   phone: text("phone").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -85,7 +84,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true
 }).extend({
-  password: z.string().min(8, "Password must be at least 8 characters")
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: z.string().email("Invalid email address")
 });
 
 export const insertTenantProfileSchema = createInsertSchema(tenantProfiles).omit({
