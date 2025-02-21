@@ -3,7 +3,6 @@ import {
   Plus,
   Building,
   Users,
-  Link,
   Eye,
   Edit,
   Send,
@@ -30,6 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Link } from "wouter";
 
 const LandlordDashboard = () => {
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -176,9 +176,9 @@ const LandlordDashboard = () => {
                 <div>
                   <p className="text-muted-foreground">Active Properties</p>
                   <p className="text-2xl font-semibold mt-1">{properties.length}</p>
-                  <p className="text-sm text-primary hover:underline cursor-pointer">
+                  <Link href="/landlord/add-property" className="text-sm text-primary hover:underline cursor-pointer">
                     + Add Property
-                  </p>
+                  </Link>
                 </div>
                 <Building className="w-8 h-8 text-primary" />
               </div>
@@ -258,10 +258,12 @@ const LandlordDashboard = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Property Screening Pages</h2>
-            <Button variant="link" className="p-0 h-auto">
-              <Plus className="w-4 h-4 mr-1" />
-              Add Property
-            </Button>
+            <Link href="/landlord/add-property">
+              <Button variant="link" className="p-0 h-auto">
+                <Plus className="w-4 h-4 mr-1" />
+                Add Property
+              </Button>
+            </Link>
           </div>
           
           <Card>
