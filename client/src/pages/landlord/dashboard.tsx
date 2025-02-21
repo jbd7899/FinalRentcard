@@ -242,12 +242,16 @@ const LandlordDashboard = () => {
                   {generalPage.submissions} total submissions
                 </span>
                 <Button variant="link" className="p-0 h-auto">
-                  <Link className="w-4 h-4 mr-1" />
-                  Copy Screening Link
+                  <Link href={generalPage.link} className="flex items-center">
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    Copy Screening Link
+                  </Link>
                 </Button>
                 <Button variant="link" className="p-0 h-auto">
-                  <ExternalLink className="w-4 h-4 mr-1" />
-                  View Submissions
+                  <Link href={`/landlord/property/general/submissions`} className="flex items-center">
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    View Submissions
+                  </Link>
                 </Button>
               </div>
             </CardContent>
@@ -289,12 +293,16 @@ const LandlordDashboard = () => {
                           {property.submissions} submissions
                         </span>
                         <Button variant="link" className="p-0 h-auto">
-                          <Link className="w-4 h-4 mr-1" />
-                          Copy Screening Link
+                          <Link href={property.link} className="flex items-center">
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            Copy Screening Link
+                          </Link>
                         </Button>
                         <Button variant="link" className="p-0 h-auto">
-                          <ExternalLink className="w-4 h-4 mr-1" />
-                          View Submissions
+                          <Link href={`/landlord/property/${property.id}/submissions`} className="flex items-center">
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            View Submissions
+                          </Link>
                         </Button>
                       </div>
                     </CardContent>
