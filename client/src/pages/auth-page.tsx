@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useEffect } from 'react';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -33,11 +34,14 @@ const registerSchema = z.object({
   userType: z.enum(['tenant', 'landlord']),
 });
 
+type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
+
 const AuthPage = () => {
   const { loginMutation, registerMutation, user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const loginForm = useForm({
+  const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
@@ -45,7 +49,7 @@ const AuthPage = () => {
     },
   });
 
-  const registerForm = useForm({
+  const registerForm = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       email: '',
@@ -55,26 +59,27 @@ const AuthPage = () => {
     },
   });
 
-  const onLogin = (data: z.infer<typeof loginSchema>) => {
-    loginMutation.mutate({
-      email: data.email,
-      password: data.password,
-    });
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
+
+  const onLogin = async (data: LoginFormData) => {
+    await loginMutation.mutateAsync(data);
   };
 
-  const onRegister = (data: z.infer<typeof registerSchema>) => {
-    registerMutation.mutate(data);
+  const onRegister = async (data: RegisterFormData) => {
+    await registerMutation.mutateAsync(data);
   };
 
-  // Redirect if already logged in
+
   if (user) {
-    setLocation("/");
     return null;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
       <header className="px-4 py-3 border-b bg-white">
         <div className="max-w-xl mx-auto flex items-center">
           <Link href="/" className="flex items-center text-blue-600">
