@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPropertySchema } from "@shared/schema";
+import { properties, applications } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -40,9 +42,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Property routes
   app.get("/api/properties", async (req, res) => {
-    const landlordId = req.query.landlordId ? parseInt(req.query.landlordId as string) : undefined;
-    const properties = await storage.getProperties(landlordId);
-    res.json(properties);
+    try {
+      const landlordId = req.query.landlordId ? parseInt(req.query.landlordId as string) : undefined;
+      const propertiesData = await storage.getProperties(landlordId);
+
+      // Get application counts for each property
+      const applicationCounts = await Promise.all(
+        propertiesData.map(async (property) => {
+          const propertyApplications = await storage.getApplications(undefined, property.id);
+          return {
+            propertyId: property.id,
+            count: propertyApplications.length
+          };
+        })
+      );
+
+      // Combine property data with application counts
+      const propertiesWithCounts = propertiesData.map(property => ({
+        ...property,
+        applicationCount: applicationCounts.find(count => count.propertyId === property.id)?.count || 0
+      }));
+
+      res.json(propertiesWithCounts);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching properties", error });
+    }
   });
 
   // New route to get property by screening page slug
