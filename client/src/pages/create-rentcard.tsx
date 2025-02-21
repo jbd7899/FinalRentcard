@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { User, Home, CreditCard, CheckCircle, ArrowRight, Building2 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Form,
   FormControl,
@@ -18,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+// Extending the schema to match backend requirements
 const createRentCardSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -26,12 +29,13 @@ const createRentCardSchema = z.object({
   hasPets: z.enum(["yes", "no"]),
   currentEmployer: z.string().min(1, "Current employer is required"),
   yearsEmployed: z.string().min(1, "Years employed is required"),
-  monthlyIncome: z.string().min(1, "Monthly income is required"),
+  monthlyIncome: z.string().min(1, "Monthly income is required").transform(Number),
   currentAddress: z.string().min(1, "Current address is required"),
-  currentRent: z.string().min(1, "Current rent is required"),
+  currentRent: z.string().min(1, "Current rent is required").transform(Number),
   moveInDate: z.string().min(1, "Move-in date is required"),
-  maxRent: z.string().min(1, "Maximum rent is required"),
-  hasRoommates: z.enum(["yes", "no"])
+  maxRent: z.string().min(1, "Maximum rent is required").transform(Number),
+  hasRoommates: z.enum(["yes", "no"]),
+  creditScore: z.string().min(1, "Credit score is required").transform(Number)
 });
 
 type CreateRentCardForm = z.infer<typeof createRentCardSchema>;
@@ -39,6 +43,8 @@ type CreateRentCardForm = z.infer<typeof createRentCardSchema>;
 export default function CreateRentCard() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const [, setLocation] = useLocation();
+
   const form = useForm<CreateRentCardForm>({
     resolver: zodResolver(createRentCardSchema),
     defaultValues: {
@@ -54,7 +60,8 @@ export default function CreateRentCard() {
       currentRent: '',
       moveInDate: '',
       maxRent: '',
-      hasRoommates: "no"
+      hasRoommates: "no",
+      creditScore: ''
     }
   });
 
@@ -63,7 +70,7 @@ export default function CreateRentCard() {
       const stepFields = {
         1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
         2: ['currentAddress', 'currentRent', 'hasRoommates'],
-        3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate']
+        3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore']
       }[step] as Array<keyof CreateRentCardForm>;
 
       const stepData = Object.fromEntries(
@@ -71,7 +78,6 @@ export default function CreateRentCard() {
       );
 
       try {
-        // Validate only the current step's fields
         await createRentCardSchema.pick(
           stepFields.reduce((acc, field) => ({ ...acc, [field]: true }), {})
         ).parseAsync(stepData);
@@ -91,12 +97,16 @@ export default function CreateRentCard() {
       }
     } else {
       try {
-        // Here you would typically submit the form data to your backend
-        console.log('Form submitted:', data);
-        toast({
-          title: "RentCard Created!",
-          description: "Your RentCard has been successfully created.",
-        });
+        const response = await apiRequest('POST', '/api/tenant/rentcard', data);
+        if (response.ok) {
+          toast({
+            title: "RentCard Created!",
+            description: "Your RentCard has been successfully created.",
+          });
+          setLocation('/tenant/dashboard');
+        } else {
+          throw new Error('Failed to create RentCard');
+        }
       } catch (error) {
         toast({
           title: "Error",
@@ -323,7 +333,7 @@ export default function CreateRentCard() {
             <FormItem>
               <FormLabel>Years in Current Job</FormLabel>
               <FormControl>
-                <Input placeholder="Enter years" type="number" {...field} />
+                <Input placeholder="Enter years" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -343,27 +353,44 @@ export default function CreateRentCard() {
           )}
         />
       </div>
-      <FormField
-        control={form.control}
-        name="maxRent"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Maximum Rent</FormLabel>
-            <FormControl>
-              <Input placeholder="Enter amount" type="number" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="maxRent"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Maximum Rent Budget</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter amount" type="number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="creditScore"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Credit Score</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter credit score" type="number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
       <FormField
         control={form.control}
         name="moveInDate"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Move-in Date</FormLabel>
+            <FormLabel>Desired Move-in Date</FormLabel>
             <FormControl>
-              <Input placeholder="Enter date" type="date" {...field} />
+              <Input type="date" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
