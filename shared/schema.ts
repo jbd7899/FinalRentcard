@@ -63,6 +63,7 @@ export const properties = pgTable("properties", {
     icon: string;
     description: string;
   }[]>(),
+  viewCount: integer("view_count").default(0),
 });
 
 // Add explicit relation between properties and applications

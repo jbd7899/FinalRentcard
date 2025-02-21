@@ -76,7 +76,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
       }
-      res.json(property);
+
+      // Increment view count
+      await storage.incrementPropertyViewCount(property.id);
+
+      // Get updated property with new view count
+      const updatedProperty = await storage.getPropertyBySlug(req.params.slug);
+      res.json(updatedProperty);
     } catch (error) {
       res.status(500).json({ message: "Error fetching property details", error });
     }

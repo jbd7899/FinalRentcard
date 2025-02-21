@@ -148,6 +148,7 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
 
 interface PropertyWithCount extends Property {
   applicationCount?: number;
+  viewCount?: number;
 }
 
 const LandlordDashboard = () => {
@@ -169,6 +170,9 @@ const LandlordDashboard = () => {
     return sum + (property.applicationCount || 0);
   }, 0) || 0;
   const activeProperties = properties?.length || 0;
+  const totalViews = properties?.reduce((sum, property) => {
+    return sum + (property.viewCount || 0);
+  }, 0) || 0;
 
   // Request RentCard Modal
   const RequestModal = () => (
@@ -258,8 +262,8 @@ const LandlordDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground">Page Views</p>
-                  <p className="text-2xl font-semibold mt-1">-</p>
-                  <p className="text-sm text-muted-foreground">Coming soon</p>
+                  <p className="text-2xl font-semibold mt-1">{totalViews}</p>
+                  <p className="text-sm text-muted-foreground">Total screening page views</p>
                 </div>
                 <Eye className="w-8 h-8 text-primary" />
               </div>
