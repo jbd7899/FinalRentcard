@@ -17,8 +17,11 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import Navbar from "@/components/shared/navbar";
 import { QRCodeSVG } from 'qrcode.react';
+import { Property } from "@shared/schema";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -145,31 +148,21 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
 
 const LandlordDashboard = () => {
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const { logoutMutation } = useAuth();
+  const { logoutMutation, user } = useAuth();
 
-  // Demo data - Replace with API data later
-  const generalPage = {
-    link: "rentcard.com/screen/johndoe",
-    submissions: 12,
-    requirements: "Min credit: 650, Income: 3x rent, No evictions"
-  };
-
-  const properties = [
-    {
-      id: 1,
-      name: "123 Main Street Unit A",
-      requirements: "Min credit: 650, Income: 3x rent",
-      submissions: 4,
-      link: "rentcard.com/screen/123main-a"
+  // Fetch properties data
+  const { data: properties, isLoading: propertiesLoading } = useQuery({
+    queryKey: ['/api/landlord/properties'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/landlord/properties');
+      return response.json() as Promise<Property[]>;
     },
-    {
-      id: 2,
-      name: "456 Oak Avenue",
-      requirements: "Min credit: 700, Income: 3.5x rent",
-      submissions: 2,
-      link: "rentcard.com/screen/456oak"
-    }
-  ];
+    enabled: !!user?.id
+  });
+
+  // Get aggregate stats
+  const totalSubmissions = properties?.reduce((sum, p) => sum + (p.applications?.length || 0), 0) || 0;
+  const activeProperties = properties?.length || 0;
 
   // Request RentCard Modal
   const RequestModal = () => (
@@ -259,8 +252,8 @@ const LandlordDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground">Page Views</p>
-                  <p className="text-2xl font-semibold mt-1">124</p>
-                  <p className="text-sm text-green-600">↑ 12% this week</p>
+                  <p className="text-2xl font-semibold mt-1">-</p>
+                  <p className="text-sm text-muted-foreground">Coming soon</p>
                 </div>
                 <Eye className="w-8 h-8 text-primary" />
               </div>
@@ -272,10 +265,8 @@ const LandlordDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground">Total Submissions</p>
-                  <p className="text-2xl font-semibold mt-1">
-                    {generalPage.submissions + properties.reduce((sum, p) => sum + p.submissions, 0)}
-                  </p>
-                  <p className="text-sm text-green-600">↑ 3 new today</p>
+                  <p className="text-2xl font-semibold mt-1">{totalSubmissions}</p>
+                  <p className="text-sm text-muted-foreground">From all properties</p>
                 </div>
                 <Users className="w-8 h-8 text-primary" />
               </div>
@@ -287,7 +278,7 @@ const LandlordDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground">Active Properties</p>
-                  <p className="text-2xl font-semibold mt-1">{properties.length}</p>
+                  <p className="text-2xl font-semibold mt-1">{activeProperties}</p>
                   <Link href="/landlord/add-property" className="text-sm text-primary hover:underline cursor-pointer">
                     + Add Property
                   </Link>
@@ -330,34 +321,6 @@ const LandlordDashboard = () => {
           </Card>
         </div>
 
-        {/* General Screening Page */}
-        <div className="max-w-6xl mx-auto mb-8">
-          <h2 className="text-lg font-semibold mb-4">General Screening Page</h2>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <p className="text-muted-foreground mb-2">
-                    Your default screening page for all rental inquiries
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Requirements: {generalPage.requirements}
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon">
-                  <Edit className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <ScreeningActions
-                screeningLink={generalPage.link}
-                propertyId="general"
-                submissionCount={generalPage.submissions}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Property Screening Pages */}
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-4">
@@ -372,31 +335,49 @@ const LandlordDashboard = () => {
 
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-6">
-                {properties.map((property) => (
-                  <Card key={property.id}>
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="font-medium">{property.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {property.requirements}
-                          </p>
+              {propertiesLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : properties && properties.length > 0 ? (
+                <div className="space-y-6">
+                  {properties.map((property) => (
+                    <Card key={property.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="font-medium">{property.address}</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {property.bedrooms} bed • {property.bathrooms} bath • ${property.rent}/month
+                            </p>
+                          </div>
+                          <Link href={`/landlord/property/${property.id}/edit`}>
+                            <Button variant="ghost" size="icon">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </Link>
                         </div>
-                        <Button variant="ghost" size="icon">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
 
-                      <ScreeningActions
-                        screeningLink={property.link}
-                        propertyId={property.id}
-                        submissionCount={property.submissions}
-                      />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        <ScreeningActions
+                          screeningLink={property.screeningPageSlug || `property-${property.id}`}
+                          propertyId={property.id}
+                          submissionCount={property.applications?.length || 0}
+                        />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center p-8">
+                  <Building className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No properties added yet</p>
+                  <Link href="/landlord/add-property">
+                    <Button variant="link" className="mt-2">
+                      Add your first property
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
