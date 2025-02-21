@@ -108,7 +108,30 @@ MyRentCard simplifies the rental application process by allowing tenants to crea
 - `GET /api/landlord/applications` → List rental applications
 - `POST /api/landlord/screening` → Create screening page
 - `GET /api/landlord/screening/:id` → Get screening page
+- `GET /api/properties/screening/:slug` → Get property details by screening page slug
 - `POST /api/landlord/reference-form` → Submit reference form
+
+## Property Requirements Format
+
+Properties can define screening requirements that are displayed to potential tenants. Each requirement includes:
+- `icon`: Name of the Lucide icon to display (e.g., "DollarSign", "Shield", "CheckCircle")
+- `description`: Text description of the requirement
+
+Example:
+```json
+{
+  "requirements": [
+    {
+      "icon": "DollarSign",
+      "description": "Minimum monthly income of $7,500"
+    },
+    {
+      "icon": "Shield",
+      "description": "Credit score above 650"
+    }
+  ]
+}
+```
 
 ## AI Workflow in Replit
 
