@@ -1,4 +1,4 @@
-import { Building2, ArrowRight, Mail, Lock, Phone } from 'lucide-react';
+import { Building2, ArrowRight, Mail, Lock, Phone, User } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useForm } from 'react-hook-form';
@@ -29,6 +29,7 @@ const loginSchema = z.object({
 });
 
 const registerSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email(),
   password: z.string().min(6),
   phone: z.string().min(10),
@@ -54,6 +55,7 @@ const AuthPage = () => {
   const registerForm = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      username: '',
       email: '',
       password: '',
       phone: '',
@@ -157,7 +159,7 @@ const AuthPage = () => {
                       )}
                     </div>
 
-                    <Button 
+                    <Button
                       type="submit"
                       className="w-full"
                       disabled={loginMutation.isPending}
@@ -185,6 +187,21 @@ const AuthPage = () => {
                 <CardContent>
                   <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
                     <div>
+                      <Label>Username</Label>
+                      <div className="relative">
+                        <User className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Input
+                          type="text"
+                          {...registerForm.register('username')}
+                          className="pl-10"
+                          placeholder="Choose a username"
+                        />
+                      </div>
+                      {registerForm.formState.errors.username && (
+                        <p className="text-red-500 text-sm mt-1">{registerForm.formState.errors.username.message}</p>
+                      )}
+                    </div>
+                    <div>
                       <Label>Email Address</Label>
                       <div className="relative">
                         <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -199,7 +216,6 @@ const AuthPage = () => {
                         <p className="text-red-500 text-sm mt-1">{registerForm.formState.errors.email.message}</p>
                       )}
                     </div>
-
                     <div>
                       <Label>Phone Number</Label>
                       <div className="relative">
@@ -215,7 +231,6 @@ const AuthPage = () => {
                         <p className="text-red-500 text-sm mt-1">{registerForm.formState.errors.phone.message}</p>
                       )}
                     </div>
-
                     <div>
                       <Label>Password</Label>
                       <div className="relative">
@@ -231,7 +246,6 @@ const AuthPage = () => {
                         <p className="text-red-500 text-sm mt-1">{registerForm.formState.errors.password.message}</p>
                       )}
                     </div>
-
                     <div>
                       <Label>Account Type</Label>
                       <div className="grid grid-cols-2 gap-4 mt-1">
@@ -253,8 +267,7 @@ const AuthPage = () => {
                         </Button>
                       </div>
                     </div>
-
-                    <Button 
+                    <Button
                       type="submit"
                       className="w-full"
                       disabled={registerMutation.isPending}
