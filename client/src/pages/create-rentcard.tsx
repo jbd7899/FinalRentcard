@@ -12,11 +12,13 @@ import { useMutation } from "@tanstack/react-query";
 import { insertRentCardSchema, type InsertRentCard } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function CreateRentCard() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [, setLocation] = useLocation();
+  const { registerMutation, user } = useAuth();
 
   const form = useForm<InsertRentCard>({
     resolver: zodResolver(insertRentCardSchema),
@@ -47,7 +49,10 @@ export default function CreateRentCard() {
 
   const createRentCardMutation = useMutation({
     mutationFn: async (data: InsertRentCard) => {
-      const response = await apiRequest('POST', '/api/tenant/rentcard', data);
+      const response = await apiRequest('POST', '/api/tenant/rentcard', {
+        ...data,
+        userId: user?.id // Add userId if user is logged in
+      });
       if (!response.ok) {
         throw new Error('Failed to create RentCard');
       }
@@ -321,62 +326,114 @@ export default function CreateRentCard() {
     </div>
   );
 
-  const CompletionStep = () => (
-    <div className="text-center">
-      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-        <CheckCircle className="w-8 h-8 text-green-500" />
-      </div>
+  const CompletionStep = () => {
+    const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+    const formData = form.getValues();
 
-      <h2 className="text-2xl font-semibold mb-4">Your RentCard is Ready!</h2>
-      <p className="text-muted-foreground mb-8">
-        You're now ready to streamline your rental search. Your RentCard contains all the
-        information landlords need to fast-track your application.
-      </p>
+    const handleCreateAccount = async () => {
+      setIsCreatingAccount(true);
+      try {
+        await registerMutation.mutateAsync({
+          email: formData.email,
+          password: '', // This will be set in the registration modal
+          userType: 'tenant',
+          phone: formData.phone
+        });
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-card p-6 rounded-lg border">
-          <h3 className="font-medium mb-4">Share Now</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Start using your RentCard immediately without creating an account. Perfect for one-time use.
-          </p>
-          <Button className="w-full" variant="default">
-            Share RentCard Now
-          </Button>
+        // After successful registration, create RentCard
+        await createRentCardMutation.mutateAsync(formData);
+      } catch (error) {
+        console.error('Account creation error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create account. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCreatingAccount(false);
+      }
+    };
+
+    return (
+      <div className="text-center">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-8 h-8 text-green-500" />
         </div>
 
-        <div className="bg-primary/5 p-6 rounded-lg border">
-          <div className="bg-primary/10 text-primary text-sm px-2 py-1 rounded-full w-fit mb-2">
-            Recommended
-          </div>
-          <h3 className="font-medium mb-4">Create Free Account</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Save your RentCard and access premium features to make your rental search even easier.
-          </p>
-          <Button className="w-full">
-            Create Free Account
-          </Button>
-        </div>
-      </div>
+        <h2 className="text-2xl font-semibold mb-4">Your RentCard is Ready!</h2>
+        <p className="text-muted-foreground mb-8">
+          You're now ready to streamline your rental search. Your RentCard contains all the
+          information landlords need to fast-track your application.
+        </p>
 
-      <div className="bg-muted p-6 rounded-lg">
-        <h3 className="font-medium mb-4">How to Use Your RentCard</h3>
-        <div className="grid md:grid-cols-3 gap-4">
-          <div>
-            <p className="text-primary font-medium mb-2">1</p>
-            <p className="text-sm text-muted-foreground">Share your RentCard link with landlords via email or text</p>
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-card p-6 rounded-lg border">
+            <h3 className="font-medium mb-4">Share Now</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Start using your RentCard immediately without creating an account. Perfect for one-time use.
+            </p>
+            <Button 
+              className="w-full" 
+              variant="default"
+              onClick={() => createRentCardMutation.mutate(formData)}
+              disabled={createRentCardMutation.isPending}
+            >
+              {createRentCardMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sharing...
+                </>
+              ) : (
+                'Share RentCard Now'
+              )}
+            </Button>
           </div>
-          <div>
-            <p className="text-primary font-medium mb-2">2</p>
-            <p className="text-sm text-muted-foreground">Landlords review your complete rental profile instantly</p>
+
+          <div className="bg-primary/5 p-6 rounded-lg border">
+            <div className="bg-primary/10 text-primary text-sm px-2 py-1 rounded-full w-fit mb-2">
+              Recommended
+            </div>
+            <h3 className="font-medium mb-4">Create Free Account</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Save your RentCard and access premium features to make your rental search even easier.
+            </p>
+            <Button 
+              className="w-full"
+              onClick={handleCreateAccount}
+              disabled={isCreatingAccount || registerMutation.isPending}
+            >
+              {isCreatingAccount || registerMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                'Create Free Account'
+              )}
+            </Button>
           </div>
-          <div>
-            <p className="text-primary font-medium mb-2">3</p>
-            <p className="text-sm text-muted-foreground">Get pre-approved faster and secure your dream rental</p>
+        </div>
+
+        <div className="bg-muted p-6 rounded-lg">
+          <h3 className="font-medium mb-4">How to Use Your RentCard</h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-primary font-medium mb-2">1</p>
+              <p className="text-sm text-muted-foreground">Share your RentCard link with landlords via email or text</p>
+            </div>
+            <div>
+              <p className="text-primary font-medium mb-2">2</p>
+              <p className="text-sm text-muted-foreground">Landlords review your complete rental profile instantly</p>
+            </div>
+            <div>
+              <p className="text-primary font-medium mb-2">3</p>
+              <p className="text-sm text-muted-foreground">Get pre-approved faster and secure your dream rental</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background p-6">
