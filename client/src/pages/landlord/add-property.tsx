@@ -444,8 +444,8 @@ const AddPropertyForm = ({ onClose }: { onClose: () => void }) => {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-3xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg w-full max-w-3xl my-4">
         <div className="p-6 bg-blue-50 border-b border-blue-100">
           <div className="flex items-start gap-3 mb-4">
             <Info className="w-5 h-5 text-blue-600 mt-1" />
@@ -477,7 +477,7 @@ const AddPropertyForm = ({ onClose }: { onClose: () => void }) => {
         </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="flex justify-between items-center p-6 border-b">
+            <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white">
               <div className="flex items-center gap-3">
                 <Building2 className="w-6 h-6 text-blue-600" />
                 <h2 className="text-xl font-semibold">Add New Property</h2>
@@ -507,7 +507,7 @@ const AddPropertyForm = ({ onClose }: { onClose: () => void }) => {
                 </>
               )}
             </div>
-            <div className="flex justify-between p-6 border-t bg-gray-50">
+            <div className="flex justify-between p-6 border-t bg-gray-50 sticky bottom-0">
               <div className="flex gap-3">
                 {step > 1 ? (
                   <Button
