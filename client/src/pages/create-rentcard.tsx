@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { User, Home, CreditCard, CheckCircle, ArrowRight, Building2 } from 'lucide-react';
+import { User, Home, CreditCard, CheckCircle, ArrowRight, Building2, Loader2 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// Simplifying the schema to prevent transformation issues
+// Schema definition remains unchanged as it's properly defined
 const createRentCardSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -43,6 +43,7 @@ type CreateRentCardForm = z.infer<typeof createRentCardSchema>;
 export default function CreateRentCard() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setLocation] = useLocation();
 
   const form = useForm<CreateRentCardForm>({
@@ -65,40 +66,22 @@ export default function CreateRentCard() {
     }
   });
 
-  const handleNextStep = async (data: Partial<CreateRentCardForm>) => {
-    const stepValidation = {
-      1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
-      2: ['currentAddress', 'currentRent', 'hasRoommates'],
-      3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore']
-    }[step] as Array<keyof CreateRentCardForm>;
+  // Step field mapping
+  const stepFields = {
+    1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
+    2: ['currentAddress', 'currentRent', 'hasRoommates'],
+    3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore']
+  } as const;
 
-    const stepData = stepValidation.reduce((acc, field) => ({
-      ...acc,
-      [field]: data[field]
-    }), {});
+  const handleNextStep = async (data: CreateRentCardForm) => {
+    const fields = stepFields[step as keyof typeof stepFields];
+    const result = await form.trigger(fields as Array<keyof CreateRentCardForm>, {
+      shouldFocus: true,
+    });
 
-    let isValid = true;
-    for (const field of stepValidation) {
-      const value = data[field];
-      if (!value || value.toString().trim() === '') {
-        form.setError(field, {
-          type: 'required',
-          message: `${field} is required`
-        });
-        isValid = false;
-      }
+    if (result) {
+      setStep(step + 1);
     }
-
-    if (!isValid) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setStep(step + 1);
   };
 
   const onSubmit = async (data: CreateRentCardForm) => {
@@ -106,7 +89,8 @@ export default function CreateRentCard() {
       if (step < 4) {
         await handleNextStep(data);
       } else {
-        // Final submission
+        setIsSubmitting(true);
+        // Format data for API submission
         const formattedData = {
           ...data,
           monthlyIncome: Number(data.monthlyIncome),
@@ -133,6 +117,8 @@ export default function CreateRentCard() {
         description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -503,6 +489,7 @@ export default function CreateRentCard() {
                     type="button"
                     variant="outline"
                     onClick={() => setStep(step - 1)}
+                    disabled={isSubmitting}
                   >
                     Back
                   </Button>
@@ -511,17 +498,37 @@ export default function CreateRentCard() {
                   <Button
                     type="submit"
                     className="ml-auto"
+                    disabled={isSubmitting}
                   >
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        Next
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
                   </Button>
                 ) : (
                   <Button
                     type="submit"
                     className="ml-auto"
+                    disabled={isSubmitting}
                   >
-                    Complete
-                    <CheckCircle className="w-4 h-4 ml-2" />
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        Complete
+                        <CheckCircle className="w-4 h-4 ml-2" />
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
