@@ -97,6 +97,27 @@ export const screeningPages = pgTable("screening_pages", {
   isActive: boolean("is_active").default(true),
 });
 
+export const rentCards = pgTable("rent_cards", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  hasPets: boolean("has_pets").notNull(),
+  currentEmployer: text("current_employer").notNull(),
+  yearsEmployed: text("years_employed").notNull(),
+  monthlyIncome: integer("monthly_income").notNull(),
+  currentAddress: text("current_address").notNull(),
+  currentRent: integer("current_rent").notNull(),
+  moveInDate: text("move_in_date").notNull(),
+  maxRent: integer("max_rent").notNull(),
+  hasRoommates: boolean("has_roommates").notNull(),
+  creditScore: integer("credit_score").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true
@@ -139,6 +160,22 @@ export const insertScreeningPageSchema = createInsertSchema(screeningPages).omit
   })
 });
 
+export const insertRentCardSchema = createInsertSchema(rentCards)
+  .omit({
+    id: true,
+    userId: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    email: z.string().email("Invalid email address"),
+    phone: z.string().min(10, "Phone number must be at least 10 digits"),
+    monthlyIncome: z.string().transform(val => parseInt(val)),
+    currentRent: z.string().transform(val => parseInt(val)),
+    maxRent: z.string().transform(val => parseInt(val)),
+    creditScore: z.string().transform(val => parseInt(val)),
+  });
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type TenantProfile = typeof tenantProfiles.$inferSelect;
@@ -147,3 +184,5 @@ export type Property = typeof properties.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type ScreeningPage = typeof screeningPages.$inferSelect;
 export type InsertScreeningPage = z.infer<typeof insertScreeningPageSchema>;
+export type RentCard = typeof rentCards.$inferSelect;
+export type InsertRentCard = z.infer<typeof insertRentCardSchema>;
