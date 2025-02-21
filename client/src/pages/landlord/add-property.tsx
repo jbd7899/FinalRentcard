@@ -38,6 +38,33 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import Navbar from "@/components/shared/navbar";
+import { z } from "zod";
+
+// Add before the AddPropertyForm component
+const propertyFormSchema = z.object({
+  // Property Details
+  name: z.string().min(1, "Property name is required"),
+  type: z.string().min(1, "Property type is required"),
+  address: z.string().min(1, "Address is required"),
+  unit: z.string().optional(),
+  rent: z.string().min(1, "Rent amount is required"),
+  availableDate: z.string().min(1, "Available date is required"),
+  description: z.string().optional(),
+
+  // Requirements
+  creditScore: z.string(),
+  incomeMultiplier: z.string(),
+  noEvictions: z.boolean(),
+  cleanHistory: z.boolean(),
+
+  // Additional Settings
+  petPolicy: z.string(),
+  petDeposit: z.string().optional(),
+  leaseLength: z.string(),
+  securityDeposit: z.string().min(1, "Security deposit is required")
+});
+
+type PropertyFormValues = z.infer<typeof propertyFormSchema>;
 
 // Main page component wrapper
 const AddProperty = () => {
@@ -60,7 +87,8 @@ const AddPropertyForm = ({ onClose }: { onClose: () => void }) => {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  const form = useForm({
+  const form = useForm<PropertyFormValues>({
+    resolver: zodResolver(propertyFormSchema),
     defaultValues: {
       // Property Details
       name: '',
@@ -85,7 +113,7 @@ const AddPropertyForm = ({ onClose }: { onClose: () => void }) => {
     },
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PropertyFormValues) => {
     try {
       await apiRequest('POST', '/api/landlord/properties', data);
       queryClient.invalidateQueries({ queryKey: ['/api/landlord/properties'] });

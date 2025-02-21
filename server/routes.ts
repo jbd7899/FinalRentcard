@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import { insertPropertySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -44,9 +45,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(properties);
   });
 
-  app.post("/api/properties", requireAuth, async (req, res) => {
-    const property = await storage.createProperty(req.body);
-    res.status(201).json(property);
+  app.post("/api/landlord/properties", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertPropertySchema.parse(req.body);
+      const property = await storage.createProperty(validatedData);
+      res.status(201).json(property);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid property data", error });
+    }
   });
 
   // Application routes
