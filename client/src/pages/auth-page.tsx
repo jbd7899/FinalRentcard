@@ -59,7 +59,7 @@ const AuthPage = () => {
 
   const onLogin = (data: z.infer<typeof loginSchema>) => {
     loginMutation.mutate({
-      username: data.email,
+      email: data.email,
       password: data.password,
     });
   };
