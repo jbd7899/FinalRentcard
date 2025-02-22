@@ -43,13 +43,13 @@ export default function CreateRentCard() {
       hasPets: false,
       currentEmployer: '',
       yearsEmployed: '',
-      monthlyIncome: '',
+      monthlyIncome: 0,  
       currentAddress: '',
-      currentRent: '',
+      currentRent: 0,   
       moveInDate: '',
-      maxRent: '',
+      maxRent: 0,       
       hasRoommates: false,
-      creditScore: ''
+      creditScore: 0    
     }
   });
 
