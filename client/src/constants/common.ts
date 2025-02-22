@@ -46,4 +46,10 @@ export const MESSAGES = {
     UPDATED: 'Updated successfully.',
     DELETED: 'Deleted successfully.',
   },
+  APPLICATION_STATUS: {
+    PENDING: 'Under Review',
+    APPROVED: 'Approved',
+    REJECTED: 'Rejected',
+    CANCELLED: 'Cancelled',
+  },
 } as const;
