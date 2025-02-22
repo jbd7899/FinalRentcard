@@ -22,6 +22,7 @@ import PropertyScreeningPage from "@/pages/landlord/screening-page";
 
 // Tenant Pages
 import TenantDashboard from "@/pages/tenant/dashboard";
+import TenantRentCard from "@/pages/tenant/rentcard"; // Add import
 
 function Router() {
   return (
@@ -42,6 +43,7 @@ function Router() {
 
       {/* Tenant Routes */}
       <ProtectedRoute path="/tenant/dashboard" component={TenantDashboard} />
+      <ProtectedRoute path="/tenant/rentcard" component={TenantRentCard} /> {/* Add protected route */}
       <Route path="/create-rentcard" component={CreateRentCard} />
 
       <Route component={NotFound} />
