@@ -36,7 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// Add RentCard query hook with proper error handling and types
+// Updated useRentCard hook with better error handling
 const useRentCard = (userId?: number) => {
   return useQuery({
     queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
@@ -45,11 +45,16 @@ const useRentCard = (userId?: number) => {
         return null;
       }
       try {
-        const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
+        const response = await apiRequest("GET", API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString()));
         if (!response.ok) {
-          throw new Error(`Failed to fetch RentCard: ${response.statusText}`);
+          console.error('RentCard API error:', response.statusText);
+          return null;
         }
-        return response.json();
+        const text = await response.text();
+        if (!text) {
+          return null;
+        }
+        return JSON.parse(text) as RentCard;
       } catch (error) {
         console.error('RentCard fetch error:', error);
         return null;
