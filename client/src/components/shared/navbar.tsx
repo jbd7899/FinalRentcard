@@ -13,7 +13,7 @@ import {
   LogOut, 
   Home,
 } from "lucide-react";
-import { ROUTES } from "@/constants/routes";
+import { ROUTES } from "@/constants";
 
 export default function Navbar() {
   const { user, logoutMutation } = useAuth();
@@ -90,14 +90,15 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button 
-              className="px-6 cursor-pointer"
-              variant="default"
-              type="button"
-              onClick={() => setLocation(ROUTES.AUTH)}
-            >
-              Login
-            </Button>
+            <Link href="/auth">
+              <Button 
+                className="px-6 cursor-pointer"
+                variant="default"
+                type="button"
+              >
+                Login
+              </Button>
+            </Link>
           )}
         </div>
       </div>
