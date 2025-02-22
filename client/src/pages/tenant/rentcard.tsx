@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { toast } from "@/hooks/use-toast";
 import {
   Star,
   Building2,
@@ -10,11 +19,76 @@ import {
   CreditCard,
   CheckCircle,
   Share2,
-  Download
+  Download,
+  Copy,
+  Loader2,
+  Mail
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
+const ShareDialog = ({ isOpen, onClose, rentCardUrl }: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  rentCardUrl: string;
+}) => {
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(rentCardUrl);
+      toast({
+        title: "Copied!",
+        description: "RentCard link copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const shareViaEmail = () => {
+    const subject = "My RentCard Profile";
+    const body = `Check out my RentCard profile: ${rentCardUrl}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Share RentCard</DialogTitle>
+          <DialogDescription>
+            Share your RentCard profile with potential landlords
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              readOnly
+              value={rentCardUrl}
+              className="flex-1"
+            />
+            <Button onClick={copyToClipboard} variant="outline">
+              <Copy className="w-4 h-4" />
+            </Button>
+          </div>
+          <Button onClick={shareViaEmail} className="w-full">
+            <Mail className="w-4 h-4 mr-2" />
+            Share via Email
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 const RentCard = () => {
-  // Demo data
+  const [isSharing, setIsSharing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  // Demo data (unchanged)
   const rentCardData = {
     tenant: {
       name: "Sarah Johnson",
@@ -59,9 +133,59 @@ const RentCard = () => {
     ]
   };
 
+  const handleShare = () => {
+    setIsSharing(true);
+  };
+
+  const handleDownloadPDF = async () => {
+    setIsDownloading(true);
+    try {
+      const element = document.getElementById('rentcard-content');
+      if (!element) {
+        throw new Error('Content element not found');
+      }
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`${rentCardData.tenant.name.replace(' ', '_')}_RentCard.pdf`);
+
+      toast({
+        title: "Success!",
+        description: "RentCard downloaded successfully",
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Generate a demo URL for sharing
+  const rentCardUrl = `${window.location.origin}/rentcard/${rentCardData.tenant.name.toLowerCase().replace(' ', '-')}`;
+
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto" id="rentcard-content">
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
@@ -69,13 +193,25 @@ const RentCard = () => {
             <p className="text-muted-foreground">Member since {rentCardData.tenant.since}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={handleShare}
+              disabled={isDownloading}
+            >
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Download PDF
+            <Button 
+              variant="outline"
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              {isDownloading ? 'Downloading...' : 'Download PDF'}
             </Button>
           </div>
         </div>
@@ -126,7 +262,7 @@ const RentCard = () => {
                 <Briefcase className="w-5 h-5 text-primary" />
                 <h3 className="font-medium">Employment</h3>
               </div>
-              
+
               <div className="space-y-2">
                 <div>
                   <p className="text-sm text-muted-foreground">Current Position</p>
@@ -150,7 +286,7 @@ const RentCard = () => {
                 <CreditCard className="w-5 h-5 text-primary" />
                 <h3 className="font-medium">Financial Overview</h3>
               </div>
-              
+
               <div className="space-y-2">
                 <div>
                   <p className="text-sm text-muted-foreground">Annual Income</p>
@@ -205,6 +341,13 @@ const RentCard = () => {
           ))}
         </div>
       </div>
+
+      {/* Share Dialog */}
+      <ShareDialog 
+        isOpen={isSharing}
+        onClose={() => setIsSharing(false)}
+        rentCardUrl={rentCardUrl}
+      />
     </div>
   );
 };
