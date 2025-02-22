@@ -69,7 +69,8 @@ const useRentCard = (userId?: number) => {
   return useQuery({
     queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
     queryFn: async () => {
-      const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BASE}/${userId}`);
+      if (!userId) return null;
+      const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
       return response.json() as Promise<RentCard>;
     },
     enabled: !!userId,
