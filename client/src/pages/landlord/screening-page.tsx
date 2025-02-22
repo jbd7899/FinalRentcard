@@ -45,19 +45,18 @@ const useRentCard = (userId?: number) => {
         return null;
       }
       try {
-        const response = await apiRequest<RentCard>("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
+        const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch RentCard: ${response.statusText}`);
         }
-        const data = await response.json();
-        return data as RentCard;
+        return response.json();
       } catch (error) {
         console.error('RentCard fetch error:', error);
-        throw error;
+        return null;
       }
     },
     enabled: !!userId,
-    retry: 1,
+    retry: false,
     staleTime: 30000, // Cache for 30 seconds
   });
 };
@@ -301,7 +300,7 @@ const ScreeningPage = () => {
                         variant="outline"
                         onClick={() => window.location.href = '/create-rentcard'}
                       >
-                        Try Again
+                        Create RentCard
                       </Button>
                     </div>
                   ) : !rentCard ? (
