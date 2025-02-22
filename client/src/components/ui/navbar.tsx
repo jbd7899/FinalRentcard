@@ -27,7 +27,7 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Link href="/dashboard" className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+                <Link href="/tenant/dashboard" className="text-muted-foreground hover:text-foreground flex items-center gap-1">
                   <Home className="w-4 h-4" />
                   Dashboard
                 </Link>

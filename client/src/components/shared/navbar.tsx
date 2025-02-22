@@ -31,7 +31,7 @@ export default function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <Link href={user.userType === "landlord" ? "/landlord/dashboard" : "/dashboard"}>
+                <Link href={user.userType === "landlord" ? "/landlord/dashboard" : "/tenant/dashboard"}>
                   <DropdownMenuItem className="gap-2 cursor-pointer">
                     <User className="h-4 w-4" />
                     <span>Dashboard</span>
