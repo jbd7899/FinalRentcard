@@ -22,6 +22,13 @@ import { apiRequest } from "@/lib/queryClient";
 import Navbar from "@/components/shared/navbar";
 import { QRCodeSVG } from 'qrcode.react';
 import { Property, Application } from "@shared/schema";
+import { 
+  ROUTES, 
+  API_ENDPOINTS, 
+  CONFIG, 
+  MESSAGES,
+  USER_ROLES 
+} from '@/constants';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,13 +51,12 @@ interface ScreeningActionsProps {
   submissionCount: number;
 }
 
-// ScreeningActions Component
 const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, propertyId, submissionCount }) => {
   const [showQRCode, setShowQRCode] = useState(false);
   const [showCopyAlert, setShowCopyAlert] = useState(false);
 
   const getScreeningPageUrl = (slug: string) => {
-    return `${window.location.origin}/landlord/screening/${slug}`;
+    return `${window.location.origin}${ROUTES.LANDLORD.SCREENING}/${slug}`;
   };
 
   const handleCopyLink = async () => {
@@ -58,7 +64,7 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
       const fullUrl = getScreeningPageUrl(screeningLink);
       await navigator.clipboard.writeText(fullUrl);
       setShowCopyAlert(true);
-      setTimeout(() => setShowCopyAlert(false), 2000);
+      setTimeout(() => setShowCopyAlert(false), CONFIG.TOAST.DEFAULT_DURATION);
     } catch (err) {
       console.error('Failed to copy link:', err);
     }
@@ -70,7 +76,6 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
         {submissionCount} submissions
       </span>
 
-      {/* Copy Link Button */}
       <Button
         variant="link"
         className="p-0 h-auto flex items-center"
@@ -84,10 +89,9 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
         Copy Screening Link
       </Button>
 
-      {/* View Submissions Link */}
       <Button variant="link" className="p-0 h-auto">
         <Link
-          href={`/landlord/property/${propertyId}/submissions`}
+          href={`${ROUTES.LANDLORD.PROPERTY}/${propertyId}/submissions`}
           className="flex items-center"
         >
           <ExternalLink className="w-4 h-4 mr-1" />
@@ -95,7 +99,6 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
         </Link>
       </Button>
 
-      {/* QR Code Button */}
       <Button
         variant="link"
         className="p-0 h-auto"
@@ -105,7 +108,6 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
         View QR Code
       </Button>
 
-      {/* QR Code Dialog */}
       <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -134,11 +136,10 @@ const ScreeningActions: React.FC<ScreeningActionsProps> = ({ screeningLink, prop
         </DialogContent>
       </Dialog>
 
-      {/* Copy Success Alert */}
       {showCopyAlert && (
         <Alert className="fixed bottom-4 right-4 w-auto bg-green-50">
           <AlertDescription className="text-green-600">
-            Link copied to clipboard!
+            {MESSAGES.SUCCESS.COPIED}
           </AlertDescription>
         </Alert>
       )}
@@ -155,17 +156,15 @@ const LandlordDashboard = () => {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const { logoutMutation, user } = useAuth();
 
-  // Fetch properties data
   const { data: properties, isLoading: propertiesLoading } = useQuery({
-    queryKey: ['/api/properties'],
+    queryKey: [API_ENDPOINTS.PROPERTIES.BASE],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/properties');
+      const response = await apiRequest('GET', API_ENDPOINTS.PROPERTIES.BASE);
       return response.json() as Promise<PropertyWithCount[]>;
     },
     enabled: !!user?.id
   });
 
-  // Get aggregate stats
   const totalSubmissions = properties?.reduce((sum, property) => {
     return sum + (property.applicationCount || 0);
   }, 0) || 0;
@@ -174,7 +173,6 @@ const LandlordDashboard = () => {
     return sum + (property.viewCount || 0);
   }, 0) || 0;
 
-  // Request RentCard Modal
   const RequestModal = () => (
     <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
       <DialogContent className="sm:max-w-md">
@@ -229,10 +227,9 @@ const LandlordDashboard = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="p-6">
-        {/* Header */}
         <div className="max-w-6xl mx-auto flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Landlord Dashboard</h1>
+            <h1 className="text-2xl font-semibold">{CONFIG.APP.NAME} Dashboard</h1>
             <p className="text-muted-foreground">Manage your screening pages and applications</p>
           </div>
           <div className="flex gap-4">
@@ -255,7 +252,6 @@ const LandlordDashboard = () => {
           </div>
         </div>
 
-        {/* Quick Stats */}
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6">
@@ -289,7 +285,7 @@ const LandlordDashboard = () => {
                 <div>
                   <p className="text-muted-foreground">Active Properties</p>
                   <p className="text-2xl font-semibold mt-1">{activeProperties}</p>
-                  <Link href="/landlord/add-property" className="text-sm text-primary hover:underline cursor-pointer">
+                  <Link href={ROUTES.LANDLORD.ADD_PROPERTY} className="text-sm text-primary hover:underline cursor-pointer">
                     + Add Property
                   </Link>
                 </div>
@@ -299,7 +295,6 @@ const LandlordDashboard = () => {
           </Card>
         </div>
 
-        {/* Getting Started Guide */}
         <div className="max-w-6xl mx-auto mb-8">
           <Card className="bg-primary/5">
             <CardContent className="pt-6">
@@ -331,11 +326,10 @@ const LandlordDashboard = () => {
           </Card>
         </div>
 
-        {/* Property Screening Pages */}
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Property Screening Pages</h2>
-            <Link href="/landlord/add-property">
+            <Link href={ROUTES.LANDLORD.ADD_PROPERTY}>
               <Button variant="link" className="p-0 h-auto">
                 <Plus className="w-4 h-4 mr-1" />
                 Add Property
@@ -361,7 +355,7 @@ const LandlordDashboard = () => {
                               {property.bedrooms} bed • {property.bathrooms} bath • ${property.rent}/month
                             </p>
                           </div>
-                          <Link href={`/landlord/property/${property.id}/edit`}>
+                          <Link href={`${ROUTES.LANDLORD.PROPERTY}/${property.id}/edit`}>
                             <Button variant="ghost" size="icon">
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -381,7 +375,7 @@ const LandlordDashboard = () => {
                 <div className="text-center p-8">
                   <Building className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">No properties added yet</p>
-                  <Link href="/landlord/add-property">
+                  <Link href={ROUTES.LANDLORD.ADD_PROPERTY}>
                     <Button variant="link" className="mt-2">
                       Add your first property
                     </Button>
@@ -392,7 +386,6 @@ const LandlordDashboard = () => {
           </Card>
         </div>
 
-        {/* Request RentCard Modal */}
         <RequestModal />
       </div>
     </div>
