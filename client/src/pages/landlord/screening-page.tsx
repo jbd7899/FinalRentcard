@@ -39,30 +39,21 @@ import {
 // Updated useRentCard hook with better error handling
 const useRentCard = (userId?: number) => {
   return useQuery({
-    queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
+    queryKey: [API_ENDPOINTS.RENTCARDS.USER, userId],
     queryFn: async () => {
       if (!userId) {
         return null;
       }
       try {
-        const response = await apiRequest("GET", API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString()));
-        if (!response.ok) {
-          console.error('RentCard API error:', response.statusText);
-          return null;
-        }
-        const text = await response.text();
-        if (!text) {
-          return null;
-        }
-        return JSON.parse(text) as RentCard;
+        const response = await apiRequest("GET", API_ENDPOINTS.RENTCARDS.USER);
+        return response.json();
       } catch (error) {
         console.error('RentCard fetch error:', error);
-        return null;
+        throw error;
       }
     },
     enabled: !!userId,
-    retry: false,
-    staleTime: 30000, // Cache for 30 seconds
+    retry: 1
   });
 };
 
@@ -94,6 +85,11 @@ const usePropertyDetails = (slug: string) => {
   });
 };
 
+// Add type for pre-screening form data
+interface PreScreeningFormData {
+  monthlyIncome: number;
+  creditScore: number;
+}
 
 // Property Details Modal Component
 const PropertyDetailsModal = ({ isOpen, onClose, property }: PropertyDetailsModalProps) => {
@@ -196,10 +192,11 @@ const ScreeningPage = () => {
   });
 
   const preScreeningMutation = useMutation({
-    mutationFn: async (formData) => {
+    mutationFn: async (formData: PreScreeningFormData) => {
       const response = await apiRequest("POST", "/api/prescreening", {
+        monthlyIncome: formData.monthlyIncome,
+        creditScore: formData.creditScore,
         propertyId: property?.id,
-        ...formData,
       });
       return response.json();
     },
@@ -218,6 +215,13 @@ const ScreeningPage = () => {
       });
     },
   });
+
+  const handlePreScreeningSubmit = () => {
+    const monthlyIncome = parseInt((document.querySelector('input[placeholder="Enter your monthly income"]') as HTMLInputElement)?.value || '0');
+    const creditScore = parseInt((document.querySelector('input[placeholder="Enter your credit score"]') as HTMLInputElement)?.value || '0');
+    
+    preScreeningMutation.mutate({ monthlyIncome, creditScore });
+  };
 
   if (isLoading || rentCardLoading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error loading property details</div>;
@@ -296,11 +300,15 @@ const ScreeningPage = () => {
                       className="px-8 py-6 text-lg h-auto"
                     >
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Loading...
+                      Loading RentCard...
                     </Button>
                   ) : rentCardError ? (
                     <div className="text-center">
-                      <p className="text-red-500 mb-2">Error loading RentCard</p>
+                      <p className="text-red-500 mb-2">
+                        {rentCardError instanceof Error 
+                          ? rentCardError.message 
+                          : 'Unable to load RentCard'}
+                      </p>
                       <Button 
                         variant="outline"
                         onClick={() => window.location.href = '/create-rentcard'}
@@ -308,7 +316,7 @@ const ScreeningPage = () => {
                         Create RentCard
                       </Button>
                     </div>
-                  ) : !rentCard ? (
+                  ) : !rentCard?.id ? (
                     <Button 
                       variant="default"
                       size="lg"
@@ -385,7 +393,7 @@ const ScreeningPage = () => {
                     <Label>Credit Score Range</Label>
                     <Input type="number" placeholder="Enter your credit score" />
                   </div>
-                  <Button className="w-full" onClick={() => preScreeningMutation.mutate()}>
+                  <Button className="w-full" onClick={handlePreScreeningSubmit}>
                     Submit Pre-Screening
                   </Button>
                 </div>
