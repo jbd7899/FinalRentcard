@@ -45,6 +45,7 @@ export const MESSAGES = {
     CREATED: 'Created successfully.',
     UPDATED: 'Updated successfully.',
     DELETED: 'Deleted successfully.',
+    COPIED: 'Link copied to clipboard!',  // Added new message
   },
   APPLICATION_STATUS: {
     PENDING: 'Under Review',
