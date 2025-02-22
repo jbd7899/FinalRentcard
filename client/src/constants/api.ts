@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     BASE: `${API_BASE}/applications`,
     BY_ID: (id: string) => `${API_BASE}/applications/${id}`,
     STATUS: (id: string) => `${API_BASE}/applications/${id}/status`,
+    CREATE: `${API_BASE}/applications`,
   },
 
   // Rentcard endpoints
