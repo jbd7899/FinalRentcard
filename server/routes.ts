@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema } from "@shared/schema";
+import { insertPropertySchema, insertApplicationSchema } from "@shared/schema";
 import { properties, applications } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
@@ -100,25 +100,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Application routes
   app.get("/api/applications", requireAuth, async (req, res) => {
-    const { tenantId, propertyId } = req.query;
-    const applications = await storage.getApplications(
-      tenantId ? parseInt(tenantId as string) : undefined,
-      propertyId ? parseInt(propertyId as string) : undefined
-    );
-    res.json(applications);
+    try {
+      const { tenantId, propertyId } = req.query;
+      const applications = await storage.getApplications(
+        tenantId ? parseInt(tenantId as string) : undefined,
+        propertyId ? parseInt(propertyId as string) : undefined
+      );
+      res.json(applications);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching applications", error });
+    }
   });
 
   app.post("/api/applications", requireAuth, async (req, res) => {
-    const application = await storage.createApplication(req.body);
-    res.status(201).json(application);
+    try {
+      // Validate the user has a RentCard
+      const rentCard = await storage.getRentCard(req.user.id);
+      if (!rentCard) {
+        return res.status(400).json({ message: "Please create your RentCard first" });
+      }
+
+      // Validate the application data
+      const validatedData = insertApplicationSchema.parse({
+        ...req.body,
+        tenantId: req.user.id
+      });
+
+      // Create the application
+      const application = await storage.createApplication(validatedData);
+      res.status(201).json(application);
+    } catch (error) {
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Failed to create application",
+        error 
+      });
+    }
   });
 
   app.patch("/api/applications/:id/status", requireAuth, async (req, res) => {
-    const application = await storage.updateApplicationStatus(
-      parseInt(req.params.id),
-      req.body.status
-    );
-    res.json(application);
+    try {
+      const application = await storage.updateApplicationStatus(
+        parseInt(req.params.id),
+        req.body.status
+      );
+      res.json(application);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating application status", error });
+    }
   });
 
   const httpServer = createServer(app);

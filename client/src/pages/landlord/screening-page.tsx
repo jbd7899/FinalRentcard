@@ -64,6 +64,18 @@ const usePropertyDetails = (slug: string) => {
   });
 };
 
+// Add RentCard query hook
+const useRentCard = (userId?: number) => {
+  return useQuery({
+    queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BASE}/${userId}`);
+      return response.json() as Promise<RentCard>;
+    },
+    enabled: !!userId,
+  });
+};
+
 // Property Details Modal Component
 const PropertyDetailsModal = ({ isOpen, onClose, property }: PropertyDetailsModalProps) => {
   if (!isOpen || !property) return null;
@@ -123,11 +135,16 @@ const ScreeningPage = () => {
   const queryClient = useQueryClient();
 
   const { data: property, isLoading, error } = usePropertyDetails(slug || '');
+  const { data: rentCard, isLoading: rentCardLoading } = useRentCard(user?.id);
 
   const rentCardMutation = useMutation({
     mutationFn: async () => {
+      if (!rentCard) {
+        throw new Error("Please create your RentCard first");
+      }
       const response = await apiRequest("POST", API_ENDPOINTS.APPLICATIONS.CREATE, {
         propertyId: property.id,
+        tenantId: user?.id,
         status: "pending"
       });
       return response.json();
@@ -142,7 +159,7 @@ const ScreeningPage = () => {
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to share RentCard. Please try again.",
+        description: error.message || "Failed to share RentCard. Please try again.",
         variant: "destructive",
       });
     },
@@ -172,7 +189,7 @@ const ScreeningPage = () => {
     },
   });
 
-  if (isLoading) return <div className="p-8 text-center">Loading...</div>;
+  if (isLoading || rentCardLoading) return <div className="p-8 text-center">Loading...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Error loading property details</div>;
   if (!property) return <div className="p-8 text-center">Property not found</div>;
 
@@ -242,24 +259,36 @@ const ScreeningPage = () => {
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-3">
-                  <Button 
-                    onClick={() => rentCardMutation.mutate()}
-                    disabled={rentCardMutation.isPending}
-                    size="lg"
-                    className="px-8 py-6 text-lg h-auto"
-                  >
-                    {rentCardMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Sharing...
-                      </>
-                    ) : (
-                      <>
-                        Share RentCard
-                        <ArrowRight className="w-5 h-5 ml-2" />
-                      </>
-                    )}
-                  </Button>
+                  {!rentCard ? (
+                    <Button 
+                      variant="default"
+                      size="lg"
+                      className="px-8 py-6 text-lg h-auto"
+                      onClick={() => window.location.href = '/create-rentcard'}
+                    >
+                      Create RentCard
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => rentCardMutation.mutate()}
+                      disabled={rentCardMutation.isPending}
+                      size="lg"
+                      className="px-8 py-6 text-lg h-auto"
+                    >
+                      {rentCardMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Sharing...
+                        </>
+                      ) : (
+                        <>
+                          Share RentCard
+                          <ArrowRight className="w-5 h-5 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  )}
                   <p className="text-sm text-muted-foreground">
                     {property.applications?.length || 0} RentCards shared
                   </p>
