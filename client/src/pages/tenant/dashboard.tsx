@@ -14,6 +14,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from "@/hooks/use-auth";
 import Navbar from "@/components/shared/navbar";
+import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus } from "@/constants";
+import { Link } from "wouter";
+
+const generateRoute = {
+  application: (id: string) => `/tenant/applications/${id}`
+};
 
 const TenantDashboard = () => {
   const { logoutMutation } = useAuth();
@@ -31,7 +37,7 @@ const TenantDashboard = () => {
       id: 1,
       property: "123 Main Street Unit A",
       landlord: "John Smith",
-      status: "under_review",
+      status: APPLICATION_STATUS.PENDING as ApplicationStatus,
       submittedAt: "2025-02-18T10:30:00",
       requirements: {
         creditScore: "✓ Meets requirement",
@@ -83,10 +89,12 @@ const TenantDashboard = () => {
                     </span>
                   </div>
                 </div>
-                <Button>
-                  <FileText className="w-4 h-4 mr-2" />
-                  View RentCard
-                </Button>
+                <Link href={ROUTES.TENANT.RENTCARD}>
+                  <Button>
+                    <FileText className="w-4 h-4 mr-2" />
+                    View RentCard
+                  </Button>
+                </Link>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -133,7 +141,9 @@ const TenantDashboard = () => {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-medium">Active Applications</h2>
-              <Button variant="outline">View All Applications</Button>
+              <Link href={ROUTES.TENANT.APPLICATIONS}>
+                <Button variant="outline">View All Applications</Button>
+              </Link>
             </div>
 
             <div className="space-y-4">
@@ -146,7 +156,7 @@ const TenantDashboard = () => {
                         <p className="text-sm text-muted-foreground">Applied to {app.landlord}'s property</p>
                       </div>
                       <Badge variant="secondary">
-                        {app.status === 'under_review' ? 'Under Review' : app.status}
+                        {app.status === APPLICATION_STATUS.PENDING ? MESSAGES.APPLICATION_STATUS.PENDING : app.status}
                       </Badge>
                     </div>
 
@@ -161,10 +171,12 @@ const TenantDashboard = () => {
                       ))}
                     </div>
 
-                    <Button variant="outline" className="w-full">
-                      View Application Status
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    <Link href={generateRoute.application(app.id.toString())}>
+                      <Button variant="outline" className="w-full">
+                        View Application Status
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               ))}
