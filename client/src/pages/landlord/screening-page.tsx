@@ -38,12 +38,10 @@ import {
 
 // Add RentCard query hook
 const useRentCard = (userId?: number) => {
-  console.log('useRentCard hook called with userId:', userId);
   return useQuery({
     queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
     queryFn: async () => {
       if (!userId) {
-        console.log('No userId provided to useRentCard');
         return null;
       }
       const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
@@ -51,7 +49,6 @@ const useRentCard = (userId?: number) => {
         throw new Error('Failed to fetch RentCard');
       }
       const data = await response.json();
-      console.log('RentCard API response:', data);
       return data as RentCard;
     },
     enabled: !!userId,
@@ -145,12 +142,8 @@ const ScreeningPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  console.log('Current user:', user);
-
   const { data: property, isLoading, error } = usePropertyDetails(slug || '');
   const { data: rentCard, isLoading: rentCardLoading } = useRentCard(user?.id);
-
-  console.log('RentCard data:', rentCard);
 
   const rentCardMutation = useMutation({
     mutationFn: async () => {
@@ -274,7 +267,16 @@ const ScreeningPage = () => {
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-3">
-                  {(!rentCard && !rentCardLoading) ? (
+                  {rentCardLoading ? (
+                    <Button 
+                      disabled
+                      size="lg"
+                      className="px-8 py-6 text-lg h-auto"
+                    >
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Loading...
+                    </Button>
+                  ) : !rentCard ? (
                     <Button 
                       variant="default"
                       size="lg"
