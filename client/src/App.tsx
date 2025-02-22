@@ -41,7 +41,7 @@ function Router() {
       <Route path="/samples/screening-page" component={SampleScreeningPage} />
 
       {/* Tenant Routes */}
-      <ProtectedRoute path="/dashboard" component={TenantDashboard} />
+      <ProtectedRoute path="/tenant/dashboard" component={TenantDashboard} />
       <Route path="/create-rentcard" component={CreateRentCard} />
 
       <Route component={NotFound} />
