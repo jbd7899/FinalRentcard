@@ -43,13 +43,13 @@ export default function CreateRentCard() {
       hasPets: false,
       currentEmployer: '',
       yearsEmployed: '',
-      monthlyIncome: 0,  
+      monthlyIncome: '',  // Change back to string since schema handles conversion
       currentAddress: '',
-      currentRent: 0,   
+      currentRent: '',    // Change back to string since schema handles conversion
       moveInDate: '',
-      maxRent: 0,       
+      maxRent: '',        // Change back to string since schema handles conversion
       hasRoommates: false,
-      creditScore: 0    
+      creditScore: ''     // Change back to string since schema handles conversion
     }
   });
 
