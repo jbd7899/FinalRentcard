@@ -38,17 +38,20 @@ import {
 
 // Add RentCard query hook
 const useRentCard = (userId?: number) => {
-  console.log('useRentCard hook called with userId:', userId); // Debug log
+  console.log('useRentCard hook called with userId:', userId);
   return useQuery({
     queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
     queryFn: async () => {
       if (!userId) {
-        console.log('No userId provided to useRentCard'); // Debug log
+        console.log('No userId provided to useRentCard');
         return null;
       }
       const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch RentCard');
+      }
       const data = await response.json();
-      console.log('RentCard API response:', data); // Debug log
+      console.log('RentCard API response:', data);
       return data as RentCard;
     },
     enabled: !!userId,
@@ -142,12 +145,12 @@ const ScreeningPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  console.log('Current user:', user); // Debug log
+  console.log('Current user:', user);
 
   const { data: property, isLoading, error } = usePropertyDetails(slug || '');
   const { data: rentCard, isLoading: rentCardLoading } = useRentCard(user?.id);
 
-  console.log('RentCard data:', rentCard); // Debug log
+  console.log('RentCard data:', rentCard);
 
   const rentCardMutation = useMutation({
     mutationFn: async () => {
@@ -271,7 +274,7 @@ const ScreeningPage = () => {
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-3">
-                  {!rentCard ? (
+                  {(!rentCard && !rentCardLoading) ? (
                     <Button 
                       variant="default"
                       size="lg"
