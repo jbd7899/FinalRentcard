@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
     BASE: `${API_BASE}/rentcards`,
     BY_ID: (id: string) => `${API_BASE}/rentcards/${id}`,
     GENERATE: `${API_BASE}/rentcards/generate`,
+    USER: `${API_BASE}/rentcards/user`,
   },
 } as const;
 
