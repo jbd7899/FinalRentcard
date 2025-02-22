@@ -19,8 +19,11 @@ import {
   Bath,
   Car,
   CalendarDays,
-  LucideIcon
+  LucideIcon,
+  Loader2
 } from "lucide-react";
+import type { RentCard } from "@shared/schema";
+import { API_ENDPOINTS, CONFIG } from "@/constants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -123,23 +126,23 @@ const ScreeningPage = () => {
 
   const rentCardMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/property-interests", {
-        propertyId: property?.id,
-        userId: user?.id,
+      const response = await apiRequest("POST", API_ENDPOINTS.APPLICATIONS.CREATE, {
+        propertyId: property.id,
+        status: "pending"
       });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/properties/screening", slug] });
       toast({
-        title: "Success",
-        description: "Your RentCard has been shared with the landlord.",
+        title: "Success!",
+        description: "Your RentCard has been shared with the landlord. They will review it shortly.",
       });
     },
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to share RentCard. Please try again.",
         variant: "destructive",
       });
     },
@@ -209,15 +212,15 @@ const ScreeningPage = () => {
         <Card>
           {/* RentCard Section */}
           {user?.userType === 'tenant' && (
-            <CardContent className="pt-6 bg-primary/5">
+            <CardContent className="pt-6 bg-primary/5 border-b">
               <div className="flex items-center gap-2 mb-4">
                 <Star className="w-6 h-6 text-primary fill-current" />
                 <h2 className="text-2xl font-semibold">Express Interest with RentCard</h2>
               </div>
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-8 mb-6">
                 <div className="flex-1">
                   <p className="text-lg text-muted-foreground mb-4">
-                    Share your verified rental profile instantly - no forms needed
+                    Share your verified rental profile instantly with the landlord - no forms needed
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center gap-3 text-muted-foreground">
@@ -228,16 +231,42 @@ const ScreeningPage = () => {
                       <Shield className="w-5 h-5 text-primary" />
                       <span>Privacy protected</span>
                     </div>
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                      <span>Instant sharing</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-muted-foreground">
+                      <Users className="w-5 h-5 text-primary" />
+                      <span>Verified profile</span>
+                    </div>
                   </div>
                 </div>
-                <Button 
-                  onClick={() => rentCardMutation.mutate()}
-                  disabled={rentCardMutation.isPending}
-                  className="px-8"
-                >
-                  Share RentCard
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
+                <div className="flex flex-col items-center gap-3">
+                  <Button 
+                    onClick={() => rentCardMutation.mutate()}
+                    disabled={rentCardMutation.isPending}
+                    size="lg"
+                    className="px-8 py-6 text-lg h-auto"
+                  >
+                    {rentCardMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Sharing...
+                      </>
+                    ) : (
+                      <>
+                        Share RentCard
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    {property.applications?.length || 0} RentCards shared
+                  </p>
+                </div>
+              </div>
+              <div className="text-sm text-muted-foreground text-center pt-4 border-t">
+                ★★★★★ "Super quick and professional way to share my rental profile!" - Recent tenant
               </div>
             </CardContent>
           )}
