@@ -36,7 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// Add RentCard query hook
+// Add RentCard query hook with proper error handling and types
 const useRentCard = (userId?: number) => {
   return useQuery({
     queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
@@ -44,14 +44,21 @@ const useRentCard = (userId?: number) => {
       if (!userId) {
         return null;
       }
-      const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch RentCard');
+      try {
+        const response = await apiRequest<RentCard>("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch RentCard: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return data as RentCard;
+      } catch (error) {
+        console.error('RentCard fetch error:', error);
+        throw error;
       }
-      const data = await response.json();
-      return data as RentCard;
     },
     enabled: !!userId,
+    retry: 1,
+    staleTime: 30000, // Cache for 30 seconds
   });
 };
 
@@ -143,18 +150,28 @@ const ScreeningPage = () => {
   const queryClient = useQueryClient();
 
   const { data: property, isLoading, error } = usePropertyDetails(slug || '');
-  const { data: rentCard, isLoading: rentCardLoading } = useRentCard(user?.id);
+  const { 
+    data: rentCard, 
+    isLoading: rentCardLoading, 
+    error: rentCardError 
+  } = useRentCard(user?.id);
 
   const rentCardMutation = useMutation({
     mutationFn: async () => {
       if (!rentCard) {
         throw new Error("Please create your RentCard first");
       }
+      if (!property?.id) {
+        throw new Error("Property information is missing");
+      }
       const response = await apiRequest("POST", API_ENDPOINTS.APPLICATIONS.CREATE, {
         propertyId: property.id,
         tenantId: user?.id,
         status: "pending"
       });
+      if (!response.ok) {
+        throw new Error("Failed to submit application");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -165,6 +182,7 @@ const ScreeningPage = () => {
       });
     },
     onError: (error: Error) => {
+      console.error('RentCard sharing error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to share RentCard. Please try again.",
@@ -276,6 +294,16 @@ const ScreeningPage = () => {
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       Loading...
                     </Button>
+                  ) : rentCardError ? (
+                    <div className="text-center">
+                      <p className="text-red-500 mb-2">Error loading RentCard</p>
+                      <Button 
+                        variant="outline"
+                        onClick={() => window.location.href = '/create-rentcard'}
+                      >
+                        Try Again
+                      </Button>
+                    </div>
                   ) : !rentCard ? (
                     <Button 
                       variant="default"
@@ -307,7 +335,7 @@ const ScreeningPage = () => {
                     </Button>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    {property.applications?.length || 0} RentCards shared
+                    {property?.applications?.length || 0} RentCards shared
                   </p>
                 </div>
               </div>
