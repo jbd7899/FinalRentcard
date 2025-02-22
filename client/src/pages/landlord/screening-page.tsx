@@ -36,6 +36,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Add RentCard query hook
+const useRentCard = (userId?: number) => {
+  console.log('useRentCard hook called with userId:', userId); // Debug log
+  return useQuery({
+    queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
+    queryFn: async () => {
+      if (!userId) {
+        console.log('No userId provided to useRentCard'); // Debug log
+        return null;
+      }
+      const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
+      const data = await response.json();
+      console.log('RentCard API response:', data); // Debug log
+      return data as RentCard;
+    },
+    enabled: !!userId,
+  });
+};
+
 // Icon mapping
 const iconMap: Record<string, LucideIcon> = {
   Shield,
@@ -64,18 +83,6 @@ const usePropertyDetails = (slug: string) => {
   });
 };
 
-// Add RentCard query hook
-const useRentCard = (userId?: number) => {
-  return useQuery({
-    queryKey: [API_ENDPOINTS.RENTCARDS.BASE, userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      const response = await apiRequest("GET", `${API_ENDPOINTS.RENTCARDS.BY_ID(userId.toString())}`);
-      return response.json() as Promise<RentCard>;
-    },
-    enabled: !!userId,
-  });
-};
 
 // Property Details Modal Component
 const PropertyDetailsModal = ({ isOpen, onClose, property }: PropertyDetailsModalProps) => {
@@ -135,8 +142,12 @@ const ScreeningPage = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  console.log('Current user:', user); // Debug log
+
   const { data: property, isLoading, error } = usePropertyDetails(slug || '');
   const { data: rentCard, isLoading: rentCardLoading } = useRentCard(user?.id);
+
+  console.log('RentCard data:', rentCard); // Debug log
 
   const rentCardMutation = useMutation({
     mutationFn: async () => {
