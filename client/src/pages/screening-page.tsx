@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
@@ -6,7 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertScreeningPageSchema, type InsertScreeningPage } from "@shared/schema";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 import {
   Form,
   FormControl,
@@ -27,13 +27,13 @@ import {
   ArrowRight,
   Copy,
 } from "lucide-react";
+import { MESSAGES, VALIDATION, ROUTES } from '@/constants';
 
 export default function ScreeningPage() {
-  const [step, setStep] = useState(1);
-  const [screeningPageUrl, setScreeningPageUrl] = useState<string>();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user } = useAuthStore();
+  const { screening: { currentStep, screeningPageUrl, setScreeningStep, setScreeningUrl } } = useUIStore();
 
   const form = useForm<InsertScreeningPage>({
     resolver: zodResolver(insertScreeningPageSchema),
@@ -42,8 +42,8 @@ export default function ScreeningPage() {
       contactName: "",
       businessEmail: "",
       screeningCriteria: {
-        minCreditScore: 650,
-        minMonthlyIncome: 3000,
+        minCreditScore: VALIDATION.SCREENING.CREDIT_SCORE.MIN,
+        minMonthlyIncome: VALIDATION.SCREENING.MONTHLY_INCOME.MIN,
         noEvictions: true,
         cleanRentalHistory: true,
       },
@@ -53,31 +53,34 @@ export default function ScreeningPage() {
   const createScreeningPage = useMutation({
     mutationFn: async (data: InsertScreeningPage) => {
       const res = await apiRequest("POST", "/api/screening", data);
+      if (!res.ok) {
+        throw new Error(MESSAGES.ERRORS.GENERAL);
+      }
       return res.json();
     },
     onSuccess: (data) => {
-      setStep(3);
-      setScreeningPageUrl(data.url);
+      setScreeningStep(3);
+      setScreeningUrl(data.url);
       queryClient.invalidateQueries({ queryKey: ["/api/screening"] });
       toast({
-        title: "Success!",
-        description: "Your screening page has been created.",
+        title: MESSAGES.TOAST.PROPERTY.CREATE_SUCCESS.TITLE,
+        description: MESSAGES.TOAST.PROPERTY.CREATE_SUCCESS.DESCRIPTION,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message,
+        title: MESSAGES.ERRORS.GENERAL,
+        description: error.message || MESSAGES.ERRORS.GENERAL,
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = form.handleSubmit((data) => {
-    if (step === 2) {
+    if (currentStep === 2) {
       createScreeningPage.mutate(data);
     } else {
-      setStep(step + 1);
+      setScreeningStep(currentStep + 1);
     }
   });
 
@@ -85,7 +88,7 @@ export default function ScreeningPage() {
     <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
       <div 
         className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-        style={{ width: `${(step / 3) * 100}%` }}
+        style={{ width: `${(currentStep / 3) * 100}%` }}
       />
     </div>
   );
@@ -246,7 +249,7 @@ export default function ScreeningPage() {
               if (screeningPageUrl) {
                 navigator.clipboard.writeText(screeningPageUrl);
                 toast({
-                  description: "URL copied to clipboard",
+                  description: MESSAGES.SUCCESS.COPIED,
                 });
               }
             }}
@@ -256,36 +259,13 @@ export default function ScreeningPage() {
         </div>
       </div>
 
-      {!user && (
-        <div className="bg-blue-50 p-6 rounded-lg border border-blue-100 mb-8">
-          <div className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full w-fit mx-auto mb-2">
-            Recommended Next Step
-          </div>
-          <h3 className="font-medium mb-2">Create a Free Account</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Sign up to access additional features and manage your screening page more effectively.
-          </p>
-          <div className="text-left space-y-2 mb-6">
-            {[
-              "Track and manage applicant responses",
-              "Create multiple screening pages",
-              "Customize screening criteria",
-              "Access detailed analytics",
-            ].map((text, i) => (
-              <div key={i} className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-blue-600 mr-2" />
-                <span>{text}</span>
-              </div>
-            ))}
-          </div>
-          <Button className="w-full" onClick={() => setLocation("/auth")}>
-            Create Account
-          </Button>
-          <p className="text-xs text-center text-gray-500 mt-3">
-            No credit card required
-          </p>
-        </div>
-      )}
+      <Button
+        onClick={() => setLocation(ROUTES.LANDLORD.DASHBOARD)}
+        className="w-full"
+      >
+        Go to Dashboard
+        <ArrowRight className="w-4 h-4 ml-2" />
+      </Button>
     </div>
   );
 
@@ -329,26 +309,26 @@ export default function ScreeningPage() {
           <form onSubmit={onSubmit} className="bg-white rounded-lg shadow p-8">
             <StepIndicator />
 
-            {step === 1 && <Step1 />}
-            {step === 2 && <Step2 />}
-            {step === 3 && <Step3 />}
+            {currentStep === 1 && <Step1 />}
+            {currentStep === 2 && <Step2 />}
+            {currentStep === 3 && <Step3 />}
 
             <div className="flex justify-between mt-8">
-              {step > 1 && step < 3 && (
+              {currentStep > 1 && currentStep < 3 && (
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => setStep(step - 1)}
+                  onClick={() => setScreeningStep(currentStep - 1)}
                 >
                   Back
                 </Button>
               )}
-              {step < 3 && (
+              {currentStep < 3 && (
                 <Button
                   type="submit"
-                  className={step === 1 ? "ml-auto" : ""}
+                  className={currentStep === 1 ? "ml-auto" : ""}
                 >
-                  {step === 2 ? "Create Screening Page" : "Next"}
+                  {currentStep === 2 ? "Create Screening Page" : "Next"}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               )}

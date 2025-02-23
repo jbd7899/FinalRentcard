@@ -12,6 +12,8 @@ import {
   ExternalLink,
   Archive
 } from 'lucide-react';
+import { useUIStore } from '@/stores/uiStore';
+import { apiRequest } from '@/lib/queryClient';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,15 +26,89 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { 
+  APPLICATION_STATUS, 
+  APPLICATION_LABELS, 
+  MESSAGES,
+  type ApplicationStatus 
+} from '@/constants';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+
+type StatusFilter = ApplicationStatus | 'all';
+
+interface Application {
+  id: number;
+  tenant: {
+    name: string;
+    email: string;
+    phone: string;
+    creditScore: string;
+    income: string;
+    score: number;
+    references: Array<{
+      name: string;
+      property: string;
+      dates: string;
+      rating: number;
+      payment: keyof typeof APPLICATION_LABELS.PAYMENT_HISTORY;
+      propertyCondition: keyof typeof APPLICATION_LABELS.PROPERTY_CONDITION;
+      comments: string;
+      verified: boolean;
+    }>;
+    employment: string;
+    moveIn: string;
+  };
+  property: string;
+  status: ApplicationStatus;
+  submittedAt: string;
+  matchScore: number;
+}
 
 const ApplicationManagement = () => {
-  const [selectedProperty, setSelectedProperty] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
-  const [selectedApplication, setSelectedApplication] = useState<any>(null);
-  const [showReferences, setShowReferences] = useState(false);
+  const { 
+    modal, 
+    openModal, 
+    closeModal, 
+    setLoading, 
+    loadingStates, 
+    addToast,
+    applications: {
+      selectedProperty,
+      selectedStatus,
+      showReferences,
+      setSelectedProperty,
+      setSelectedStatus,
+      setShowReferences
+    }
+  } = useUIStore();
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+
+  const handleStatusChange = (status: ApplicationStatus | 'all') => {
+    setSelectedStatus(status);
+  };
+
+  const handleApplicationAction = async (applicationId: string, action: 'approve' | 'reject') => {
+    setLoading(`application-${action}-${applicationId}`, true);
+    try {
+      await apiRequest('POST', `/api/applications/${applicationId}/${action}`);
+      addToast({
+        title: 'Success',
+        description: `Application ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
+        type: 'success'
+      });
+    } catch (error) {
+      addToast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to process application',
+        type: 'error'
+      });
+    } finally {
+      setLoading(`application-${action}-${applicationId}`, false);
+    }
+  };
 
   // Demo data
-  const applications = [
+  const applications: Application[] = [
     {
       id: 1,
       tenant: {
@@ -48,8 +124,8 @@ const ApplicationManagement = () => {
             property: "Parkview Apartments",
             dates: "Jan 2023 - Dec 2024",
             rating: 5,
-            payment: "Always on time",
-            propertyCondition: "Excellent",
+            payment: "ON_TIME",
+            propertyCondition: "EXCELLENT",
             comments: "Excellent tenant, kept property in pristine condition.",
             verified: true
           },
@@ -58,8 +134,8 @@ const ApplicationManagement = () => {
             property: "Riverfront Residences",
             dates: "Mar 2020 - Dec 2022",
             rating: 4.8,
-            payment: "Always on time",
-            propertyCondition: "Good",
+            payment: "ON_TIME",
+            propertyCondition: "GOOD",
             comments: "Very responsible tenant, would rent to again.",
             verified: true
           }
@@ -68,7 +144,7 @@ const ApplicationManagement = () => {
         moveIn: "March 1, 2025"
       },
       property: "123 Main Street Unit A",
-      status: "new",
+      status: APPLICATION_STATUS.NEW,
       submittedAt: "2025-02-19T10:30:00",
       matchScore: 95
     }
@@ -136,16 +212,17 @@ const ApplicationManagement = () => {
                 <SelectItem value="456-oak">456 Oak Avenue</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <Select value={selectedStatus} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="reviewing">Under Review</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
+                {(Object.values(APPLICATION_STATUS) as ApplicationStatus[]).map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {APPLICATION_LABELS.STATUS[status]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -181,8 +258,8 @@ const ApplicationManagement = () => {
                   
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <Badge variant={app.status === 'new' ? 'default' : 'secondary'}>
-                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                      <Badge variant={app.status === APPLICATION_STATUS.NEW ? 'default' : 'secondary'}>
+                        {APPLICATION_LABELS.STATUS[app.status]}
                       </Badge>
                       {app.tenant.references?.length > 0 && (
                         <span className="text-xs text-muted-foreground">
@@ -347,6 +424,15 @@ const ApplicationManagement = () => {
           </Card>
         )}
       </div>
+
+      <Dialog 
+        open={modal?.type === 'applicationDetails'} 
+        onOpenChange={() => closeModal()}
+      >
+        <DialogContent className="max-w-3xl">
+          {/* ... existing dialog content ... */}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

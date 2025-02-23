@@ -28,4 +28,20 @@ export const CONFIG = {
     DEFAULT_DURATION: 3000,
     ERROR_DURATION: 5000,
   },
+
+  // Authentication settings
+  AUTH: {
+    TOKEN_KEY: 'auth_token',
+    SESSION_COOKIE: 'sid',
+    TOKEN_EXPIRY: 24 * 60 * 60 * 1000, // 24 hours
+    REFRESH_THRESHOLD: 60 * 60 * 1000, // 1 hour before expiry
+    STORAGE_TYPE: 'localStorage' as 'localStorage' | 'sessionStorage',
+  },
+
+  // API Configuration
+  API: {
+    TIMEOUT: 30000, // 30 seconds
+    RETRY_ATTEMPTS: 3,
+    WITH_CREDENTIALS: true, // Required for session cookies
+  },
 } as const;

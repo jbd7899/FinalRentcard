@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { ENV } from "@/constants/env";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,9 +8,10 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-function getAuthHeader() {
+function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
 }
 
 export async function apiRequest(
@@ -17,22 +19,42 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const headers = {
+  const headers: Record<string, string> = {
     ...getAuthHeader(),
-    ...(data ? { "Content-Type": "application/json" } : {}),
   };
 
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const fullUrl = url.startsWith('http') ? url : `${ENV.API_URL}${url}`;
+
   try {
-    const res = await fetch(url, {
+    console.log('Making API request:', { method, url: fullUrl, headers, data });
+    const res = await fetch(fullUrl, {
       method,
       headers,
+      credentials: 'include',
       body: data ? JSON.stringify(data) : undefined,
     });
 
-    await throwIfResNotOk(res);
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('API Response Error:', {
+        status: res.status,
+        statusText: res.statusText,
+        body: errorText
+      });
+      throw new Error(`API Error ${res.status}: ${errorText || res.statusText}`);
+    }
+
     return res;
   } catch (error) {
-    console.error('API Request error:', error);
+    console.error('API Request error:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     throw error;
   }
 }
@@ -43,11 +65,13 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const headers = getAuthHeader();
+    const headers: Record<string, string> = getAuthHeader();
     const url = queryKey[0] as string;
+    const fullUrl = url.startsWith('http') ? url : `${ENV.API_URL}${url}`;
     
-    const res = await fetch(url, { 
+    const res = await fetch(fullUrl, { 
       headers,
+      credentials: 'include',
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

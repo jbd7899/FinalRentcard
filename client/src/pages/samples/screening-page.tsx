@@ -1,29 +1,14 @@
-import { useState } from 'react';
-import {
-  Info,
-  Shield,
-  ArrowRight,
-  DollarSign,
-  Star,
-  Clock,
-  CheckCircle,
-  MapPin,
-  Building,
-  Users,
-  X,
-  Bed,
-  Bath,
-  Car,
-  CalendarDays
-} from 'lucide-react';
+import { Building2, Info, Shield, ArrowRight, DollarSign, Star, Clock, CheckCircle, MapPin, Users, X, Bed, Bath, Car, CalendarDays, Share2, Phone, Mail } from 'lucide-react';
+import { useUIStore } from '@/stores/uiStore';
 
 interface PropertyDetailsModalProps {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-const PropertyDetailsModal = ({ isOpen, onClose }: PropertyDetailsModalProps) => {
-  if (!isOpen) return null;
+const PropertyDetailsModal = ({ onClose }: PropertyDetailsModalProps) => {
+  const { modal } = useUIStore();
+  
+  if (!modal || modal.type !== 'propertyDetails') return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -39,15 +24,13 @@ const PropertyDetailsModal = ({ isOpen, onClose }: PropertyDetailsModalProps) =>
             </button>
           </div>
 
-          {/* Property Images */}
           <div className="bg-gray-100 h-64 rounded-lg mb-6 flex items-center justify-center">
             <div className="text-gray-400 text-center">
-              <Building className="w-12 h-12 mx-auto mb-2" />
+              <Building2 className="w-12 h-12 mx-auto mb-2" />
               <p>Property Photos</p>
             </div>
           </div>
 
-          {/* Key Details */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="flex items-center gap-2">
               <Bed className="w-5 h-5 text-blue-600" />
@@ -67,7 +50,6 @@ const PropertyDetailsModal = ({ isOpen, onClose }: PropertyDetailsModalProps) =>
             </div>
           </div>
 
-          {/* Description */}
           <div className="mb-6">
             <h3 className="font-semibold mb-2">Description</h3>
             <p className="text-gray-600">
@@ -77,7 +59,6 @@ const PropertyDetailsModal = ({ isOpen, onClose }: PropertyDetailsModalProps) =>
             </p>
           </div>
 
-          {/* Amenities */}
           <div className="mb-6">
             <h3 className="font-semibold mb-2">Amenities</h3>
             <div className="grid grid-cols-2 gap-2 text-gray-600">
@@ -90,7 +71,6 @@ const PropertyDetailsModal = ({ isOpen, onClose }: PropertyDetailsModalProps) =>
             </div>
           </div>
 
-          {/* Location */}
           <div>
             <h3 className="font-semibold mb-2">Location</h3>
             <div className="flex items-center gap-2 text-gray-600">
@@ -108,7 +88,7 @@ const PropertyDetailsModal = ({ isOpen, onClose }: PropertyDetailsModalProps) =>
             </div>
             <button 
               onClick={onClose}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-transform hover:scale-105"
             >
               Close Details
             </button>
@@ -120,37 +100,88 @@ const PropertyDetailsModal = ({ isOpen, onClose }: PropertyDetailsModalProps) =>
 };
 
 const SampleScreeningPage = () => {
-  const [showInterestForm, setShowInterestForm] = useState(false);
-  const [showPropertyDetails, setShowPropertyDetails] = useState(false);
+  const { openModal, closeModal, setLoading, loadingStates, addToast } = useUIStore();
+
+  const handleViewPropertyDetails = () => {
+    openModal('propertyDetails');
+  };
+
+  const handleClosePropertyDetails = () => {
+    closeModal();
+  };
+
+  const handleShareRentCard = async () => {
+    try {
+      setLoading('shareRentCard', true);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      addToast({
+        title: 'RentCard Shared',
+        description: 'Your RentCard has been shared successfully.',
+        type: 'success'
+      });
+    } catch (error) {
+      addToast({
+        title: 'Error',
+        description: 'Failed to share RentCard. Please try again.',
+        type: 'destructive'
+      });
+    } finally {
+      setLoading('shareRentCard', false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Demo Banner */}
-      <div className="max-w-3xl mx-auto mb-4">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-2">
-          <Info className="w-5 h-5 text-amber-600" />
-          <p className="text-amber-800">
-            This is a demo page showing how your rental listing will appear to potential tenants.
-            <span className="hidden sm:inline"> Customize all property details and requirements from your dashboard.</span>
-          </p>
+    <div className="min-h-screen bg-gray-100 p-6">
+      {/* Demo Banner with Button */}
+      <div className="max-w-4xl mx-auto mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold mb-2 flex items-center">
+              <Info className="w-5 h-5 text-blue-600 mr-2" />
+              Sample Landlord Screening Page
+            </h1>
+            <p className="text-gray-600">
+              This is a free screening page demo for your rental business. Manage tenant inquiries as usual—our MyRentCard integration 
+              helps you screen faster and connects tenants to a free profile tool, at no cost to you.
+            </p>
+          </div>
+          <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-transform hover:scale-105 w-full md:w-auto">
+            Create My Free Pre-Screening Page
+          </button>
         </div>
       </div>
 
-      {/* Property Header */}
-      <div className="max-w-3xl mx-auto mb-6">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <div className="bg-blue-600 rounded-lg p-4">
-                  <Building className="w-8 h-8 text-white" />
+      {/* Property Header with Landlord Info */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl shadow-lg overflow-hidden">
+          <div className="p-6 sm:p-4 text-white relative">
+            <div className="flex flex-col md:flex-row md:items-center justify-between">
+              {/* Landlord Info */}
+              <div className="mb-4 md:mb-0">
+                <h2 className="text-xl font-semibold text-white">Oceanfront Rentals</h2>
+                <div className="flex flex-col sm:flex-row sm:gap-4 text-blue-100 text-sm">
+                  <div className="flex items-center gap-1">
+                    <Phone className="w-4 h-4" />
+                    <span>(555) 123-4567</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Mail className="w-4 h-4" />
+                    <span>contact@oceanfrontrentals.com</span>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold">123 Ocean Avenue, Unit 2B</h1>
-                  <p className="text-gray-600">2 Bed • 2 Bath • $2,400/month</p>
+              </div>
+              {/* Property Info */}
+              <div className="flex flex-col items-center md:flex-row md:items-center">
+                <div className="bg-white rounded-lg p-4">
+                  <Building2 className="w-8 h-8 text-blue-600" />
+                </div>
+                <div className="ml-0 md:ml-4 mt-4 md:mt-0 text-center md:text-left">
+                  <h1 className="text-2xl font-bold text-white">123 Ocean Avenue, Unit 2B</h1>
+                  <p className="text-blue-100">2 Bed • 2 Bath • $2,400/month</p>
                   <button 
-                    className="mt-2 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                    onClick={() => setShowPropertyDetails(true)}
+                    className="mt-2 text-white hover:text-blue-200 font-medium flex items-center gap-1 mx-auto md:mx-0"
+                    onClick={handleViewPropertyDetails}
                   >
                     View full property details
                     <ArrowRight className="w-4 h-4" />
@@ -163,98 +194,111 @@ const SampleScreeningPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg">
-          {/* Quick Interest Section */}
-          <div className="p-8 border-b bg-blue-50">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          {/* RentCard Integration Section */}
+          <div className="p-8 bg-blue-50 border-b border-blue-100">
             <div className="flex items-center gap-2 mb-4">
               <Star className="w-6 h-6 text-blue-600 fill-current" />
-              <h2 className="text-2xl font-semibold">Express Interest with RentCard</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Screen Tenants Instantly with RentCard</h2>
             </div>
-            <div className="flex items-center gap-8">
-              <div className="flex-1">
-                <p className="text-lg text-gray-700 mb-4">Share your verified rental profile instantly - no forms needed</p>
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-1 text-center md:text-left">
+                <p className="text-lg text-gray-700 mb-4">
+                  Accept verified RentCards for seamless tenant screening—no extra work for you!
+                </p>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 text-gray-700">
+                  <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                     <Clock className="w-5 h-5 text-blue-600" />
-                    <span>Takes 30 seconds</span>
+                    <span>Saves you time</span>
                   </div>
-                  <div className="flex items-center gap-3 text-gray-700">
+                  <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                     <Shield className="w-5 h-5 text-blue-600" />
-                    <span>Privacy protected</span>
+                    <span>Verified tenants</span>
                   </div>
                 </div>
               </div>
-              <button className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition-transform">
-                Share RentCard
-                <ArrowRight className="w-5 h-5" />
-              </button>
+              <div className="flex flex-col gap-4">
+                <button 
+                  className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition-transform"
+                  onClick={handleShareRentCard}
+                  disabled={loadingStates.shareRentCard}
+                >
+                  <Share2 className="w-5 h-5" />
+                  {loadingStates.shareRentCard ? 'Sharing...' : 'Share Your RentCard'}
+                </button>
+                <p className="text-sm text-gray-600 text-center">
+                  No RentCard?{' '}
+                  <button 
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                    onClick={() => openModal('createRentCard')}
+                  >
+                    Create Your RentCard
+                  </button>
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Basic Interest Form */}
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Quick Pre-Screening Form</h2>
+          {/* Quick Pre-Screening Form */}
+          <div className="p-8">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Quick Tenant Pre-Screening</h2>
             <p className="text-gray-600 mb-6">
-              Share basic details to check if this property matches your needs. 
-              Not a full application - just helps us understand if it's a good fit.
+              Collect tenant details to find your perfect match. This free tool works with your existing process—no changes required!
             </p>
-
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h3 className="font-medium mb-3">Basic Requirements:</h3>
-                <div className="space-y-3">
+                <h3 className="font-semibold mb-3 text-gray-800">Your Requirements:</h3>
+                <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <DollarSign className="w-5 h-5 text-gray-600 mt-1" />
+                    <DollarSign className="w-5 h-5 text-blue-600 mt-1" />
                     <div>
                       <p className="text-gray-600">Minimum Income: $7,200/month</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Users className="w-5 h-5 text-gray-600 mt-1" />
+                    <Users className="w-5 h-5 text-blue-600 mt-1" />
                     <div>
                       <p className="text-gray-600">Max Occupants: 4 people</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-gray-600 mt-1" />
+                    <CheckCircle className="w-5 h-5 text-green-500 mt-1" />
                     <div>
                       <p className="text-gray-600">Move-in: Available Now</p>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div>
+              <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
                 <button 
-                  onClick={() => setShowInterestForm(true)}
-                  className="w-full bg-gray-100 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 flex items-center justify-center gap-2"
+                  onClick={() => openModal('quickPreScreening')}
+                  className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 flex items-center justify-center gap-2 transition-transform hover:scale-105"
                 >
-                  Start Quick Pre-Screen
+                  Submit Pre-Screening
                   <ArrowRight className="w-4 h-4" />
                 </button>
                 <p className="text-sm text-gray-500 mt-3 text-center">
-                  30-second form • No credit check • No commitment
+                  Free tenant screening tool • No cost to you • Integrates with your process
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Bottom Trust Section */}
-          <div className="bg-gray-50 p-6 rounded-b-lg">
-            <div className="text-center text-sm text-gray-600">
-              <p className="mb-2">★★★★★ "Super quick process!"</p>
-              <p>Used by thousands of renters to find their perfect home</p>
-            </div>
+          {/* Trust Section */}
+          <div className="bg-gray-50 p-6 text-center border-t border-gray-200">
+            <p className="text-sm text-gray-600 mb-2">★★★★★ "Effortless tenant screening!"</p>
+            <p className="text-sm text-gray-600">A free tool to enhance your rental business</p>
+          </div>
+
+          {/* Last Updated Footer */}
+          <div className="bg-gray-100 p-3 text-center text-sm text-gray-500">
+            This Screening Page was last updated: October 25, 2024
           </div>
         </div>
       </div>
 
-      {/* Property Details Modal */}
-      <PropertyDetailsModal 
-        isOpen={showPropertyDetails}
-        onClose={() => setShowPropertyDetails(false)}
-      />
+      <PropertyDetailsModal onClose={handleClosePropertyDetails} />
     </div>
   );
 };

@@ -6,6 +6,8 @@ import { promisify } from "util";
 import jwt from "jsonwebtoken";
 import { storage } from "./storage";
 import { User as SelectUser, insertUserSchema } from "@shared/schema";
+import session from "express-session";
+import MemoryStore from "memorystore";
 
 // Fix the type error by declaring the User interface
 declare global {
@@ -15,7 +17,16 @@ declare global {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || "development_secret";
+const SESSION_SECRET = process.env.SESSION_SECRET || "session_secret";
 const scryptAsync = promisify(scrypt);
+
+// Configure session store based on environment
+const MemoryStoreSession = MemoryStore(session);
+const sessionStore = process.env.NODE_ENV === 'production' 
+  ? storage.sessionStore 
+  : new MemoryStoreSession({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -31,6 +42,39 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Configure session middleware
+  app.use(session({
+    store: sessionStore,
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    name: 'sid', // Change cookie name from connect.sid
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax'
+    }
+  }));
+
+  // Initialize passport and restore authentication state from session
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // Set up passport serialization
+  passport.serializeUser((user: Express.User, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id: number, done) => {
+    try {
+      const user = await storage.getUser(id);
+      done(null, user);
+    } catch (err) {
+      done(err);
+    }
+  });
+
   passport.use(
     new LocalStrategy(
       { usernameField: 'email' },
@@ -50,7 +94,6 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res) => {
     try {
-      // Validate the request body using the schema
       const validatedData = insertUserSchema.parse(req.body);
 
       const existingUser = await storage.getUserByEmail(validatedData.email);
@@ -64,8 +107,16 @@ export function setupAuth(app: Express) {
         password: hashedPassword,
       });
 
+      // Generate JWT token
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
-      res.status(201).json({ user, token });
+      
+      // Log the user in (create session)
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error logging in after registration" });
+        }
+        res.status(201).json({ user, token });
+      });
     } catch (err) {
       console.error('Registration error:', err);
       res.status(400).json({ 
@@ -81,9 +132,24 @@ export function setupAuth(app: Express) {
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
+
+      // Generate JWT token
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
-      res.json({ user, token });
+
+      // Log the user in (create session)
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Error creating session" });
+        }
+        res.json({ user, token });
+      });
     })(req, res, next);
+  });
+
+  app.post("/api/logout", (req, res) => {
+    req.logout(() => {
+      res.json({ message: "Logged out successfully" });
+    });
   });
 
   app.get("/api/user", requireAuth, async (req, res) => {
@@ -100,17 +166,27 @@ export function setupAuth(app: Express) {
   });
 }
 
-// Middleware to verify JWT token
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+// Middleware to verify authentication using both session and JWT
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
+  // First check session authentication
+  if (req.isAuthenticated()) {
+    return next();
+  }
+
+  // If no session, check JWT
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    return res.status(401).json({ message: "No token provided" });
+    return res.status(401).json({ message: "No authentication provided" });
   }
 
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
-    req.user = { id: decoded.id } as Express.User;
+    const user = await storage.getUser(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    req.user = user;
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });

@@ -3,7 +3,7 @@ import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
-
+import { useUIStore } from "@/stores/uiStore"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -63,8 +63,12 @@ const Carousel = React.forwardRef<
       },
       plugins
     )
-    const [canScrollPrev, setCanScrollPrev] = React.useState(false)
-    const [canScrollNext, setCanScrollNext] = React.useState(false)
+    const { 
+      carousel: { 
+        setCanScrollPrev, 
+        setCanScrollNext 
+      } 
+    } = useUIStore()
 
     const onSelect = React.useCallback((api: CarouselApi) => {
       if (!api) {
@@ -73,7 +77,7 @@ const Carousel = React.forwardRef<
 
       setCanScrollPrev(api.canScrollPrev())
       setCanScrollNext(api.canScrollNext())
-    }, [])
+    }, [setCanScrollPrev, setCanScrollNext])
 
     const scrollPrev = React.useCallback(() => {
       api?.scrollPrev()
@@ -128,8 +132,8 @@ const Carousel = React.forwardRef<
             orientation || (opts?.axis === "y" ? "vertical" : "horizontal"),
           scrollPrev,
           scrollNext,
-          canScrollPrev,
-          canScrollNext,
+          canScrollPrev: useUIStore.getState().carousel.canScrollPrev,
+          canScrollNext: useUIStore.getState().carousel.canScrollNext,
         }}
       >
         <div

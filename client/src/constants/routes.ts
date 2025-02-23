@@ -22,9 +22,11 @@ export const ROUTES = {
   LANDLORD: {
     DASHBOARD: '/landlord/dashboard',
     PROPERTIES: '/landlord/properties',
-    ADD_PROPERTY: '/landlord/properties/add',
+    ADD_PROPERTY: '/landlord/add-property',
+    EDIT_PROPERTY: '/landlord/properties/edit',
     SCREENING: '/landlord/screening',
     REFERENCE_FORM: '/landlord/reference-form',
+    APPLICATIONS: '/landlord/applications',
   },
 } as const;
 
@@ -37,7 +39,9 @@ export type RouteParams = {
 
 // Helper function to generate dynamic routes
 export const generateRoute = {
-  property: (id: string) => `${ROUTES.LANDLORD.PROPERTIES}/${id}`,
-  application: (id: string) => `${ROUTES.TENANT.APPLICATIONS}/${id}`,
-  rentcard: (id: string) => `${ROUTES.TENANT.RENTCARD}/${id}`,
+  property: (id: string | number) => `${ROUTES.LANDLORD.PROPERTIES}/${id}`,
+  propertyEdit: (id: string | number) => `${ROUTES.LANDLORD.PROPERTIES}/${id}/edit`,
+  application: (id: string | number) => `${ROUTES.TENANT.APPLICATIONS}/${id}`,
+  rentcard: (id: string | number) => `${ROUTES.TENANT.RENTCARD}/${id}`,
+  screening: (slug: string) => `${ROUTES.LANDLORD.SCREENING}/${slug}`,
 };

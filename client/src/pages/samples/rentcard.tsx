@@ -7,14 +7,123 @@ import {
   Briefcase,
   Users,
   Heart,
-  AlertCircle,
-  Info
+  Info,
+  User,
+  Share2,
+  MessageSquare
 } from 'lucide-react';
+import { useUIStore } from '@/stores/uiStore';
+import { FeedbackToast } from '@/components/ui/FeedbackToast';
+import type { ReactNode } from 'react';
+
+// Update the Toast type to allow ReactNode in description
+type Toast = {
+  title: string;
+  description?: ReactNode;
+  type: 'default' | 'destructive' | 'success' | 'error' | 'warning' | 'info';
+  duration?: number;
+};
 
 const SampleRentCard = () => {
+  const { setLoading, loadingStates, addToast } = useUIStore();
+
+  // Static dummy data for quick stats
+  const quickStats = [
+    { icon: <DollarSign className="w-6 h-6 text-blue-600 mr-2" />, title: "Income", value: "$85,000/year" },
+    { icon: <Briefcase className="w-6 h-6 text-blue-600 mr-2" />, title: "Employment", value: "Full-time (3+ years)" },
+    { icon: <Users className="w-6 h-6 text-blue-600 mr-2" />, title: "Occupants", value: "2 Adults" },
+    { icon: <Heart className="w-6 h-6 text-blue-600 mr-2" />, title: "Pets", value: "1 Cat (5 years)" },
+  ];
+
+  // Static dummy data for rental history
+  const rentalHistory = [
+    { name: "The Parkview Apartments", dates: "Jan 2023 - Present", details: "Rent: $2,200/month • No late payments" },
+    { name: "Riverfront Residences", dates: "Mar 2020 - Dec 2022", details: "Rent: $1,950/month • No late payments" },
+  ];
+
+  // Static dummy data for landlord references
+  const landlordReferences = [
+    {
+      name: "John Smith",
+      contact: "john@example.com",
+      period: "Jan 2020 - Dec 2022",
+      comment: "Sarah was an excellent tenant, always paid on time and took great care of the property.",
+      rating: 5,
+    },
+    {
+      name: "Jane Doe",
+      contact: "jane@example.com",
+      period: "Mar 2018 - Dec 2019",
+      comment: "Reliable tenant with great communication. Would rent to again.",
+      rating: 5,
+    },
+  ];
+
+  const handleCreateRentCard = async () => {
+    try {
+      setLoading('createRentCard', true);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      addToast({
+        title: 'Success',
+        description: 'Your RentCard creation has started. Please complete your profile.',
+        type: 'success'
+      });
+    } catch (error) {
+      addToast({
+        title: 'Error',
+        description: 'Failed to start RentCard creation. Please try again.',
+        type: 'destructive'
+      });
+    } finally {
+      setLoading('createRentCard', false);
+    }
+  };
+
+  const handleShareRentCard = async () => {
+    try {
+      setLoading('shareRentCard', true);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      addToast({
+        title: 'RentCard Shared',
+        description: 'Your RentCard has been shared successfully.',
+        type: 'success'
+      });
+
+      // Show feedback prompt after a short delay
+      setTimeout(() => {
+        addToast({
+          title: 'Quick Feedback',
+          description: <FeedbackToast 
+            interaction="share_rentcard"
+            onSubmit={async (rating) => {
+              // Here you can send the feedback to your API
+              console.log('Feedback submitted:', {
+                interaction: 'share_rentcard',
+                rating,
+                timestamp: new Date().toISOString()
+              });
+            }}
+          />,
+          type: 'default',
+          duration: 10000, // Give users more time to rate
+        });
+      }, 1000);
+    } catch (error) {
+      addToast({
+        title: 'Error',
+        description: 'Failed to share RentCard. Please try again.',
+        type: 'destructive'
+      });
+    } finally {
+      setLoading('shareRentCard', false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Demo Banner */}
+    <div className="min-h-screen bg-gray-100 p-6">
+      {/* Original Top Bar */}
       <div className="max-w-4xl mx-auto mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4">
         <h1 className="text-xl font-semibold mb-2 flex items-center">
           <Info className="w-5 h-5 text-blue-600 mr-2" />
@@ -25,136 +134,217 @@ const SampleRentCard = () => {
           Create your own RentCard in minutes and share it instantly with any property.
         </p>
         <div className="flex gap-4">
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-            Create My RentCard
+          <button 
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-transform hover:scale-105"
+            onClick={handleCreateRentCard}
+            disabled={loadingStates.createRentCard}
+          >
+            {loadingStates.createRentCard ? 'Creating...' : 'Create My RentCard'}
           </button>
-          <button className="border border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50">
+          <button className="border border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition-colors">
             Learn More
           </button>
         </div>
       </div>
 
-      {/* RentCard Content */}
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow">
-        {/* Header */}
-        <div className="border-b p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <div className="flex items-center mb-2">
-                <h2 className="text-2xl font-semibold mr-3">Sarah Anderson</h2>
-                <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">
-                  Verified Profile
-                </span>
-              </div>
-              <p className="text-gray-600">Preferred Move-in: March 2025</p>
+      {/* Enhanced RentCard */}
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        {/* Header with Logo and Gradient */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-400 p-8 sm:p-6 text-white relative">
+          <div className="flex flex-col md:flex-row md:items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center gap-2 mb-4 md:mb-0">
+              <Building2 className="w-8 h-8 sm:w-6 sm:h-6 text-white" />
+              <span className="text-xl font-semibold text-white">MyRentCard</span>
             </div>
-            <div className="text-right">
-              <div className="flex items-center justify-end mb-1">
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="ml-1 font-semibold">4.9</span>
-                <span className="text-gray-600 ml-1">Rental Score</span>
+            {/* Tenant Info */}
+            <div className="flex flex-col items-center md:flex-row md:items-center">
+              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white">
+                <User className="w-10 h-10 text-gray-500" />
               </div>
-              <p className="text-sm text-gray-600">3 Verified References</p>
+              <div className="ml-0 md:ml-4 mt-4 md:mt-0 text-center md:text-left">
+                <h2 className="text-3xl font-bold text-white">Sarah Anderson</h2>
+                <p className="text-blue-100">Preferred Move-in: March 2025</p>
+              </div>
+            </div>
+            {/* Verified Badge and Rental Score */}
+            <div className="flex flex-col items-center md:flex-row md:space-x-4 mt-4 md:mt-0">
+              <span className="bg-white text-blue-600 px-4 py-1 rounded-full text-sm font-semibold">
+                Verified Profile
+              </span>
+              <div className="flex items-center mt-2 md:mt-0">
+                <Star className="w-6 h-6 text-yellow-300 fill-current" />
+                <span className="ml-1 text-xl font-bold text-white">4.9</span>
+                <span className="ml-1 text-blue-100">Rental Score</span>
+              </div>
             </div>
           </div>
+          {/* Share Button */}
+          <button 
+            className="absolute top-4 right-4 bg-white text-blue-600 p-2 rounded-full hover:bg-blue-50 transition-colors"
+            onClick={handleShareRentCard}
+            disabled={loadingStates.shareRentCard}
+          >
+            <Share2 className={`w-5 h-5 ${loadingStates.shareRentCard ? 'animate-spin' : ''}`} />
+          </button>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid md:grid-cols-4 gap-4 p-6 border-b">
-          <div>
-            <div className="flex items-center mb-1">
-              <DollarSign className="w-4 h-4 text-blue-600 mr-1" />
-              <span className="font-medium">Income</span>
-            </div>
-            <p className="text-gray-600">$85,000/year</p>
+        <div className="p-8 bg-gray-50">
+          <h3 className="font-semibold text-lg mb-4 flex items-center text-gray-800">
+            Key Information
+            <span
+              className="ml-2 cursor-help"
+              title="These key stats provide a quick overview of your rental profile for landlords."
+            >
+              <Info className="w-4 h-4 text-gray-500" />
+            </span>
+          </h3>
+          <div className="grid md:grid-cols-4 gap-6">
+            {quickStats.map((stat, index) => (
+              <div key={index} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center mb-2">
+                  {stat.icon}
+                  <span className="font-medium text-gray-700">{stat.title}</span>
+                </div>
+                <p className="text-gray-600">{stat.value}</p>
+              </div>
+            ))}
           </div>
-          <div>
-            <div className="flex items-center mb-1">
-              <Briefcase className="w-4 h-4 text-blue-600 mr-1" />
-              <span className="font-medium">Employment</span>
-            </div>
-            <p className="text-gray-600">Full-time (3+ years)</p>
-          </div>
-          <div>
-            <div className="flex items-center mb-1">
-              <Users className="w-4 h-4 text-blue-600 mr-1" />
-              <span className="font-medium">Occupants</span>
-            </div>
-            <p className="text-gray-600">2 Adults</p>
-          </div>
-          <div>
-            <div className="flex items-center mb-1">
-              <Heart className="w-4 h-4 text-blue-600 mr-1" />
-              <span className="font-medium">Pets</span>
-            </div>
-            <p className="text-gray-600">1 Cat (5 years)</p>
-          </div>
+        </div>
+
+        {/* About Me */}
+        <div className="p-8 border-t border-gray-200">
+          <h3 className="font-semibold text-lg mb-4 flex items-center text-gray-800">
+            About Me
+            <span
+              className="ml-2 cursor-help"
+              title="A personal bio helps landlords get to know you better."
+            >
+              <Info className="w-4 h-4 text-gray-500" />
+            </span>
+          </h3>
+          <p className="text-gray-600 leading-relaxed">
+            I'm a software engineer at TechCorp with a passion for technology and community. 
+            Looking for a quiet, well-maintained apartment where I can work from home occasionally. 
+            I'm a non-smoker, no parties, and I always pay rent on time.
+          </p>
         </div>
 
         {/* Rental History */}
-        <div className="p-6 border-b">
-          <h3 className="font-semibold mb-4">Rental History</h3>
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <Building2 className="w-5 h-5 text-blue-600 mr-3 mt-1" />
-              <div>
-                <p className="font-medium">The Parkview Apartments</p>
-                <p className="text-gray-600">Jan 2023 - Present</p>
-                <p className="text-sm text-gray-600">Rent: $2,200/month • No late payments</p>
-                <div className="flex items-center mt-1">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">Reference Verified</span>
+        <div className="p-8 bg-gray-50 border-t border-gray-200">
+          <h3 className="font-semibold text-lg mb-4 flex items-center text-gray-800">
+            Rental History
+            <span
+              className="ml-2 cursor-help"
+              title="Your rental history demonstrates your experience and reliability as a tenant."
+            >
+              <Info className="w-4 h-4 text-gray-500" />
+            </span>
+          </h3>
+          <div className="space-y-6">
+            {rentalHistory.map((history, index) => (
+              <div key={index} className="flex items-start pb-4 border-b last:border-b-0">
+                <Building2 className="w-6 h-6 text-blue-600 mr-3 mt-1" />
+                <div>
+                  <p className="font-medium text-gray-800">{history.name}</p>
+                  <p className="text-gray-600">{history.dates}</p>
+                  <p className="text-sm text-gray-500">{history.details}</p>
+                  <div className="flex items-center mt-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                    <span className="text-sm text-green-600">Reference Verified</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-start">
-              <Building2 className="w-5 h-5 text-blue-600 mr-3 mt-1" />
-              <div>
-                <p className="font-medium">Riverfront Residences</p>
-                <p className="text-gray-600">Mar 2020 - Dec 2022</p>
-                <p className="text-sm text-gray-600">Rent: $1,950/month • No late payments</p>
-                <div className="flex items-center mt-1">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">Reference Verified</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Additional Info */}
-        <div className="p-6">
-          <h3 className="font-semibold mb-4">Pre-Qualification Details</h3>
+        {/* Landlord References */}
+        <div className="p-8 border-t border-gray-200">
+          <h3 className="font-semibold text-lg mb-4 flex items-center text-gray-800">
+            Previous Landlord References
+            <span
+              className="ml-2 cursor-help"
+              title="Verified landlord references demonstrate your reliability and help build trust with potential landlords."
+            >
+              <Info className="w-4 h-4 text-gray-500" />
+            </span>
+          </h3>
+          <div className="space-y-6">
+            {landlordReferences.map((ref, index) => (
+              <div key={index} className="flex items-start pb-4 border-b last:border-b-0">
+                <MessageSquare className="w-6 h-6 text-blue-600 mr-3 mt-1" />
+                <div>
+                  <p className="font-medium text-gray-800">{ref.name}</p>
+                  <p className="text-gray-600">{ref.contact}</p>
+                  <p className="text-gray-600">Rental Period: {ref.period}</p>
+                  <p className="text-gray-600 mt-2 italic">"{ref.comment}"</p>
+                  <div className="flex items-center mt-2">
+                    {[...Array(ref.rating)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                    ))}
+                    <span className="ml-2 text-sm text-gray-600">Landlord Rating</span>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                    <span className="text-sm text-green-600">Reference Verified</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pre-Qualification Details */}
+        <div className="p-8 bg-gray-50 border-t border-gray-200">
+          <h3 className="font-semibold text-lg mb-4 flex items-center text-gray-800">
+            Pre-Qualification Details
+            <span
+              className="ml-2 cursor-help"
+              title="Pre-qualification details help landlords assess your financial stability quickly."
+            >
+              <Info className="w-4 h-4 text-gray-500" />
+            </span>
+          </h3>
           <div className="grid md:grid-cols-2 gap-6">
-            <div>
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <h4 className="text-sm font-medium text-gray-600 mb-2">Credit Score Range</h4>
               <div className="flex items-center">
                 <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                <span>720-750</span>
+                <span className="text-gray-700">720-750</span>
               </div>
             </div>
-            <div>
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               <h4 className="text-sm font-medium text-gray-600 mb-2">Background Check</h4>
               <div className="flex items-center">
                 <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                <span>Clear</span>
+                <span className="text-gray-700">Clear</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Banner */}
-        <div className="bg-gray-50 p-6 rounded-b-lg border-t">
-          <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-blue-600 mr-3 mt-1" />
-            <div>
-              <p className="font-medium mb-1">This is a sample RentCard</p>
-              <p className="text-sm text-gray-600">
-                Create your own RentCard to share your rental profile with landlords instantly. 
-                No more filling out multiple applications!
-              </p>
-            </div>
-          </div>
+        {/* Shareability Section */}
+        <div className="p-8 bg-blue-50 border-t border-blue-100 text-center">
+          <h3 className="text-xl font-semibold text-blue-800 mb-2">Share Your RentCard Easily</h3>
+          <p className="text-gray-600 mb-4">
+            With just one click, share your RentCard with any landlord or property manager. 
+            No more paperwork, no more hassle.
+          </p>
+          <button 
+            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-transform hover:scale-105 inline-flex items-center gap-2"
+            onClick={handleShareRentCard}
+            disabled={loadingStates.shareRentCard}
+          >
+            <Share2 className="w-5 h-5" />
+            {loadingStates.shareRentCard ? 'Sharing RentCard...' : 'Share RentCard Now'}
+          </button>
+        </div>
+
+        {/* Updated Last Updated Footer */}
+        <div className="bg-gray-100 p-3 text-center text-sm text-gray-500">
+          This Rent Card was last updated: October 25, 2024
         </div>
       </div>
     </div>

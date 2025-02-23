@@ -7,33 +7,59 @@ const API_BASE = '/api';
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
-    LOGIN: `${API_BASE}/auth/login`,
-    REGISTER: `${API_BASE}/auth/register`,
-    LOGOUT: `${API_BASE}/auth/logout`,
-    USER: `${API_BASE}/user`,
+    LOGIN: '/api/auth/login',
+    REGISTER: '/api/auth/register',
+    LOGOUT: '/api/auth/logout',
+    ME: '/api/auth/me',
+  },
+
+  // Stats endpoints
+  STATS: {
+    BASE: '/api/stats',
+    VIEWS: '/api/stats/views',
+    SUBMISSIONS: '/api/stats/submissions',
   },
 
   // Property endpoints
   PROPERTIES: {
-    BASE: `${API_BASE}/properties`,
-    BY_ID: (id: string) => `${API_BASE}/properties/${id}`,
-    SEARCH: `${API_BASE}/properties/search`,
+    BASE: '/api/properties',
+    CREATE: '/api/landlord/properties',
+    BY_ID: (id: string | number) => `/api/properties/${id}`,
+    UPDATE: (id: string | number) => `/api/properties/${id}`,
+    DELETE: (id: string | number) => `/api/properties/${id}`,
+    SCREENING: {
+      BY_SLUG: (slug: string) => `/api/properties/screening/${slug}`,
+      CREATE: '/api/landlord/screening',
+      UPDATE: (id: string | number) => `/api/landlord/screening/${id}`,
+    },
   },
 
   // Application endpoints
   APPLICATIONS: {
-    BASE: `${API_BASE}/applications`,
-    BY_ID: (id: string) => `${API_BASE}/applications/${id}`,
-    STATUS: (id: string) => `${API_BASE}/applications/${id}/status`,
-    CREATE: `${API_BASE}/applications`,
+    BASE: '/api/applications',
+    CREATE: '/api/applications',
+    BY_ID: (id: string | number) => `/api/applications/${id}`,
+    UPDATE_STATUS: (id: string | number) => `/api/landlord/applications/${id}/status`,
+    STATS: '/api/landlord/applications/stats',
   },
 
   // Rentcard endpoints
+  RENTCARD: {
+    BASE: '/api/tenant/rentcard',
+    BY_ID: (id: string | number) => `/api/tenant/rentcard/${id}`,
+    SHARE: (id: string | number) => `/api/tenant/rentcard/${id}/share`,
+    PDF: (id: string | number) => `/api/tenant/rentcard/${id}/pdf`,
+  },
+
+  // RentCards endpoints (for multiple rentcards)
   RENTCARDS: {
-    BASE: `${API_BASE}/rentcards`,
-    BY_ID: (id: string) => `${API_BASE}/rentcards/${id}`,
-    GENERATE: `${API_BASE}/rentcards/generate`,
-    USER: `${API_BASE}/rentcards/user`,
+    BASE: '/api/tenant/rentcards',
+    USER: '/api/tenant/rentcard', // Endpoint to get user's rentcard
+  },
+
+  // Reference endpoints
+  REFERENCE: {
+    CREATE: '/api/landlord/reference-form',
   },
 } as const;
 

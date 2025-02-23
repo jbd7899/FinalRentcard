@@ -12,17 +12,20 @@ import {
   LogOut,
   Loader2
 } from 'lucide-react';
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 import Navbar from "@/components/shared/navbar";
-import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus } from "@/constants";
-import { Link } from "wouter";
+import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus, APPLICATION_LABELS } from "@/constants";
+import { Link, useLocation } from "wouter";
 
 const generateRoute = {
   application: (id: string) => `/tenant/applications/${id}`
 };
 
 const TenantDashboard = () => {
-  const { logoutMutation } = useAuth();
+  const { logout } = useAuthStore();
+  const { setLoading, loadingStates, addToast } = useUIStore();
+  const [, setLocation] = useLocation();
 
   // Demo data
   const rentCardStatus = {
@@ -37,7 +40,7 @@ const TenantDashboard = () => {
       id: 1,
       property: "123 Main Street Unit A",
       landlord: "John Smith",
-      status: APPLICATION_STATUS.PENDING as ApplicationStatus,
+      status: APPLICATION_STATUS.REVIEWING,
       submittedAt: "2025-02-18T10:30:00",
       requirements: {
         creditScore: "✓ Meets requirement",
@@ -47,6 +50,27 @@ const TenantDashboard = () => {
       }
     }
   ];
+
+  const handleLogout = async () => {
+    try {
+      setLoading('logout', true);
+      await logout();
+      addToast({
+        title: 'Success',
+        description: 'You have been logged out successfully.',
+        type: 'success'
+      });
+      setLocation(ROUTES.AUTH);
+    } catch (error) {
+      addToast({
+        title: 'Error',
+        description: 'Failed to log out. Please try again.',
+        type: 'destructive'
+      });
+    } finally {
+      setLoading('logout', false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -61,15 +85,15 @@ const TenantDashboard = () => {
             </div>
             <Button 
               variant="outline" 
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
+              onClick={handleLogout}
+              disabled={loadingStates.logout}
             >
-              {logoutMutation.isPending ? (
+              {loadingStates.logout ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <LogOut className="w-4 h-4 mr-2" />
               )}
-              Logout
+              {loadingStates.logout ? 'Logging out...' : 'Logout'}
             </Button>
           </div>
 
@@ -156,7 +180,7 @@ const TenantDashboard = () => {
                         <p className="text-sm text-muted-foreground">Applied to {app.landlord}'s property</p>
                       </div>
                       <Badge variant="secondary">
-                        {app.status === APPLICATION_STATUS.PENDING ? MESSAGES.APPLICATION_STATUS.PENDING : app.status}
+                        {app.status === APPLICATION_STATUS.REVIEWING ? APPLICATION_LABELS.STATUS[APPLICATION_STATUS.REVIEWING] : app.status}
                       </Badge>
                     </div>
 

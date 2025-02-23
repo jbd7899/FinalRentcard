@@ -186,3 +186,17 @@ export type ScreeningPage = typeof screeningPages.$inferSelect;
 export type InsertScreeningPage = z.infer<typeof insertScreeningPageSchema>;
 export type RentCard = typeof rentCards.$inferSelect;
 export type InsertRentCard = z.infer<typeof insertRentCardSchema>;
+
+export type StatsTimeframe = 'today' | '7days' | '30days';
+
+export interface StatsDataPoint {
+  date: string;
+  count: number;
+}
+
+export interface StatsResponse {
+  data: StatsDataPoint[];
+  total: number;
+}
+
+export const statsTimeframeSchema = z.enum(['today', '7days', '30days']);

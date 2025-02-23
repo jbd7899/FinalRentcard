@@ -2,13 +2,13 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import CreateRentCard from "@/pages/create-rentcard";
 import ScreeningPage from "@/pages/screening-page";
 import { ProtectedRoute } from "./lib/protected-route";
+import { StoreProvider } from "@/providers/StoreProvider";
 
 // Sample Pages
 import SampleRentCard from "@/pages/samples/rentcard";
@@ -22,7 +22,7 @@ import PropertyScreeningPage from "@/pages/landlord/screening-page";
 
 // Tenant Pages
 import TenantDashboard from "@/pages/tenant/dashboard";
-import TenantRentCard from "@/pages/tenant/rentcard"; // Add import
+import TenantRentCard from "@/pages/tenant/rentcard";
 
 function Router() {
   return (
@@ -43,7 +43,7 @@ function Router() {
 
       {/* Tenant Routes */}
       <ProtectedRoute path="/tenant/dashboard" component={TenantDashboard} />
-      <ProtectedRoute path="/tenant/rentcard" component={TenantRentCard} /> {/* Add protected route */}
+      <ProtectedRoute path="/tenant/rentcard" component={TenantRentCard} />
       <Route path="/create-rentcard" component={CreateRentCard} />
 
       <Route component={NotFound} />
@@ -54,12 +54,11 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <StoreProvider>
         <Router />
         <Toaster />
-      </AuthProvider>
+      </StoreProvider>
     </QueryClientProvider>
   );
-}
+}export default App;
 
-export default App;

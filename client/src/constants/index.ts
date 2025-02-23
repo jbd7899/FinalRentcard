@@ -3,10 +3,19 @@ export * from './api';
 export * from './config';
 export * from './env';
 export * from './common';
+export * from './validation';
 
 // Example usage in components:
 /*
-import { ROUTES, API_ENDPOINTS, CONFIG, ENV, USER_ROLES } from '@/constants';
+import { 
+  ROUTES, 
+  API_ENDPOINTS, 
+  CONFIG, 
+  ENV, 
+  USER_ROLES,
+  VALIDATION,
+  FORM_MESSAGES,
+} from '@/constants';
 
 // Using route constants
 <Link href={ROUTES.LANDLORD.DASHBOARD}>Dashboard</Link>
@@ -29,4 +38,12 @@ if (ENV.IS_DEVELOPMENT) {
 if (userRole === USER_ROLES.LANDLORD) {
   // Show landlord specific content
 }
+
+// Using validation constants
+const schema = z.object({
+  password: z.string()
+    .min(VALIDATION.PASSWORD.MIN_LENGTH, VALIDATION.PASSWORD.MESSAGE)
+    .regex(VALIDATION.PASSWORD.REGEX, VALIDATION.PASSWORD.REGEX_MESSAGE),
+  email: z.string().email(VALIDATION.EMAIL.MESSAGE),
+});
 */

@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/stores/authStore";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 
 export default function Navbar() {
-  const { user, logoutMutation } = useAuth();
+  const { user, logout } = useAuthStore();
   const [, setLocation] = useLocation();
 
   return (
@@ -82,7 +82,10 @@ export default function Navbar() {
                 </Link>
                 <DropdownMenuItem
                   className="gap-2 text-red-600 cursor-pointer"
-                  onClick={() => logoutMutation.mutate()}
+                  onClick={() => {
+                    logout();
+                    setLocation(ROUTES.AUTH);
+                  }}
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
