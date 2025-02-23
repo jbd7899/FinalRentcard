@@ -185,6 +185,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(rentCards.userId, userId));
     return rentCard;
   }
+
+  async createRentCard(rentCard: Omit<RentCard, "id" | "createdAt" | "updatedAt">): Promise<RentCard> {
+    const [newRentCard] = await db.insert(rentCards).values(rentCard).returning();
+    return newRentCard;
+  }
 }
 
 export const storage = new DatabaseStorage();
