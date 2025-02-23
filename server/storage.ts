@@ -1,5 +1,5 @@
-import { User, TenantProfile, LandlordProfile, Property, Application } from "@shared/schema";
-import { users, tenantProfiles, landlordProfiles, properties, applications } from "@shared/schema";
+import { User, TenantProfile, LandlordProfile, Property, Application, RentCard } from "@shared/schema";
+import { users, tenantProfiles, landlordProfiles, properties, applications, rentCards } from "@shared/schema";
 import { db, sql } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -36,6 +36,9 @@ export interface IStorage {
   getApplications(tenantId?: number, propertyId?: number): Promise<Application[]>;
   createApplication(application: Omit<Application, "id" | "submittedAt">): Promise<Application>;
   updateApplicationStatus(id: number, status: string): Promise<Application>;
+
+  // Rent card operations
+  getRentCard(userId: number): Promise<RentCard | undefined>;
 
   sessionStore: session.Store;
 }
@@ -147,21 +150,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getApplications(tenantId?: number, propertyId?: number): Promise<Application[]> {
-    let query = db.select().from(applications);
+    let conditions = [];
+    if (tenantId) conditions.push(eq(applications.tenantId, tenantId));
+    if (propertyId) conditions.push(eq(applications.propertyId, propertyId));
 
-    // Combine conditions into a single where clause if both params exist
-    if (tenantId && propertyId) {
-      query = query.where(and(
-        eq(applications.tenantId, tenantId),
-        eq(applications.propertyId, propertyId)
-      ));
-    } else if (tenantId) {
-      query = query.where(eq(applications.tenantId, tenantId));
-    } else if (propertyId) {
-      query = query.where(eq(applications.propertyId, propertyId));
-    }
+    const query = conditions.length > 0
+      ? db.select().from(applications).where(and(...conditions))
+      : db.select().from(applications);
 
-    return query;
+    return await query;
   }
 
   async createApplication(application: Omit<Application, "id" | "submittedAt">): Promise<Application> {
@@ -179,6 +176,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(applications.id, id))
       .returning();
     return updatedApplication;
+  }
+
+  async getRentCard(userId: number): Promise<RentCard | undefined> {
+    const [rentCard] = await db
+      .select()
+      .from(rentCards)
+      .where(eq(rentCards.userId, userId));
+    return rentCard;
   }
 }
 

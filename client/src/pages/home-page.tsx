@@ -1,21 +1,65 @@
 import { Building2, Clock, Shield, CheckCircle, ArrowRight, Users, Zap, ArrowUpRight, CreditCard } from 'lucide-react';
 import { Link } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 import Navbar from '@/components/shared/navbar';
-import React, { useState } from 'react';
+import { Toaster } from '@/components/ui/toast';
+import { Skeleton } from '@/components/ui/skeleton';
+import React from 'react';
 
 export default function HomePage() {
-  const { user } = useAuth();
-  const [hoveredCard, setHoveredCard] = useState(null);
+  const { user } = useAuthStore();
+  const { loadingStates, setLoading, addToast } = useUIStore();
+
+  const handleDashboardClick = () => {
+    setLoading('dashboard', true);
+    addToast({
+      title: "Welcome back!",
+      description: "Redirecting to your dashboard...",
+      type: "info",
+      duration: 3000
+    });
+    // Simulate loading for demo
+    setTimeout(() => setLoading('dashboard', false), 1000);
+  };
+
+  const handleCreateRentCard = () => {
+    setLoading('createRentCard', true);
+    addToast({
+      title: "Let's get started!",
+      description: "Creating your RentCard profile...",
+      type: "success",
+      duration: 3000
+    });
+    // Simulate loading for demo
+    setTimeout(() => setLoading('createRentCard', false), 1000);
+  };
+
+  const handleRequestScreening = () => {
+    setLoading('requestScreening', true);
+    addToast({
+      title: "Tenant Screening",
+      description: "Setting up tenant screening request...",
+      type: "info",
+      duration: 3000
+    });
+    // Simulate loading for demo
+    setTimeout(() => setLoading('requestScreening', false), 1000);
+  };
+
+  const handleHover = (key: string, isHovered: boolean) => {
+    setLoading(`hover_${key}`, isHovered);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
-      <div className="absolute inset-0 bg-[url('/api/placeholder/20/20')] opacity-5"></div>
+      <div className="absolute inset-0 bg-[url('/api/placeholder/20/20')] opacity-5 z-0"></div>
 
-      {/* Original Navbar */}
-      <Navbar />
+      <div className="relative z-10">
+        <Navbar />
+      </div>
 
-      <main className="relative max-w-7xl mx-auto px-4 py-16">
+      <main className="relative z-1 max-w-7xl mx-auto px-4 py-16">
         {/* Decorative speed lines */}
         <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
           <div className="absolute transform rotate-45 h-1 w-32 bg-blue-600"></div>
@@ -65,26 +109,61 @@ export default function HomePage() {
             No account needed to start.
           </p>
 
-          {/* CTA Buttons with Original Links */}
+          {/* CTA Buttons with conditional rendering based on auth state */}
           <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
-            <Link 
-              href="/create-rentcard" 
-              className="group bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all"
-              onMouseEnter={() => setHoveredCard('cta1')}
-              onMouseLeave={() => setHoveredCard(null)}
-            >
-              Create Free RentCard
-              <ArrowRight className={`w-5 h-5 transition-transform ${hoveredCard === 'cta1' ? 'translate-x-1' : ''}`} />
-            </Link>
-            <Link 
-              href="/create-screening" 
-              className="group border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl font-medium hover:bg-blue-50 flex items-center justify-center gap-3 transition-all"
-              onMouseEnter={() => setHoveredCard('cta2')}
-              onMouseLeave={() => setHoveredCard(null)}
-            >
-              Request Tenant Info
-              <ArrowRight className={`w-5 h-5 transition-transform ${hoveredCard === 'cta2' ? 'translate-x-1' : ''}`} />
-            </Link>
+            {user ? (
+              <Link 
+                href={user.userType === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard'}
+                className="group bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all disabled:opacity-50"
+                onClick={handleDashboardClick}
+                onMouseEnter={() => handleHover('dashboard', true)}
+                onMouseLeave={() => handleHover('dashboard', false)}
+              >
+                {loadingStates.dashboard ? (
+                  <Skeleton className="w-24 h-6" />
+                ) : (
+                  <>
+                    View Dashboard
+                    <ArrowRight className={`w-5 h-5 transition-transform ${loadingStates.hover_dashboard ? 'translate-x-1' : ''}`} />
+                  </>
+                )}
+              </Link>
+            ) : (
+              <>
+                <Link 
+                  href="/create-rentcard" 
+                  className="group bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all disabled:opacity-50"
+                  onClick={handleCreateRentCard}
+                  onMouseEnter={() => handleHover('createRentCard', true)}
+                  onMouseLeave={() => handleHover('createRentCard', false)}
+                >
+                  {loadingStates.createRentCard ? (
+                    <Skeleton className="w-32 h-6" />
+                  ) : (
+                    <>
+                      Create Free RentCard
+                      <ArrowRight className={`w-5 h-5 transition-transform ${loadingStates.hover_createRentCard ? 'translate-x-1' : ''}`} />
+                    </>
+                  )}
+                </Link>
+                <Link 
+                  href="/create-screening" 
+                  className="group border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl font-medium hover:bg-blue-50 flex items-center justify-center gap-3 transition-all disabled:opacity-50"
+                  onClick={handleRequestScreening}
+                  onMouseEnter={() => handleHover('requestScreening', true)}
+                  onMouseLeave={() => handleHover('requestScreening', false)}
+                >
+                  {loadingStates.requestScreening ? (
+                    <Skeleton className="w-32 h-6" />
+                  ) : (
+                    <>
+                      Request Tenant Info
+                      <ArrowRight className={`w-5 h-5 transition-transform ${loadingStates.hover_requestScreening ? 'translate-x-1' : ''}`} />
+                    </>
+                  )}
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Sample Links */}
@@ -92,16 +171,20 @@ export default function HomePage() {
             <Link 
               href="/samples/rentcard" 
               className="group flex items-center gap-2 hover:text-blue-800 transition-colors"
+              onMouseEnter={() => handleHover('sampleRentCard', true)}
+              onMouseLeave={() => handleHover('sampleRentCard', false)}
             >
               <span>View Sample RentCard</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className={`w-4 h-4 transition-transform ${loadingStates.hover_sampleRentCard ? 'translate-x-1' : ''}`} />
             </Link>
             <Link 
               href="/samples/screening-page" 
               className="group flex items-center gap-2 hover:text-blue-800 transition-colors"
+              onMouseEnter={() => handleHover('sampleScreening', true)}
+              onMouseLeave={() => handleHover('sampleScreening', false)}
             >
               <span>View Sample Screening Page</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className={`w-4 h-4 transition-transform ${loadingStates.hover_sampleScreening ? 'translate-x-1' : ''}`} />
             </Link>
           </div>
 
@@ -115,11 +198,11 @@ export default function HomePage() {
               <div 
                 key={index}
                 className="relative bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all overflow-hidden"
-                onMouseEnter={() => setHoveredCard(`benefit${index}`)}
-                onMouseLeave={() => setHoveredCard(null)}
+                onMouseEnter={() => handleHover(`benefit${index}`, true)}
+                onMouseLeave={() => handleHover(`benefit${index}`, false)}
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
-                <div className={`bg-blue-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 transition-transform ${hoveredCard === `benefit${index}` ? 'scale-110' : ''}`}>
+                <div className={`bg-blue-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 transition-transform ${loadingStates[`hover_benefit${index}`] ? 'scale-110' : ''}`}>
                   <benefit.icon className="w-8 h-8 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{benefit.title}</h3>
@@ -148,8 +231,8 @@ export default function HomePage() {
                   <div 
                     key={index}
                     className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-all"
-                    onMouseEnter={() => setHoveredCard(`review${index}`)}
-                    onMouseLeave={() => setHoveredCard(null)}
+                    onMouseEnter={() => handleHover(`review${index}`, true)}
+                    onMouseLeave={() => handleHover(`review${index}`, false)}
                   >
                     <div className="text-yellow-400 mb-3 flex gap-1">
                       {"★★★★★"}
@@ -167,6 +250,8 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+
+      <Toaster />
     </div>
   );
 }

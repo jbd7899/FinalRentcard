@@ -1,6 +1,7 @@
 import { Building2, ArrowRight, Mail, Lock, Phone } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,27 +22,36 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { 
+  VALIDATION, 
+  USER_ROLES, 
+  MESSAGES, 
+  ROUTES 
+} from '@/constants';
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: z.string().email(VALIDATION.EMAIL.MESSAGE),
+  password: z.string().min(VALIDATION.PASSWORD.MIN_LENGTH, VALIDATION.PASSWORD.MESSAGE),
 });
 
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  phone: z.string().min(10),
-  userType: z.enum(['tenant', 'landlord']),
+  email: z.string().email(VALIDATION.EMAIL.MESSAGE),
+  password: z.string()
+    .min(VALIDATION.PASSWORD.MIN_LENGTH, VALIDATION.PASSWORD.MESSAGE)
+    .regex(VALIDATION.PASSWORD.REGEX, VALIDATION.PASSWORD.REGEX_MESSAGE),
+  phone: z.string()
+    .min(VALIDATION.PHONE.MIN_LENGTH, VALIDATION.PHONE.MESSAGE)
+    .regex(VALIDATION.PHONE.REGEX, VALIDATION.PHONE.REGEX_MESSAGE),
+  userType: z.enum([USER_ROLES.TENANT, USER_ROLES.LANDLORD]),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 const AuthPage = () => {
-  const { loginMutation, registerMutation, user } = useAuth();
+  const { user, login, error, register } = useAuthStore();
+  const { setLoading, loadingStates, addToast } = useUIStore();
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -57,40 +67,66 @@ const AuthPage = () => {
       email: '',
       password: '',
       phone: '',
-      userType: 'tenant',
+      userType: USER_ROLES.TENANT,
     },
   });
 
   useEffect(() => {
     if (user) {
-      const dashboardPath = user.userType === 'tenant' ? '/tenant/dashboard' : '/landlord/dashboard';
+      const dashboardPath = user.userType === USER_ROLES.TENANT 
+        ? ROUTES.TENANT.DASHBOARD 
+        : ROUTES.LANDLORD.DASHBOARD;
       setLocation(dashboardPath);
     }
   }, [user, setLocation]);
 
+  useEffect(() => {
+    if (error) {
+      addToast({
+        title: MESSAGES.TOAST.AUTH.LOGIN_ERROR.TITLE,
+        description: error,
+        type: 'destructive'
+      });
+    }
+  }, [error, addToast]);
+
   const onLogin = async (data: LoginFormData) => {
     try {
-      await loginMutation.mutateAsync(data);
-      // Redirection will be handled by the useEffect hook
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive"
+      setLoading('login', true);
+      await login(data);
+      addToast({
+        title: MESSAGES.TOAST.AUTH.LOGIN_SUCCESS.TITLE,
+        description: MESSAGES.TOAST.AUTH.LOGIN_SUCCESS.DESCRIPTION,
+        type: 'success'
       });
+    } catch (error) {
+      addToast({
+        title: MESSAGES.TOAST.AUTH.LOGIN_ERROR.TITLE,
+        description: error instanceof Error ? error.message : MESSAGES.TOAST.AUTH.LOGIN_ERROR.DESCRIPTION,
+        type: 'destructive'
+      });
+    } finally {
+      setLoading('login', false);
     }
   };
 
   const onRegister = async (data: RegisterFormData) => {
     try {
-      await registerMutation.mutateAsync(data);
-      // Redirection will be handled by the useEffect hook
-    } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: "An error occurred during registration. Please try again.",
-        variant: "destructive"
+      setLoading('register', true);
+      await register(data);
+      addToast({
+        title: MESSAGES.TOAST.AUTH.REGISTER_SUCCESS.TITLE,
+        description: MESSAGES.TOAST.AUTH.REGISTER_SUCCESS.DESCRIPTION,
+        type: 'success'
       });
+    } catch (error) {
+      addToast({
+        title: MESSAGES.TOAST.AUTH.REGISTER_ERROR.TITLE,
+        description: error instanceof Error ? error.message : MESSAGES.TOAST.AUTH.REGISTER_ERROR.DESCRIPTION,
+        type: 'destructive'
+      });
+    } finally {
+      setLoading('register', false);
     }
   };
 
@@ -160,9 +196,9 @@ const AuthPage = () => {
                     <Button
                       type="submit"
                       className="w-full"
-                      disabled={loginMutation.isPending}
+                      disabled={loadingStates.login}
                     >
-                      {loginMutation.isPending ? (
+                      {loadingStates.login ? (
                         <span>Signing in...</span>
                       ) : (
                         <>
@@ -237,17 +273,17 @@ const AuthPage = () => {
                       <div className="grid grid-cols-2 gap-4 mt-1">
                         <Button
                           type="button"
-                          variant={registerForm.watch('userType') === 'tenant' ? 'default' : 'outline'}
+                          variant={registerForm.watch('userType') === USER_ROLES.TENANT ? 'default' : 'outline'}
                           className="w-full"
-                          onClick={() => registerForm.setValue('userType', 'tenant')}
+                          onClick={() => registerForm.setValue('userType', USER_ROLES.TENANT)}
                         >
                           Tenant
                         </Button>
                         <Button
                           type="button"
-                          variant={registerForm.watch('userType') === 'landlord' ? 'default' : 'outline'}
+                          variant={registerForm.watch('userType') === USER_ROLES.LANDLORD ? 'default' : 'outline'}
                           className="w-full"
-                          onClick={() => registerForm.setValue('userType', 'landlord')}
+                          onClick={() => registerForm.setValue('userType', USER_ROLES.LANDLORD)}
                         >
                           Landlord
                         </Button>
@@ -257,9 +293,9 @@ const AuthPage = () => {
                     <Button
                       type="submit"
                       className="w-full"
-                      disabled={registerMutation.isPending}
+                      disabled={loadingStates.register}
                     >
-                      {registerMutation.isPending ? (
+                      {loadingStates.register ? (
                         <span>Creating Account...</span>
                       ) : (
                         <>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { toast } from "@/hooks/use-toast";
 import {
   Star,
   Building2,
@@ -24,26 +23,33 @@ import {
   Loader2,
   Mail
 } from 'lucide-react';
+import { useUIStore } from '@/stores/uiStore';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { MESSAGES, APPLICATION_LABELS } from '@/constants';
 
-const ShareDialog = ({ isOpen, onClose, rentCardUrl }: { 
-  isOpen: boolean; 
+const ShareDialog = ({ onClose, rentCardUrl }: { 
   onClose: () => void; 
   rentCardUrl: string;
 }) => {
+  const { addToast } = useUIStore();
+  const { modal } = useUIStore();
+
+  if (!modal || modal.type !== 'shareRentCard') return null;
+
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(rentCardUrl);
-      toast({
-        title: "Copied!",
+      addToast({
+        title: MESSAGES.SUCCESS.COPIED,
         description: "RentCard link copied to clipboard",
+        type: 'success'
       });
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to copy link",
-        variant: "destructive",
+      addToast({
+        title: MESSAGES.ERRORS.GENERAL,
+        description: MESSAGES.ERRORS.GENERAL,
+        type: 'destructive'
       });
     }
   };
@@ -55,7 +61,7 @@ const ShareDialog = ({ isOpen, onClose, rentCardUrl }: {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={true} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Share RentCard</DialogTitle>
@@ -85,10 +91,9 @@ const ShareDialog = ({ isOpen, onClose, rentCardUrl }: {
 };
 
 const RentCard = () => {
-  const [isSharing, setIsSharing] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const { setLoading, loadingStates, openModal, closeModal, addToast } = useUIStore();
 
-  // Demo data (unchanged)
+  // Demo data
   const rentCardData = {
     tenant: {
       name: "Sarah Johnson",
@@ -119,6 +124,8 @@ const RentCard = () => {
         property: "Parkview Apartments",
         dates: "Jan 2023 - Dec 2024",
         rating: 5,
+        payment: APPLICATION_LABELS.PAYMENT_HISTORY.ON_TIME,
+        propertyCondition: APPLICATION_LABELS.PROPERTY_CONDITION.EXCELLENT,
         highlights: ["Always paid on time", "Excellent property maintenance", "Quiet and respectful"],
         verified: true
       },
@@ -127,6 +134,8 @@ const RentCard = () => {
         property: "Riverfront Residences",
         dates: "Mar 2020 - Dec 2022",
         rating: 4.8,
+        payment: APPLICATION_LABELS.PAYMENT_HISTORY.ON_TIME,
+        propertyCondition: APPLICATION_LABELS.PROPERTY_CONDITION.GOOD,
         highlights: ["Consistent payment history", "Good communication", "Followed all rules"],
         verified: true
       }
@@ -134,15 +143,19 @@ const RentCard = () => {
   };
 
   const handleShare = () => {
-    setIsSharing(true);
+    openModal('shareRentCard');
+  };
+
+  const handleCloseShare = () => {
+    closeModal();
   };
 
   const handleDownloadPDF = async () => {
-    setIsDownloading(true);
     try {
+      setLoading('downloadPDF', true);
       const element = document.getElementById('rentcard-content');
       if (!element) {
-        throw new Error('Content element not found');
+        throw new Error(MESSAGES.ERRORS.GENERAL);
       }
 
       const canvas = await html2canvas(element, {
@@ -164,19 +177,20 @@ const RentCard = () => {
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save(`${rentCardData.tenant.name.replace(' ', '_')}_RentCard.pdf`);
 
-      toast({
-        title: "Success!",
+      addToast({
+        title: MESSAGES.SUCCESS.SAVED,
         description: "RentCard downloaded successfully",
+        type: 'success'
       });
     } catch (error) {
       console.error('PDF generation error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive",
+      addToast({
+        title: MESSAGES.ERRORS.GENERAL,
+        description: MESSAGES.ERRORS.GENERAL,
+        type: 'destructive'
       });
     } finally {
-      setIsDownloading(false);
+      setLoading('downloadPDF', false);
     }
   };
 
@@ -196,7 +210,7 @@ const RentCard = () => {
             <Button 
               variant="outline"
               onClick={handleShare}
-              disabled={isDownloading}
+              disabled={loadingStates.downloadPDF}
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share
@@ -204,14 +218,14 @@ const RentCard = () => {
             <Button 
               variant="outline"
               onClick={handleDownloadPDF}
-              disabled={isDownloading}
+              disabled={loadingStates.downloadPDF}
             >
-              {isDownloading ? (
+              {loadingStates.downloadPDF ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Download className="w-4 h-4 mr-2" />
               )}
-              {isDownloading ? 'Downloading...' : 'Download PDF'}
+              {loadingStates.downloadPDF ? 'Downloading...' : 'Download PDF'}
             </Button>
           </div>
         </div>
@@ -344,8 +358,7 @@ const RentCard = () => {
 
       {/* Share Dialog */}
       <ShareDialog 
-        isOpen={isSharing}
-        onClose={() => setIsSharing(false)}
+        onClose={handleCloseShare}
         rentCardUrl={rentCardUrl}
       />
     </div>

@@ -2,7 +2,8 @@ import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
-
+import { useEffect } from 'react';
+import { useUIStore } from '@/stores/uiStore';
 import { cn } from "@/lib/utils"
 
 const ToastProvider = ToastPrimitives.Provider
@@ -28,8 +29,11 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: "border bg-background text-foreground",
-        destructive:
-          "destructive group border-destructive bg-destructive text-destructive-foreground",
+        destructive: "destructive group border-destructive bg-destructive text-destructive-foreground",
+        success: "border-green-200 bg-green-50 text-green-900",
+        error: "border-red-200 bg-red-50 text-red-900",
+        warning: "border-yellow-200 bg-yellow-50 text-yellow-900",
+        info: "border-blue-200 bg-blue-50 text-blue-900"
       },
     },
     defaultVariants: {
@@ -38,10 +42,14 @@ const toastVariants = cva(
   }
 )
 
-const Toast = React.forwardRef<
+type ToastVariant = NonNullable<VariantProps<typeof toastVariants>["variant"]>
+
+interface ToastProps extends React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root>,
+  VariantProps<typeof toastVariants> {}
+
+const BaseToast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants>
+  ToastProps
 >(({ className, variant, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
@@ -51,7 +59,7 @@ const Toast = React.forwardRef<
     />
   )
 })
-Toast.displayName = ToastPrimitives.Root.displayName
+BaseToast.displayName = ToastPrimitives.Root.displayName
 
 const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,
@@ -110,16 +118,34 @@ const ToastDescription = React.forwardRef<
 ))
 ToastDescription.displayName = ToastPrimitives.Description.displayName
 
-type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
-
 type ToastActionElement = React.ReactElement<typeof ToastAction>
 
+const TOAST_DURATION = 5000; // 5 seconds
+
+export const Toaster = () => {
+  const { toasts, removeToast } = useUIStore();
+
+  return (
+    <ToastProvider>
+      {toasts.map(({ id, title, description, type, duration = TOAST_DURATION }) => (
+        <BaseToast key={id} variant={type as ToastVariant}>
+          <div className="grid gap-1">
+            {title && <ToastTitle>{title}</ToastTitle>}
+            {description && <ToastDescription>{description}</ToastDescription>}
+          </div>
+          <ToastClose onClick={() => removeToast(id)} />
+        </BaseToast>
+      ))}
+      <ToastViewport />
+    </ToastProvider>
+  );
+};
+
 export {
-  type ToastProps,
   type ToastActionElement,
   ToastProvider,
   ToastViewport,
-  Toast,
+  BaseToast as Toast,
   ToastTitle,
   ToastDescription,
   ToastClose,
