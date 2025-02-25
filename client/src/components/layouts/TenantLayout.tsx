@@ -19,7 +19,7 @@ const TenantLayout: React.FC<TenantLayoutProps> = ({ children, activeRoute = ROU
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Mobile header component for tenant view
-  const MobileHeader = (
+  const mobileHeader = (
     <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b z-10">
       <div className="flex items-center justify-between p-4">
         <Link href="/">
@@ -43,11 +43,10 @@ const TenantLayout: React.FC<TenantLayoutProps> = ({ children, activeRoute = ROU
   return (
     <BaseLayout
       sidebar={<TenantSidebar activeRoute={activeRoute} mobileMenuOpen={mobileMenuOpen} />}
+      mobileHeader={mobileHeader}
       mobileMenuOpen={mobileMenuOpen}
       setMobileMenuOpen={setMobileMenuOpen}
     >
-      {/* Mobile Header is rendered inside the layout */}
-      {MobileHeader}
       {children}
     </BaseLayout>
   );
