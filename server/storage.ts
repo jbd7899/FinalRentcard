@@ -10,10 +10,12 @@ import { pool } from "./db";
 import {
   TenantDocument, PropertyImage, PropertyAmenity, TenantReference,
   Conversation, Message, Notification, RoommateGroup, GroupApplication,
+  NeighborhoodInsight,
   tenantDocuments, propertyImages, propertyAmenities, tenantReferences,
   conversations, messages, notifications, roommateGroups, groupApplications,
-  conversationParticipants, roommateGroupMembers, propertyAnalytics, userActivity
-} from "@shared/schema";
+  conversationParticipants, roommateGroupMembers, propertyAnalytics, userActivity,
+  neighborhoodInsights
+} from "@shared/schema-enhancements";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -99,6 +101,11 @@ export interface IStorage {
   // Analytics operations
   recordUserActivity(userId: number, activityType: string, metadata?: any): Promise<void>;
   updatePropertyAnalytics(propertyId: number): Promise<void>;
+
+  // Neighborhood insights operations
+  getNeighborhoodInsight(propertyId: number): Promise<NeighborhoodInsight | undefined>;
+  createNeighborhoodInsight(insight: Omit<NeighborhoodInsight, "id" | "createdAt" | "updatedAt">): Promise<NeighborhoodInsight>;
+  updateNeighborhoodInsight(id: number, insight: Partial<NeighborhoodInsight>): Promise<NeighborhoodInsight>;
 
   sessionStore: session.Store;
 }
@@ -529,6 +536,39 @@ export class DatabaseStorage implements IStorage {
       activityType,
       metadata: metadata || {}
     });
+  }
+  
+  // Neighborhood insights operations
+  async getNeighborhoodInsight(propertyId: number): Promise<NeighborhoodInsight | undefined> {
+    const [insight] = await db
+      .select()
+      .from(neighborhoodInsights)
+      .where(eq(neighborhoodInsights.propertyId, propertyId));
+    return insight;
+  }
+
+  async createNeighborhoodInsight(insight: Omit<NeighborhoodInsight, "id" | "createdAt" | "updatedAt">): Promise<NeighborhoodInsight> {
+    const [newInsight] = await db
+      .insert(neighborhoodInsights)
+      .values({ 
+        ...insight,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newInsight;
+  }
+
+  async updateNeighborhoodInsight(id: number, insight: Partial<NeighborhoodInsight>): Promise<NeighborhoodInsight> {
+    const [updatedInsight] = await db
+      .update(neighborhoodInsights)
+      .set({ 
+        ...insight,
+        updatedAt: new Date() 
+      })
+      .where(eq(neighborhoodInsights.id, id))
+      .returning();
+    return updatedInsight;
   }
 
   async updatePropertyAnalytics(propertyId: number): Promise<void> {
