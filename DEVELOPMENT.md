@@ -371,4 +371,178 @@ const form = useForm<InsertRentCard>({
     monthlyIncome: '0'
   }
 });
-``` 
+```
+
+## Authentication Debugging
+
+The application includes several tools to help debug authentication issues during development.
+
+### Common Authentication Issues
+
+1. **401 Unauthorized errors**: These occur when the authentication token is missing, invalid, or expired.
+2. **403 Forbidden errors**: These occur when the user is authenticated but doesn't have permission for the requested resource.
+3. **Authentication state inconsistencies**: These occur when the client-side authentication state doesn't match the server-side state.
+
+### Debugging Tools
+
+We've implemented several debugging tools to help diagnose and fix authentication issues:
+
+#### 1. Debug Auth Page
+
+A dedicated debugging page is available at `/debug-auth` that provides tools for inspecting and testing authentication.
+
+Features:
+- View current authentication status
+- Inspect token and user information
+- Test API endpoints with the current authentication
+- Reset authentication token
+- Reinitialize authentication state
+
+#### 2. Authentication Token Debugging
+
+The `debugAuthToken()` function in `client/src/lib/queryClient.ts` provides detailed information about the JWT token:
+
+```typescript
+import { debugAuthToken } from '@/lib/queryClient';
+
+// Call this function to log token details to the console
+debugAuthToken();
+```
+
+This function logs:
+- Whether a token exists
+- Token length and prefix/suffix
+- Decoded payload information (user ID, expiration, etc.)
+- Whether the token is expired
+
+#### 3. Enhanced Error Logging
+
+The API request function has been enhanced with detailed logging for authentication errors:
+
+```typescript
+// In client/src/lib/queryClient.ts
+if (res.status === 401) {
+  console.error('Authentication error details:', {
+    hasToken: !!headers.Authorization,
+    tokenPrefix: headers.Authorization ? headers.Authorization.substring(0, 15) + '...' : 'none',
+    endpoint: url
+  });
+}
+```
+
+#### 4. Example Component
+
+An example component demonstrating how to use the authentication debugging tools is available at `client/src/examples/AuthDebugExample.tsx`:
+
+```typescript
+import { debugAuthToken } from '@/lib/queryClient';
+
+// Inside your component
+const handleDebugToken = () => {
+  const tokenInfo = debugAuthToken();
+  console.log('Token exists:', tokenInfo.hasToken);
+};
+```
+
+You can include this component in any page during development to quickly debug authentication issues.
+
+### Troubleshooting Steps
+
+#### For 401 Unauthorized Errors:
+
+1. **Check if the token exists**:
+   - Open the debug page at `/debug-auth`
+   - Click "Debug Token" to see if a token exists in localStorage
+
+2. **Check if the token is valid and not expired**:
+   - The debug token function will show expiration information
+   - If expired, you'll need to log in again
+
+3. **Test specific endpoints**:
+   - Use the endpoint testing tool on the debug page
+   - Try `/api/user` first to verify basic authentication
+   - Then test the specific endpoint that's failing
+
+4. **Check for mock implementations**:
+   - For development mode, ensure there's a mock implementation for the endpoint
+   - Check `client/src/lib/queryClient.ts` for mock implementations
+
+#### For Authentication State Issues:
+
+1. **Reinitialize authentication**:
+   - Click "Reinitialize Auth" on the debug page
+   - This will attempt to validate the token and update the auth state
+
+2. **Reset authentication if needed**:
+   - Click "Reset Token" to clear the token from localStorage
+   - Log in again to get a fresh token
+
+### Mock Implementation for Development
+
+In development mode, many API endpoints are mocked to work without a backend. When adding new endpoints, make sure to add mock implementations for them in `client/src/lib/queryClient.ts`.
+
+Example of a mock implementation for a PATCH endpoint:
+
+```typescript
+// Mock property PATCH (update) endpoint
+if (url.match(/^\/api\/properties\/\d+$/) && method === 'PATCH') {
+  console.log('MOCK: Intercepting property PATCH request', data);
+  
+  // Extract the ID from the URL
+  const id = parseInt(url.split('/api/properties/')[1]);
+  
+  // Get properties from mock storage
+  const properties = getMockProperties();
+  
+  // Find the index of the property with the matching ID
+  const propertyIndex = properties.findIndex((p: any) => p.id === id);
+  
+  if (propertyIndex === -1) {
+    console.error('MOCK: Property not found with ID:', id);
+    return new Response(JSON.stringify({ message: "Property not found" }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  // Update the property with the new data
+  const updatedProperty = {
+    ...properties[propertyIndex],
+    ...(data as object),
+    updatedAt: new Date().toISOString()
+  };
+  
+  // Save the updated property
+  properties[propertyIndex] = updatedProperty;
+  saveMockProperties(properties);
+  
+  console.log('MOCK: Successfully updated property:', updatedProperty);
+  
+  // Return a mock successful response
+  return new Response(JSON.stringify(updatedProperty), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+```
+
+### Best Practices
+
+1. **Always check authentication in the browser console**:
+   - Look for "Using authentication token from localStorage" messages
+   - Check for any 401 errors and their details
+
+2. **Use the debug page for systematic testing**:
+   - Test authentication with `/api/user` endpoint
+   - Test specific endpoints that are failing
+   - Check token validity and expiration
+
+3. **Keep mock implementations up to date**:
+   - When adding new API endpoints, add corresponding mock implementations
+   - Ensure mock implementations handle authentication correctly
+
+4. **Check user roles and permissions**:
+   - Some endpoints require specific user types (e.g., landlord)
+   - Verify the user has the correct role for the operation
+
+> Note: The content from the separate Authentication Debugging Guide has been merged into this section for easier reference. 

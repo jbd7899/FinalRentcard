@@ -122,25 +122,6 @@ type ToastActionElement = React.ReactElement<typeof ToastAction>
 
 const TOAST_DURATION = 5000; // 5 seconds
 
-export const Toaster = () => {
-  const { toasts, removeToast } = useUIStore();
-
-  return (
-    <ToastProvider>
-      {toasts.map(({ id, title, description, type, duration = TOAST_DURATION }) => (
-        <BaseToast key={id} variant={type as ToastVariant}>
-          <div className="grid gap-1">
-            {title && <ToastTitle>{title}</ToastTitle>}
-            {description && <ToastDescription>{description}</ToastDescription>}
-          </div>
-          <ToastClose onClick={() => removeToast(id)} />
-        </BaseToast>
-      ))}
-      <ToastViewport />
-    </ToastProvider>
-  );
-};
-
 export {
   type ToastActionElement,
   ToastProvider,

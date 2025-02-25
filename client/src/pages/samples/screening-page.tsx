@@ -1,5 +1,7 @@
+import React from 'react';
 import { Building2, Info, Shield, ArrowRight, DollarSign, Star, Clock, CheckCircle, MapPin, Users, X, Bed, Bath, Car, CalendarDays, Share2, Phone, Mail } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
+import { useLocation } from 'wouter';
 
 interface PropertyDetailsModalProps {
   onClose: () => void;
@@ -101,6 +103,7 @@ const PropertyDetailsModal = ({ onClose }: PropertyDetailsModalProps) => {
 
 const SampleScreeningPage = () => {
   const { openModal, closeModal, setLoading, loadingStates, addToast } = useUIStore();
+  const [, setLocation] = useLocation();
 
   const handleViewPropertyDetails = () => {
     openModal('propertyDetails');
@@ -129,6 +132,10 @@ const SampleScreeningPage = () => {
     } finally {
       setLoading('shareRentCard', false);
     }
+  };
+
+  const handleCreateScreeningPage = () => {
+    setLocation('/create-screening');
   };
 
   return (

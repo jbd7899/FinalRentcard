@@ -148,19 +148,123 @@ if (modal?.type === 'confirmDelete') {
 ```
 
 ### 3. Toast Notifications
-- Queue toast messages
-- Auto-remove functionality
-- Different toast types
+
+MyRentCard uses a unified toast notification system to provide feedback to users across the application. The toast system uses a dual-approach with a bridge to ensure notifications appear consistently:
+
+1. **Primary Toast System**: Based on the `useToast` hook from `@/hooks/use-toast`
+2. **UI Store Toast System**: Based on the `addToast` method from `useUIStore`
+
+#### Using the Primary Toast System (Recommended)
+
+This is the recommended approach for most components:
 
 ```typescript
-// Show success toast
-const { addToast } = useUIStore();
-addToast({
-  title: 'Success',
-  description: 'Operation completed',
-  type: 'success'
-});
+import { useToast } from "@/hooks/use-toast";
+
+function MyComponent() {
+  const { toast } = useToast();
+  
+  const handleAction = () => {
+    toast({
+      title: "Success",
+      description: "Operation completed successfully",
+      variant: "success", // or "default", "destructive", "error", "warning", "info"
+    });
+  };
+  
+  return <button onClick={handleAction}>Perform Action</button>;
+}
 ```
+
+#### Using the UI Store Toast System
+
+This approach is useful for global state management scenarios:
+
+```typescript
+import { useUIStore } from "@/stores/uiStore";
+
+function MyComponent() {
+  const { addToast } = useUIStore();
+  
+  const handleAction = () => {
+    addToast({
+      title: "Success",
+      description: "Operation completed successfully",
+      type: "success", // or "default", "destructive", "error", "warning", "info"
+      duration: 5000, // optional, in milliseconds
+    });
+  };
+  
+  return <button onClick={handleAction}>Perform Action</button>;
+}
+```
+
+#### Toast Configuration
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `title` | string | The main message of the toast |
+| `description` | ReactNode | Additional details (can include JSX) |
+| `variant`/`type` | string | Visual style of the toast |
+| `duration` | number | How long the toast appears (in ms) |
+
+#### Toast Variants/Types
+
+- `default`: Standard toast
+- `destructive`: For critical errors or destructive actions
+- `success`: For successful operations
+- `error`: For error notifications
+- `warning`: For warning messages
+- `info`: For informational messages
+
+#### Implementation Details
+
+The application uses a bridge in the `StoreProvider` to ensure that toasts triggered by either method appear consistently:
+
+```typescript
+// In StoreProvider.tsx
+useEffect(() => {
+  // When a new toast is added to the UIStore, also show it in the main toast system
+  if (toasts.length > 0) {
+    const latestToast = toasts[toasts.length - 1];
+    
+    // Show the toast in the main system
+    toast({
+      title: latestToast.title,
+      description: latestToast.description,
+      variant: latestToast.type,
+    });
+    
+    // Remove the toast from UIStore after it's shown
+    removeToast(latestToast.id);
+  }
+}, [toasts, removeToast]);
+```
+
+The main `<Toaster />` component is included in the application's root component (`App.tsx`), ensuring toasts can appear on any page.
+
+#### Best Practices
+
+1. **Use the `useToast` Hook When Possible**: This is the primary toast system and provides the most consistent behavior.
+
+2. **Include Meaningful Titles and Descriptions**: Make toast messages clear and actionable.
+
+3. **Choose Appropriate Variants**: Use the correct variant to convey the right level of importance.
+
+4. **Set Appropriate Durations**: Critical messages should stay longer, while informational toasts can be shorter.
+
+5. **Don't Add Multiple Toasters**: The `<Toaster />` component should only be included once in the application (in `App.tsx`).
+
+6. **Avoid Excessive Notifications**: Too many toasts can overwhelm users. Use them for important feedback only.
+
+#### Troubleshooting
+
+If toast notifications aren't appearing as expected:
+
+1. **Check Import Paths**: Ensure you're importing from the correct location
+2. **Verify Component Hierarchy**: Make sure your component is within the `StoreProvider`
+3. **Check for Duplicate Toasters**: There should only be one `<Toaster />` in the app
+4. **Console Errors**: Look for any errors related to the toast system
 
 ### 4. Form States
 - Multi-step form progress

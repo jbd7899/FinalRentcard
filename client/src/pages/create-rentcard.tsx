@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { User, Home, CreditCard, CheckCircle, ArrowRight, Building2, Loader2, Award, Mail, MessageSquare, Copy, Save } from 'lucide-react';
+import { User, Home, CreditCard, CheckCircle, ArrowRight, Building2, Loader2, Award, Mail, MessageSquare, Copy, Save, Share2, Star } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -18,6 +19,8 @@ import { VALIDATION, FORM_MESSAGES, MESSAGES, ROUTES } from '@/constants';
 import Navbar from '@/components/shared/navbar';
 import { useRentCardStore } from '@/stores/rentCardStore';
 import { useUIStore } from '@/stores/uiStore';
+import { MultiStepForm, StepConfig } from '@/components/ui/multi-step-form';
+import { convertFormNumericValues } from '@/utils/form-utils';
 
 // Registration schema (unchanged)
 const registrationSchema = z.object({
@@ -36,39 +39,118 @@ type SidebarPreviewProps = {
 };
 
 const SidebarPreview = React.memo(({ formData }: SidebarPreviewProps) => {
-  const completedFields = Object.keys(formData).filter(key => formData[key as keyof InsertRentCard] && formData[key as keyof InsertRentCard] !== '0').length;
-  const totalFields = Object.keys(formData).length;
-  const strength = Math.round((completedFields / totalFields) * 100);
+  const completedFields = Object.keys(formData).filter(
+    key => formData[key as keyof InsertRentCard] && formData[key as keyof InsertRentCard] !== '0'
+  ).length;
+  const totalFields = Object.keys(insertRentCardSchema.shape).length; // Use schema for total fields
+  const profileStrength = Math.round((completedFields / totalFields) * 100);
+
+  const handleSharePreview = () => {
+    const previewData = JSON.stringify(formData);
+    const previewUrl = `${window.location.origin}/rentcard/preview/${btoa(previewData)}`;
+    navigator.clipboard.writeText(previewUrl);
+    alert("Preview link copied to clipboard! Note: This is a preview only and not saved yet.");
+  };
 
   return (
-    <div className="p-4 bg-muted rounded-lg sticky top-4">
-      <h3 className="font-semibold mb-2">Your RentCard Preview</h3>
-      <p><strong>Name:</strong> {formData.firstName} {formData.lastName || '—'}</p>
-      <p><strong>Rent Budget:</strong> ${formData.maxRent || '—'}</p>
-      <p><strong>Credit Score:</strong> {formData.creditScore || '—'}</p>
-      <div className="mt-4">
-        <p className="text-sm">Profile Strength: <span className="font-medium">{strength}%</span></p>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className="bg-primary h-2 rounded-full" style={{ width: `${strength}%` }} />
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">Fill more fields to boost your chances!</p>
-      </div>
+    <div className="sticky top-4">
+      <Card className="bg-muted">
+        <CardContent className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">
+                {formData.firstName && formData.lastName 
+                  ? `${formData.firstName} ${formData.lastName}'s RentCard` 
+                  : "Your RentCard Preview"}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Profile in progress ({profileStrength}%)
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSharePreview}
+              className="flex items-center gap-1"
+            >
+              <Share2 className="w-4 h-4" />
+              Share Preview
+            </Button>
+          </div>
+
+          {/* Profile Strength */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-lg font-bold">{Math.round(profileStrength / 20)}</div>
+                  <Star className="w-4 h-4 text-yellow-400 mx-auto" />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Profile Strength</p>
+                <Badge variant="secondary" className="mt-1">
+                  {profileStrength}% Complete
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Basic Info */}
+          {(formData.firstName || formData.email || formData.phone) && (
+            <div className="mb-4">
+              <p className="text-sm font-medium">Tenant Info</p>
+              <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                <p>{formData.firstName} {formData.lastName || ''}</p>
+                <p>{formData.email || '—'}</p>
+                <p>{formData.phone || '—'}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Financial Overview */}
+          {(formData.maxRent || formData.creditScore || formData.monthlyIncome) && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CreditCard className="w-4 h-4 text-primary" />
+                <p className="text-sm font-medium">Financial Overview</p>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>Max Rent: ${formData.maxRent || '—'}</p>
+                <p>Credit Score: {formData.creditScore || '—'}</p>
+                <p>Monthly Income: ${formData.monthlyIncome || '—'}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Prompt to Complete */}
+          <p className="text-xs text-muted-foreground italic">
+            Fill out more details to make your RentCard stand out!
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 });
+
 SidebarPreview.displayName = 'SidebarPreview';
 
 export default function CreateRentCard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { user, login } = useAuthStore();
-  const { step, setStep, formData, setFormData, updateField, reset } = useRentCardStore();
+  const { step, setStep, formData, setFormData, reset } = useRentCardStore();
   const { setLoading } = useUIStore();
   const [showPasswordForm, setShowPasswordForm] = React.useState(false);
 
   const form = useForm<InsertRentCard>({
     resolver: zodResolver(insertRentCardSchema),
-    defaultValues: formData
+    defaultValues: {
+      ...formData,
+      hasPets: formData.hasPets !== undefined ? formData.hasPets : false,
+      hasRoommates: formData.hasRoommates !== undefined ? formData.hasRoommates : false
+    }
   });
 
   const passwordForm = useForm<RegistrationForm>({
@@ -79,24 +161,24 @@ export default function CreateRentCard() {
     }
   });
 
-  const stepFields = {
-    1: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
-    2: ['currentAddress', 'currentRent', 'hasRoommates'],
-    3: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore']
-  } as const;
+  // Define numeric fields for conversion
+  const numericFields = ['monthlyIncome', 'currentRent', 'maxRent', 'creditScore'];
 
   const createRentCardMutation = useMutation({
     mutationFn: async (data: InsertRentCard) => {
-      setLoading(true);
+      setLoading('createRentCard', true);
       try {
+        // Convert numeric fields
+        const processedData = convertFormNumericValues(data, numericFields);
+        
         const response = await apiRequest('POST', '/api/tenant/rentcard', {
-          ...data,
+          ...processedData,
           userId: user?.id
         });
         if (!response.ok) throw new Error(MESSAGES.ERRORS.GENERAL);
         return response.json();
       } finally {
-        setLoading(false);
+        setLoading('createRentCard', false);
       }
     },
     onSuccess: () => {
@@ -116,39 +198,45 @@ export default function CreateRentCard() {
     }
   });
 
-  const handleNextStep = async () => {
-    const fields = stepFields[step as keyof typeof stepFields];
-    const result = await form.trigger(fields);
-    if (result) {
-      const formData = form.getValues();
-      setFormData(formData);
+  const handleStepChange = (newStep: number) => {
+    setStep(newStep);
+    
+    // Show milestone toast when advancing to next step
+    if (newStep > step) {
       const milestoneMessages = {
-        1: { title: "Profile Starter Earned!", desc: "You've kicked off your RentCard!" },
-        2: { title: "Rental Historian Earned!", desc: "Your rental history is impressing landlords!" },
-        3: { title: "Income Champ Earned!", desc: "You're ready to shine—RentCard complete!" }
+        2: { title: "Profile Starter Earned!", desc: "You've kicked off your RentCard!" },
+        3: { title: "Rental Historian Earned!", desc: "Your rental history is impressing landlords!" },
+        4: { title: "Income Champ Earned!", desc: "You're ready to shine—RentCard complete!" }
       };
-      toast({
-        title: milestoneMessages[step as keyof typeof milestoneMessages].title,
-        description: (
-          <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 text-yellow-500" />
-            {milestoneMessages[step as keyof typeof milestoneMessages].desc}
-          </div>
-        ),
-      });
-      setStep(step + 1);
+      
+      if (milestoneMessages[newStep as keyof typeof milestoneMessages]) {
+        toast({
+          title: milestoneMessages[newStep as keyof typeof milestoneMessages].title,
+          description: (
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-yellow-500" />
+              {milestoneMessages[newStep as keyof typeof milestoneMessages].desc}
+            </div>
+          ),
+        });
+      }
+    }
+    
+    // Update form data in store when changing steps
+    const formData = form.getValues();
+    const processedData = convertFormNumericValues(formData, numericFields);
+    setFormData(processedData);
+  };
+
+  const handleFormSubmit = (data: InsertRentCard) => {
+    // If we're on the final step, submit the form
+    if (step === 4) {
+      const processedData = convertFormNumericValues(data, numericFields);
+      createRentCardMutation.mutate(processedData);
     }
   };
 
-  const onSubmit = async (data: InsertRentCard) => {
-    if (step < 4) {
-      await handleNextStep();
-      return;
-    }
-    createRentCardMutation.mutate(data);
-  };
-
-  const PersonalInfoStep = useMemo(() => () => (
+  const PersonalInfoStep = useMemo(() => (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div><Label htmlFor="firstName">First Name</Label><Input id="firstName" placeholder="Enter first name" {...form.register('firstName')} />{form.formState.errors.firstName && <p className="text-destructive text-sm mt-1">{form.formState.errors.firstName.message}</p>}</div>
@@ -162,7 +250,7 @@ export default function CreateRentCard() {
     </div>
   ), [form]);
 
-  const RentalHistoryStep = useMemo(() => () => (
+  const RentalHistoryStep = useMemo(() => (
     <div className="space-y-6">
       <div><Label htmlFor="currentAddress">Current Address</Label><Input id="currentAddress" placeholder="Enter your current address" {...form.register('currentAddress')} />{form.formState.errors.currentAddress && <p className="text-destructive text-sm mt-1">{form.formState.errors.currentAddress.message}</p>}</div>
       <div className="grid grid-cols-2 gap-4">
@@ -172,7 +260,7 @@ export default function CreateRentCard() {
     </div>
   ), [form]);
 
-  const IncomeStep = useMemo(() => () => (
+  const IncomeStep = useMemo(() => (
     <div className="space-y-6">
       <div><Label htmlFor="currentEmployer">Current Employer</Label><Input id="currentEmployer" placeholder="Enter employer name" {...form.register('currentEmployer')} />{form.formState.errors.currentEmployer && <p className="text-destructive text-sm mt-1">{form.formState.errors.currentEmployer.message}</p>}</div>
       <div className="grid grid-cols-2 gap-4">
@@ -196,14 +284,15 @@ export default function CreateRentCard() {
     const handlePasswordSubmit = async (passwordData: RegistrationForm) => {
       setIsCreatingAccount(true);
       try {
-        const token = btoa(JSON.stringify({
+        const loginData = {
           email: formData.email,
-          password: passwordData.password,
-          userType: 'tenant',
-          phone: formData.phone
-        }));
-        await login(token);
-        await createRentCardMutation.mutateAsync(formData);
+          password: passwordData.password
+        };
+        await login(loginData);
+        
+        // Convert numeric fields before submitting
+        const processedData = convertFormNumericValues(formData, numericFields);
+        await createRentCardMutation.mutateAsync(processedData);
       } catch (error) {
         console.error('Account creation error:', error);
         toast({
@@ -310,6 +399,34 @@ export default function CreateRentCard() {
     );
   };
 
+  // Define step configurations for the multi-step form
+  const formSteps: StepConfig[] = [
+    {
+      fields: ['firstName', 'lastName', 'email', 'phone', 'hasPets'],
+      component: PersonalInfoStep,
+      title: "Personal Information",
+      description: "Landlords love complete profiles—start yours in minutes!"
+    },
+    {
+      fields: ['currentAddress', 'currentRent', 'hasRoommates'],
+      component: RentalHistoryStep,
+      title: "Rental History",
+      description: "Show landlords your rental track record instantly."
+    },
+    {
+      fields: ['currentEmployer', 'yearsEmployed', 'monthlyIncome', 'maxRent', 'moveInDate', 'creditScore'],
+      component: IncomeStep,
+      title: "Income & Preferences",
+      description: "Prove you're a top tenant with income and credit details."
+    },
+    {
+      fields: [],
+      component: <CompletionStep />,
+      title: "Complete Your RentCard",
+      description: "Landlords can pre-approve you faster with your RentCard!"
+    }
+  ];
+
   const StepIndicator = () => (
     <div className="flex items-center justify-center space-x-4 mb-8">
       {[User, Home, CreditCard, CheckCircle].map((Icon, index) => (
@@ -320,30 +437,6 @@ export default function CreateRentCard() {
     </div>
   );
 
-  const ProgressBar = () => (
-    <div className="mb-8">
-      <div className="w-full bg-muted rounded-full h-2">
-        <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{ width: `${(step / 4) * 100}%` }} />
-      </div>
-      <p className="text-center text-sm text-muted-foreground mt-2">{(step / 4) * 100}% Complete</p>
-    </div>
-  );
-
-  const ValueProposition = () => {
-    const messages = {
-      1: "Landlords love complete profiles—start yours in minutes!",
-      2: "Show landlords your rental track record instantly.",
-      3: "Prove you're a top tenant with income and credit details.",
-      4: "Landlords can pre-approve you faster with your RentCard!"
-    };
-    return (
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-semibold mb-2">Create My Free RentCard</h1>
-        <p className="text-muted-foreground">{messages[step as keyof typeof messages]}</p>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -351,27 +444,21 @@ export default function CreateRentCard() {
         <Card className="max-w-5xl mx-auto">
           <CardContent className="p-8">
             <div className="grid md:grid-cols-[2fr,1fr] gap-8">
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <ProgressBar />
+              <div className="space-y-8">
                 <StepIndicator />
-                <ValueProposition />
-                {step === 1 && <PersonalInfoStep />}
-                {step === 2 && <RentalHistoryStep />}
-                {step === 3 && <IncomeStep />}
-                {step === 4 && <CompletionStep />}
-                <div className="flex justify-between mt-8">
-                  {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} disabled={createRentCardMutation.isPending}>Back</Button>}
-                  {step < 4 ? (
-                    <Button type="submit" className="ml-auto" disabled={createRentCardMutation.isPending}>
-                      {createRentCardMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</> : <>Next <ArrowRight className="w-4 h-4 ml-2" /></>}
-                    </Button>
-                  ) : (
-                    <Button type="submit" className="ml-auto" disabled={createRentCardMutation.isPending}>
-                      {createRentCardMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : <>Complete <CheckCircle className="w-4 h-4 ml-2" /></>}
-                    </Button>
-                  )}
-                </div>
-              </form>
+                
+                <MultiStepForm
+                  steps={formSteps}
+                  form={form}
+                  onStepChange={handleStepChange}
+                  onSubmit={handleFormSubmit}
+                  isSubmitting={createRentCardMutation.isPending}
+                  submitButtonText="Complete"
+                  showProgressBar={false}
+                  className="space-y-8"
+                />
+              </div>
+              
               {step < 4 && <SidebarPreview formData={formData} />}
             </div>
           </CardContent>

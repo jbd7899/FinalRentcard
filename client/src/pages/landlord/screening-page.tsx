@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useParams } from "wouter";
+import { useState, useEffect } from "react";
+import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Shield,
   ArrowRight,
@@ -22,8 +22,12 @@ import {
   Car,
   CalendarDays,
   Loader2,
+  Share2,
+  Phone,
+  Mail,
+  Info,
 } from "lucide-react";
-import { API_ENDPOINTS } from "@/constants";
+import { API_ENDPOINTS, ROUTES, generateRoute } from "@/constants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,6 +39,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Link } from "wouter";
+import { PropertyImage, PropertyAmenity } from '@shared/schema';
+import LandlordLayout from '@/components/layouts/LandlordLayout';
 
 // Existing hooks (unchanged)
 const useRentCard = (userId?: number) => {
@@ -52,9 +58,9 @@ const useRentCard = (userId?: number) => {
 
 const usePropertyDetails = (slug: string) => {
   return useQuery({
-    queryKey: ["/api/properties/screening", slug],
+    queryKey: [API_ENDPOINTS.PROPERTIES.SCREENING.BY_SLUG(slug)],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/properties/screening/${slug}`);
+      const response = await apiRequest("GET", API_ENDPOINTS.PROPERTIES.SCREENING.BY_SLUG(slug));
       return response.json();
     },
     enabled: !!slug,
@@ -72,9 +78,12 @@ interface PreScreeningFormData {
   creditScore: number;
 }
 
-// PropertyDetailsModal (unchanged)
+// PropertyDetailsModal (enhanced with better styling)
 const PropertyDetailsModal = ({ isOpen, onClose, property }: PropertyDetailsModalProps) => {
   if (!isOpen || !property) return null;
+
+  // Find primary image or use the first image
+  const primaryImage = property.images?.find((img: PropertyImage) => img.isPrimary) || property.images?.[0];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -89,9 +98,35 @@ const PropertyDetailsModal = ({ isOpen, onClose, property }: PropertyDetailsModa
           </button>
         </DialogHeader>
         <div className="space-y-6">
-          <div className="bg-gray-100 h-64 rounded-lg flex items-center justify-center">
-            <Building className="w-12 h-12 text-gray-400" />
-          </div>
+          {primaryImage ? (
+            <div className="bg-gray-100 h-64 rounded-lg overflow-hidden">
+              <img 
+                src={primaryImage.imageUrl} 
+                alt={property.address} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="bg-gray-100 h-64 rounded-lg flex items-center justify-center">
+              <Building className="w-12 h-12 text-gray-400" />
+            </div>
+          )}
+          
+          {/* Property images gallery */}
+          {property.images && property.images.length > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {property.images.slice(0, 4).map((image: PropertyImage, index: number) => (
+                <div key={image.id} className="aspect-square rounded-md overflow-hidden">
+                  <img 
+                    src={image.imageUrl} 
+                    alt={`Property image ${index + 1}`} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-2">
               <Bed className="w-5 h-5 text-blue-600" />
@@ -110,6 +145,22 @@ const PropertyDetailsModal = ({ isOpen, onClose, property }: PropertyDetailsModa
               <span>{new Date(property.availableFrom).toLocaleDateString()}</span>
             </div>
           </div>
+          
+          {/* Amenities section */}
+          {property.amenities && property.amenities.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-2">Amenities</h3>
+              <div className="flex flex-wrap gap-2">
+                {property.amenities.map((amenity: PropertyAmenity) => (
+                  <div key={amenity.id} className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                    {amenity.amenityType}
+                    {amenity.description && ` - ${amenity.description}`}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div>
             <h3 className="font-semibold mb-2">Description</h3>
             <p className="text-gray-600">{property.description}</p>
@@ -129,20 +180,29 @@ const PropertyDetailsModal = ({ isOpen, onClose, property }: PropertyDetailsModa
 
 // Main ScreeningPage Component
 const ScreeningPage = () => {
-  const { slug } = useParams();
+  const { slug } = useParams<{ slug: string }>();
+  const [, setLocation] = useLocation();
   const { user } = useAuthStore();
   const { modal, openModal, closeModal, setLoading, loadingStates, addToast } = useUIStore();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [preScreeningData, setPreScreeningData] = useState<PreScreeningFormData>({
+    monthlyIncome: 0,
+    creditScore: 0,
+  });
 
-  const { data: property, isLoading, error } = usePropertyDetails(slug || "");
+  const { data: property, isLoading: propertyLoading, error } = usePropertyDetails(slug || "");
   const { data: rentCard, isLoading: rentCardLoading } = useRentCard(user?.id);
 
-  const showPropertyDetails = modal?.type === 'propertyDetails';
+  // Redirect to archived property page if property is archived
+  useEffect(() => {
+    if (property && property.isArchived) {
+      setLocation(generateRoute.archivedProperty(slug || ""));
+    }
+  }, [property, slug, setLocation]);
 
-  // Debugging logs (kept for troubleshooting)
-  console.log("User:", user);
-  console.log("User Type:", user?.userType);
-  console.log("RentCard:", rentCard);
+  const showPropertyDetailsModal = modal?.type === 'propertyDetails';
+  const isLandlord = user?.userType === 'landlord';
 
   const rentCardMutation = useMutation({
     mutationFn: async () => {
@@ -211,179 +271,279 @@ const ScreeningPage = () => {
   });
 
   const handlePreScreeningSubmit = () => {
-    const monthlyIncome = parseInt(
-      (document.querySelector('input[placeholder="Enter your monthly income"]') as HTMLInputElement)?.value || "0"
-    );
-    const creditScore = parseInt(
-      (document.querySelector('input[placeholder="Enter your credit score"]') as HTMLInputElement)?.value || "0"
-    );
-    preScreeningMutation.mutate({ monthlyIncome, creditScore });
+    preScreeningMutation.mutate(preScreeningData);
   };
 
-  if (isLoading || rentCardLoading) return <div className="p-8 text-center">Loading...</div>;
-  if (error) return <div className="p-8 text-center text-red-500">Error loading property</div>;
-  if (!property) return <div className="p-8 text-center">Property not found</div>;
+  const handleSubmitRentCard = () => {
+    rentCardMutation.mutate();
+  };
 
-  return (
+  const pageContent = (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto mb-6">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6 text-white">
-            <div className="flex flex-col md:flex-row md:items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="bg-white rounded-lg p-4">
-                  <Building className="w-8 h-8 text-blue-600" />
+      {/* Demo Banner for Landlords */}
+      {isLandlord && (
+        <div className="max-w-4xl mx-auto mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold mb-2 flex items-center">
+                <Info className="w-5 h-5 text-blue-600 mr-2" />
+                Your Property Screening Page
+              </h1>
+              <p className="text-gray-600">
+                This is your property screening page for tenant applications. Tenants can submit their RentCard or complete a quick pre-screening form.
+              </p>
+            </div>
+            <Button 
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-transform hover:scale-105 w-full md:w-auto"
+              onClick={() => setLocation(ROUTES.LANDLORD.SCREENING)}
+            >
+              Manage Screening Pages
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {propertyLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            <p className="text-sm text-gray-500">Loading property details...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-12 px-4 border rounded-lg bg-gray-50 max-w-4xl mx-auto">
+          <Building className="w-12 h-12 text-gray-300 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-1">Property Not Found</h3>
+          <p className="text-gray-500 text-center mb-6 max-w-md">
+            The property you're looking for doesn't exist or has been removed.
+          </p>
+          <Button 
+            onClick={() => setLocation(ROUTES.HOME)}
+            size="sm"
+            className="h-9 text-sm"
+          >
+            Return Home
+          </Button>
+        </div>
+      ) : property ? (
+        <div className="max-w-4xl mx-auto">
+          {/* Property Header with Landlord Info */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl shadow-lg overflow-hidden mb-6">
+            <div className="p-6 sm:p-4 text-white relative">
+              <div className="flex flex-col md:flex-row md:items-center justify-between">
+                {/* Landlord Info */}
+                <div className="mb-4 md:mb-0">
+                  <h2 className="text-xl font-semibold text-white">{property.landlordName || "Property Owner"}</h2>
+                  <div className="flex flex-col sm:flex-row sm:gap-4 text-blue-100 text-sm">
+                    {property.landlordPhone && (
+                      <div className="flex items-center gap-1">
+                        <Phone className="w-4 h-4" />
+                        <span>{property.landlordPhone}</span>
+                      </div>
+                    )}
+                    {property.landlordEmail && (
+                      <div className="flex items-center gap-1">
+                        <Mail className="w-4 h-4" />
+                        <span>{property.landlordEmail}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold">{property.address}</h1>
-                  <p className="text-blue-100">
-                    {property.bedrooms} Bed • {property.bathrooms} Bath • ${property.rent}/month
-                  </p>
-                  <button
-                    className="mt-2 text-white hover:text-blue-200 font-medium flex items-center gap-1"
-                    onClick={() => openModal('propertyDetails', { property })}
-                  >
-                    View full property details
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                {/* Property Info */}
+                <div className="flex flex-col items-center md:flex-row md:items-center">
+                  <div className="bg-white rounded-lg p-4">
+                    <Building2 className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div className="ml-0 md:ml-4 mt-4 md:mt-0 text-center md:text-left">
+                    <h1 className="text-2xl font-bold text-white">{property.title || property.address}</h1>
+                    <p className="text-blue-100">{property.bedrooms} Bed • {property.bathrooms} Bath • ${property.rent}/month</p>
+                    <button 
+                      className="mt-2 text-white hover:text-blue-200 font-medium flex items-center gap-1 mx-auto md:mx-0"
+                      onClick={() => openModal('propertyDetails')}
+                    >
+                      View full property details
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto">
-        <Card className="shadow-lg rounded-xl overflow-hidden">
-          {(!user || user?.userType === "tenant") ? (
-            <CardContent className="p-8 bg-blue-50 border-b border-blue-100">
+          {/* Main Content */}
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            {/* RentCard Integration Section */}
+            <div className="p-8 bg-blue-50 border-b border-blue-100">
               <div className="flex items-center gap-2 mb-4">
                 <Star className="w-6 h-6 text-blue-600 fill-current" />
-                <h2 className="text-2xl font-bold text-gray-800">Express Interest with RentCard</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Screen Tenants Instantly with RentCard</h2>
               </div>
               <div className="flex flex-col md:flex-row items-center gap-8">
                 <div className="flex-1 text-center md:text-left">
                   <p className="text-lg text-gray-700 mb-4">
-                    Share your verified rental profile instantly—no forms needed!
+                    Accept verified RentCards for seamless tenant screening—no extra work for you!
                   </p>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3 text-gray-700">
+                    <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                       <Clock className="w-5 h-5 text-blue-600" />
-                      <span>Takes 30 seconds</span>
+                      <span>Saves you time</span>
                     </div>
-                    <div className="flex items-center gap-3 text-gray-700">
+                    <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                       <Shield className="w-5 h-5 text-blue-600" />
-                      <span>Privacy protected</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-700">
-                      <CheckCircle className="w-5 h-5 text-blue-600" />
-                      <span>Instant sharing</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-700">
-                      <Users className="w-5 h-5 text-blue-600" />
-                      <span>Verified profile</span>
+                      <span>Verified tenants</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-4">
-                  <Button
-                    onClick={() => (!rentCard?.id ? (window.location.href = "/create-rentcard") : rentCardMutation.mutate())}
-                    disabled={rentCardMutation.isPending}
-                    className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 shadow-lg transform hover:scale-105 transition-transform"
-                  >
-                    {rentCard?.id ? "Share RentCard" : "Create RentCard"}
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                  {/* Added Login Link */}
-                  {!rentCard?.id && (
+                  {user ? (
+                    rentCard ? (
+                      <Button 
+                        className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition-transform"
+                        onClick={handleSubmitRentCard}
+                        disabled={loadingStates.submitRentCard}
+                      >
+                        <Share2 className="w-5 h-5" />
+                        {loadingStates.submitRentCard ? 'Sharing...' : 'Share Your RentCard'}
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition-transform"
+                        onClick={() => setLocation('/create-rentcard')}
+                      >
+                        <Share2 className="w-5 h-5" />
+                        Create Your RentCard
+                      </Button>
+                    )
+                  ) : (
+                    <Button 
+                      className="bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 flex items-center gap-2 shadow-lg transform hover:scale-105 transition-transform"
+                      onClick={() => setLocation('/auth')}
+                    >
+                      <Share2 className="w-5 h-5" />
+                      Sign In to Apply
+                    </Button>
+                  )}
+                  {!user && (
                     <p className="text-sm text-gray-600 text-center">
-                      Already have a RentCard?{" "}
-                      <Link href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
-                        Login
-                      </Link>
+                      No account?{' '}
+                      <button 
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        onClick={() => setLocation('/auth?tab=register')}
+                      >
+                        Create an Account
+                      </button>
                     </p>
                   )}
-                  <p className="text-sm text-gray-600 text-center">
-                    {property?.applications?.length || 0} RentCards shared
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Pre-Screening Form */}
+            <div className="p-8">
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Quick Tenant Pre-Screening</h2>
+              <p className="text-gray-600 mb-6">
+                Collect tenant details to find your perfect match. This free tool works with your existing process—no changes required!
+              </p>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold mb-3 text-gray-800">Property Requirements:</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <DollarSign className="w-5 h-5 text-blue-600 mt-1" />
+                      <div>
+                        <p className="text-gray-600">Minimum Income: ${property.minIncome || property.rent * 3}/month</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Users className="w-5 h-5 text-blue-600 mt-1" />
+                      <div>
+                        <p className="text-gray-600">Max Occupants: {property.maxOccupants || property.bedrooms * 2} people</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-500 mt-1" />
+                      <div>
+                        <p className="text-gray-600">Move-in: {new Date(property.availableFrom).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="monthlyIncome">Monthly Income</Label>
+                      <Input 
+                        id="monthlyIncome"
+                        type="number" 
+                        placeholder="Enter your monthly income" 
+                        value={preScreeningData.monthlyIncome || ''}
+                        onChange={(e) => setPreScreeningData({
+                          ...preScreeningData,
+                          monthlyIncome: parseInt(e.target.value) || 0
+                        })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="creditScore">Credit Score</Label>
+                      <Input 
+                        id="creditScore"
+                        type="number" 
+                        placeholder="Enter your credit score" 
+                        value={preScreeningData.creditScore || ''}
+                        onChange={(e) => setPreScreeningData({
+                          ...preScreeningData,
+                          creditScore: parseInt(e.target.value) || 0
+                        })}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handlePreScreeningSubmit}
+                      className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 flex items-center justify-center gap-2 transition-transform hover:scale-105"
+                      disabled={loadingStates.preScreening}
+                    >
+                      {loadingStates.preScreening ? 'Submitting...' : 'Submit Pre-Screening'}
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-3 text-center">
+                    Free tenant screening tool • No cost to you • Integrates with your process
                   </p>
                 </div>
               </div>
-            </CardContent>
-          ) : user?.userType === "landlord" ? (
-            <CardContent className="p-8 bg-blue-50 border-b border-blue-100 text-center">
-              <p className="text-lg text-gray-700">
-                You are logged in as a landlord and cannot submit a RentCard.
-              </p>
-            </CardContent>
-          ) : null}
-
-          <CardContent className="p-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Quick Pre-Screening</h2>
-            <p className="text-gray-600 mb-6">
-              Share basic details to check if this property matches your needs.
-            </p>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold mb-3 text-gray-800">Basic Requirements:</h3>
-                <div className="space-y-4">
-                  {property.requirements?.map((req, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                      <DollarSign className="w-5 h-5 text-blue-600 mt-1" />
-                      <p className="text-gray-600">{req.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Monthly Income</Label>
-                    <Input type="number" placeholder="Enter your monthly income" />
-                  </div>
-                  <div>
-                    <Label>Credit Score</Label>
-                    <Input type="number" placeholder="Enter your credit score" />
-                  </div>
-                  <Button
-                    onClick={handlePreScreeningSubmit}
-                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-transform hover:scale-105"
-                  >
-                    Submit Pre-Screening
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500 mt-3 text-center">
-                  30-second form • No commitment
-                </p>
-              </div>
             </div>
-          </CardContent>
 
-          <CardContent className="bg-gray-50 p-6 text-center border-t border-gray-200">
-            <p className="text-sm text-gray-600 mb-2">★★★★★ "Super quick process!"</p>
-            <p className="text-sm text-gray-600">Trusted by thousands of renters</p>
-          </CardContent>
+            {/* Trust Section */}
+            <div className="bg-gray-50 p-6 text-center border-t border-gray-200">
+              <p className="text-sm text-gray-600 mb-2">★★★★★ "Effortless tenant screening!"</p>
+              <p className="text-sm text-gray-600">A free tool to enhance your rental business</p>
+            </div>
 
-          <div className="bg-gray-100 p-3 text-center text-sm text-gray-500">
-            Last updated: February 22, 2025
+            {/* Last Updated Footer */}
+            <div className="bg-gray-100 p-3 text-center text-sm text-gray-500">
+              This Screening Page was last updated: {new Date().toLocaleDateString()}
+            </div>
           </div>
-        </Card>
-      </div>
+        </div>
+      ) : null}
 
-      <PropertyDetailsModal
-        isOpen={showPropertyDetails}
-        onClose={() => closeModal()}
-        property={property}
-      />
+      {/* Property Details Modal */}
+      {property && (
+        <PropertyDetailsModal
+          isOpen={showPropertyDetailsModal}
+          onClose={closeModal}
+          property={property}
+        />
+      )}
+    </div>
+  );
 
-      <div className="max-w-4xl mx-auto mt-6 text-center">
-        <Link href="/">
-          <div className="flex items-center justify-center gap-2 cursor-pointer">
-            <Building2 className="w-6 h-6 text-blue-600" />
-            <span className="text-sm font-semibold text-blue-600">Made with MyRentCard</span>
-          </div>
-        </Link>
-      </div>
+  return isLandlord ? (
+    <LandlordLayout>
+      {pageContent}
+    </LandlordLayout>
+  ) : (
+    <div className="min-h-screen bg-background">
+      {pageContent}
     </div>
   );
 };

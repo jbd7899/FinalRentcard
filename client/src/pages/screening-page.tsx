@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertScreeningPageSchema, type InsertScreeningPage } from "@shared/schema";
 import { useAuthStore } from '@/stores/authStore';
@@ -28,12 +28,15 @@ import {
   Copy,
 } from "lucide-react";
 import { MESSAGES, VALIDATION, ROUTES } from '@/constants';
+import { MultiStepForm, StepConfig } from '@/components/ui/multi-step-form';
+import { convertNestedNumericValues } from '@/utils/form-utils';
 
 export default function ScreeningPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { screening: { currentStep, screeningPageUrl, setScreeningStep, setScreeningUrl } } = useUIStore();
+  const { toast } = useToast();
 
   const form = useForm<InsertScreeningPage>({
     resolver: zodResolver(insertScreeningPageSchema),
@@ -52,7 +55,12 @@ export default function ScreeningPage() {
 
   const createScreeningPage = useMutation({
     mutationFn: async (data: InsertScreeningPage) => {
-      const res = await apiRequest("POST", "/api/screening", data);
+      // Process numeric fields in nested objects
+      const processedData = convertNestedNumericValues(data, {
+        screeningCriteria: ['minCreditScore', 'minMonthlyIncome']
+      });
+      
+      const res = await apiRequest("POST", "/api/screening", processedData);
       if (!res.ok) {
         throw new Error(MESSAGES.ERRORS.GENERAL);
       }
@@ -76,30 +84,20 @@ export default function ScreeningPage() {
     },
   });
 
-  const onSubmit = form.handleSubmit((data) => {
+  const handleStepChange = (step: number) => {
+    setScreeningStep(step);
+  };
+
+  const handleFormSubmit = (data: InsertScreeningPage) => {
+    if (currentStep === 3) return; // Already on success step
+    
     if (currentStep === 2) {
       createScreeningPage.mutate(data);
-    } else {
-      setScreeningStep(currentStep + 1);
     }
-  });
+  };
 
-  const StepIndicator = () => (
-    <div className="w-full bg-gray-200 rounded-full h-2 mb-8">
-      <div 
-        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-        style={{ width: `${(currentStep / 3) * 100}%` }}
-      />
-    </div>
-  );
-
-  const Step1 = () => (
+  const BusinessInfoStep = (
     <div className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Business Information</h2>
-        <p className="text-gray-600">Set up your general screening page to start receiving qualified applicants</p>
-      </div>
-
       <FormField
         control={form.control}
         name="businessName"
@@ -144,13 +142,8 @@ export default function ScreeningPage() {
     </div>
   );
 
-  const Step2 = () => (
+  const ScreeningCriteriaStep = (
     <div className="space-y-6">
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-2">Tenant Requirements</h2>
-        <p className="text-gray-600">Set your screening criteria to automatically filter applicants</p>
-      </div>
-
       <FormField
         control={form.control}
         name="screeningCriteria.minCreditScore"
@@ -162,7 +155,7 @@ export default function ScreeningPage() {
                 type="number" 
                 placeholder="e.g., 650" 
                 {...field}
-                onChange={(e) => field.onChange(parseInt(e.target.value))}
+                onChange={(e) => field.onChange(e.target.value)}
               />
             </FormControl>
             <FormMessage />
@@ -181,7 +174,7 @@ export default function ScreeningPage() {
                 type="number" 
                 placeholder="e.g., 3000" 
                 {...field}
-                onChange={(e) => field.onChange(parseInt(e.target.value))}
+                onChange={(e) => field.onChange(e.target.value)}
               />
             </FormControl>
             <FormMessage />
@@ -227,7 +220,7 @@ export default function ScreeningPage() {
     </div>
   );
 
-  const Step3 = () => (
+  const SuccessStep = (
     <div className="text-center">
       <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
         <CheckCircle className="w-8 h-8 text-green-500" />
@@ -269,6 +262,26 @@ export default function ScreeningPage() {
     </div>
   );
 
+  // Define step configurations for the multi-step form
+  const formSteps: StepConfig[] = [
+    {
+      fields: ['businessName', 'contactName', 'businessEmail'],
+      component: BusinessInfoStep,
+      title: "Business Information",
+      description: "Set up your general screening page to start receiving qualified applicants"
+    },
+    {
+      fields: ['screeningCriteria.minCreditScore', 'screeningCriteria.minMonthlyIncome'],
+      component: ScreeningCriteriaStep,
+      title: "Tenant Requirements",
+      description: "Set your screening criteria to automatically filter applicants"
+    },
+    {
+      fields: [],
+      component: SuccessStep
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <header className="flex items-center justify-between max-w-3xl mx-auto mb-8">
@@ -306,34 +319,16 @@ export default function ScreeningPage() {
         </div>
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="bg-white rounded-lg shadow p-8">
-            <StepIndicator />
-
-            {currentStep === 1 && <Step1 />}
-            {currentStep === 2 && <Step2 />}
-            {currentStep === 3 && <Step3 />}
-
-            <div className="flex justify-between mt-8">
-              {currentStep > 1 && currentStep < 3 && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setScreeningStep(currentStep - 1)}
-                >
-                  Back
-                </Button>
-              )}
-              {currentStep < 3 && (
-                <Button
-                  type="submit"
-                  className={currentStep === 1 ? "ml-auto" : ""}
-                >
-                  {currentStep === 2 ? "Create Screening Page" : "Next"}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              )}
-            </div>
-          </form>
+          <div className="bg-white rounded-lg shadow p-8">
+            <MultiStepForm
+              steps={formSteps}
+              form={form}
+              onStepChange={handleStepChange}
+              onSubmit={handleFormSubmit}
+              isSubmitting={createScreeningPage.isPending}
+              submitButtonText="Create Screening Page"
+            />
+          </div>
         </Form>
       </div>
     </div>

@@ -12,6 +12,9 @@ import {
   User, 
   LogOut, 
   Home,
+  FileText,
+  CheckSquare,
+  UserCheck,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 
@@ -46,6 +49,12 @@ export default function Navbar() {
                       Applications
                     </span>
                   </Link>
+                  <Link href="/landlord/verify-documents">
+                    <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      <CheckSquare className="w-4 h-4" />
+                      Verify Documents
+                    </span>
+                  </Link>
                 </>
               ) : (
                 <>
@@ -55,9 +64,21 @@ export default function Navbar() {
                       Dashboard
                     </span>
                   </Link>
-                  <Link href="/create-rentcard">
+                  <Link href="/tenant/rentcard">
                     <span className="text-muted-foreground hover:text-foreground">
                       My RentCard
+                    </span>
+                  </Link>
+                  <Link href="/tenant/documents">
+                    <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      <FileText className="w-4 h-4" />
+                      Documents
+                    </span>
+                  </Link>
+                  <Link href="/tenant/references">
+                    <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      <UserCheck className="w-4 h-4" />
+                      References
                     </span>
                   </Link>
                 </>

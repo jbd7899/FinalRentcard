@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import LandlordLayout from '@/components/layouts/LandlordLayout';
 
 const LandlordReferenceForm = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -41,25 +42,34 @@ const LandlordReferenceForm = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full">
-          <CardContent className="pt-6 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Check className="w-8 h-8 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-semibold mb-2">Thank You!</h2>
-            <p className="text-muted-foreground">
-              Your reference for {tenantInfo.name} has been submitted successfully.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <LandlordLayout>
+        <div className="flex items-center justify-center p-4">
+          <Card className="max-w-lg w-full">
+            <CardContent className="pt-6 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-semibold mb-2">Thank You!</h2>
+              <p className="text-muted-foreground">
+                Your reference for {tenantInfo.name} has been submitted successfully.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </LandlordLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <LandlordLayout>
       <div className="max-w-lg mx-auto">
+        <header className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Tenant Reference Form</h1>
+          <p className="text-gray-500 mt-1">
+            Please provide your honest assessment of this tenant
+          </p>
+        </header>
+        
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3 mb-4">
@@ -67,14 +77,13 @@ const LandlordReferenceForm = () => {
                 <img src="/logo.svg" alt="RentCard Logo" className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold">Tenant Reference Request</h1>
-                <p className="text-muted-foreground">via RentCard</p>
+                <h2 className="text-xl font-semibold">Tenant Information</h2>
+                <p className="text-muted-foreground">Reference Request</p>
               </div>
             </div>
             
             <Card>
               <CardContent className="pt-6">
-                <h2 className="font-medium mb-2">Tenant Information</h2>
                 <p className="text-muted-foreground">Name: {tenantInfo.name}</p>
                 <p className="text-muted-foreground">Property: {tenantInfo.propertyAddress}</p>
                 <p className="text-muted-foreground">Period: {tenantInfo.tenancyDates}</p>
@@ -231,7 +240,7 @@ const LandlordReferenceForm = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </LandlordLayout>
   );
 };
 

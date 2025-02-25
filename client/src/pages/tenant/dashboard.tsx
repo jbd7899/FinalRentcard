@@ -10,22 +10,30 @@ import {
   ArrowRight,
   CheckCircle,
   LogOut,
-  Loader2
+  Loader2,
+  Share2,
+  Upload,
+  Home,
+  UserCheck,
+  Menu,
+  X,
+  User
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import Navbar from "@/components/shared/navbar";
 import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus, APPLICATION_LABELS } from "@/constants";
 import { Link, useLocation } from "wouter";
+import TenantLayout from '@/components/layouts/TenantLayout';
 
 const generateRoute = {
   application: (id: string) => `/tenant/applications/${id}`
 };
 
 const TenantDashboard = () => {
-  const { logout } = useAuthStore();
+  const { logout, user } = useAuthStore();
   const { setLoading, loadingStates, addToast } = useUIStore();
   const [, setLocation] = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   // Demo data
   const rentCardStatus = {
@@ -40,7 +48,7 @@ const TenantDashboard = () => {
       id: 1,
       property: "123 Main Street Unit A",
       landlord: "John Smith",
-      status: APPLICATION_STATUS.REVIEWING,
+      status: APPLICATION_STATUS.REVIEWING as ApplicationStatus,
       submittedAt: "2025-02-18T10:30:00",
       requirements: {
         creditScore: "✓ Meets requirement",
@@ -72,143 +80,251 @@ const TenantDashboard = () => {
     }
   };
 
+  const navigationItems = [
+    { icon: <Home className="w-5 h-5" />, label: "Dashboard", route: ROUTES.TENANT.DASHBOARD, active: true },
+    { icon: <Star className="w-5 h-5" />, label: "My RentCard", route: ROUTES.TENANT.RENTCARD },
+    { icon: <FileText className="w-5 h-5" />, label: "Documents", route: ROUTES.TENANT.DOCUMENTS },
+    { icon: <UserCheck className="w-5 h-5" />, label: "References", route: ROUTES.TENANT.REFERENCES },
+    { icon: <Building2 className="w-5 h-5" />, label: "Applications", route: ROUTES.TENANT.APPLICATIONS }
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="p-6">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-6 flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-semibold">Tenant Dashboard</h1>
-              <p className="text-muted-foreground">Manage your RentCard and applications</p>
-            </div>
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              disabled={loadingStates.logout}
-            >
-              {loadingStates.logout ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <LogOut className="w-4 h-4 mr-2" />
-              )}
-              {loadingStates.logout ? 'Logging out...' : 'Logout'}
-            </Button>
-          </div>
-
-          {/* RentCard Status */}
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h2 className="text-lg font-medium mb-2">Your RentCard</h2>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      Verified Profile
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      Last updated: {rentCardStatus.lastUpdated}
-                    </span>
-                  </div>
-                </div>
-                <Link href={ROUTES.TENANT.RENTCARD}>
-                  <Button>
-                    <FileText className="w-4 h-4 mr-2" />
-                    View RentCard
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Rental Score</p>
-                        <p className="text-2xl font-semibold mt-1">{rentCardStatus.score}</p>
-                      </div>
-                      <Star className="w-8 h-8 text-yellow-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Verified References</p>
-                        <p className="text-2xl font-semibold mt-1">{rentCardStatus.verifiedReferences}</p>
-                      </div>
-                      <Building2 className="w-8 h-8 text-primary" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Profile Completion</p>
-                        <p className="text-2xl font-semibold mt-1">{rentCardStatus.completionStatus}%</p>
-                      </div>
-                      <Clock className="w-8 h-8 text-primary" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+    <TenantLayout activeRoute={ROUTES.TENANT.DASHBOARD}>
+      <header className="mb-6 md:mb-8">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Welcome to your Dashboard</h1>
+        <p className="text-sm sm:text-base text-gray-500 mt-1">
+          Manage your rental profile, documents, and applications
+        </p>
+      </header>
+      
+      {/* Quick Actions */}
+      <section className="mb-8 md:mb-10">
+        <h2 className="text-base sm:text-lg font-medium mb-4 md:mb-5">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
+              <Star className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mb-1 sm:mb-2" />
+              <h3 className="font-medium text-sm sm:text-base">View RentCard</h3>
+              <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Check your rental profile</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
+                onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+              >
+                Open
+              </Button>
             </CardContent>
           </Card>
-
-          {/* Active Applications */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium">Active Applications</h2>
-              <Link href={ROUTES.TENANT.APPLICATIONS}>
-                <Button variant="outline">View All Applications</Button>
-              </Link>
+          
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
+              <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 mb-1 sm:mb-2" />
+              <h3 className="font-medium text-sm sm:text-base">Upload Document</h3>
+              <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Add new verification</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
+                onClick={() => setLocation(ROUTES.TENANT.DOCUMENTS)}
+              >
+                Upload
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
+              <UserCheck className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500 mb-1 sm:mb-2" />
+              <h3 className="font-medium text-sm sm:text-base">References</h3>
+              <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Manage your references</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
+                onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
+              >
+                Manage
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
+              <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 mb-1 sm:mb-2" />
+              <h3 className="font-medium text-sm sm:text-base">Applications</h3>
+              <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">View your applications</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
+                onClick={() => setLocation(ROUTES.TENANT.APPLICATIONS)}
+              >
+                View
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 md:gap-8">
+        {/* RentCard Status */}
+        <Card>
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex justify-between items-start mb-4 sm:mb-5">
+              <div>
+                <h2 className="text-base sm:text-lg font-medium">Your RentCard</h2>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-1.5">
+                  Last updated: {rentCardStatus.lastUpdated}
+                </p>
+              </div>
+              <Badge variant="outline" className="px-2 py-1 text-xs font-medium">
+                {rentCardStatus.completionStatus}% Complete
+              </Badge>
             </div>
-
-            <div className="space-y-4">
-              {applications.map((app) => (
-                <Card key={app.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start mb-4">
+            
+            <div className="flex items-center justify-between mb-4 sm:mb-5">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center">
+                  <Star className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm sm:text-base font-medium">Tenant Score</p>
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <span className="text-lg sm:text-xl font-semibold">{rentCardStatus.score}</span>
+                    <span className="text-xs sm:text-sm text-gray-500">/ 5.0</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="text-right">
+                <p className="text-sm sm:text-base font-medium">References</p>
+                <div className="flex items-center justify-end gap-1 sm:gap-2">
+                  <span className="text-lg sm:text-xl font-semibold">{rentCardStatus.verifiedReferences}</span>
+                  <span className="text-xs sm:text-sm text-gray-500">verified</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 sm:mt-6">
+              <Button 
+                variant="default" 
+                className="w-full text-xs sm:text-sm h-8 sm:h-9"
+                onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
+              >
+                Manage References
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Active Applications */}
+        <section>
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h2 className="text-base sm:text-lg font-medium">Active Applications</h2>
+            <Link href={ROUTES.TENANT.APPLICATIONS}>
+              <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs sm:text-sm">View All</Button>
+            </Link>
+          </div>
+          
+          {applications.length > 0 ? (
+            <Card>
+              <CardContent className="p-5 sm:p-6">
+                {applications.map((application) => (
+                  <div key={application.id} className="border-b pb-4 mb-4 last:border-0 last:pb-0 last:mb-0">
+                    <div className="flex justify-between items-start mb-2 sm:mb-3">
                       <div>
-                        <h3 className="font-medium">{app.property}</h3>
-                        <p className="text-sm text-muted-foreground">Applied to {app.landlord}'s property</p>
+                        <h3 className="font-medium text-sm sm:text-base">{application.property}</h3>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
+                          Landlord: {application.landlord}
+                        </p>
                       </div>
-                      <Badge variant="secondary">
-                        {app.status === APPLICATION_STATUS.REVIEWING ? APPLICATION_LABELS.STATUS[APPLICATION_STATUS.REVIEWING] : app.status}
+                      <Badge 
+                        className={`px-2 py-1 text-xs font-medium ${
+                          application.status === 'approved' 
+                            ? 'bg-green-100 text-green-800' 
+                            : application.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {APPLICATION_LABELS.STATUS[application.status]}
                       </Badge>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                      {Object.entries(app.requirements).map(([key, value]) => (
-                        <div key={key}>
-                          <p className="text-muted-foreground capitalize">
-                            {key.replace('_', ' ')}
-                          </p>
-                          <p>{value}</p>
-                        </div>
-                      ))}
+                    
+                    <div className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span>Submitted {new Date(application.submittedAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
-
-                    <Link href={generateRoute.application(app.id.toString())}>
-                      <Button variant="outline" className="w-full">
-                        View Application Status
-                        <ArrowRight className="w-4 h-4 ml-2" />
+                    
+                    <Link href={generateRoute.application(application.id.toString())}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full text-xs sm:text-sm h-7 sm:h-8 flex items-center justify-center gap-1 sm:gap-2"
+                      >
+                        <span>View Details</span>
+                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </Button>
                     </Link>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-5 sm:p-6 text-center">
+                <Building2 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">No active applications</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-xs sm:text-sm h-8 sm:h-9"
+                  onClick={() => setLocation(ROUTES.TENANT.APPLICATIONS)}
+                >
+                  Browse Properties
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </section>
+      </div>
+      
+      {/* Tips Section */}
+      <Card className="mt-8 md:mt-10 bg-blue-50">
+        <CardContent className="p-5 sm:p-6">
+          <h2 className="text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2">
+            <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            <span>Tips for a Successful Application</span>
+          </h2>
+          
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+            <div>
+              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Complete Your RentCard</h3>
+              <p className="text-xs sm:text-sm text-gray-600">
+                A complete RentCard increases your chances of approval by landlords.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Verify Your Documents</h3>
+              <p className="text-xs sm:text-sm text-gray-600">
+                Upload and verify your income, employment, and identification documents.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Add Strong References</h3>
+              <p className="text-xs sm:text-sm text-gray-600">
+                Previous landlords and employers make the strongest references.
+              </p>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </CardContent>
+      </Card>
+    </TenantLayout>
   );
 };
 

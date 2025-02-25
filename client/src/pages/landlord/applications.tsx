@@ -33,6 +33,8 @@ import {
   type ApplicationStatus 
 } from '@/constants';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import Navbar from "@/components/shared/navbar";
+import LandlordLayout from '@/components/layouts/LandlordLayout';
 
 type StatusFilter = ApplicationStatus | 'all';
 
@@ -193,236 +195,226 @@ const ApplicationManagement = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-6">
-        <div className="flex justify-between items-center">
+    <LandlordLayout>
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-semibold">Application Management</h1>
-            <p className="text-muted-foreground">Review and process RentCard applications</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Applications</h1>
+            <p className="text-gray-500 mt-1">
+              Review and manage tenant applications
+            </p>
           </div>
-          <div className="flex gap-4">
-            <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select property" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Properties</SelectItem>
-                <SelectItem value="123-main">123 Main Street Unit A</SelectItem>
-                <SelectItem value="456-oak">456 Oak Avenue</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2">
             <Select value={selectedStatus} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select status" />
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                {(Object.values(APPLICATION_STATUS) as ApplicationStatus[]).map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {APPLICATION_LABELS.STATUS[status]}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">All Applications</SelectItem>
+                <SelectItem value={APPLICATION_STATUS.NEW}>New</SelectItem>
+                <SelectItem value={APPLICATION_STATUS.REVIEWING}>Reviewing</SelectItem>
+                <SelectItem value={APPLICATION_STATUS.APPROVED}>Approved</SelectItem>
+                <SelectItem value={APPLICATION_STATUS.REJECTED}>Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
-      </div>
-      
-      <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
-        {/* Applications List */}
-        <Card className="col-span-5">
-          <ScrollArea className="h-[calc(100vh-12rem)]">
-            <CardContent className="pt-6">
-              {applications.map((app) => (
-                <div 
-                  key={app.id}
-                  onClick={() => {
-                    setSelectedApplication(app);
-                    setShowReferences(false);
-                  }}
-                  className={`p-4 cursor-pointer hover:bg-accent rounded-lg transition-colors ${
-                    selectedApplication?.id === app.id ? 'bg-accent' : ''
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-medium">{app.tenant.name}</h3>
-                      <p className="text-sm text-muted-foreground">{app.property}</p>
+
+        <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+          {/* Applications List */}
+          <Card className="col-span-5">
+            <ScrollArea className="h-[calc(100vh-12rem)]">
+              <CardContent className="pt-6">
+                {applications.map((app) => (
+                  <div 
+                    key={app.id}
+                    onClick={() => {
+                      setSelectedApplication(app);
+                      setShowReferences(false);
+                    }}
+                    className={`p-4 cursor-pointer hover:bg-accent rounded-lg transition-colors ${
+                      selectedApplication?.id === app.id ? 'bg-accent' : ''
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-medium">{app.tenant.name}</h3>
+                        <p className="text-sm text-muted-foreground">{app.property}</p>
+                      </div>
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="ml-1">{app.tenant.score}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="ml-1">{app.tenant.score}</span>
+                    
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Badge variant={app.status === APPLICATION_STATUS.NEW ? 'default' : 'secondary'}>
+                          {APPLICATION_LABELS.STATUS[app.status]}
+                        </Badge>
+                        {app.tenant.references?.length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {app.tenant.references.length} references
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm">
+                        <span className="text-primary font-medium">{app.matchScore}%</span>
+                        <span className="text-muted-foreground ml-1">match</span>
+                      </span>
                     </div>
                   </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <Badge variant={app.status === APPLICATION_STATUS.NEW ? 'default' : 'secondary'}>
-                        {APPLICATION_LABELS.STATUS[app.status]}
+                ))}
+              </CardContent>
+            </ScrollArea>
+          </Card>
+
+          {/* Application Details */}
+          {selectedApplication ? (
+            <Card className="col-span-7">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className="text-xl font-semibold">{selectedApplication.tenant.name}</h2>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        Verified Profile
                       </Badge>
-                      {app.tenant.references?.length > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          {app.tenant.references.length} references
-                        </span>
-                      )}
                     </div>
-                    <span className="text-sm">
-                      <span className="text-primary font-medium">{app.matchScore}%</span>
-                      <span className="text-muted-foreground ml-1">match</span>
-                    </span>
+                    <p className="text-muted-foreground">{selectedApplication.property}</p>
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </ScrollArea>
-        </Card>
-
-        {/* Application Details */}
-        {selectedApplication ? (
-          <Card className="col-span-7">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-xl font-semibold">{selectedApplication.tenant.name}</h2>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Verified Profile
-                    </Badge>
-                  </div>
-                  <p className="text-muted-foreground">{selectedApplication.property}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" asChild>
-                    <a href={`mailto:${selectedApplication.tenant.email}`}>
-                      <Mail className="w-4 h-4 mr-2" />
-                      Email
-                    </a>
-                  </Button>
-                  <Button>
-                    <FileText className="w-4 h-4 mr-2" />
-                    View RentCard
-                  </Button>
-                </div>
-              </div>
-
-              {/* Contact Info */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span>{selectedApplication.tenant.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span>{selectedApplication.tenant.phone}</span>
-                </div>
-              </div>
-
-              {/* Qualifications Summary */}
-              <Card className="mb-6">
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Credit Score</p>
-                      <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                        <span>{selectedApplication.tenant.creditScore}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Annual Income</p>
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 text-primary mr-1" />
-                        <span>${selectedApplication.tenant.income}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Employment</p>
-                      <span>{selectedApplication.tenant.employment}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* References or Details */}
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-medium">
-                    {showReferences ? 'Landlord References' : 'Application Details'}
-                  </h3>
-                  {selectedApplication.tenant.references?.length > 0 && (
-                    <Button 
-                      variant="link"
-                      onClick={() => setShowReferences(!showReferences)}
-                    >
-                      {showReferences ? 'View Details' : 'View References'}
+                  <div className="flex gap-2">
+                    <Button variant="outline" asChild>
+                      <a href={`mailto:${selectedApplication.tenant.email}`}>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Email
+                      </a>
                     </Button>
-                  )}
-                </div>
-
-                {showReferences ? (
-                  <ReferencesSection references={selectedApplication.tenant.references} />
-                ) : (
-                  <div className="space-y-4">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-primary" />
-                            <span>Desired Move-in Date</span>
-                          </div>
-                          <span>{selectedApplication.tenant.moveIn}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Star className="w-4 h-4 text-yellow-400" />
-                            <span>Rental Score</span>
-                          </div>
-                          <span>{selectedApplication.tenant.score} / 5.0</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-primary" />
-                            <span>Verified References</span>
-                          </div>
-                          <span>{selectedApplication.tenant.references?.length || 0} references</span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <Button>
+                      <FileText className="w-4 h-4 mr-2" />
+                      View RentCard
+                    </Button>
                   </div>
-                )}
-
-                <div className="mt-8 flex gap-4">
-                  <Button variant="outline" className="flex-1">
-                    <Archive className="w-4 h-4 mr-2" />
-                    Archive
-                  </Button>
-                  <Button className="flex-1">
-                    Approve Application
-                  </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="col-span-7 flex items-center justify-center">
-            <CardContent className="pt-12 pb-12 text-center">
-              <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Application Selected</h3>
-              <p className="text-muted-foreground">Select an application from the list to view details</p>
-            </CardContent>
-          </Card>
-        )}
+
+                {/* Contact Info */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span>{selectedApplication.tenant.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span>{selectedApplication.tenant.phone}</span>
+                  </div>
+                </div>
+
+                {/* Qualifications Summary */}
+                <Card className="mb-6">
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Credit Score</p>
+                        <div className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                          <span>{selectedApplication.tenant.creditScore}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Annual Income</p>
+                        <div className="flex items-center">
+                          <DollarSign className="w-4 h-4 text-primary mr-1" />
+                          <span>${selectedApplication.tenant.income}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Employment</p>
+                        <span>{selectedApplication.tenant.employment}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* References or Details */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-medium">
+                      {showReferences ? 'Landlord References' : 'Application Details'}
+                    </h3>
+                    {selectedApplication.tenant.references?.length > 0 && (
+                      <Button 
+                        variant="link"
+                        onClick={() => setShowReferences(!showReferences)}
+                      >
+                        {showReferences ? 'View Details' : 'View References'}
+                      </Button>
+                    )}
+                  </div>
+
+                  {showReferences ? (
+                    <ReferencesSection references={selectedApplication.tenant.references} />
+                  ) : (
+                    <div className="space-y-4">
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-primary" />
+                              <span>Desired Move-in Date</span>
+                            </div>
+                            <span>{selectedApplication.tenant.moveIn}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Star className="w-4 h-4 text-yellow-400" />
+                              <span>Rental Score</span>
+                            </div>
+                            <span>{selectedApplication.tenant.score} / 5.0</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-primary" />
+                              <span>Verified References</span>
+                            </div>
+                            <span>{selectedApplication.tenant.references?.length || 0} references</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  <div className="mt-8 flex gap-4">
+                    <Button variant="outline" className="flex-1">
+                      <Archive className="w-4 h-4 mr-2" />
+                      Archive
+                    </Button>
+                    <Button className="flex-1">
+                      Approve Application
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="col-span-7 flex items-center justify-center">
+              <CardContent className="pt-12 pb-12 text-center">
+                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No Application Selected</h3>
+                <p className="text-muted-foreground">Select an application from the list to view details</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
       <Dialog 
@@ -433,7 +425,7 @@ const ApplicationManagement = () => {
           {/* ... existing dialog content ... */}
         </DialogContent>
       </Dialog>
-    </div>
+    </LandlordLayout>
   );
 };
 
