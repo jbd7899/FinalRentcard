@@ -9,7 +9,7 @@ import CreateRentCard from "@/pages/create-rentcard";
 import ScreeningPage from "@/pages/screening-page";
 import GeneralScreeningPage from "@/pages/general-screening-page";
 import ArchivedPropertyPage from "@/pages/archived-property";
-import DebugAuthPage from "@/pages/debug-auth";
+import DebugAuthPage from "@/components/AuthDebugTools";
 import { ProtectedRoute } from "./lib/protected-route";
 import { StoreProvider } from "@/providers/StoreProvider";
 
