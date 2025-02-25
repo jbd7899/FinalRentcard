@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users, tenantProfiles, landlordProfiles, properties } from "./schema";
@@ -120,6 +120,29 @@ export const groupApplications = pgTable("group_applications", {
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
+// 9. Neighborhood Insights
+export const neighborhoodInsights = pgTable("neighborhood_insights", {
+  id: serial("id").primaryKey(),
+  propertyId: integer("property_id").references(() => properties.id),
+  safetyRating: real("safety_rating"), // 1.0 to 5.0 scale
+  walkabilityScore: integer("walkability_score"), // 1-100 scale
+  transitScore: integer("transit_score"), // 1-100 scale
+  nearbyAmenities: json("nearby_amenities").$type<{
+    name: string;
+    type: string; // 'grocery', 'restaurant', 'school', 'park', 'healthcare', etc.
+    distance: number; // in miles or kilometers
+    rating?: number; // optional rating on a 1-5 scale
+  }[]>(),
+  publicTransport: json("public_transport").$type<{
+    type: string; // 'bus', 'subway', 'train', etc.
+    line: string;
+    station: string;
+    distance: number; // in miles or kilometers
+  }[]>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas for the new tables
 export const insertTenantDocumentSchema = createInsertSchema(tenantDocuments).omit({
   id: true,
@@ -165,6 +188,12 @@ export const insertGroupApplicationSchema = createInsertSchema(groupApplications
   submittedAt: true,
 });
 
+export const insertNeighborhoodInsightSchema = createInsertSchema(neighborhoodInsights).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Type definitions
 export type TenantDocument = typeof tenantDocuments.$inferSelect;
 export type InsertTenantDocument = z.infer<typeof insertTenantDocumentSchema>;
@@ -193,3 +222,6 @@ export type InsertRoommateGroup = z.infer<typeof insertRoommateGroupSchema>;
 
 export type GroupApplication = typeof groupApplications.$inferSelect;
 export type InsertGroupApplication = z.infer<typeof insertGroupApplicationSchema>; 
+
+export type NeighborhoodInsight = typeof neighborhoodInsights.$inferSelect;
+export type InsertNeighborhoodInsight = z.infer<typeof insertNeighborhoodInsightSchema>;
