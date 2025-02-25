@@ -26,14 +26,15 @@ The dashboard is built using a component-based architecture with React and TypeS
 ### Component Hierarchy
 
 ```
-LandlordLayout
-└── LandlordDashboard
-    ├── Tab Navigation
-    ├── OverviewTab
-    │   ├── StatsCard
-    │   └── GeneralScreeningActions
-    ├── PropertiesTab
-    │   └── ScreeningActions
+BaseLayout
+├── LandlordLayout / TenantLayout
+│   └── LandlordDashboard / TenantDashboard
+│       ├── Tab Navigation
+│       ├── OverviewTab
+│       │   ├── StatsCard
+│       │   └── GeneralScreeningActions
+│       ├── PropertiesTab
+│       │   └── ScreeningActions
     ├── ApplicationsTab
     └── RequestModal
 ```
@@ -231,7 +232,9 @@ const handleDownloadCSV = () => {
 
 The following describes the component relationships to be visualized in a diagram:
 
-- **LandlordDashboard** is the parent component that contains all other components
+- **BaseLayout** is the foundational layout component that all role-specific layouts extend
+- **LandlordLayout** extends BaseLayout and provides landlord-specific UI structure
+- **LandlordDashboard** is the parent component that contains all dashboard-specific components
 - **Tab Navigation** sits at the top and controls which tab is displayed
 - **OverviewTab**, **PropertiesTab**, and **ApplicationsTab** are siblings that are conditionally rendered based on the active tab
 - **RequestModal** is a modal component that can be triggered from any tab
@@ -239,6 +242,8 @@ The following describes the component relationships to be visualized in a diagra
 - **ScreeningActions** is a child component used within the PropertiesTab
 - Data flows down from LandlordDashboard to the tab components as props
 - User actions in the tabs trigger callbacks that were passed down from the parent
+
+For more details on the layout architecture, see the [Layout Architecture Documentation](/docs/layout-architecture.md)
 
 ## Best Practices
 
