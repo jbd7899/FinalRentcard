@@ -43,6 +43,8 @@ export const API_ENDPOINTS = {
       CREATE: (propertyId: string | number) => `/api/properties/${propertyId}/amenities`,
       DELETE: (amenityId: string | number) => `/api/properties/amenities/${amenityId}`,
     },
+    NEIGHBORHOOD: '/api/properties/neighborhood', // Base neighborhood insights endpoint
+    NEIGHBORHOOD_BY_PROPERTY: (propertyId: string | number) => `/api/properties/${propertyId}/neighborhood`,
   },
 
   // Application endpoints

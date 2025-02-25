@@ -41,6 +41,7 @@ import {
 import { Link } from "wouter";
 import { PropertyImage, PropertyAmenity } from '@shared/schema';
 import LandlordLayout from '@/components/layouts/LandlordLayout';
+import { NeighborhoodInsights } from '@/components/shared/NeighborhoodInsights';
 
 // Existing hooks (unchanged)
 const useRentCard = (userId?: number) => {
@@ -436,6 +437,11 @@ const ScreeningPage = () => {
                   )}
                 </div>
               </div>
+            </div>
+            
+            {/* Neighborhood Insights Section */}
+            <div className="p-8 bg-white border-t border-gray-100">
+              <NeighborhoodInsights propertyId={property?.id} />
             </div>
 
             {/* Quick Pre-Screening Form */}
