@@ -30,6 +30,25 @@ export interface NeighborhoodInsightProps {
   propertyId?: number;
 }
 
+// Type for neighborhood insights data
+interface NeighborhoodData {
+  safetyRating: number;
+  walkabilityScore: number;
+  transitScore: number;
+  nearbyAmenities: Array<{
+    name: string;
+    type: string;
+    distance: number;
+    rating?: number;
+  }>;
+  publicTransport: Array<{
+    type: string;
+    line: string;
+    station: string;
+    distance: number;
+  }>;
+}
+
 // Type for amenity
 type AmenityType = 'grocery' | 'restaurant' | 'school' | 'park' | 'healthcare' | 'gym' | 'shopping' | 'entertainment';
 type TransportType = 'bus' | 'subway' | 'train' | 'tram' | 'ferry';
@@ -83,7 +102,7 @@ export function NeighborhoodInsights({ propertyId }: NeighborhoodInsightProps) {
   };
 
   // Use demo data if in demo mode or if there's an error
-  const insights = isDemoMode || error || !neighborhoodData ? demoData : neighborhoodData;
+  const insights: NeighborhoodData = isDemoMode || error || !neighborhoodData ? demoData : (neighborhoodData as NeighborhoodData);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'bg-green-500';
@@ -198,11 +217,12 @@ export function NeighborhoodInsights({ propertyId }: NeighborhoodInsightProps) {
               </div>
               <span className="text-lg font-bold">{insights.walkabilityScore}/100</span>
             </div>
-            <Progress 
-              value={insights.walkabilityScore} 
-              className="h-2" 
-              indicatorClassName={cn(getScoreColor(insights.walkabilityScore))}
-            />
+            <div className="h-2 relative bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className={cn("h-full absolute left-0 top-0 rounded-full", getScoreColor(insights.walkabilityScore))} 
+                style={{ width: `${insights.walkabilityScore}%` }}
+              />
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -213,11 +233,12 @@ export function NeighborhoodInsights({ propertyId }: NeighborhoodInsightProps) {
               </div>
               <span className="text-lg font-bold">{insights.transitScore}/100</span>
             </div>
-            <Progress 
-              value={insights.transitScore} 
-              className="h-2" 
-              indicatorClassName={cn(getScoreColor(insights.transitScore))}
-            />
+            <div className="h-2 relative bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className={cn("h-full absolute left-0 top-0 rounded-full", getScoreColor(insights.transitScore))} 
+                style={{ width: `${insights.transitScore}%` }}
+              />
+            </div>
           </div>
         </div>
 
@@ -227,7 +248,7 @@ export function NeighborhoodInsights({ propertyId }: NeighborhoodInsightProps) {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Nearby Amenities</h3>
           <div className="space-y-3">
-            {insights.nearbyAmenities.map((amenity, index) => (
+            {insights.nearbyAmenities.map((amenity: { name: string; type: string; distance: number; rating?: number }, index: number) => (
               <div key={index} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                   {amenityIcons[amenity.type as AmenityType] || <Landmark className="w-4 h-4" />}
@@ -252,7 +273,7 @@ export function NeighborhoodInsights({ propertyId }: NeighborhoodInsightProps) {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Public Transportation</h3>
           <div className="space-y-3">
-            {insights.publicTransport.map((transport, index) => (
+            {insights.publicTransport.map((transport: { type: string; line: string; station: string; distance: number }, index: number) => (
               <div key={index} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                   {transportIcons[transport.type as TransportType] || <Bus className="w-4 h-4" />}
