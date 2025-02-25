@@ -3,7 +3,6 @@ import { Link } from 'wouter';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import Navbar from '@/components/shared/navbar';
-import { Toaster } from '@/components/ui/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import React from 'react';
 
@@ -250,8 +249,6 @@ export default function HomePage() {
           </div>
         </div>
       </main>
-
-      <Toaster />
     </div>
   );
 }

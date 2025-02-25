@@ -171,6 +171,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             setLoading(true);
             const token = localStorage.getItem('token');
             
+            console.log('Auth initialization:', {
+              hasToken: !!token,
+              tokenPrefix: token ? token.substring(0, 15) + '...' : 'none'
+            });
+            
             if (token) {
               const response = await fetch('/api/user', {
                 headers: {
@@ -178,17 +183,25 @@ export const useAuthStore = create<AuthState & AuthActions>()(
                 }
               });
 
+              console.log('Auth validation response:', {
+                status: response.status,
+                ok: response.ok
+              });
+
               if (response.ok) {
                 const userData = await response.json();
                 setToken(token);
                 setUser(userData);
+                console.log('Authentication successful, user data loaded');
               } else {
                 // If token is invalid, clean up
+                console.warn('Invalid token detected, cleaning up authentication state');
                 setToken(null);
                 setUser(null);
               }
             }
           } catch (error) {
+            console.error('Auth initialization error:', error);
             setError(error instanceof Error ? error.message : 'Failed to initialize auth');
           } finally {
             setLoading(false);

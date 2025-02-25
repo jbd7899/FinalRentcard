@@ -3,6 +3,9 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
+// Import all schema enhancements
+import * as schemaEnhancements from "./schema-enhancements";
+
 // Base user table for authentication
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -64,6 +67,7 @@ export const properties = pgTable("properties", {
     description: string;
   }[]>(),
   viewCount: integer("view_count").default(0),
+  isArchived: boolean("is_archived").default(false),
 });
 
 // Add explicit relation between properties and applications
@@ -175,6 +179,9 @@ export const insertRentCardSchema = createInsertSchema(rentCards)
     maxRent: z.string().transform(val => parseInt(val)),
     creditScore: z.string().transform(val => parseInt(val)),
   });
+
+// Re-export all schema enhancements
+export * from "./schema-enhancements";
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;

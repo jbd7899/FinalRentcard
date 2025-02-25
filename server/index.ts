@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import session from "express-session";
+import { initializeEmailService } from "./email";
 
 const app = express();
 
@@ -50,6 +51,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize email service
+  try {
+    await initializeEmailService();
+    log("Email service initialized successfully");
+  } catch (error) {
+    log("Failed to initialize email service: " + (error instanceof Error ? error.message : String(error)));
+    log("The application will continue to run, but email functionality may not work correctly");
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

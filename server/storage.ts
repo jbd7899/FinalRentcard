@@ -6,6 +6,15 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
+// Import new schema types
+import {
+  TenantDocument, PropertyImage, PropertyAmenity, TenantReference,
+  Conversation, Message, Notification, RoommateGroup, GroupApplication,
+  tenantDocuments, propertyImages, propertyAmenities, tenantReferences,
+  conversations, messages, notifications, roommateGroups, groupApplications,
+  conversationParticipants, roommateGroupMembers, propertyAnalytics, userActivity
+} from "@shared/schema";
+
 const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
@@ -39,6 +48,57 @@ export interface IStorage {
 
   // Rent card operations
   getRentCard(userId: number): Promise<RentCard | undefined>;
+
+  // Document operations
+  getTenantDocuments(tenantId: number): Promise<TenantDocument[]>;
+  getTenantDocumentById(id: number): Promise<TenantDocument | undefined>;
+  createTenantDocument(document: Omit<TenantDocument, "id" | "isVerified" | "verifiedBy" | "verifiedAt" | "uploadedAt">): Promise<TenantDocument>;
+  verifyTenantDocument(id: number, verifiedBy: number): Promise<TenantDocument>;
+  deleteTenantDocument(id: number): Promise<void>;
+
+  // Property image operations
+  getPropertyImages(propertyId: number): Promise<PropertyImage[]>;
+  getPropertyImageById(id: number): Promise<PropertyImage | undefined>;
+  createPropertyImage(image: Omit<PropertyImage, "id" | "uploadedAt">): Promise<PropertyImage>;
+  setPrimaryPropertyImage(id: number): Promise<PropertyImage>;
+  deletePropertyImage(id: number): Promise<void>;
+
+  // Property amenity operations
+  getPropertyAmenities(propertyId: number): Promise<PropertyAmenity[]>;
+  createPropertyAmenity(amenity: Omit<PropertyAmenity, "id">): Promise<PropertyAmenity>;
+  deletePropertyAmenity(id: number): Promise<void>;
+
+  // Tenant reference operations
+  getTenantReferences(tenantId: number): Promise<TenantReference[]>;
+  getTenantReferenceById(id: number): Promise<TenantReference | undefined>;
+  createTenantReference(reference: Omit<TenantReference, "id" | "isVerified" | "verificationDate">): Promise<TenantReference>;
+  updateTenantReference(id: number, reference: Partial<TenantReference>): Promise<TenantReference>;
+  verifyTenantReference(id: number): Promise<TenantReference>;
+  deleteTenantReference(id: number): Promise<void>;
+
+  // Conversation operations
+  getConversations(userId: number): Promise<Conversation[]>;
+  createConversation(conversation: Omit<Conversation, "id" | "createdAt">, participantIds: number[]): Promise<Conversation>;
+  getMessages(conversationId: number): Promise<Message[]>;
+  createMessage(message: Omit<Message, "id" | "sentAt" | "readAt">): Promise<Message>;
+  markMessageAsRead(id: number): Promise<Message>;
+
+  // Notification operations
+  getUserNotifications(userId: number): Promise<Notification[]>;
+  createNotification(notification: Omit<Notification, "id" | "createdAt">): Promise<Notification>;
+  markNotificationAsRead(id: number): Promise<Notification>;
+
+  // Roommate operations
+  getRoommateGroups(tenantId?: number): Promise<RoommateGroup[]>;
+  createRoommateGroup(group: Omit<RoommateGroup, "id" | "createdAt">, primaryTenantId: number): Promise<RoommateGroup>;
+  addTenantToGroup(groupId: number, tenantId: number, isPrimary?: boolean): Promise<void>;
+  getGroupApplications(groupId: number): Promise<GroupApplication[]>;
+  createGroupApplication(application: Omit<GroupApplication, "id" | "submittedAt">): Promise<GroupApplication>;
+  updateGroupApplicationStatus(id: number, status: string): Promise<GroupApplication>;
+
+  // Analytics operations
+  recordUserActivity(userId: number, activityType: string, metadata?: any): Promise<void>;
+  updatePropertyAnalytics(propertyId: number): Promise<void>;
 
   sessionStore: session.Store;
 }
@@ -123,6 +183,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(properties)
       .where(eq(properties.screeningPageSlug, slug));
+    
     return property;
   }
 
@@ -184,6 +245,327 @@ export class DatabaseStorage implements IStorage {
       .from(rentCards)
       .where(eq(rentCards.userId, userId));
     return rentCard;
+  }
+
+  async createRentCard(rentCard: Omit<RentCard, "id" | "createdAt" | "updatedAt">): Promise<RentCard> {
+    const [newRentCard] = await db.insert(rentCards).values(rentCard).returning();
+    return newRentCard;
+  }
+
+  // Document operations
+  async getTenantDocuments(tenantId: number): Promise<TenantDocument[]> {
+    return await db.select().from(tenantDocuments).where(eq(tenantDocuments.tenantId, tenantId));
+  }
+
+  async getTenantDocumentById(id: number): Promise<TenantDocument | undefined> {
+    const results = await db.select().from(tenantDocuments).where(eq(tenantDocuments.id, id));
+    return results[0];
+  }
+
+  async createTenantDocument(document: Omit<TenantDocument, "id" | "isVerified" | "verifiedBy" | "verifiedAt" | "uploadedAt">): Promise<TenantDocument> {
+    const [newDocument] = await db.insert(tenantDocuments).values(document).returning();
+    return newDocument;
+  }
+
+  async verifyTenantDocument(id: number, verifiedBy: number): Promise<TenantDocument> {
+    const [updatedDocument] = await db
+      .update(tenantDocuments)
+      .set({ 
+        isVerified: true, 
+        verifiedBy, 
+        verifiedAt: new Date() 
+      })
+      .where(eq(tenantDocuments.id, id))
+      .returning();
+    return updatedDocument;
+  }
+
+  async deleteTenantDocument(id: number): Promise<void> {
+    await db.delete(tenantDocuments).where(eq(tenantDocuments.id, id));
+  }
+
+  // Property image operations
+  async getPropertyImages(propertyId: number): Promise<PropertyImage[]> {
+    return await db.select().from(propertyImages).where(eq(propertyImages.propertyId, propertyId));
+  }
+
+  async getPropertyImageById(id: number): Promise<PropertyImage | undefined> {
+    const [image] = await db.select().from(propertyImages).where(eq(propertyImages.id, id));
+    return image;
+  }
+
+  async createPropertyImage(image: Omit<PropertyImage, "id" | "uploadedAt">): Promise<PropertyImage> {
+    const [newImage] = await db.insert(propertyImages).values(image).returning();
+    return newImage;
+  }
+
+  async setPrimaryPropertyImage(id: number): Promise<PropertyImage> {
+    // First, get the property ID for this image
+    const [image] = await db.select().from(propertyImages).where(eq(propertyImages.id, id));
+    if (!image) throw new Error("Image not found");
+
+    // Reset all images for this property to not primary
+    await db
+      .update(propertyImages)
+      .set({ isPrimary: false })
+      .where(eq(propertyImages.propertyId, image.propertyId));
+
+    // Set the selected image as primary
+    const [updatedImage] = await db
+      .update(propertyImages)
+      .set({ isPrimary: true })
+      .where(eq(propertyImages.id, id))
+      .returning();
+    
+    return updatedImage;
+  }
+
+  async deletePropertyImage(id: number): Promise<void> {
+    await db.delete(propertyImages).where(eq(propertyImages.id, id));
+  }
+
+  // Property amenity operations
+  async getPropertyAmenities(propertyId: number): Promise<PropertyAmenity[]> {
+    return await db.select().from(propertyAmenities).where(eq(propertyAmenities.propertyId, propertyId));
+  }
+
+  async createPropertyAmenity(amenity: Omit<PropertyAmenity, "id">): Promise<PropertyAmenity> {
+    const [newAmenity] = await db.insert(propertyAmenities).values(amenity).returning();
+    return newAmenity;
+  }
+
+  async deletePropertyAmenity(id: number): Promise<void> {
+    await db.delete(propertyAmenities).where(eq(propertyAmenities.id, id));
+  }
+
+  // Tenant reference operations
+  async getTenantReferences(tenantId: number): Promise<TenantReference[]> {
+    return await db.select().from(tenantReferences).where(eq(tenantReferences.tenantId, tenantId));
+  }
+
+  async getTenantReferenceById(id: number): Promise<TenantReference | undefined> {
+    const [reference] = await db.select().from(tenantReferences).where(eq(tenantReferences.id, id));
+    return reference;
+  }
+
+  async createTenantReference(reference: Omit<TenantReference, "id" | "isVerified" | "verificationDate">): Promise<TenantReference> {
+    const [newReference] = await db.insert(tenantReferences).values(reference).returning();
+    return newReference;
+  }
+
+  async updateTenantReference(id: number, reference: Partial<TenantReference>): Promise<TenantReference> {
+    const [updatedReference] = await db
+      .update(tenantReferences)
+      .set(reference)
+      .where(eq(tenantReferences.id, id))
+      .returning();
+    return updatedReference;
+  }
+
+  async verifyTenantReference(id: number): Promise<TenantReference> {
+    const [updatedReference] = await db
+      .update(tenantReferences)
+      .set({ 
+        isVerified: true, 
+        verificationDate: new Date() 
+      })
+      .where(eq(tenantReferences.id, id))
+      .returning();
+    return updatedReference;
+  }
+
+  async deleteTenantReference(id: number): Promise<void> {
+    await db.delete(tenantReferences).where(eq(tenantReferences.id, id));
+  }
+
+  // Conversation operations
+  async getConversations(userId: number): Promise<Conversation[]> {
+    // Get all conversation IDs where the user is a participant
+    const participations = await db
+      .select()
+      .from(conversationParticipants)
+      .where(eq(conversationParticipants.userId, userId));
+    
+    const conversationIds = participations.map(p => p.conversationId);
+    
+    if (conversationIds.length === 0) return [];
+    
+    // Get all conversations for these IDs
+    return await db
+      .select()
+      .from(conversations)
+      .where(sql`${conversations.id} IN (${conversationIds.join(',')})`);
+  }
+
+  async createConversation(conversation: Omit<Conversation, "id" | "createdAt">, participantIds: number[]): Promise<Conversation> {
+    // Create the conversation
+    const [newConversation] = await db.insert(conversations).values(conversation).returning();
+    
+    // Add all participants
+    for (const userId of participantIds) {
+      await db.insert(conversationParticipants).values({
+        conversationId: newConversation.id,
+        userId
+      });
+    }
+    
+    return newConversation;
+  }
+
+  async getMessages(conversationId: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId))
+      .orderBy(messages.sentAt);
+  }
+
+  async createMessage(message: Omit<Message, "id" | "sentAt" | "readAt">): Promise<Message> {
+    const [newMessage] = await db.insert(messages).values(message).returning();
+    return newMessage;
+  }
+
+  async markMessageAsRead(id: number): Promise<Message> {
+    const [updatedMessage] = await db
+      .update(messages)
+      .set({ readAt: new Date() })
+      .where(eq(messages.id, id))
+      .returning();
+    return updatedMessage;
+  }
+
+  // Notification operations
+  async getUserNotifications(userId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(sql`${notifications.createdAt} DESC`);
+  }
+
+  async createNotification(notification: Omit<Notification, "id" | "createdAt">): Promise<Notification> {
+    const [newNotification] = await db.insert(notifications).values(notification).returning();
+    return newNotification;
+  }
+
+  async markNotificationAsRead(id: number): Promise<Notification> {
+    const [updatedNotification] = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return updatedNotification;
+  }
+
+  // Roommate operations
+  async getRoommateGroups(tenantId?: number): Promise<RoommateGroup[]> {
+    if (tenantId) {
+      // Get groups where this tenant is a member
+      const memberships = await db
+        .select()
+        .from(roommateGroupMembers)
+        .where(eq(roommateGroupMembers.tenantId, tenantId));
+      
+      const groupIds = memberships.map(m => m.groupId);
+      
+      if (groupIds.length === 0) return [];
+      
+      return await db
+        .select()
+        .from(roommateGroups)
+        .where(sql`${roommateGroups.id} IN (${groupIds.join(',')})`);
+    } else {
+      return await db.select().from(roommateGroups);
+    }
+  }
+
+  async createRoommateGroup(group: Omit<RoommateGroup, "id" | "createdAt">, primaryTenantId: number): Promise<RoommateGroup> {
+    // Create the group
+    const [newGroup] = await db.insert(roommateGroups).values(group).returning();
+    
+    // Add the primary tenant
+    await db.insert(roommateGroupMembers).values({
+      groupId: newGroup.id,
+      tenantId: primaryTenantId,
+      isPrimary: true
+    });
+    
+    return newGroup;
+  }
+
+  async addTenantToGroup(groupId: number, tenantId: number, isPrimary: boolean = false): Promise<void> {
+    await db.insert(roommateGroupMembers).values({
+      groupId,
+      tenantId,
+      isPrimary
+    });
+  }
+
+  async getGroupApplications(groupId: number): Promise<GroupApplication[]> {
+    return await db
+      .select()
+      .from(groupApplications)
+      .where(eq(groupApplications.groupId, groupId));
+  }
+
+  async createGroupApplication(application: Omit<GroupApplication, "id" | "submittedAt">): Promise<GroupApplication> {
+    const [newApplication] = await db.insert(groupApplications).values(application).returning();
+    return newApplication;
+  }
+
+  async updateGroupApplicationStatus(id: number, status: string): Promise<GroupApplication> {
+    const [updatedApplication] = await db
+      .update(groupApplications)
+      .set({ status })
+      .where(eq(groupApplications.id, id))
+      .returning();
+    return updatedApplication;
+  }
+
+  // Analytics operations
+  async recordUserActivity(userId: number, activityType: string, metadata?: any): Promise<void> {
+    await db.insert(userActivity).values({
+      userId,
+      activityType,
+      metadata: metadata || {}
+    });
+  }
+
+  async updatePropertyAnalytics(propertyId: number): Promise<void> {
+    // Get current view count from properties table
+    const [property] = await db
+      .select({ viewCount: properties.viewCount })
+      .from(properties)
+      .where(eq(properties.id, propertyId));
+    
+    // Get application count
+    const applicationCount = await db
+      .select({ count: sql`count(*)` })
+      .from(applications)
+      .where(eq(applications.propertyId, propertyId));
+    
+    // Update or create analytics record
+    const existingAnalytics = await db
+      .select()
+      .from(propertyAnalytics)
+      .where(eq(propertyAnalytics.propertyId, propertyId));
+    
+    if (existingAnalytics.length > 0) {
+      await db
+        .update(propertyAnalytics)
+        .set({
+          viewCount: property?.viewCount || 0,
+          applicationCount: Number(applicationCount[0]?.count) || 0,
+          lastUpdated: new Date()
+        })
+        .where(eq(propertyAnalytics.propertyId, propertyId));
+    } else {
+      await db.insert(propertyAnalytics).values({
+        propertyId,
+        viewCount: property?.viewCount || 0,
+        applicationCount: Number(applicationCount[0]?.count) || 0
+      });
+    }
   }
 }
 

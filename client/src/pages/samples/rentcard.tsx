@@ -15,6 +15,7 @@ import {
 import { useUIStore } from '@/stores/uiStore';
 import { FeedbackToast } from '@/components/ui/FeedbackToast';
 import type { ReactNode } from 'react';
+import { useLocation } from 'wouter';
 
 // Update the Toast type to allow ReactNode in description
 type Toast = {
@@ -26,6 +27,7 @@ type Toast = {
 
 const SampleRentCard = () => {
   const { setLoading, loadingStates, addToast } = useUIStore();
+  const [, setLocation] = useLocation();
 
   // Static dummy data for quick stats
   const quickStats = [
@@ -59,25 +61,8 @@ const SampleRentCard = () => {
     },
   ];
 
-  const handleCreateRentCard = async () => {
-    try {
-      setLoading('createRentCard', true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      addToast({
-        title: 'Success',
-        description: 'Your RentCard creation has started. Please complete your profile.',
-        type: 'success'
-      });
-    } catch (error) {
-      addToast({
-        title: 'Error',
-        description: 'Failed to start RentCard creation. Please try again.',
-        type: 'destructive'
-      });
-    } finally {
-      setLoading('createRentCard', false);
-    }
+  const handleCreateRentCard = () => {
+    setLocation('/create-rentcard');
   };
 
   const handleShareRentCard = async () => {
@@ -150,43 +135,52 @@ const SampleRentCard = () => {
       {/* Enhanced RentCard */}
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         {/* Header with Logo and Gradient */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-400 p-8 sm:p-6 text-white relative">
-          <div className="flex flex-col md:flex-row md:items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <Building2 className="w-8 h-8 sm:w-6 sm:h-6 text-white" />
-              <span className="text-xl font-semibold text-white">MyRentCard</span>
-            </div>
-            {/* Tenant Info */}
-            <div className="flex flex-col items-center md:flex-row md:items-center">
-              <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white">
-                <User className="w-10 h-10 text-gray-500" />
-              </div>
-              <div className="ml-0 md:ml-4 mt-4 md:mt-0 text-center md:text-left">
-                <h2 className="text-3xl font-bold text-white">Sarah Anderson</h2>
-                <p className="text-blue-100">Preferred Move-in: March 2025</p>
-              </div>
-            </div>
-            {/* Verified Badge and Rental Score */}
-            <div className="flex flex-col items-center md:flex-row md:space-x-4 mt-4 md:mt-0">
-              <span className="bg-white text-blue-600 px-4 py-1 rounded-full text-sm font-semibold">
-                Verified Profile
-              </span>
-              <div className="flex items-center mt-2 md:mt-0">
-                <Star className="w-6 h-6 text-yellow-300 fill-current" />
-                <span className="ml-1 text-xl font-bold text-white">4.9</span>
-                <span className="ml-1 text-blue-100">Rental Score</span>
-              </div>
-            </div>
-          </div>
+        <div className="bg-gradient-to-r from-blue-600 to-blue-400 p-4 sm:p-6 lg:p-8 text-white relative">
           {/* Share Button */}
           <button 
-            className="absolute top-4 right-4 bg-white text-blue-600 p-2 rounded-full hover:bg-blue-50 transition-colors"
+            className="absolute top-4 right-4 bg-white text-blue-600 p-2 rounded-full hover:bg-blue-50 transition-colors z-10"
             onClick={handleShareRentCard}
             disabled={loadingStates.shareRentCard}
           >
             <Share2 className={`w-5 h-5 ${loadingStates.shareRentCard ? 'animate-spin' : ''}`} />
           </button>
+
+          <div className="flex flex-col space-y-6">
+            {/* Logo */}
+            <div className="flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-white" />
+              <span className="text-xl font-semibold text-white">MyRentCard</span>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-6 lg:space-y-0">
+              {/* Tenant Info */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shrink-0">
+                  <User className="w-10 h-10 text-gray-500" />
+                </div>
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white">Sarah Anderson</h2>
+                  <p className="text-blue-100">Preferred Move-in: March 2025</p>
+                </div>
+              </div>
+
+              {/* Verification and Score */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <span className="bg-white text-blue-600 px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
+                  Verified Profile
+                </span>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-6 h-6 text-yellow-300 fill-current" />
+                    <span className="text-xl font-bold text-white">4.9</span>
+                    <span className="text-blue-100 whitespace-nowrap">Profile Completeness</span>
+                  </div>
+                  <p className="text-sm text-blue-100 mt-1">Last updated: October 25, 2024</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -340,11 +334,6 @@ const SampleRentCard = () => {
             <Share2 className="w-5 h-5" />
             {loadingStates.shareRentCard ? 'Sharing RentCard...' : 'Share RentCard Now'}
           </button>
-        </div>
-
-        {/* Updated Last Updated Footer */}
-        <div className="bg-gray-100 p-3 text-center text-sm text-gray-500">
-          This Rent Card was last updated: October 25, 2024
         </div>
       </div>
     </div>

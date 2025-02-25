@@ -8,8 +8,24 @@ MyRentCard simplifies the rental application process by allowing tenants to crea
 - Instant profile sharing with potential landlords
 - Property view tracking and analytics
 - Secure document storage and verification
+  - Upload various document types (ID, payslips, references, etc.)
+  - Landlord verification of tenant documents
+  - Document status tracking and management
+  - Secure document preview and storage
 - Real-time application status updates
 - Automated reference checks
+- Messaging system between tenants and landlords
+- Comprehensive property listings with images and amenities
+- Roommate/co-applicant support for group applications
+- Notification system for important updates
+- Detailed analytics and reporting
+
+## Documentation
+
+- [Development Guide](DEVELOPMENT.md) - Setup and development workflow
+- [Deployment Guide](DEPLOYMENT.md) - Production deployment instructions
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project
+- [Authentication Debugging Guide](DEVELOPMENT.md#authentication-debugging) - Troubleshooting authentication issues
 
 ## Prerequisites
 
@@ -74,7 +90,7 @@ The application will be available at `http://localhost:5173`
 
 For detailed development guidelines, including constants management, authentication handling, and best practices, please refer to our [Development Guide](DEVELOPMENT.md).
 
-For UI state management patterns and best practices, see our [UI State Management Guide](UI_STATE.md).
+For UI state management patterns and best practices, including the toast notification system, see our [UI State Management Guide](UI_STATE.md).
 
 ### Running Tests
 
@@ -127,3 +143,45 @@ For detailed contribution guidelines, see [Contributing Guide](CONTRIBUTING.md).
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Database Structure
+
+MyRentCard uses PostgreSQL with Drizzle ORM for database management. The database schema includes:
+
+### Core Tables
+- **users**: Authentication and basic user information
+- **tenant_profiles**: Detailed tenant information
+- **landlord_profiles**: Landlord business information
+- **properties**: Property listings with details
+- **applications**: Tenant applications for properties
+- **screening_pages**: Custom screening pages for landlords
+- **rent_cards**: Comprehensive tenant rental profiles
+
+### Enhanced Features
+
+#### Document Management
+- **tenant_documents**: Store and verify tenant documents (ID, payslips, etc.)
+
+#### Messaging System
+- **conversations**: Property-related conversations
+- **conversation_participants**: Users participating in conversations
+- **messages**: Individual messages within conversations
+
+#### Property Enhancements
+- **property_images**: Multiple images for properties
+- **property_amenities**: Detailed property amenities
+
+#### Analytics
+- **property_analytics**: Detailed property performance metrics
+- **user_activity**: Track user actions for analytics
+
+#### Notifications
+- **notifications**: System notifications for users
+
+#### References
+- **tenant_references**: Detailed tenant references with verification
+
+#### Roommates
+- **roommate_groups**: Groups of tenants applying together
+- **roommate_group_members**: Members of roommate groups
+- **group_applications**: Applications submitted by roommate groups
