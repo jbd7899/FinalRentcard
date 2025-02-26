@@ -41,6 +41,8 @@ export const ROUTES = {
   SCREENING: {
     GENERAL: '/screening',
     PROPERTY: '/screening/property',
+    EDIT_GENERAL: '/screening/general',
+    EDIT_PROPERTY: '/screening/property',
   },
 } as const;
 
@@ -63,6 +65,8 @@ export const generateRoute = {
   screening: (slug: string) => `${ROUTES.SCREENING.PROPERTY}/${slug}`,
   generalScreening: (slug: string) => `${ROUTES.SCREENING.GENERAL}/${slug}`,
   propertyScreening: (slug: string) => `${ROUTES.SCREENING.PROPERTY}/${slug}`,
+  editGeneralScreening: (slug: string) => `${ROUTES.SCREENING.EDIT_GENERAL}/${slug}/edit`,
+  editPropertyScreening: (slug: string) => `${ROUTES.SCREENING.EDIT_PROPERTY}/${slug}/edit`,
   archivedProperty: (slug: string) => `${ROUTES.PROPERTY.ARCHIVED}/${slug}`,
   document: (id: string | number) => `${ROUTES.TENANT.DOCUMENTS}/${id}`,
   verifyTenantDocuments: (tenantId: string | number) => `${ROUTES.LANDLORD.VERIFY_DOCUMENTS}/${tenantId}`,

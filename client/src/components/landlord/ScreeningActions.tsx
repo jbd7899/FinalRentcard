@@ -86,7 +86,7 @@ export const GeneralScreeningActions: React.FC<GeneralScreeningActionsProps> = (
   };
 
   const handleEditScreeningPage = () => {
-    setLocation(`/screening/general/${screeningLink}/edit`);
+    setLocation(generateRoute.editGeneralScreening(screeningLink));
   };
 
   return (
@@ -209,7 +209,7 @@ export const ScreeningActions: React.FC<ScreeningActionsProps> = ({
   };
 
   const handleEditScreeningPage = () => {
-    setLocation(`/screening/property/${screeningLink}/edit`);
+    setLocation(generateRoute.editPropertyScreening(screeningLink));
   };
 
   return (
