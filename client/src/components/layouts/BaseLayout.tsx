@@ -24,11 +24,20 @@ const BaseLayout: React.FC<BaseLayoutProps> = ({
       {mobileHeader}
       
       {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6 md:p-8 md:pl-10 lg:pl-12 mt-16 md:mt-0">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 md:pl-10 lg:pl-12 mt-16 md:mt-0 overflow-x-hidden">
         <div className="max-w-6xl mx-auto w-full">
           {children}
         </div>
       </main>
+      
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-[9]"
+          onClick={() => setMobileMenuOpen && setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 };
