@@ -112,18 +112,18 @@ const ScreeningManagement = () => {
       </header>
 
       <Tabs defaultValue="properties" className="w-full" onValueChange={(value) => setActiveTab(value as 'properties' | 'general')}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="properties" className="text-sm sm:text-base">Property Screening Pages</TabsTrigger>
-          <TabsTrigger value="general" className="text-sm sm:text-base">General Screening Page</TabsTrigger>
+        <TabsList className="mb-6 w-full justify-start overflow-x-auto">
+          <TabsTrigger value="properties" className="text-xs sm:text-sm whitespace-nowrap">Property Screening Pages</TabsTrigger>
+          <TabsTrigger value="general" className="text-xs sm:text-sm whitespace-nowrap">General Screening Page</TabsTrigger>
         </TabsList>
 
         <TabsContent value="properties" className="space-y-6">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-semibold">Property Screening Pages</h2>
             <Button 
               onClick={() => setLocation(ROUTES.LANDLORD.ADD_PROPERTY)}
               size="sm"
-              className="h-8 sm:h-9 text-xs sm:text-sm"
+              className="h-8 sm:h-9 text-xs sm:text-sm w-full sm:w-auto"
             >
               <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
               Add Property
@@ -143,11 +143,11 @@ const ScreeningManagement = () => {
                 <Card key={property.id} className={`overflow-hidden ${property.isArchived ? 'bg-gray-50 border-gray-200' : ''}`}>
                   <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-base sm:text-lg font-semibold truncate">
+                      <CardTitle className="text-base sm:text-lg font-semibold truncate pr-2">
                         {property.title || `Property #${property.id}`}
                       </CardTitle>
                       {property.isArchived && (
-                        <Badge variant="outline" className="text-gray-500 border-gray-300 text-xs">
+                        <Badge variant="outline" className="text-gray-500 border-gray-300 text-xs whitespace-nowrap ml-1">
                           Archived
                         </Badge>
                       )}
@@ -159,12 +159,12 @@ const ScreeningManagement = () => {
                   <CardContent className="p-4 sm:p-6 pt-2 sm:pt-3 pb-3 sm:pb-4">
                     <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
                       <div className="flex items-center gap-1.5 sm:gap-2">
-                        <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
-                        <span className="text-xs sm:text-sm">{property.viewCount || 0} Views</span>
+                        <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm truncate">{property.viewCount || 0} Views</span>
                       </div>
                       <div className="flex items-center gap-1.5 sm:gap-2">
-                        <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
-                        <span className="text-xs sm:text-sm">{property.applicationCount || 0} Applications</span>
+                        <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm truncate">{property.applicationCount || 0} Apps</span>
                       </div>
                     </div>
                     <Separator className="mb-3 sm:mb-4" />
@@ -226,12 +226,12 @@ const ScreeningManagement = () => {
               <CardContent className="p-4 sm:p-6 pt-2 sm:pt-3 pb-3 sm:pb-4">
                 <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
-                    <span className="text-xs sm:text-sm">{generalScreening.viewCount || 0} Views</span>
+                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm truncate">{generalScreening.viewCount || 0} Views</span>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                    <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
-                    <span className="text-xs sm:text-sm">{generalScreening.applicationCount || 0} Applications</span>
+                    <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm truncate">{generalScreening.applicationCount || 0} Apps</span>
                   </div>
                 </div>
                 <Separator className="mb-3 sm:mb-4" />
