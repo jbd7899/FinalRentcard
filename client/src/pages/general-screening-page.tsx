@@ -205,36 +205,36 @@ const GeneralScreeningPage = () => {
         </div>
       ) : screeningPage ? (
         <div className="max-w-4xl mx-auto">
-          {/* Property Header with Landlord Info */}
+          {/* Property Header with Company Info */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl shadow-lg overflow-hidden mb-6">
             <div className="p-6 sm:p-4 text-white relative">
               <div className="flex flex-col md:flex-row md:items-center justify-between">
-                {/* Landlord Info */}
+                {/* Company Info */}
                 <div className="mb-4 md:mb-0">
                   <h2 className="text-xl font-semibold text-white">{screeningPage.businessName}</h2>
                   <div className="flex flex-col sm:flex-row sm:gap-4 text-blue-100 text-sm">
                     {screeningPage.contactName && (
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
-                        <span>{screeningPage.contactName}</span>
+                        <span>Property Manager: {screeningPage.contactName}</span>
                       </div>
                     )}
                     {screeningPage.businessEmail && (
                       <div className="flex items-center gap-1">
                         <Mail className="w-4 h-4" />
-                        <span>{screeningPage.businessEmail}</span>
+                        <span>Contact: {screeningPage.businessEmail}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                {/* Business Info */}
+                {/* Screening Info */}
                 <div className="flex flex-col items-center md:flex-row md:items-center">
                   <div className="bg-white rounded-lg p-4">
                     <Globe className="w-8 h-8 text-blue-600" />
                   </div>
                   <div className="ml-0 md:ml-4 mt-4 md:mt-0 text-center md:text-left">
-                    <h1 className="text-2xl font-bold text-white">General Screening</h1>
-                    <p className="text-blue-100">Apply for all available properties</p>
+                    <h1 className="text-2xl font-bold text-white">Multiple Properties Available</h1>
+                    <p className="text-blue-100">Apply once for all properties</p>
                   </div>
                 </div>
               </div>
@@ -247,21 +247,21 @@ const GeneralScreeningPage = () => {
             <div className="p-8 bg-blue-50 border-b border-blue-100">
               <div className="flex items-center gap-2 mb-4">
                 <Star className="w-6 h-6 text-blue-600 fill-current" />
-                <h2 className="text-2xl font-bold text-gray-800">Screen Tenants Instantly with RentCard</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Fast-Track Your Application with RentCard</h2>
               </div>
               <div className="flex flex-col md:flex-row items-center gap-8">
                 <div className="flex-1 text-center md:text-left">
                   <p className="text-lg text-gray-700 mb-4">
-                    Accept verified RentCards for seamless tenant screening—no extra work for you!
+                    Save time and stand out! Share your RentCard for quick approval on your dream rental.
                   </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                       <Clock className="w-5 h-5 text-blue-600" />
-                      <span>Saves you time</span>
+                      <span>Apply in seconds</span>
                     </div>
                     <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                       <Shield className="w-5 h-5 text-blue-600" />
-                      <span>Verified tenants</span>
+                      <span>Increase approval odds</span>
                     </div>
                   </div>
                 </div>
@@ -311,9 +311,9 @@ const GeneralScreeningPage = () => {
 
             {/* Quick Pre-Screening Form */}
             <div className="p-8">
-              <h2 className="text-2xl font-bold mb-4 text-gray-800">Quick Tenant Pre-Screening</h2>
+              <h2 className="text-2xl font-bold mb-4 text-gray-800">Check Your Qualification</h2>
               <p className="text-gray-600 mb-6">
-                Collect tenant details to find your perfect match. This free tool works with your existing process—no changes required!
+                Check if you qualify for these properties in just seconds! Enter your information below to see if you meet the basic requirements.
               </p>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -382,12 +382,12 @@ const GeneralScreeningPage = () => {
                       className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 flex items-center justify-center gap-2 transition-transform hover:scale-105"
                       disabled={loadingStates.preScreening}
                     >
-                      {loadingStates.preScreening ? 'Submitting...' : 'Submit Pre-Screening'}
+                      {loadingStates.preScreening ? 'Checking...' : 'Check My Eligibility'}
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </div>
                   <p className="text-sm text-gray-500 mt-3 text-center">
-                    Free tenant screening tool • No cost to you • Integrates with your process
+                    Quick check • 100% free • No credit check required
                   </p>
                 </div>
               </div>
@@ -395,13 +395,13 @@ const GeneralScreeningPage = () => {
 
             {/* Trust Section */}
             <div className="bg-gray-50 p-6 text-center border-t border-gray-200">
-              <p className="text-sm text-gray-600 mb-2">★★★★★ "Effortless tenant screening!"</p>
-              <p className="text-sm text-gray-600">A free tool to enhance your rental business</p>
+              <p className="text-sm text-gray-600 mb-2">★★★★★ "Found my dream apartment in minutes!"</p>
+              <p className="text-sm text-gray-600">Join thousands of happy renters who found their perfect home</p>
             </div>
 
             {/* Last Updated Footer */}
             <div className="bg-gray-100 p-3 text-center text-sm text-gray-500">
-              This Screening Page was last updated: {new Date().toLocaleDateString()}
+              Property listings last updated: {new Date().toLocaleDateString()}
             </div>
           </div>
         </div>
