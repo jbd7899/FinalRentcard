@@ -40,6 +40,7 @@ export const ROUTES = {
   // Screening routes
   SCREENING: {
     GENERAL: '/screening',
+    PROPERTY: '/screening/property',
   },
 } as const;
 
@@ -59,8 +60,9 @@ export const generateRoute = {
   propertyEdit: (id: string | number) => `${ROUTES.LANDLORD.PROPERTIES}/${id}/edit`,
   application: (id: string | number) => `${ROUTES.TENANT.APPLICATIONS}/${id}`,
   rentcard: (id: string | number) => `${ROUTES.TENANT.RENTCARD}/${id}`,
-  screening: (slug: string) => `${ROUTES.SCREENING.GENERAL}/${slug}`,
+  screening: (slug: string) => `${ROUTES.SCREENING.PROPERTY}/${slug}`,
   generalScreening: (slug: string) => `${ROUTES.SCREENING.GENERAL}/${slug}`,
+  propertyScreening: (slug: string) => `${ROUTES.SCREENING.PROPERTY}/${slug}`,
   archivedProperty: (slug: string) => `${ROUTES.PROPERTY.ARCHIVED}/${slug}`,
   document: (id: string | number) => `${ROUTES.TENANT.DOCUMENTS}/${id}`,
   verifyTenantDocuments: (tenantId: string | number) => `${ROUTES.LANDLORD.VERIFY_DOCUMENTS}/${tenantId}`,

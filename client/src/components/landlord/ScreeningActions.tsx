@@ -189,7 +189,7 @@ export const ScreeningActions: React.FC<ScreeningActionsProps> = ({
   } = useUIStore();
 
   const getScreeningPageUrl = (slug: string) => {
-    return `${window.location.origin}${generateRoute.screening(slug)}`;
+    return `${window.location.origin}${generateRoute.propertyScreening(slug)}`;
   };
 
   const handleCopyLink = async () => {
