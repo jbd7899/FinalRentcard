@@ -70,7 +70,7 @@ export const GeneralScreeningActions: React.FC<GeneralScreeningActionsProps> = (
   } = useUIStore();
 
   const getScreeningPageUrl = (slug: string) => {
-    return `${window.location.origin}${ROUTES.SCREENING.GENERAL}/${slug}`;
+    return `${window.location.origin}${generateRoute.generalScreening(slug)}`;
   };
 
   const handleCopyLink = async () => {
@@ -189,7 +189,7 @@ export const ScreeningActions: React.FC<ScreeningActionsProps> = ({
   } = useUIStore();
 
   const getScreeningPageUrl = (slug: string) => {
-    return `${window.location.origin}${ROUTES.SCREENING.GENERAL}/${slug}`;
+    return `${window.location.origin}${generateRoute.screening(slug)}`;
   };
 
   const handleCopyLink = async () => {
