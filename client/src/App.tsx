@@ -7,6 +7,7 @@ import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import CreateRentCard from "@/pages/create-rentcard";
 import ScreeningPage from "@/pages/screening-page";
+import EditScreeningPage from "@/pages/edit-screening-page";
 import GeneralScreeningPage from "@/pages/general-screening-page";
 import ArchivedPropertyPage from "@/pages/archived-property";
 import DebugAuthPage from "@/components/AuthDebugTools";
@@ -50,9 +51,11 @@ function Router() {
       <Route path="/property/archived/:slug" component={ArchivedPropertyPage} />
 
       {/* Property Screening Pages */}
+      <Route path="/screening/property/:slug/edit" component={EditScreeningPage} />
       <Route path="/screening/property/:slug" component={PropertyScreeningPage} />
       
       {/* General Screening Page */}
+      <Route path="/screening/general/:slug/edit" component={EditScreeningPage} />
       <Route path="/screening/:slug" component={GeneralScreeningPage} />
 
       {/* Sample Pages */}
