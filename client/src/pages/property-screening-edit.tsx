@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertScreeningPageSchema, type InsertScreeningPage } from "@shared/schema";
 import { useAuthStore } from '@/stores/authStore';
+import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -45,22 +46,58 @@ import { MESSAGES, VALIDATION, ROUTES } from '@/constants';
 import { convertNestedNumericValues } from '@/utils/form-utils';
 import LandlordLayout from "@/components/layouts/LandlordLayout";
 import PropertyScreeningImageUpload from "@/components/shared/PropertyScreeningImageUpload";
-import { format, parseISO } from "date-fns";
+
+// Define a separate type for property image handling
+interface PropertyImage {
+  url: string;
+  isPrimary: boolean;
+  id?: number;
+}
+
+// Extend the ScreeningPage schema for our form
+const propertyScreeningFormSchema = insertScreeningPageSchema.extend({
+  // These fields will be stored separately outside the form but will be 
+  // included in the API submission via propertyDetails object
+  propertyAddress: z.string().optional(),
+  propertyUnit: z.string().optional(),
+  propertyBedrooms: z.number().min(0).optional(),
+  propertyBathrooms: z.number().min(0).optional(),
+  propertySquareFeet: z.number().min(0).optional(),
+  propertyRentAmount: z.number().min(0).optional(),
+  propertyAvailableDate: z.string().optional(),
+  propertyDescription: z.string().optional(),
+  propertyPetPolicy: z.string().optional(),
+  propertyParkingInfo: z.string().optional(),
+});
+
+// Type for our form
+interface PropertyScreeningFormValues extends InsertScreeningPage {
+  propertyAddress?: string;
+  propertyUnit?: string;
+  propertyBedrooms?: number;
+  propertyBathrooms?: number;
+  propertySquareFeet?: number;
+  propertyRentAmount?: number;
+  propertyAvailableDate?: string;
+  propertyDescription?: string;
+  propertyPetPolicy?: string;
+  propertyParkingInfo?: string;
+}
 
 export default function PropertyScreeningEdit() {
   const [location, setLocation] = useLocation();
   const params = useParams<{ slug: string }>();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("business-info");
+  const [propertyImages, setPropertyImages] = useState<PropertyImage[]>([]);
   
   // Extract slug from the URL
   const slug = params.slug || '';
   
-  const form = useForm<InsertScreeningPage>({
-    resolver: zodResolver(insertScreeningPageSchema),
+  const form = useForm<PropertyScreeningFormValues>({
+    resolver: zodResolver(propertyScreeningFormSchema),
     defaultValues: {
       businessName: "",
       contactName: "",
@@ -71,20 +108,16 @@ export default function PropertyScreeningEdit() {
         noEvictions: true,
         cleanRentalHistory: true,
       },
-      propertyDetails: {
-        address: "",
-        unit: "",
-        bedrooms: 1,
-        bathrooms: 1,
-        squareFeet: 0,
-        rentAmount: 0,
-        availableDate: new Date().toISOString().split('T')[0],
-        description: "",
-        amenities: [],
-        petPolicy: "no-pets",
-        parkingInfo: "",
-        images: []
-      },
+      propertyAddress: "",
+      propertyUnit: "",
+      propertyBedrooms: 1,
+      propertyBathrooms: 1,
+      propertySquareFeet: 0, 
+      propertyRentAmount: 0,
+      propertyAvailableDate: new Date().toISOString().split('T')[0],
+      propertyDescription: "",
+      propertyPetPolicy: "no-pets",
+      propertyParkingInfo: "",
       slug,
     },
   });
@@ -116,42 +149,70 @@ export default function PropertyScreeningEdit() {
   // Update form with fetched data
   useEffect(() => {
     if (screeningPage) {
-      const formattedDate = screeningPage.propertyDetails?.availableDate 
+      const availableDate = screeningPage.propertyDetails?.availableDate 
         ? screeningPage.propertyDetails.availableDate 
         : new Date().toISOString().split('T')[0];
 
+      // Set form values
       form.reset({
-        ...screeningPage,
+        businessName: screeningPage.businessName || "",
+        contactName: screeningPage.contactName || "",
+        businessEmail: screeningPage.businessEmail || "",
         screeningCriteria: {
           minCreditScore: screeningPage.screeningCriteria?.minCreditScore || VALIDATION.SCREENING.CREDIT_SCORE.MIN,
           minMonthlyIncome: screeningPage.screeningCriteria?.minMonthlyIncome || VALIDATION.SCREENING.MONTHLY_INCOME.MIN,
           noEvictions: screeningPage.screeningCriteria?.noEvictions ?? true,
           cleanRentalHistory: screeningPage.screeningCriteria?.cleanRentalHistory ?? true,
         },
-        propertyDetails: {
-          address: screeningPage.propertyDetails?.address || "",
-          unit: screeningPage.propertyDetails?.unit || "",
-          bedrooms: screeningPage.propertyDetails?.bedrooms || 1,
-          bathrooms: screeningPage.propertyDetails?.bathrooms || 1,
-          squareFeet: screeningPage.propertyDetails?.squareFeet || 0,
-          rentAmount: screeningPage.propertyDetails?.rentAmount || 0,
-          availableDate: formattedDate,
-          description: screeningPage.propertyDetails?.description || "",
-          amenities: screeningPage.propertyDetails?.amenities || [],
-          petPolicy: screeningPage.propertyDetails?.petPolicy || "no-pets",
-          parkingInfo: screeningPage.propertyDetails?.parkingInfo || "",
-          images: screeningPage.propertyDetails?.images || []
-        }
+        propertyAddress: screeningPage.propertyDetails?.address || "",
+        propertyUnit: screeningPage.propertyDetails?.unit || "",
+        propertyBedrooms: screeningPage.propertyDetails?.bedrooms || 1,
+        propertyBathrooms: screeningPage.propertyDetails?.bathrooms || 1,
+        propertySquareFeet: screeningPage.propertyDetails?.squareFeet || 0,
+        propertyRentAmount: screeningPage.propertyDetails?.rentAmount || 0,
+        propertyAvailableDate: availableDate,
+        propertyDescription: screeningPage.propertyDetails?.description || "",
+        propertyPetPolicy: screeningPage.propertyDetails?.petPolicy || "no-pets",
+        propertyParkingInfo: screeningPage.propertyDetails?.parkingInfo || "",
+        slug: screeningPage.slug,
       });
+
+      // Set images outside the form state
+      if (screeningPage.propertyDetails?.images && screeningPage.propertyDetails.images.length > 0) {
+        setPropertyImages(screeningPage.propertyDetails.images);
+      }
+      
       setIsLoading(false);
     }
   }, [screeningPage, form]);
 
   // Update the screening page
   const updateScreeningPage = useMutation({
-    mutationFn: async (data: InsertScreeningPage) => {
-      // Process numeric fields in nested objects
-      const processedData = convertNestedNumericValues(data, {
+    mutationFn: async (formData: PropertyScreeningFormValues) => {
+      // Prepare data for API submission
+      const dataToSubmit = {
+        businessName: formData.businessName,
+        contactName: formData.contactName,
+        businessEmail: formData.businessEmail,
+        screeningCriteria: formData.screeningCriteria,
+        slug: formData.slug,
+        propertyDetails: {
+          address: formData.propertyAddress,
+          unit: formData.propertyUnit,
+          bedrooms: formData.propertyBedrooms,
+          bathrooms: formData.propertyBathrooms,
+          squareFeet: formData.propertySquareFeet,
+          rentAmount: formData.propertyRentAmount,
+          availableDate: formData.propertyAvailableDate,
+          description: formData.propertyDescription,
+          petPolicy: formData.propertyPetPolicy,
+          parkingInfo: formData.propertyParkingInfo,
+          images: propertyImages,
+        }
+      };
+      
+      // Process numeric fields
+      const processedData = convertNestedNumericValues(dataToSubmit, {
         screeningCriteria: ['minCreditScore', 'minMonthlyIncome'],
         propertyDetails: ['bedrooms', 'bathrooms', 'squareFeet', 'rentAmount']
       });
@@ -182,12 +243,12 @@ export default function PropertyScreeningEdit() {
     },
   });
 
-  const handleFormSubmit = (data: InsertScreeningPage) => {
+  const handleFormSubmit = (data: PropertyScreeningFormValues) => {
     updateScreeningPage.mutate(data);
   };
 
-  const handleImagesChange = (images: any[]) => {
-    form.setValue('propertyDetails.images', images);
+  const handleImagesChange = (images: PropertyImage[]) => {
+    setPropertyImages(images);
   };
 
   return (
@@ -368,7 +429,7 @@ export default function PropertyScreeningEdit() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="propertyDetails.address"
+                      name="propertyAddress"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Address</FormLabel>
@@ -382,7 +443,7 @@ export default function PropertyScreeningEdit() {
 
                     <FormField
                       control={form.control}
-                      name="propertyDetails.unit"
+                      name="propertyUnit"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Unit # (Optional)</FormLabel>
@@ -398,7 +459,7 @@ export default function PropertyScreeningEdit() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <FormField
                       control={form.control}
-                      name="propertyDetails.bedrooms"
+                      name="propertyBedrooms"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Bedrooms</FormLabel>
@@ -411,7 +472,7 @@ export default function PropertyScreeningEdit() {
                                 step={1}
                                 {...field}
                                 onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                value={field.value?.toString() || ''}
+                                value={field.value?.toString() || '1'}
                               />
                             </div>
                           </FormControl>
@@ -422,7 +483,7 @@ export default function PropertyScreeningEdit() {
 
                     <FormField
                       control={form.control}
-                      name="propertyDetails.bathrooms"
+                      name="propertyBathrooms"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Bathrooms</FormLabel>
@@ -435,7 +496,7 @@ export default function PropertyScreeningEdit() {
                                 step={0.5}
                                 {...field}
                                 onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                                value={field.value?.toString() || ''}
+                                value={field.value?.toString() || '1'}
                               />
                             </div>
                           </FormControl>
@@ -446,7 +507,7 @@ export default function PropertyScreeningEdit() {
 
                     <FormField
                       control={form.control}
-                      name="propertyDetails.squareFeet"
+                      name="propertySquareFeet"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Square Feet</FormLabel>
@@ -457,7 +518,7 @@ export default function PropertyScreeningEdit() {
                               placeholder="e.g., 1200"
                               {...field}
                               onChange={(e) => field.onChange(parseInt(e.target.value))}
-                              value={field.value?.toString() || ''}
+                              value={field.value?.toString() || '0'}
                             />
                           </FormControl>
                           <FormMessage />
@@ -469,7 +530,7 @@ export default function PropertyScreeningEdit() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="propertyDetails.rentAmount"
+                      name="propertyRentAmount"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Monthly Rent</FormLabel>
@@ -482,7 +543,7 @@ export default function PropertyScreeningEdit() {
                                 placeholder="e.g., 1500"
                                 {...field}
                                 onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                value={field.value?.toString() || ''}
+                                value={field.value?.toString() || '0'}
                               />
                             </div>
                           </FormControl>
@@ -493,7 +554,7 @@ export default function PropertyScreeningEdit() {
 
                     <FormField
                       control={form.control}
-                      name="propertyDetails.availableDate"
+                      name="propertyAvailableDate"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Available From</FormLabel>
@@ -517,7 +578,7 @@ export default function PropertyScreeningEdit() {
 
                   <FormField
                     control={form.control}
-                    name="propertyDetails.description"
+                    name="propertyDescription"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Property Description</FormLabel>
@@ -536,7 +597,7 @@ export default function PropertyScreeningEdit() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="propertyDetails.petPolicy"
+                      name="propertyPetPolicy"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Pet Policy</FormLabel>
@@ -565,7 +626,7 @@ export default function PropertyScreeningEdit() {
 
                     <FormField
                       control={form.control}
-                      name="propertyDetails.parkingInfo"
+                      name="propertyParkingInfo"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Parking Information</FormLabel>
@@ -593,7 +654,7 @@ export default function PropertyScreeningEdit() {
                     </div>
                     
                     <PropertyScreeningImageUpload 
-                      images={form.watch('propertyDetails.images') || []} 
+                      images={propertyImages} 
                       onChange={handleImagesChange}
                       maxImages={10}
                     />
