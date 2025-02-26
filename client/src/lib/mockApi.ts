@@ -22,6 +22,94 @@ let mockDocuments = [
   }
 ];
 
+// Mock storage for property screening pages
+let mockPropertyScreenings = [
+  {
+    id: 1,
+    landlordId: 2,
+    businessName: "ABC Property Management",
+    contactName: "John Smith",
+    businessEmail: "contact@abcproperty.com",
+    screeningCriteria: {
+      minCreditScore: 650,
+      minMonthlyIncome: 3000,
+      noEvictions: true,
+      cleanRentalHistory: true
+    },
+    slug: "property-3038-screening",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    propertyDetails: {
+      address: "123 Main Street",
+      unit: "Apt 4B",
+      bedrooms: 2,
+      bathrooms: 1.5,
+      squareFeet: 950,
+      rentAmount: 1500,
+      availableDate: new Date(Date.now() + 30*86400000).toISOString().split('T')[0], // 30 days from now
+      description: "Beautiful apartment in downtown with modern amenities. Close to public transportation and shopping centers.",
+      petPolicy: "cats-only",
+      parkingInfo: "1 assigned parking space included",
+      images: [
+        {
+          id: 1,
+          url: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+          isPrimary: true
+        },
+        {
+          id: 2, 
+          url: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+          isPrimary: false
+        }
+      ]
+    },
+    viewCount: 42,
+    applicationCount: 5
+  },
+  {
+    id: 2,
+    landlordId: 2,
+    businessName: "XYZ Real Estate",
+    contactName: "Jane Doe",
+    businessEmail: "info@xyzrealestate.com",
+    screeningCriteria: {
+      minCreditScore: 700,
+      minMonthlyIncome: 4000,
+      noEvictions: true,
+      cleanRentalHistory: true
+    },
+    slug: "luxury-downtown-condo-screening",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    propertyDetails: {
+      address: "456 Park Avenue",
+      unit: "Unit 12C",
+      bedrooms: 3,
+      bathrooms: 2,
+      squareFeet: 1400,
+      rentAmount: 2800,
+      availableDate: new Date(Date.now() + 15*86400000).toISOString().split('T')[0], // 15 days from now
+      description: "Luxury condo with stunning city views. Features stainless steel appliances, hardwood floors, and 24-hour doorman.",
+      petPolicy: "case-by-case",
+      parkingInfo: "Garage parking available for additional fee",
+      images: [
+        {
+          id: 3,
+          url: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+          isPrimary: true
+        },
+        {
+          id: 4,
+          url: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+          isPrimary: false
+        }
+      ]
+    },
+    viewCount: 78,
+    applicationCount: 12
+  }
+];
+
 // Mock document ID counter
 let documentIdCounter = mockDocuments.length + 1;
 
@@ -42,6 +130,171 @@ const createMockResponse = (data: any, status = 200) => {
 window.fetch = async (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
   // Convert URL to string if it's not already
   const urlStr = url.toString();
+  
+  // Handle property screening endpoints
+  if (urlStr.includes('/api/properties/screening/')) {
+    // Get property screening page by slug
+    const slug = urlStr.split('/api/properties/screening/')[1].split('?')[0]; // Remove any query params
+    
+    // Intercept screening page fetch request
+    if (options?.method === 'GET' || !options?.method) {
+      console.log('MOCK: Intercepting property screening request for slug:', slug);
+      
+      // Always return a mock screening page for testing purposes
+      const mockScreeningPage = {
+        id: 1,
+        landlordId: 2,
+        businessName: "ABC Property Management",
+        contactName: "John Smith",
+        businessEmail: "contact@abcproperty.com",
+        screeningCriteria: {
+          minCreditScore: 650,
+          minMonthlyIncome: 3000,
+          noEvictions: true,
+          cleanRentalHistory: true
+        },
+        slug: slug,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        propertyDetails: {
+          address: "123 Main Street",
+          unit: "Apt 4B",
+          bedrooms: 2,
+          bathrooms: 1.5,
+          squareFeet: 950,
+          rentAmount: 1500,
+          availableDate: new Date(Date.now() + 30*86400000).toISOString().split('T')[0], // 30 days from now
+          description: "Beautiful apartment in downtown with modern amenities. Close to public transportation and shopping centers.",
+          petPolicy: "cats-only",
+          parkingInfo: "1 assigned parking space included",
+          images: [
+            {
+              id: 1,
+              url: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+              isPrimary: true
+            },
+            {
+              id: 2, 
+              url: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+              isPrimary: false
+            }
+          ]
+        },
+        viewCount: 42,
+        applicationCount: 5
+      };
+      
+      return createMockResponse(mockScreeningPage);
+    }
+    
+    // Update property screening page
+    if (options?.method === 'PATCH' || options?.method === 'PUT') {
+      console.log('MOCK: Updating property screening');
+      
+      try {
+        // Parse the update data
+        let updateData: any = {};
+        
+        if (options.body && typeof options.body === 'string') {
+          updateData = JSON.parse(options.body);
+          console.log('MOCK: Update data received:', updateData);
+        }
+        
+        // For simplicity in the mock, just return success with the updated data
+        const updatedScreeningPage = {
+          id: 1,
+          landlordId: 2,
+          businessName: updateData.businessName || "ABC Property Management",
+          contactName: updateData.contactName || "John Smith",
+          businessEmail: updateData.businessEmail || "contact@abcproperty.com",
+          screeningCriteria: updateData.screeningCriteria || {
+            minCreditScore: 650,
+            minMonthlyIncome: 3000,
+            noEvictions: true,
+            cleanRentalHistory: true
+          },
+          slug: slug,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          propertyDetails: updateData.propertyDetails || {
+            address: "123 Main Street",
+            unit: "Apt 4B",
+            bedrooms: 2,
+            bathrooms: 1.5,
+            squareFeet: 950,
+            rentAmount: 1500,
+            availableDate: new Date(Date.now() + 30*86400000).toISOString().split('T')[0],
+            description: "Beautiful apartment in downtown with modern amenities.",
+            petPolicy: "cats-only",
+            parkingInfo: "1 assigned parking space included",
+            images: [
+              {
+                id: 1,
+                url: "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg",
+                isPrimary: true
+              }
+            ]
+          },
+          viewCount: 42,
+          applicationCount: 5
+        };
+        
+        // Add to mock data for subsequent requests
+        const existingIndex = mockPropertyScreenings.findIndex(p => p.slug === slug);
+        if (existingIndex !== -1) {
+          mockPropertyScreenings[existingIndex] = updatedScreeningPage;
+        } else {
+          mockPropertyScreenings.push(updatedScreeningPage);
+        }
+        
+        return createMockResponse(updatedScreeningPage);
+      } catch (error) {
+        console.error('MOCK: Error updating property screening:', error);
+        return createMockResponse({ message: 'Failed to update property screening page' }, 500);
+      }
+    }
+  }
+  
+  // Handle general screening page
+  if (urlStr.includes('/api/screening/general') && (options?.method === 'GET' || !options?.method)) {
+    console.log('MOCK: Intercepting general screening request');
+    
+    // Return a mock general screening page
+    return createMockResponse({
+      id: 100,
+      landlordId: 2,
+      businessName: "General Housing Solutions",
+      contactName: "Admin User",
+      businessEmail: "admin@generalhousing.com",
+      screeningCriteria: {
+        minCreditScore: 600,
+        minMonthlyIncome: 2500,
+        noEvictions: true,
+        cleanRentalHistory: true
+      },
+      slug: "general-screening",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      viewCount: 150,
+      applicationCount: 35
+    });
+  }
+  
+  // Handle properties list request
+  if (urlStr.includes('/api/properties') && urlStr === '/api/properties' && (options?.method === 'GET' || !options?.method)) {
+    console.log('MOCK: Intercepting properties list request');
+    
+    // Return a list of properties with screening pages
+    return createMockResponse(mockPropertyScreenings.map(screening => ({
+      id: screening.id,
+      title: screening.propertyDetails?.address || `Property ${screening.id}`,
+      address: `${screening.propertyDetails?.address || ''} ${screening.propertyDetails?.unit || ''}`.trim(),
+      slug: screening.slug,
+      applicationCount: screening.applicationCount,
+      viewCount: screening.viewCount,
+      isArchived: false
+    })));
+  }
   
   // Handle document endpoints
   if (urlStr.includes('/api/documents')) {
