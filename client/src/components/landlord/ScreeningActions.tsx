@@ -2,7 +2,7 @@ import React from 'react';
 import { QrCode, Copy, CheckCircle, RefreshCw, Archive } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useUIStore } from '@/stores/uiStore';
-import { ROUTES, CONFIG } from '@/constants';
+import { ROUTES, CONFIG, generateRoute } from '@/constants';
 
 import { Button } from "@/components/ui/button";
 import {

@@ -169,7 +169,7 @@ const ScreeningManagement = () => {
                     </div>
                     <Separator className="mb-3 sm:mb-4" />
                     <ScreeningActions
-                      screeningLink={property.slug || `property-${property.id}`}
+                      screeningLink={property.slug || `property-${property.id}-screening`}
                       propertyId={property.id}
                       submissionCount={property.applicationCount || 0}
                       viewCount={property.viewCount || 0}
@@ -236,7 +236,7 @@ const ScreeningManagement = () => {
                 </div>
                 <Separator className="mb-3 sm:mb-4" />
                 <GeneralScreeningActions
-                  screeningLink={generalScreening.slug || `landlord-${user?.id || '1'}-screening`}
+                  screeningLink={generalScreening.slug || `general-landlord-${user?.id || '1'}-screening`}
                   submissionCount={generalScreening.applicationCount || 0}
                   viewCount={generalScreening.viewCount || 0}
                 />
