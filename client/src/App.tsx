@@ -49,6 +49,9 @@ function Router() {
       <ProtectedRoute path="/landlord/screening" component={ScreeningManagement} />
       <Route path="/property/archived/:slug" component={ArchivedPropertyPage} />
 
+      {/* Property Screening Pages */}
+      <Route path="/screening/property/:slug" component={PropertyScreeningPage} />
+      
       {/* General Screening Page */}
       <Route path="/screening/:slug" component={GeneralScreeningPage} />
 
