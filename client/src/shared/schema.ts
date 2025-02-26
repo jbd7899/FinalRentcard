@@ -67,6 +67,25 @@ export const insertScreeningPageSchema = z.object({
     noEvictions: z.boolean().default(true),
     cleanRentalHistory: z.boolean().default(true),
   }),
+  // Property-specific fields (optional)
+  propertyDetails: z.object({
+    address: z.string().optional(),
+    unit: z.string().optional(),
+    bedrooms: z.number().optional(),
+    bathrooms: z.number().optional(),
+    squareFeet: z.number().optional(),
+    rentAmount: z.number().optional(),
+    availableDate: z.string().optional(), // ISO date string
+    description: z.string().optional(),
+    amenities: z.array(z.string()).optional(),
+    petPolicy: z.string().optional(),
+    parkingInfo: z.string().optional(),
+    images: z.array(z.object({
+      url: z.string(),
+      isPrimary: z.boolean().default(false),
+      id: z.number().optional(),
+    })).optional(),
+  }).optional(),
 });
 
 export type InsertScreeningPage = z.infer<typeof insertScreeningPageSchema>; 
