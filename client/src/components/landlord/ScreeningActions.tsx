@@ -1,5 +1,5 @@
 import React from 'react';
-import { QrCode, Copy, CheckCircle, RefreshCw, Archive } from 'lucide-react';
+import { QrCode, Copy, CheckCircle, RefreshCw, Archive, FileText } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useUIStore } from '@/stores/uiStore';
 import { ROUTES, CONFIG, generateRoute } from '@/constants';
@@ -13,7 +13,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 /**
  * Props for the ScreeningActions component
@@ -68,6 +68,7 @@ export const GeneralScreeningActions: React.FC<GeneralScreeningActionsProps> = (
       setShowCopyAlert 
     } 
   } = useUIStore();
+  const [, setLocation] = useLocation();
 
   const getScreeningPageUrl = (slug: string) => {
     return `${window.location.origin}${generateRoute.generalScreening(slug)}`;
@@ -82,6 +83,10 @@ export const GeneralScreeningActions: React.FC<GeneralScreeningActionsProps> = (
     } catch (err) {
       console.error('Failed to copy link:', err);
     }
+  };
+
+  const handleEditScreeningPage = () => {
+    setLocation(`/screening/general/${screeningLink}/edit`);
   };
 
   return (
@@ -116,16 +121,15 @@ export const GeneralScreeningActions: React.FC<GeneralScreeningActionsProps> = (
         </Button>
       </div>
 
-      <Link href={ROUTES.LANDLORD.SCREENING}>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="w-full text-xs sm:text-sm h-8 sm:h-9"
-        >
-          <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-          Edit Screening Page
-        </Button>
-      </Link>
+      <Button
+        variant="default"
+        size="sm"
+        className="w-full text-xs sm:text-sm h-8 sm:h-9 bg-blue-600 hover:bg-blue-700"
+        onClick={handleEditScreeningPage}
+      >
+        <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+        Edit Screening Page
+      </Button>
 
       <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
         <DialogContent className="sm:max-w-md max-w-[90vw]">
@@ -187,6 +191,7 @@ export const ScreeningActions: React.FC<ScreeningActionsProps> = ({
       setShowCopyAlert 
     } 
   } = useUIStore();
+  const [, setLocation] = useLocation();
 
   const getScreeningPageUrl = (slug: string) => {
     return `${window.location.origin}${generateRoute.propertyScreening(slug)}`;
@@ -201,6 +206,10 @@ export const ScreeningActions: React.FC<ScreeningActionsProps> = ({
     } catch (err) {
       console.error('Failed to copy link:', err);
     }
+  };
+
+  const handleEditScreeningPage = () => {
+    setLocation(`/screening/property/${screeningLink}/edit`);
   };
 
   return (
@@ -236,6 +245,17 @@ export const ScreeningActions: React.FC<ScreeningActionsProps> = ({
           )}
         </Button>
       </div>
+      
+      <Button
+        variant="default"
+        size="sm"
+        className="w-full text-xs sm:text-sm h-8 sm:h-9 bg-blue-600 hover:bg-blue-700"
+        onClick={handleEditScreeningPage}
+        disabled={isArchived}
+      >
+        <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+        Edit Screening Page
+      </Button>
 
       <Button
         variant={isArchived ? "outline" : "secondary"}
