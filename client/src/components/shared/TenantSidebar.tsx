@@ -74,8 +74,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
           <ul className="space-y-1 md:space-y-2">
             {navigationItems.map((item) => (
               <li key={item.route}>
-                <Link href={item.route}>
-                  <a className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-md transition-colors ${
+                <Link href={item.route} className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-md transition-colors ${
                     item.active 
                       ? "bg-blue-50 text-blue-600" 
                       : "text-gray-600 hover:bg-gray-100"
@@ -85,7 +84,6 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
                     {item.active && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600"></div>
                     )}
-                  </a>
                 </Link>
               </li>
             ))}
@@ -124,15 +122,13 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
           <ul className="space-y-1 sm:space-y-2">
             {navigationItems.map((item) => (
               <li key={item.route}>
-                <Link href={item.route}>
-                  <a className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors ${
+                <Link href={item.route} className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors ${
                     item.active 
                       ? "bg-blue-50 text-blue-600" 
                       : "text-gray-600 hover:bg-gray-100"
                   }`}>
                     {item.icon}
                     <span>{item.label}</span>
-                  </a>
                 </Link>
               </li>
             ))}
