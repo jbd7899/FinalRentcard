@@ -9,6 +9,100 @@ import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdF
 import { db } from "./db";
 import { sendReferenceVerificationEmail, verifyToken } from "./email";
 
+// Standardized error handler for consistent API responses
+function handleRouteError(error: unknown, res: any, operation: string): void {
+  console.error(`Error in ${operation}:`, error);
+  
+  if (error instanceof Error) {
+    if (error.message.includes('Unauthorized')) {
+      return res.status(401).json({ message: error.message });
+    }
+    if (error.message.includes('Forbidden')) {
+      return res.status(403).json({ message: error.message });
+    }
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ message: error.message });
+    }
+  }
+  
+  // Default to 500 for unexpected errors
+  res.status(500).json({ 
+    message: `Server error in ${operation}`,
+    error: error instanceof Error ? error.message : "Unknown error"
+  });
+}
+
+// Authorization helper functions
+async function assertTenantOwnership(req: any, tenantId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  if (!tenantProfile || tenantProfile.id !== tenantId) {
+    throw new Error("Forbidden: Access denied to this tenant resource");
+  }
+}
+
+async function assertLandlordOwnership(req: any, landlordId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  if (!landlordProfile || landlordProfile.id !== landlordId) {
+    throw new Error("Forbidden: Access denied to this landlord resource");
+  }
+}
+
+async function assertReferenceOwnership(req: any, referenceId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const reference = await storage.getTenantReferenceById(referenceId);
+  if (!reference) {
+    throw new Error("Reference not found");
+  }
+  
+  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  if (!tenantProfile || !reference.tenantId || tenantProfile.id !== reference.tenantId) {
+    throw new Error("Forbidden: Access denied to this reference");
+  }
+}
+
+async function assertDocumentOwnership(req: any, documentId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const document = await storage.getTenantDocumentById(documentId);
+  if (!document) {
+    throw new Error("Document not found");
+  }
+  
+  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  if (!tenantProfile || !document.tenantId || tenantProfile.id !== document.tenantId) {
+    throw new Error("Forbidden: Access denied to this document");
+  }
+}
+
+async function assertPropertyOwnership(req: any, propertyId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const property = await storage.getProperty(propertyId);
+  if (!property) {
+    throw new Error("Property not found");
+  }
+  
+  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  if (!landlordProfile || landlordProfile.id !== property.landlordId) {
+    throw new Error("Forbidden: Access denied to this property");
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
@@ -16,9 +110,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Profile routes
   app.get("/api/profile/tenant/:userId", requireAuth, async (req, res) => {
-    const profile = await storage.getTenantProfile(parseInt(req.params.userId));
-    if (!profile) return res.status(404).json({ message: "Profile not found" });
-    res.json(profile);
+    try {
+      const requestedUserId = parseInt(req.params.userId);
+      
+      // Only allow users to access their own profile
+      if (req.user?.id !== requestedUserId) {
+        return res.status(403).json({ message: "Forbidden: Access denied" });
+      }
+      
+      const profile = await storage.getTenantProfile(requestedUserId);
+      if (!profile) return res.status(404).json({ message: "Profile not found" });
+      res.json(profile);
+    } catch (error) {
+      handleRouteError(error, res, 'tenant profile endpoint');
+    }
   });
 
   // Add endpoint for current user's tenant profile
@@ -40,15 +145,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Successfully retrieved tenant profile for user ID: ${req.user.id}`);
       res.json(profile);
     } catch (error) {
-      console.error('Error in /api/tenant/profile endpoint:', error);
-      res.status(500).json({ 
-        message: "Server error while fetching tenant profile",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+      handleRouteError(error, res, '/api/tenant/profile endpoint');
     }
   });
 
-  // Add endpoint for specific tenant profile
+  // Add endpoint for specific tenant profile (with authorization check)
   app.get("/api/tenant/profile/:tenantId", requireAuth, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
@@ -58,8 +159,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid tenant ID format" });
       }
       
-      console.log(`Fetching tenant profile for tenant ID: ${tenantId}`);
-      const profile = await storage.getTenantProfile(tenantId);
+      // Verify ownership - only allow access to own tenant profile
+      await assertTenantOwnership(req, tenantId);
+      
+      // After successful ownership assertion, req.user is guaranteed to exist
+      if (!req.user?.id) {
+        throw new Error("Unexpected: User session lost after ownership verification");
+      }
+      
+      console.log(`Fetching tenant profile for user ID: ${req.user.id} (verified tenant ID: ${tenantId})`);
+      const profile = await storage.getTenantProfile(req.user.id);
       
       if (!profile) {
         console.log(`No tenant profile found for tenant ID: ${tenantId}`);
@@ -70,6 +179,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(profile);
     } catch (error) {
       console.error(`Error in /api/tenant/profile/:tenantId endpoint for ID ${req.params.tenantId}:`, error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ 
         message: "Server error while fetching tenant profile",
         error: error instanceof Error ? error.message : "Unknown error"
@@ -78,19 +192,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/profile/tenant", requireAuth, async (req, res) => {
-    const profile = await storage.createTenantProfile(req.body);
-    res.status(201).json(profile);
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Ensure the profile is created for the authenticated user
+      const profileData = { ...req.body, userId: req.user.id };
+      const profile = await storage.createTenantProfile(profileData);
+      res.status(201).json(profile);
+    } catch (error) {
+      handleRouteError(error, res, 'creating tenant profile');
+    }
   });
 
   app.get("/api/profile/landlord/:userId", requireAuth, async (req, res) => {
-    const profile = await storage.getLandlordProfile(parseInt(req.params.userId));
-    if (!profile) return res.status(404).json({ message: "Profile not found" });
-    res.json(profile);
+    try {
+      const requestedUserId = parseInt(req.params.userId);
+      
+      // Only allow users to access their own profile
+      if (req.user?.id !== requestedUserId) {
+        return res.status(403).json({ message: "Forbidden: Access denied" });
+      }
+      
+      const profile = await storage.getLandlordProfile(requestedUserId);
+      if (!profile) return res.status(404).json({ message: "Profile not found" });
+      res.json(profile);
+    } catch (error) {
+      handleRouteError(error, res, 'landlord profile endpoint');
+    }
   });
 
   app.post("/api/profile/landlord", requireAuth, async (req, res) => {
-    const profile = await storage.createLandlordProfile(req.body);
-    res.status(201).json(profile);
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Ensure the profile is created for the authenticated user
+      const profileData = { ...req.body, userId: req.user.id };
+      const profile = await storage.createLandlordProfile(profileData);
+      res.status(201).json(profile);
+    } catch (error) {
+      handleRouteError(error, res, 'creating landlord profile');
+    }
   });
 
   // Property routes
@@ -212,6 +357,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const propertyId = parseInt(req.params.propertyId);
       
+      // Verify property ownership
+      await assertPropertyOwnership(req, propertyId);
+      
       // Check if this is the first image for the property (make it primary)
       const existingImages = await storage.getPropertyImages(propertyId);
       const isPrimary = existingImages.length === 0;
@@ -224,6 +372,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(newImage);
     } catch (error) {
+      console.error('Error uploading property image:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(400).json({ message: "Error uploading property image", error });
     }
   });
@@ -235,10 +389,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const imageId = parseInt(req.params.imageId);
+      
+      // Get the image to verify property ownership
+      const image = await storage.getPropertyImageById(imageId);
+      if (!image) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      
+      // Verify property ownership
+      if (!image.propertyId) {
+        return res.status(400).json({ message: "Invalid image: missing property reference" });
+      }
+      await assertPropertyOwnership(req, image.propertyId);
+      
       const updatedImage = await storage.setPrimaryPropertyImage(imageId);
       
       res.json(updatedImage);
     } catch (error) {
+      console.error('Error setting primary image:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(400).json({ message: "Error setting primary image", error });
     }
   });
@@ -258,6 +431,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Image not found" });
       }
       
+      // Verify property ownership
+      if (!image.propertyId) {
+        return res.status(400).json({ message: "Invalid image: missing property reference" });
+      }
+      await assertPropertyOwnership(req, image.propertyId);
+      
       // Delete from Cloudinary
       const publicId = getPublicIdFromUrl(image.imageUrl);
       await deleteCloudinaryFile(publicId);
@@ -267,6 +446,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
+      console.error('Error deleting property image:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Error deleting property image", error });
     }
   });
@@ -289,6 +474,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const propertyId = parseInt(req.params.propertyId);
+      
+      // Verify property ownership
+      await assertPropertyOwnership(req, propertyId);
+      
       const { amenityType, description } = req.body;
       
       const newAmenity = await storage.createPropertyAmenity({
@@ -299,6 +488,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(newAmenity);
     } catch (error) {
+      console.error('Error adding property amenity:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(400).json({ message: "Error adding property amenity", error });
     }
   });
@@ -311,11 +506,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const amenityId = parseInt(req.params.amenityId);
       
+      // Get the amenity to verify property ownership
+      const amenities = await storage.getPropertyAmenities(0); // Get all amenities
+      const amenity = amenities.find(a => a.id === amenityId);
+      
+      if (!amenity) {
+        return res.status(404).json({ message: "Amenity not found" });
+      }
+      
+      // Verify property ownership
+      if (!amenity.propertyId) {
+        return res.status(400).json({ message: "Invalid amenity: missing property reference" });
+      }
+      await assertPropertyOwnership(req, amenity.propertyId);
+      
       // Delete from database
       await storage.deletePropertyAmenity(amenityId);
       
       res.json({ success: true });
     } catch (error) {
+      console.error('Error deleting property amenity:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Error deleting property amenity", error });
     }
   });
@@ -323,13 +538,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Application routes
   app.get("/api/applications", requireAuth, async (req, res) => {
     try {
-      const { tenantId, propertyId } = req.query;
-      const applications = await storage.getApplications(
-        tenantId ? parseInt(tenantId as string) : undefined,
-        propertyId ? parseInt(propertyId as string) : undefined
-      );
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { propertyId } = req.query;
+      
+      // Get applications based on user type
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      
+      let applications;
+      
+      if (tenantProfile) {
+        // Tenants can only see their own applications
+        applications = await storage.getApplications(
+          tenantProfile.id,
+          propertyId ? parseInt(propertyId as string) : undefined
+        );
+      } else if (landlordProfile) {
+        // Landlords can see applications for their properties
+        if (propertyId) {
+          const property = await storage.getProperty(parseInt(propertyId as string));
+          if (!property || property.landlordId !== landlordProfile.id) {
+            return res.status(403).json({ message: "Access denied to property applications" });
+          }
+        }
+        applications = await storage.getApplications(
+          undefined,
+          propertyId ? parseInt(propertyId as string) : undefined
+        );
+        // Filter to only applications for landlord's properties
+        if (!propertyId) {
+          const landlordProperties = await storage.getProperties(landlordProfile.id);
+          const landlordPropertyIds = landlordProperties.map(p => p.id);
+          applications = applications.filter(app => app.propertyId !== null && landlordPropertyIds.includes(app.propertyId));
+        }
+      } else {
+        return res.status(403).json({ message: "User profile not found" });
+      }
+      
       res.json(applications);
     } catch (error) {
+      console.error('Error fetching applications:', error);
       res.status(500).json({ message: "Error fetching applications", error });
     }
   });
@@ -402,12 +653,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/applications/:id/status", requireAuth, async (req, res) => {
     try {
-      const application = await storage.updateApplicationStatus(
-        parseInt(req.params.id),
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const applicationId = parseInt(req.params.id);
+      
+      // Get the application to verify ownership
+      const applications = await storage.getApplications();
+      const application = applications.find(app => app.id === applicationId);
+      
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      
+      // Only landlords who own the property can update application status
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(403).json({ message: "Only landlords can update application status" });
+      }
+      
+      if (!application.propertyId) {
+        return res.status(400).json({ message: "Invalid application: missing property reference" });
+      }
+      
+      const property = await storage.getProperty(application.propertyId);
+      if (!property || property.landlordId !== landlordProfile.id) {
+        return res.status(403).json({ message: "Access denied to this application" });
+      }
+      
+      const updatedApplication = await storage.updateApplicationStatus(
+        applicationId,
         req.body.status
       );
-      res.json(application);
+      res.json(updatedApplication);
     } catch (error) {
+      console.error('Error updating application status:', error);
       res.status(500).json({ message: "Error updating application status", error });
     }
   });
@@ -503,10 +784,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/documents/:tenantId", requireAuth, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
+      
+      // Verify ownership - only allow access to own documents
+      await assertTenantOwnership(req, tenantId);
+      
       const documents = await storage.getTenantDocuments(tenantId);
       res.json(documents);
     } catch (error) {
       console.error("Error fetching tenant documents:", error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to fetch documents" });
     }
   });
@@ -516,15 +806,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
-
-      const { tenantId, documentType } = req.body;
       
-      if (!tenantId || !documentType) {
-        return res.status(400).json({ message: "Missing required fields" });
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { documentType } = req.body;
+      
+      if (!documentType) {
+        return res.status(400).json({ message: "Missing required field: documentType" });
+      }
+      
+      // Get the authenticated user's tenant profile
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(400).json({ message: "Tenant profile not found" });
       }
 
       const document = await storage.createTenantDocument({
-        tenantId: parseInt(tenantId),
+        tenantId: tenantProfile.id,
         documentType,
         documentUrl: (req.file as any).path,
       });
@@ -539,6 +839,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/documents/:id", requireAuth, async (req, res) => {
     try {
       const documentId = parseInt(req.params.id);
+      
+      // Verify ownership before deleting
+      await assertDocumentOwnership(req, documentId);
       
       // Get the document to find the URL
       const documents = await storage.getTenantDocumentById(documentId);
@@ -556,6 +859,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Document deleted successfully" });
     } catch (error) {
       console.error("Error deleting document:", error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to delete document" });
     }
   });
@@ -563,16 +871,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/documents/:id/verify", requireAuth, async (req, res) => {
     try {
       const documentId = parseInt(req.params.id);
-      const { verifiedBy } = req.body;
       
-      if (!verifiedBy) {
-        return res.status(400).json({ message: "Missing verifiedBy field" });
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
       }
       
-      const document = await storage.verifyTenantDocument(documentId, parseInt(verifiedBy));
+      // Verify the user is a landlord (only landlords should verify documents)
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(403).json({ message: "Only landlords can verify documents" });
+      }
+      
+      const document = await storage.verifyTenantDocument(documentId, landlordProfile.id);
       res.json(document);
     } catch (error) {
       console.error("Error verifying document:", error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to verify document" });
     }
   });
@@ -581,10 +899,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenant/references/:tenantId", requireAuth, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
+      
+      // Verify ownership - only allow access to own references
+      await assertTenantOwnership(req, tenantId);
+      
       const references = await storage.getTenantReferences(tenantId);
       res.json(references);
     } catch (error) {
       console.error("Error fetching tenant references:", error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to fetch tenant references" });
     }
   });
@@ -592,6 +919,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tenant/references/detail/:id", requireAuth, async (req, res) => {
     try {
       const referenceId = parseInt(req.params.id);
+      
+      // Verify ownership - only allow access to own references
+      await assertReferenceOwnership(req, referenceId);
+      
       const reference = await storage.getTenantReferenceById(referenceId);
       
       if (!reference) {
@@ -601,13 +932,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(reference);
     } catch (error) {
       console.error("Error fetching tenant reference:", error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to fetch tenant reference" });
     }
   });
 
   app.post("/api/tenant/references", requireAuth, async (req, res) => {
     try {
-      const reference = await storage.createTenantReference(req.body);
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Get the authenticated user's tenant profile
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(400).json({ message: "Tenant profile not found" });
+      }
+      
+      // Bind the reference to the authenticated user's tenant profile
+      const referenceData = { ...req.body, tenantId: tenantProfile.id };
+      const reference = await storage.createTenantReference(referenceData);
       res.status(201).json(reference);
     } catch (error) {
       console.error("Error creating tenant reference:", error);
@@ -618,10 +966,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/tenant/references/:id", requireAuth, async (req, res) => {
     try {
       const referenceId = parseInt(req.params.id);
+      
+      // Verify ownership before updating
+      await assertReferenceOwnership(req, referenceId);
+      
       const reference = await storage.updateTenantReference(referenceId, req.body);
       res.json(reference);
     } catch (error) {
       console.error("Error updating tenant reference:", error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to update tenant reference" });
     }
   });
@@ -629,10 +986,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/tenant/references/:id", requireAuth, async (req, res) => {
     try {
       const referenceId = parseInt(req.params.id);
+      
+      // Verify ownership before deleting
+      await assertReferenceOwnership(req, referenceId);
+      
       await storage.deleteTenantReference(referenceId);
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting tenant reference:", error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to delete tenant reference" });
     }
   });
@@ -640,6 +1006,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/tenant/references/:id/send-verification", requireAuth, async (req, res) => {
     try {
       const referenceId = parseInt(req.params.id);
+      
+      // Verify ownership before sending verification
+      await assertReferenceOwnership(req, referenceId);
+      
       const reference = await storage.getTenantReferenceById(referenceId);
       
       if (!reference) {

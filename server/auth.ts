@@ -9,10 +9,19 @@ import { User as SelectUser, insertUserSchema } from "@shared/schema";
 import session from "express-session";
 import MemoryStore from "memorystore";
 
+// Safe user mapper to exclude sensitive fields from API responses
+export function createSafeUserResponse(user: SelectUser): Omit<SelectUser, 'password'> {
+  const { password, ...safeUser } = user;
+  return safeUser;
+}
+
+// Type for sanitized user without password
+export type SafeUser = Omit<SelectUser, 'password'>;
+
 // Fix the type error by declaring the User interface
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SafeUser {}
   }
 }
 
@@ -69,7 +78,11 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user);
+      if (user) {
+        done(null, createSafeUserResponse(user));
+      } else {
+        done(null, false);
+      }
     } catch (err) {
       done(err);
     }
@@ -107,15 +120,34 @@ export function setupAuth(app: Express) {
         password: hashedPassword,
       });
 
+      // Create the appropriate profile based on user type
+      if (validatedData.userType === 'tenant') {
+        await storage.createTenantProfile({
+          userId: user.id,
+          moveInDate: null,
+          maxRent: null,
+          employmentInfo: null,
+          creditScore: null,
+          rentalHistory: null,
+        });
+      } else if (validatedData.userType === 'landlord') {
+        await storage.createLandlordProfile({
+          userId: user.id,
+          companyName: null,
+          screeningCriteria: null,
+        });
+      }
+
       // Generate JWT token
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
       
-      // Log the user in (create session)
-      req.login(user, (err) => {
+      // Log the user in (create session) with sanitized user
+      const safeUser = createSafeUserResponse(user);
+      req.login(safeUser, (err) => {
         if (err) {
           return res.status(500).json({ message: "Error logging in after registration" });
         }
-        res.status(201).json({ user, token });
+        res.status(201).json({ user: safeUser, token });
       });
     } catch (err) {
       console.error('Registration error:', err);
@@ -136,12 +168,13 @@ export function setupAuth(app: Express) {
       // Generate JWT token
       const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "24h" });
 
-      // Log the user in (create session)
-      req.login(user, (err) => {
+      // Log the user in (create session) with sanitized user
+      const safeUser = createSafeUserResponse(user);
+      req.login(safeUser, (err) => {
         if (err) {
           return res.status(500).json({ message: "Error creating session" });
         }
-        res.json({ user, token });
+        res.json({ user: safeUser, token });
       });
     })(req, res, next);
   });
@@ -158,7 +191,7 @@ export function setupAuth(app: Express) {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      res.json(user);
+      res.json(createSafeUserResponse(user));
     } catch (err) {
       console.error('Get user error:', err);
       res.status(500).json({ message: "Server error" });
@@ -186,7 +219,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
-    req.user = user;
+    req.user = createSafeUserResponse(user);
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });
