@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
+import { setupAuth, requireAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPropertySchema, insertApplicationSchema } from "@shared/schema";
 import { properties, applications, propertyImages, propertyAmenities } from "@shared/schema";
@@ -12,13 +12,7 @@ import { sendReferenceVerificationEmail, verifyToken } from "./email";
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
-  // Protected route middleware
-  const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    next();
-  };
+  // Note: requireAuth middleware imported from auth.ts handles both session and JWT authentication
 
   // Profile routes
   app.get("/api/profile/tenant/:userId", requireAuth, async (req, res) => {
