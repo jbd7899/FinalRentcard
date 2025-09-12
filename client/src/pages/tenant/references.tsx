@@ -351,10 +351,8 @@ const ReferencesPage = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </Tabs>
-          </div>
-          
-          <TabsContent value="all" className="mt-0">
+              
+              <TabsContent value="all" className="mt-0">
             {Object.keys(referencesByType).length === 0 ? (
               <div className="text-center py-12">
                 <UserCheck className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -472,6 +470,8 @@ const ReferencesPage = () => {
               </div>
             )}
           </TabsContent>
+            </Tabs>
+          </div>
         </div>
         
         {tenantProfileId && (
