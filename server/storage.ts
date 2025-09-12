@@ -310,6 +310,7 @@ export class DatabaseStorage implements IStorage {
     // First, get the property ID for this image
     const [image] = await db.select().from(propertyImages).where(eq(propertyImages.id, id));
     if (!image) throw new Error("Image not found");
+    if (!image.propertyId) throw new Error("Image has no associated property");
 
     // Reset all images for this property to not primary
     await db
