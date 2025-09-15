@@ -1,18 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Share2, Copy, Loader2, CheckCircle, Smartphone } from 'lucide-react';
+import { Share2, Copy, Loader2, CheckCircle, Smartphone, Users, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useUIStore } from '@/stores/uiStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { ShareToken, InsertShareToken } from '@shared/schema';
 import { createRentcardShortlinkRequest, generateShortlinkUrl, determineChannel } from '@shared/url-helpers';
 import type { ChannelType, ShortlinkResponse } from '@shared/url-helpers';
+import { EnhancedShareDialog } from '../sharing/EnhancedShareDialog';
 
 interface OneClickShareButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'sm' | 'default' | 'lg';
   className?: string;
   showText?: boolean;
+  mode?: 'simple' | 'enhanced' | 'dropdown';
+  showEnhancedOption?: boolean;
 }
 
 // Platform detection utilities
@@ -34,9 +44,12 @@ export function OneClickShareButton({
   variant = 'default', 
   size = 'default', 
   className = '', 
-  showText = true 
+  showText = true,
+  mode = 'simple',
+  showEnhancedOption = true,
 }: OneClickShareButtonProps) {
   const { addToast } = useUIStore();
+  const [showEnhancedDialog, setShowEnhancedDialog] = useState(false);
   const queryClient = useQueryClient();
   const platform = detectPlatform();
   const hasWebShare = supportsWebShare();
@@ -238,18 +251,105 @@ export function OneClickShareButton({
     return 'Share RentCard';
   };
 
+  // Handle enhanced sharing
+  const handleEnhancedShare = () => {
+    setShowEnhancedDialog(true);
+  };
+
+  // Render based on mode
+  if (mode === 'enhanced') {
+    return (
+      <>
+        <Button
+          variant={variant}
+          size={size}
+          className={`${className} transition-all duration-200`}
+          onClick={handleEnhancedShare}
+          disabled={isLoading}
+          data-testid="button-enhanced-share"
+        >
+          <Users className="w-4 h-4" />
+          {showText && <span className="ml-2">Share with Contact</span>}
+        </Button>
+        
+        <EnhancedShareDialog
+          open={showEnhancedDialog}
+          onClose={() => setShowEnhancedDialog(false)}
+        />
+      </>
+    );
+  }
+
+  if (mode === 'dropdown' && showEnhancedOption) {
+    return (
+      <>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant={variant}
+              size={size}
+              className={`${className} transition-all duration-200`}
+              disabled={isLoading}
+              data-testid="button-share-dropdown"
+            >
+              {getIcon()}
+              {getText() && <span className="ml-2">{getText()}</span>}
+              <ChevronDown className="w-3 h-3 ml-1 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={handleOneClickShare}
+              disabled={isLoading}
+              data-testid="option-quick-share"
+            >
+              {getIcon()}
+              <span className="ml-2">
+                {platform === 'mobile' && hasWebShare ? 'Quick Share' : 'Copy Link'}
+              </span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleEnhancedShare}
+              disabled={isLoading}
+              data-testid="option-enhanced-share"
+            >
+              <Users className="w-4 h-4" />
+              <span className="ml-2">Share with Contact</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <EnhancedShareDialog
+          open={showEnhancedDialog}
+          onClose={() => setShowEnhancedDialog(false)}
+        />
+      </>
+    );
+  }
+
+  // Default simple mode
   return (
-    <Button
-      variant={variant}
-      size={size}
-      className={`${className} transition-all duration-200`}
-      onClick={handleOneClickShare}
-      disabled={isLoading}
-      data-testid="button-one-click-share"
-    >
-      {getIcon()}
-      {getText() && <span className="ml-2">{getText()}</span>}
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        size={size}
+        className={`${className} transition-all duration-200`}
+        onClick={handleOneClickShare}
+        disabled={isLoading}
+        data-testid="button-one-click-share"
+      >
+        {getIcon()}
+        {getText() && <span className="ml-2">{getText()}</span>}
+      </Button>
+
+      {showEnhancedOption && (
+        <EnhancedShareDialog
+          open={showEnhancedDialog}
+          onClose={() => setShowEnhancedDialog(false)}
+        />
+      )}
+    </>
   );
 }
 

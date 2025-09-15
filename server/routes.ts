@@ -5,11 +5,12 @@ import { storage } from "./storage";
 import { 
   insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema, insertPropertyQRCodeSchema,
   insertTenantContactPreferencesSchema, insertCommunicationLogSchema, insertTenantBlockedContactsSchema, insertCommunicationTemplateSchema,
-  insertShortlinkSchema, insertShortlinkClickSchema 
+  insertShortlinkSchema, insertShortlinkClickSchema, insertRecipientContactSchema, insertTenantMessageTemplateSchema, insertContactSharingHistorySchema
 } from "@shared/schema";
 import { 
   properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode,
-  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick 
+  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick,
+  RecipientContact, TenantMessageTemplate, ContactSharingHistory
 } from "@shared/schema";
 import {
   insertRentcardViewSchema, insertViewSessionSchema, insertInterestAnalyticsSchema,
@@ -2174,6 +2175,355 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending verification email:", error);
       res.status(500).json({ message: "Failed to send verification email" });
+    }
+  });
+
+  // ========================
+  // RECIPIENT MANAGEMENT API ENDPOINTS
+  // ========================
+
+  // Recipient Contacts CRUD Operations
+  app.get("/api/tenant/contacts", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const { category, isFavorite } = req.query;
+      const options = {
+        category: category as string,
+        isFavorite: isFavorite === 'true' ? true : isFavorite === 'false' ? false : undefined
+      };
+
+      const contacts = await storage.getRecipientContacts(tenantProfile.id, options);
+      res.json(contacts);
+    } catch (error) {
+      handleRouteError(error, res, 'get recipient contacts');
+    }
+  });
+
+  app.get("/api/tenant/contacts/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const contactId = parseInt(req.params.id);
+      const contact = await storage.getRecipientContactById(contactId);
+      
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+
+      // Verify ownership
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(contact);
+    } catch (error) {
+      handleRouteError(error, res, 'get recipient contact');
+    }
+  });
+
+  app.post("/api/tenant/contacts", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertRecipientContactSchema.parse(req.body);
+
+      const contact = await storage.createRecipientContact({
+        ...validatedData,
+        tenantId: tenantProfile.id
+      });
+
+      res.status(201).json(contact);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: (error as any).errors 
+        });
+      }
+      handleRouteError(error, res, 'create recipient contact');
+    }
+  });
+
+  app.put("/api/tenant/contacts/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const contactId = parseInt(req.params.id);
+      const contact = await storage.getRecipientContactById(contactId);
+      
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+
+      // Verify ownership
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedContact = await storage.updateRecipientContact(contactId, req.body);
+      res.json(updatedContact);
+    } catch (error) {
+      handleRouteError(error, res, 'update recipient contact');
+    }
+  });
+
+  app.delete("/api/tenant/contacts/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const contactId = parseInt(req.params.id);
+      const contact = await storage.getRecipientContactById(contactId);
+      
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+
+      // Verify ownership
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteRecipientContact(contactId);
+      res.status(204).send();
+    } catch (error) {
+      handleRouteError(error, res, 'delete recipient contact');
+    }
+  });
+
+  // Tenant Message Templates CRUD Operations
+  app.get("/api/tenant/message-templates", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const { category } = req.query;
+      const templates = await storage.getTenantMessageTemplates(tenantProfile.id, category as string);
+      res.json(templates);
+    } catch (error) {
+      handleRouteError(error, res, 'get tenant message templates');
+    }
+  });
+
+  app.get("/api/tenant/message-templates/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const templateId = parseInt(req.params.id);
+      const template = await storage.getTenantMessageTemplateById(templateId);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Verify ownership
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile || template.tenantId !== tenantProfile.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(template);
+    } catch (error) {
+      handleRouteError(error, res, 'get tenant message template');
+    }
+  });
+
+  app.post("/api/tenant/message-templates", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertTenantMessageTemplateSchema.parse(req.body);
+
+      const template = await storage.createTenantMessageTemplate({
+        ...validatedData,
+        tenantId: tenantProfile.id
+      });
+
+      res.status(201).json(template);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: (error as any).errors 
+        });
+      }
+      handleRouteError(error, res, 'create tenant message template');
+    }
+  });
+
+  app.put("/api/tenant/message-templates/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const templateId = parseInt(req.params.id);
+      const template = await storage.getTenantMessageTemplateById(templateId);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Verify ownership
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile || template.tenantId !== tenantProfile.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedTemplate = await storage.updateTenantMessageTemplate(templateId, req.body);
+      res.json(updatedTemplate);
+    } catch (error) {
+      handleRouteError(error, res, 'update tenant message template');
+    }
+  });
+
+  app.delete("/api/tenant/message-templates/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const templateId = parseInt(req.params.id);
+      const template = await storage.getTenantMessageTemplateById(templateId);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Verify ownership
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile || template.tenantId !== tenantProfile.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteTenantMessageTemplate(templateId);
+      res.status(204).send();
+    } catch (error) {
+      handleRouteError(error, res, 'delete tenant message template');
+    }
+  });
+
+  // Contact Sharing History Operations
+  app.get("/api/tenant/sharing-history", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const { contactId } = req.query;
+      const history = await storage.getContactSharingHistory(
+        tenantProfile.id, 
+        contactId ? parseInt(contactId as string) : undefined
+      );
+      
+      res.json(history);
+    } catch (error) {
+      handleRouteError(error, res, 'get contact sharing history');
+    }
+  });
+
+  app.post("/api/tenant/sharing-history", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertContactSharingHistorySchema.parse(req.body);
+
+      const history = await storage.createContactSharingHistory({
+        ...validatedData,
+        tenantId: tenantProfile.id
+      });
+
+      res.status(201).json(history);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: (error as any).errors 
+        });
+      }
+      handleRouteError(error, res, 'create contact sharing history');
+    }
+  });
+
+  app.post("/api/tenant/sharing-history/:id/mark-response", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const historyId = parseInt(req.params.id);
+      const { notes } = req.body;
+
+      // Verify ownership by checking if the sharing history belongs to the tenant
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const allHistory = await storage.getContactSharingHistory(tenantProfile.id);
+      const historyItem = allHistory.find(h => h.id === historyId);
+      
+      if (!historyItem) {
+        return res.status(404).json({ message: "Sharing history not found" });
+      }
+
+      const updatedHistory = await storage.markSharingResponseReceived(historyId, notes);
+      res.json(updatedHistory);
+    } catch (error) {
+      handleRouteError(error, res, 'mark sharing response received');
     }
   });
 

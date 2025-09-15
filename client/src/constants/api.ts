@@ -102,6 +102,32 @@ export const API_ENDPOINTS = {
       SUBMIT: (token: string) => `/api/tenant/references/verify/${token}`,
     },
   },
+
+  // Recipient Management endpoints
+  TENANT_CONTACTS: {
+    BASE: '/api/tenant/contacts',
+    LIST: '/api/tenant/contacts',
+    CREATE: '/api/tenant/contacts',
+    BY_ID: (id: string | number) => `/api/tenant/contacts/${id}`,
+    UPDATE: (id: string | number) => `/api/tenant/contacts/${id}`,
+    DELETE: (id: string | number) => `/api/tenant/contacts/${id}`,
+  },
+
+  TENANT_MESSAGE_TEMPLATES: {
+    BASE: '/api/tenant/message-templates',
+    LIST: '/api/tenant/message-templates',
+    CREATE: '/api/tenant/message-templates',
+    BY_ID: (id: string | number) => `/api/tenant/message-templates/${id}`,
+    UPDATE: (id: string | number) => `/api/tenant/message-templates/${id}`,
+    DELETE: (id: string | number) => `/api/tenant/message-templates/${id}`,
+  },
+
+  TENANT_SHARING_HISTORY: {
+    BASE: '/api/tenant/sharing-history',
+    LIST: '/api/tenant/sharing-history',
+    CREATE: '/api/tenant/sharing-history',
+    MARK_RESPONSE: (id: string | number) => `/api/tenant/sharing-history/${id}/mark-response`,
+  },
 } as const;
 
 // HTTP Methods
