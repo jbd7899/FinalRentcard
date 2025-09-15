@@ -5,6 +5,8 @@ import { useUIStore } from '@/stores/uiStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { ShareToken, InsertShareToken } from '@shared/schema';
+import { createRentcardShortlinkRequest, generateShortlinkUrl, determineChannel } from '@shared/url-helpers';
+import type { ChannelType, ShortlinkResponse } from '@shared/url-helpers';
 
 interface OneClickShareButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
@@ -73,6 +75,20 @@ export function OneClickShareButton({
     return `${window.location.origin}/rentcard/shared/${token}`;
   };
 
+  // Create shortlink mutation
+  const createShortlinkMutation = useMutation<ShortlinkResponse, Error, any>({
+    mutationFn: async (shortlinkData) => {
+      const response = await apiRequest('POST', '/api/shortlinks', shortlinkData);
+      if (!response.ok) {
+        throw new Error('Failed to create shortlink');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/shortlinks'] });
+    },
+  });
+
   const copyToClipboard = async (text: string): Promise<boolean> => {
     try {
       if (navigator.clipboard?.writeText) {
@@ -118,12 +134,12 @@ export function OneClickShareButton({
       let activeToken = getActiveToken();
       let shareUrl: string;
 
+      // Set default expiry to 30 days from now
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
       // Create token if none exists or all are expired/revoked
       if (!activeToken && !createTokenMutation.isPending) {
-        // Set default expiry to 30 days
-        const thirtyDaysFromNow = new Date();
-        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-        
         const newToken = await createTokenMutation.mutateAsync({
           scope: 'rentcard',
           expiresAt: thirtyDaysFromNow,
@@ -136,11 +152,37 @@ export function OneClickShareButton({
         throw new Error('Unable to create share token');
       }
 
-      shareUrl = generateShareUrl(activeToken.token);
+      // Determine the channel based on platform and share method
+      let channel: ChannelType;
+      let willUseNativeShare = false;
 
       // Platform-specific behavior
-      if (platform === 'mobile') {
-        // Try native share first, fallback to copy
+      if (platform === 'mobile' && hasWebShare) {
+        channel = determineChannel({ platform: 'mobile', method: 'native_share' });
+        willUseNativeShare = true;
+      } else {
+        channel = determineChannel({ platform: 'desktop', method: 'clipboard' });
+      }
+
+      // Use the existing token's expiration or the default for new tokens
+      const expirationDate = activeToken.expiresAt ? new Date(activeToken.expiresAt) : thirtyDaysFromNow;
+
+      // Create shortlink with proper channel attribution
+      const shortlinkRequest = createRentcardShortlinkRequest(
+        activeToken.token,
+        channel,
+        {
+          shareTokenId: activeToken.id,
+          tenantName: undefined, // Could be enhanced with tenant name
+          expiresAt: expirationDate,
+        }
+      );
+
+      const shortlink = await createShortlinkMutation.mutateAsync(shortlinkRequest);
+      shareUrl = generateShortlinkUrl(shortlink.slug, channel);
+
+      if (willUseNativeShare) {
+        // Try native share first
         const shareSuccess = await nativeShare(shareUrl, 'My RentCard Profile');
         if (shareSuccess) {
           addToast({
@@ -150,6 +192,7 @@ export function OneClickShareButton({
           });
           return;
         }
+        // If native share fails, fallback to copy
       }
 
       // Desktop and fallback: Copy to clipboard
@@ -175,7 +218,7 @@ export function OneClickShareButton({
     }
   };
 
-  const isLoading = tokensLoading || createTokenMutation.isPending;
+  const isLoading = tokensLoading || createTokenMutation.isPending || createShortlinkMutation.isPending;
   const hasActiveToken = !!getActiveToken();
 
   // Dynamic icon based on platform and state

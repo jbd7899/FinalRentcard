@@ -63,6 +63,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { ShareToken, InsertShareToken } from '@shared/schema';
 import { format, formatDistanceToNow } from 'date-fns';
+import { createRentcardShortlinkRequest, generateShortlinkUrl, determineChannel } from '@shared/url-helpers';
+import type { ChannelType, ShortlinkResponse } from '@shared/url-helpers';
 
 interface EnhancedShareModalProps {
   open: boolean;
@@ -93,6 +95,7 @@ export function EnhancedShareModal({
   const [activeTab, setActiveTab] = useState('share');
   const [revokeTokenId, setRevokeTokenId] = useState<number | null>(null);
   const [newShareToken, setNewShareToken] = useState<ShareToken | null>(null);
+  const [activeShortlinks, setActiveShortlinks] = useState<{[key: string]: ShortlinkResponse}>({});
 
   // Form for share token settings
   const form = useForm<ShareTokenSettings>({
@@ -107,6 +110,20 @@ export function EnhancedShareModal({
   const { data: shareTokens, isLoading: tokensLoading, refetch: refetchTokens } = useQuery<ShareToken[]>({
     queryKey: ['/api/share-tokens'],
     enabled: open,
+  });
+
+  // Create shortlink mutation
+  const createShortlinkMutation = useMutation<ShortlinkResponse, Error, any>({
+    mutationFn: async (shortlinkData) => {
+      const response = await apiRequest('POST', '/api/shortlinks', shortlinkData);
+      if (!response.ok) {
+        throw new Error('Failed to create shortlink');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/shortlinks'] });
+    },
   });
 
   // Create share token mutation
@@ -198,35 +215,92 @@ export function EnhancedShareModal({
     return `${window.location.origin}/rentcard/shared/${token}`;
   };
 
-  const copyToClipboard = async (text: string) => {
+  // Create shortlink with specific channel attribution
+  const createShortlinkWithChannel = async (channel: ChannelType): Promise<string> => {
+    if (!activeToken) {
+      throw new Error('No active share token available');
+    }
+
+    // Check if we already have a shortlink for this channel
+    const existingKey = `${activeToken.token}-${channel}`;
+    if (activeShortlinks[existingKey]) {
+      return generateShortlinkUrl(activeShortlinks[existingKey].slug, channel);
+    }
+
+    // Create new shortlink
+    const shortlinkRequest = createRentcardShortlinkRequest(
+      activeToken.token,
+      channel,
+      {
+        shareTokenId: activeToken.id,
+        tenantName: undefined, // Could be enhanced with tenant name
+        expiresAt: activeToken.expiresAt ? new Date(activeToken.expiresAt) : undefined,
+      }
+    );
+
+    const shortlink = await createShortlinkMutation.mutateAsync(shortlinkRequest);
+    
+    // Cache the shortlink
+    setActiveShortlinks(prev => ({
+      ...prev,
+      [existingKey]: shortlink
+    }));
+
+    return generateShortlinkUrl(shortlink.slug, channel);
+  };
+
+  const copyToClipboard = async (token?: ShareToken) => {
     try {
-      await navigator.clipboard.writeText(text);
+      const shareUrl = await createShortlinkWithChannel('copy');
+      await navigator.clipboard.writeText(shareUrl);
       addToast({
         title: 'Copied to Clipboard',
         description: 'Share link copied successfully.',
         type: 'success'
       });
     } catch (error) {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      
-      addToast({
-        title: 'Copied to Clipboard',
-        description: 'Share link copied successfully.',
-        type: 'success'
-      });
+      console.error('Failed to copy shortlink:', error);
+      // Fallback to direct share URL
+      const fallbackUrl = token ? generateShareUrl(token.token) : (activeToken ? generateShareUrl(activeToken.token) : '');
+      if (fallbackUrl) {
+        try {
+          await navigator.clipboard.writeText(fallbackUrl);
+          addToast({
+            title: 'Copied to Clipboard',
+            description: 'Share link copied successfully.',
+            type: 'success'
+          });
+        } catch (fallbackError) {
+          // Final fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = fallbackUrl;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          addToast({
+            title: 'Copied to Clipboard',
+            description: 'Share link copied successfully.',
+            type: 'success'
+          });
+        }
+      } else {
+        addToast({
+          title: 'Copy Failed',
+          description: 'Unable to copy share link',
+          type: 'destructive'
+        });
+      }
     }
   };
 
-  const shareViaEmail = (shareUrl: string) => {
-    const subject = encodeURIComponent('My RentCard Profile - Rental Application');
-    const body = encodeURIComponent(
-      `Hi there,
+  const shareViaEmail = async () => {
+    try {
+      const shareUrl = await createShortlinkWithChannel('email');
+      const subject = encodeURIComponent('My RentCard Profile - Rental Application');
+      const body = encodeURIComponent(
+        `Hi there,
 
 I'd like to share my rental application profile with you. Please take a look at my RentCard:
 
@@ -235,17 +309,35 @@ ${shareUrl}
 This secure link contains my verified rental history, references, and all the information you need for my application.
 
 Best regards`
-    );
-    const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
-    window.location.href = mailtoUrl;
+      );
+      const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+      window.location.href = mailtoUrl;
+    } catch (error) {
+      console.error('Failed to create email shortlink:', error);
+      addToast({
+        title: 'Email Share Failed',
+        description: 'Unable to prepare email share link',
+        type: 'destructive'
+      });
+    }
   };
 
-  const shareViaSMS = (shareUrl: string) => {
-    const message = encodeURIComponent(
-      `Here's my RentCard for your rental application review: ${shareUrl}`
-    );
-    const smsUrl = `sms:?body=${message}`;
-    window.location.href = smsUrl;
+  const shareViaSMS = async () => {
+    try {
+      const shareUrl = await createShortlinkWithChannel('sms');
+      const message = encodeURIComponent(
+        `Here's my RentCard for your rental application review: ${shareUrl}`
+      );
+      const smsUrl = `sms:?body=${message}`;
+      window.location.href = smsUrl;
+    } catch (error) {
+      console.error('Failed to create SMS shortlink:', error);
+      addToast({
+        title: 'SMS Share Failed',
+        description: 'Unable to prepare SMS share link',
+        type: 'destructive'
+      });
+    }
   };
 
   const handleRevokeToken = (tokenId: number) => {
@@ -320,12 +412,13 @@ Best regards`
                         data-testid="input-share-url"
                       />
                       <Button
-                        onClick={() => copyToClipboard(generateShareUrl(activeToken.token))}
+                        onClick={() => copyToClipboard(activeToken)}
                         variant="outline"
                         size="sm"
                         data-testid="button-copy-link"
+                        disabled={createShortlinkMutation.isPending}
                       >
-                        <Copy className="w-4 h-4" />
+                        {createShortlinkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>
@@ -333,32 +426,35 @@ Best regards`
                   {/* Share Options */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Button
-                      onClick={() => copyToClipboard(generateShareUrl(activeToken.token))}
+                      onClick={() => copyToClipboard(activeToken)}
                       variant="outline"
                       className="justify-start"
                       data-testid="button-copy-link-large"
+                      disabled={createShortlinkMutation.isPending}
                     >
-                      <Copy className="w-4 h-4 mr-2" />
+                      {createShortlinkMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
                       Copy Link
                     </Button>
                     
                     <Button
-                      onClick={() => shareViaEmail(generateShareUrl(activeToken.token))}
+                      onClick={() => shareViaEmail()}
                       variant="outline"
                       className="justify-start"
                       data-testid="button-share-email"
+                      disabled={createShortlinkMutation.isPending}
                     >
-                      <Mail className="w-4 h-4 mr-2" />
+                      {createShortlinkMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
                       Share via Email
                     </Button>
                     
                     <Button
-                      onClick={() => shareViaSMS(generateShareUrl(activeToken.token))}
+                      onClick={() => shareViaSMS()}
                       variant="outline"
                       className="justify-start"
                       data-testid="button-share-sms"
+                      disabled={createShortlinkMutation.isPending}
                     >
-                      <Phone className="w-4 h-4 mr-2" />
+                      {createShortlinkMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Phone className="w-4 h-4 mr-2" />}
                       Share via SMS
                     </Button>
                     

@@ -4,11 +4,12 @@ import { setupAuth, requireAuth } from "./auth";
 import { storage } from "./storage";
 import { 
   insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema, insertPropertyQRCodeSchema,
-  insertTenantContactPreferencesSchema, insertCommunicationLogSchema, insertTenantBlockedContactsSchema, insertCommunicationTemplateSchema 
+  insertTenantContactPreferencesSchema, insertCommunicationLogSchema, insertTenantBlockedContactsSchema, insertCommunicationTemplateSchema,
+  insertShortlinkSchema, insertShortlinkClickSchema 
 } from "@shared/schema";
 import { 
   properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode,
-  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate 
+  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick 
 } from "@shared/schema";
 import {
   insertRentcardViewSchema, insertViewSessionSchema, insertInterestAnalyticsSchema,
@@ -204,10 +205,243 @@ function generateSessionFingerprint(req: any): string {
   return Buffer.from(fingerprint).toString('base64').substring(0, 32);
 }
 
+// Slug generation helper function
+function generateShortSlug(length: number = 6): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Note: requireAuth middleware imported from auth.ts handles both session and JWT authentication
+
+  // Shortlink routes - added early for redirect performance
+  
+  // Shortlink redirect route - handle /r/:slug redirects
+  app.get("/r/:slug", async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const shortlink = await storage.getShortlinkBySlug(slug);
+      
+      if (!shortlink) {
+        return res.status(404).json({ message: "Shortlink not found" });
+      }
+      
+      // Check if expired
+      if (shortlink.expiresAt && new Date() > new Date(shortlink.expiresAt)) {
+        return res.status(410).json({ message: "Shortlink expired" });
+      }
+      
+      // SECURITY: Validate targetUrl to prevent open redirect (defense in depth)
+      try {
+        const urlObj = new URL(shortlink.targetUrl);
+        const allowedPaths = [
+          '/rentcard/shared/',
+          '/property/',
+          '/screening/',
+          '/tenant/',
+          '/landlord/',
+          '/'
+        ];
+        const isValidProtocol = urlObj.protocol === 'https:' || urlObj.protocol === 'http:';
+        const isValidHostname = urlObj.hostname === 'localhost' || 
+                               urlObj.hostname.includes('replit') || 
+                               urlObj.hostname.includes('myrentcard') ||
+                               urlObj.hostname === '127.0.0.1' ||
+                               urlObj.hostname === '0.0.0.0';
+        const isValidPath = allowedPaths.some(path => urlObj.pathname.startsWith(path));
+        
+        if (!isValidProtocol || !isValidHostname || !isValidPath) {
+          console.error('Security violation: Invalid redirect URL attempted', {
+            shortlinkId: shortlink.id,
+            targetUrl: shortlink.targetUrl,
+            requestIP: req.ip
+          });
+          return res.status(403).json({ message: "Invalid redirect URL - security policy violation" });
+        }
+      } catch (urlError) {
+        console.error('Invalid URL format in shortlink', { shortlinkId: shortlink.id, targetUrl: shortlink.targetUrl });
+        return res.status(400).json({ message: "Invalid URL format" });
+      }
+      
+      // Extract request metadata for analytics
+      const metadata = extractRequestMetadata(req);
+      
+      // Determine channel from query parameters or headers
+      let channel = req.query.ch as string || 'direct';
+      const validChannels = ['copy', 'mobile_share', 'email', 'sms', 'qr', 'pdf', 'direct', 'unknown'];
+      if (!validChannels.includes(channel)) {
+        channel = 'direct';
+      }
+      
+      // Record click analytics asynchronously (don't block redirect)
+      Promise.all([
+        storage.incrementShortlinkClick(slug),
+        storage.recordShortlinkClick({
+          shortlinkId: shortlink.id,
+          channel: channel as any,
+          ipAddress: metadata.ipAddress,
+          userAgent: metadata.userAgent,
+          referrer: metadata.referrer,
+          deviceInfo: metadata.deviceInfo,
+          locationInfo: undefined, // Could be enhanced with GeoIP
+          sessionId: generateSessionFingerprint(req),
+          userId: (req as any).user?.id || null,
+        })
+      ]).catch(error => {
+        console.error('Failed to record shortlink click:', error);
+      });
+      
+      // Perform redirect
+      res.redirect(302, shortlink.targetUrl);
+    } catch (error) {
+      handleRouteError(error, res, 'shortlink redirect');
+    }
+  });
+
+  // Create shortlink endpoint
+  app.post("/api/shortlinks", requireAuth, async (req, res) => {
+    try {
+      const validationResult = insertShortlinkSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid shortlink data",
+          errors: validationResult.error.issues 
+        });
+      }
+
+      const data = validationResult.data;
+      
+      // SECURITY: Validate shareTokenId ownership if provided
+      if (data.shareTokenId) {
+        try {
+          await assertShareTokenOwnership(req, data.shareTokenId);
+        } catch (ownershipError) {
+          return res.status(403).json({ 
+            message: "Forbidden: Cannot create shortlink for share token you don't own" 
+          });
+        }
+      }
+      
+      // Generate unique slug
+      let slug: string;
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      do {
+        slug = generateShortSlug();
+        const existing = await storage.getShortlinkBySlug(slug);
+        if (!existing) break;
+        attempts++;
+      } while (attempts < maxAttempts);
+      
+      if (attempts >= maxAttempts) {
+        return res.status(500).json({ message: "Unable to generate unique slug" });
+      }
+
+      // Determine owner based on user type
+      let tenantId: number | undefined;
+      let landlordId: number | undefined;
+      
+      if (req.user?.userType === 'tenant') {
+        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        if (tenantProfile) {
+          tenantId = tenantProfile.id;
+        }
+      } else if (req.user?.userType === 'landlord') {
+        const landlordProfile = await storage.getLandlordProfile(req.user.id);
+        if (landlordProfile) {
+          landlordId = landlordProfile.id;
+        }
+      }
+
+      const shortlink = await storage.createShortlink({
+        ...data,
+        slug,
+        tenantId,
+        landlordId,
+        isActive: true,
+      });
+
+      res.json(shortlink);
+    } catch (error) {
+      handleRouteError(error, res, 'create shortlink');
+    }
+  });
+
+  // Get user's shortlinks
+  app.get("/api/shortlinks", requireAuth, async (req, res) => {
+    try {
+      let shortlinks: Shortlink[] = [];
+      
+      if (req.user?.userType === 'tenant') {
+        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        if (tenantProfile) {
+          shortlinks = await storage.getShortlinks(tenantProfile.id);
+        }
+      } else if (req.user?.userType === 'landlord') {
+        const landlordProfile = await storage.getLandlordProfile(req.user.id);
+        if (landlordProfile) {
+          shortlinks = await storage.getShortlinks(undefined, landlordProfile.id);
+        }
+      }
+
+      res.json(shortlinks);
+    } catch (error) {
+      handleRouteError(error, res, 'get shortlinks');
+    }
+  });
+
+  // Get shortlink analytics
+  app.get("/api/shortlinks/:id/analytics", requireAuth, async (req, res) => {
+    try {
+      const shortlinkId = parseInt(req.params.id);
+      if (isNaN(shortlinkId)) {
+        return res.status(400).json({ message: "Invalid shortlink ID" });
+      }
+
+      const timeframe = req.query.timeframe as string;
+      const clicks = await storage.getShortlinkAnalytics(shortlinkId, timeframe);
+      
+      // Calculate analytics summary
+      const totalClicks = clicks.length;
+      const uniqueClicks = new Set(clicks.map(c => c.sessionId)).size;
+      
+      const channelBreakdown = clicks.reduce((acc, click) => {
+        acc[click.channel] = (acc[click.channel] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const deviceBreakdown = clicks.reduce((acc, click) => {
+        const device = click.deviceInfo?.type || 'unknown';
+        acc[device] = (acc[device] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      res.json({
+        summary: {
+          totalClicks,
+          uniqueClicks,
+          topChannel: Object.entries(channelBreakdown).sort(([,a], [,b]) => b - a)[0]?.[0] || 'none',
+        },
+        clicks,
+        channelBreakdown,
+        deviceBreakdown,
+        timeline: clicks.map(click => ({
+          date: click.clickedAt,
+          channel: click.channel,
+          device: click.deviceInfo?.type
+        })).reverse()
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get shortlink analytics');
+    }
+  });
 
   // Profile routes
   app.get("/api/profile/tenant/:userId", requireAuth, async (req, res) => {
