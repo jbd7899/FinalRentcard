@@ -197,6 +197,36 @@ export function setupAuth(app: Express) {
       res.status(500).json({ message: "Server error" });
     }
   });
+
+  app.put("/api/user", requireAuth, async (req, res) => {
+    try {
+      const { email, phone } = req.body;
+      
+      // Basic validation
+      if (!email || !phone) {
+        return res.status(400).json({ message: "Email and phone are required" });
+      }
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+      
+      // Check if email is already taken by another user
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser && existingUser.id !== req.user!.id) {
+        return res.status(400).json({ message: "Email is already in use" });
+      }
+      
+      // Update user
+      const updatedUser = await storage.updateUser(req.user!.id, { email, phone });
+      res.json(createSafeUserResponse(updatedUser));
+    } catch (err) {
+      console.error('Update user error:', err);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
 }
 
 // Middleware to verify authentication using both session and JWT
