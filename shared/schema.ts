@@ -70,17 +70,26 @@ export const properties = pgTable("properties", {
   isArchived: boolean("is_archived").default(false),
 });
 
-// Add explicit relation between properties and applications
+// Add explicit relation between properties and interests
 export const propertyRelations = relations(properties, ({ many }) => ({
-  applications: many(applications)
+  interests: many(interests)
 }));
 
-export const applications = pgTable("applications", {
+export const interests = pgTable("interests", {
   id: serial("id").primaryKey(),
-  tenantId: integer("tenant_id").references(() => tenantProfiles.id),
-  propertyId: integer("property_id").references(() => properties.id),
-  status: text("status").notNull(), // 'pending', 'approved', 'rejected'
-  submittedAt: timestamp("submitted_at").defaultNow(),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id), // optional - for authenticated users
+  propertyId: integer("property_id").references(() => properties.id), // optional - null for general interests
+  landlordId: integer("landlord_id").references(() => landlordProfiles.id).notNull(), // required
+  contactInfo: json("contact_info").notNull().$type<{
+    name: string;
+    email: string;
+    phone: string;
+    preferredContact: 'email' | 'phone' | 'text';
+  }>(),
+  message: text("message"), // optional text from interested party
+  status: text("status").notNull().default('new'), // 'new', 'contacted', 'archived'
+  createdAt: timestamp("created_at").defaultNow(),
+  viewedAt: timestamp("viewed_at"), // when landlord first viewed
 });
 
 export const screeningPages = pgTable("screening_pages", {
@@ -142,9 +151,18 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true
 });
 
-export const insertApplicationSchema = createInsertSchema(applications).omit({
+export const insertInterestSchema = createInsertSchema(interests).omit({
   id: true,
-  submittedAt: true
+  createdAt: true,
+  viewedAt: true
+}).extend({
+  contactInfo: z.object({
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().min(10, "Phone number must be at least 10 digits"),
+    preferredContact: z.enum(['email', 'phone', 'text'])
+  }),
+  status: z.enum(['new', 'contacted', 'archived']).default('new')
 });
 
 export const insertScreeningPageSchema = createInsertSchema(screeningPages).omit({
@@ -188,11 +206,12 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type TenantProfile = typeof tenantProfiles.$inferSelect;
 export type LandlordProfile = typeof landlordProfiles.$inferSelect;
 export type Property = typeof properties.$inferSelect;
-export type Application = typeof applications.$inferSelect;
+export type Interest = typeof interests.$inferSelect;
 export type ScreeningPage = typeof screeningPages.$inferSelect;
 export type InsertScreeningPage = z.infer<typeof insertScreeningPageSchema>;
 export type RentCard = typeof rentCards.$inferSelect;
 export type InsertRentCard = z.infer<typeof insertRentCardSchema>;
+export type InsertInterest = z.infer<typeof insertInterestSchema>;
 
 export type StatsTimeframe = 'today' | '7days' | '30days';
 

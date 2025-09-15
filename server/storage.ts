@@ -1,5 +1,5 @@
-import { User, TenantProfile, LandlordProfile, Property, Application, RentCard } from "@shared/schema";
-import { users, tenantProfiles, landlordProfiles, properties, applications, rentCards } from "@shared/schema";
+import { User, TenantProfile, LandlordProfile, Property, Interest, RentCard } from "@shared/schema";
+import { users, tenantProfiles, landlordProfiles, properties, interests, rentCards } from "@shared/schema";
 import { db, sql } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -43,10 +43,11 @@ export interface IStorage {
   updateProperty(id: number, property: Partial<Property>): Promise<Property>;
   incrementPropertyViewCount(id: number): Promise<void>;
 
-  // Application operations
-  getApplications(tenantId?: number, propertyId?: number): Promise<Application[]>;
-  createApplication(application: Omit<Application, "id" | "submittedAt">): Promise<Application>;
-  updateApplicationStatus(id: number, status: string): Promise<Application>;
+  // Interest operations
+  getInterests(landlordId?: number, tenantId?: number, propertyId?: number): Promise<Interest[]>;
+  createInterest(interest: Omit<Interest, "id" | "createdAt" | "viewedAt">): Promise<Interest>;
+  updateInterestStatus(id: number, status: string): Promise<Interest>;
+  markInterestAsViewed(id: number): Promise<Interest>;
 
   // Rent card operations
   getRentCard(userId: number): Promise<RentCard | undefined>;
@@ -217,33 +218,43 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.id, id));
   }
 
-  async getApplications(tenantId?: number, propertyId?: number): Promise<Application[]> {
+  async getInterests(landlordId?: number, tenantId?: number, propertyId?: number): Promise<Interest[]> {
     let conditions = [];
-    if (tenantId) conditions.push(eq(applications.tenantId, tenantId));
-    if (propertyId) conditions.push(eq(applications.propertyId, propertyId));
+    if (landlordId) conditions.push(eq(interests.landlordId, landlordId));
+    if (tenantId) conditions.push(eq(interests.tenantId, tenantId));
+    if (propertyId) conditions.push(eq(interests.propertyId, propertyId));
 
     const query = conditions.length > 0
-      ? db.select().from(applications).where(and(...conditions))
-      : db.select().from(applications);
+      ? db.select().from(interests).where(and(...conditions))
+      : db.select().from(interests);
 
     return await query;
   }
 
-  async createApplication(application: Omit<Application, "id" | "submittedAt">): Promise<Application> {
-    const [newApplication] = await db
-      .insert(applications)
-      .values({ ...application, submittedAt: new Date() })
+  async createInterest(interest: Omit<Interest, "id" | "createdAt" | "viewedAt">): Promise<Interest> {
+    const [newInterest] = await db
+      .insert(interests)
+      .values(interest)
       .returning();
-    return newApplication;
+    return newInterest;
   }
 
-  async updateApplicationStatus(id: number, status: string): Promise<Application> {
-    const [updatedApplication] = await db
-      .update(applications)
+  async updateInterestStatus(id: number, status: string): Promise<Interest> {
+    const [updatedInterest] = await db
+      .update(interests)
       .set({ status })
-      .where(eq(applications.id, id))
+      .where(eq(interests.id, id))
       .returning();
-    return updatedApplication;
+    return updatedInterest;
+  }
+
+  async markInterestAsViewed(id: number): Promise<Interest> {
+    const [updatedInterest] = await db
+      .update(interests)
+      .set({ viewedAt: new Date() })
+      .where(eq(interests.id, id))
+      .returning();
+    return updatedInterest;
   }
 
   async getRentCard(userId: number): Promise<RentCard | undefined> {
@@ -579,11 +590,11 @@ export class DatabaseStorage implements IStorage {
       .from(properties)
       .where(eq(properties.id, propertyId));
     
-    // Get application count
-    const applicationCount = await db
+    // Get interest count (replaces application count)
+    const interestCount = await db
       .select({ count: sql`count(*)` })
-      .from(applications)
-      .where(eq(applications.propertyId, propertyId));
+      .from(interests)
+      .where(eq(interests.propertyId, propertyId));
     
     // Update or create analytics record
     const existingAnalytics = await db
@@ -596,7 +607,7 @@ export class DatabaseStorage implements IStorage {
         .update(propertyAnalytics)
         .set({
           viewCount: property?.viewCount || 0,
-          applicationCount: Number(applicationCount[0]?.count) || 0,
+          applicationCount: Number(interestCount[0]?.count) || 0,
           lastUpdated: new Date()
         })
         .where(eq(propertyAnalytics.propertyId, propertyId));
@@ -604,7 +615,7 @@ export class DatabaseStorage implements IStorage {
       await db.insert(propertyAnalytics).values({
         propertyId,
         viewCount: property?.viewCount || 0,
-        applicationCount: Number(applicationCount[0]?.count) || 0
+        applicationCount: Number(interestCount[0]?.count) || 0
       });
     }
   }
