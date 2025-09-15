@@ -3,18 +3,32 @@ import TenantLayout from "@/components/layouts/TenantLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, Clock, MessageCircle, Archive, Eye, Mail, Heart } from "lucide-react";
+import { Building2, Clock, MessageCircle, Archive, Eye, Mail, Heart, AlertCircle } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuthStore } from "@/stores/authStore";
+import { apiRequest } from "@/lib/queryClient";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface Interest {
+interface TenantInterest {
   id: number;
-  property: string;
-  landlord: string;
-  landlordEmail: string;
+  tenantId: number | null;
+  propertyId: number | null;
+  landlordId: number;
+  contactInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    preferredContact: 'email' | 'phone' | 'text';
+  };
+  message: string | null;
   status: 'new' | 'contacted' | 'archived';
-  submittedAt: string;
-  notes?: string;
+  createdAt: string;
+  viewedAt: string | null;
+  property: {
+    address: string;
+    rent: number;
+  } | null;
+  isGeneral: boolean;
 }
 
 const getStatusIcon = (status: string) => {
@@ -39,7 +53,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-function InterestCard({ interest }: { interest: Interest }) {
+function InterestCard({ interest }: { interest: TenantInterest }) {
   return (
     <Card data-testid={`card-interest-${interest.id}`}>
       <CardHeader className="pb-3">
@@ -47,8 +61,12 @@ function InterestCard({ interest }: { interest: Interest }) {
           <div className="flex items-center space-x-3">
             <Heart className="h-5 w-5 text-red-500" />
             <div>
-              <CardTitle className="text-lg">{interest.property}</CardTitle>
-              <CardDescription>Landlord: {interest.landlord}</CardDescription>
+              <CardTitle className="text-lg">
+                {interest.isGeneral ? 'General Interest' : (interest.property?.address || 'Property Interest')}
+              </CardTitle>
+              <CardDescription>
+                {interest.property && `$${interest.property.rent}/month`}
+              </CardDescription>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -61,14 +79,18 @@ function InterestCard({ interest }: { interest: Interest }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-sm text-gray-500">
-          Interest submitted: {new Date(interest.submittedAt).toLocaleDateString()}
+          Interest submitted: {new Date(interest.createdAt).toLocaleDateString()}
         </div>
         
-        {interest.notes && (
+        {interest.message && (
           <div className="text-sm text-gray-600">
-            <strong>Notes:</strong> {interest.notes}
+            <strong>Message:</strong> {interest.message}
           </div>
         )}
+        
+        <div className="text-sm text-gray-500">
+          Contact preference: <span className="capitalize">{interest.contactInfo.preferredContact}</span>
+        </div>
         
         <div className="flex space-x-2">
           <Button variant="outline" size="sm" data-testid={`button-contact-${interest.id}`}>
@@ -88,39 +110,82 @@ function InterestCard({ interest }: { interest: Interest }) {
 function TenantInterestsPage() {
   const { user } = useAuthStore();
 
-  // Mock data for now - in a real app this would fetch from the API
-  const interests: Interest[] = [
-    {
-      id: 1,
-      property: "123 Main Street Unit A",
-      landlord: "John Smith",
-      landlordEmail: "john.smith@email.com",
-      status: "new",
-      submittedAt: "2025-02-18T10:30:00",
-      notes: "Interested in this beautiful apartment with great location"
-    },
-    {
-      id: 2,
-      property: "456 Oak Avenue Unit 2B",
-      landlord: "Sarah Johnson",
-      landlordEmail: "sarah.johnson@email.com",
-      status: "contacted",
-      submittedAt: "2025-02-15T14:20:00"
-    },
-    {
-      id: 3,
-      property: "789 Pine Street Apartment 3",
-      landlord: "Mike Chen",
-      landlordEmail: "mike.chen@email.com",
-      status: "archived",
-      submittedAt: "2025-02-10T09:15:00",
-      notes: "Property no longer available"
-    }
-  ];
+  // Fetch tenant's interests using React Query
+  const { data: interests = [], isLoading, error } = useQuery({
+    queryKey: ['/api/interests'],
+    queryFn: () => apiRequest('GET', '/api/interests'),
+    enabled: !!user // Only fetch if user is authenticated
+  });
 
-  const newInterests = interests.filter(interest => interest.status === 'new');
-  const contactedInterests = interests.filter(interest => interest.status === 'contacted');
-  const archivedInterests = interests.filter(interest => interest.status === 'archived');
+  const newInterests = interests.filter((interest: TenantInterest) => interest.status === 'new');
+  const contactedInterests = interests.filter((interest: TenantInterest) => interest.status === 'contacted');
+  const archivedInterests = interests.filter((interest: TenantInterest) => interest.status === 'archived');
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <TenantLayout activeRoute={ROUTES.TENANT.INTERESTS}>
+        <div className="container mx-auto py-8 px-4">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold" data-testid="text-page-title">Your Interests</h1>
+              <p className="text-gray-500 mt-1">
+                View the properties you've expressed interest in and track landlord contact
+              </p>
+            </div>
+          </div>
+
+          {/* Loading Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center">
+                    <Skeleton className="h-8 w-8 mr-3" />
+                    <Skeleton className="h-8 w-12" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Loading Interests List */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <Skeleton className="h-6 w-48 mb-2" />
+            <Skeleton className="h-4 w-96 mb-6" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={i} className="h-48 w-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </TenantLayout>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <TenantLayout activeRoute={ROUTES.TENANT.INTERESTS}>
+        <div className="container mx-auto py-8 px-4">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load interests</h3>
+              <p className="text-gray-500">
+                {error instanceof Error ? error.message : 'An error occurred while fetching your interests'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </TenantLayout>
+    );
+  }
 
   return (
     <TenantLayout activeRoute={ROUTES.TENANT.INTERESTS}>
@@ -195,7 +260,7 @@ function TenantInterestsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {interests.map(interest => (
+              {interests.map((interest: TenantInterest) => (
                 <InterestCard key={interest.id} interest={interest} />
               ))}
             </div>

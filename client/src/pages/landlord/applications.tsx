@@ -12,8 +12,10 @@ import {
   Archive,
   User
 } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useUIStore } from '@/stores/uiStore';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,128 +36,130 @@ import {
 } from '@/constants';
 import Navbar from "@/components/shared/navbar";
 import LandlordLayout from '@/components/layouts/LandlordLayout';
+import { Skeleton } from "@/components/ui/skeleton";
 
 type StatusFilter = InterestStatus | 'all';
 
-interface Interest {
+interface EnrichedInterest {
   id: number;
-  tenant: {
+  tenantId: number | null;
+  propertyId: number | null;
+  landlordId: number;
+  contactInfo: {
     name: string;
     email: string;
     phone: string;
     preferredContact: 'email' | 'phone' | 'text';
-    hasRentCard: boolean;
   };
-  property?: string; // undefined for general interests
-  propertyId?: number;
-  message: string;
+  message: string | null;
   status: InterestStatus;
-  submittedAt: string;
-  isGeneral: boolean; // true for general interests, false for property-specific
+  createdAt: string;
+  viewedAt: string | null;
+  property: {
+    id: number;
+    address: string;
+    rent: number;
+    bedrooms: number;
+    bathrooms: number;
+  } | null;
+  isGeneral: boolean;
 }
 
 const InterestInbox = () => {
   const { 
-    setLoading, 
-    loadingStates, 
-    addToast,
     applications: {
       selectedStatus,
       setSelectedStatus,
       setShowReferences
     }
   } = useUIStore();
-  const [selectedInterest, setSelectedInterest] = useState<Interest | null>(null);
+  const { toast } = useToast();
+  const [selectedInterest, setSelectedInterest] = useState<EnrichedInterest | null>(null);
+
+  // Fetch interests using React Query
+  const { data: interests = [], isLoading, error } = useQuery({
+    queryKey: ['/api/interests', { status: selectedStatus !== 'all' ? selectedStatus : undefined }],
+    queryFn: () => apiRequest('GET', `/api/interests${selectedStatus !== 'all' ? `?status=${selectedStatus}` : ''}`)
+  });
 
   const handleStatusChange = (status: InterestStatus | 'all') => {
     setSelectedStatus(status);
   };
 
-  const handleInterestAction = async (applicationId: string, action: 'contact' | 'archive') => {
-    setLoading(`interest-${action}-${applicationId}`, true);
-    try {
-      await apiRequest('POST', `/api/interests/${applicationId}/${action}`);
-      addToast({
+  // Mutation for updating interest status
+  const updateInterestMutation = useMutation({
+    mutationFn: ({ id, action }: { id: number, action: 'contact' | 'archive' }) => {
+      return apiRequest('POST', `/api/interests/${id}/${action}`);
+    },
+    onSuccess: (_, variables) => {
+      toast({
         title: 'Success',
-        description: `Interest ${action === 'contact' ? 'marked as contacted' : 'archived'} successfully`,
-        type: 'success'
+        description: `Interest ${variables.action === 'contact' ? 'marked as contacted' : 'archived'} successfully`,
       });
-    } catch (error) {
-      addToast({
+      // Invalidate and refetch interests
+      queryClient.invalidateQueries({ queryKey: ['/api/interests'] });
+    },
+    onError: (error) => {
+      toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to process interest',
-        type: 'error'
+        variant: 'destructive',
       });
-    } finally {
-      setLoading(`interest-${action}-${applicationId}`, false);
     }
+  });
+
+  const handleInterestAction = (applicationId: number, action: 'contact' | 'archive') => {
+    updateInterestMutation.mutate({ id: applicationId, action });
   };
 
-  // Demo data
-  const interests: Interest[] = [
-    {
-      id: 1,
-      tenant: {
-        name: "Sarah Anderson",
-        email: "sarah@email.com",
-        phone: "(555) 123-4567",
-        preferredContact: "email",
-        hasRentCard: true
-      },
-      property: "123 Main Street Unit A",
-      propertyId: 1,
-      message: "Hi! I'm very interested in this 2-bedroom unit. I'm looking to move in around March 1st. I have excellent references and would love to schedule a viewing.",
-      status: INTEREST_STATUS.NEW,
-      submittedAt: "2025-02-19T10:30:00",
-      isGeneral: false
-    },
-    {
-      id: 2,
-      tenant: {
-        name: "Michael Chen",
-        email: "m.chen@email.com",
-        phone: "(555) 987-6543",
-        preferredContact: "phone",
-        hasRentCard: false
-      },
-      property: "456 Oak Avenue Unit 2B",
-      propertyId: 2,
-      message: "I saw your listing and it looks perfect for my family. Could we arrange a showing this weekend?",
-      status: INTEREST_STATUS.NEW,
-      submittedAt: "2025-02-19T14:15:00",
-      isGeneral: false
-    },
-    {
-      id: 3,
-      tenant: {
-        name: "Emily Rodriguez",
-        email: "emily.r@email.com",
-        phone: "(555) 456-7890",
-        preferredContact: "text",
-        hasRentCard: true
-      },
-      message: "I'm looking for a 1-2 bedroom apartment in your portfolio. Flexible on location, budget around $1500-2000. Please let me know what you have available.",
-      status: INTEREST_STATUS.CONTACTED,
-      submittedAt: "2025-02-18T16:45:00",
-      isGeneral: true
-    },
-    {
-      id: 4,
-      tenant: {
-        name: "David Thompson",
-        email: "d.thompson@email.com",
-        phone: "(555) 321-0987",
-        preferredContact: "email",
-        hasRentCard: false
-      },
-      property: "789 Pine Street Studio",
-      propertyId: 3,
-      message: "Is this studio still available? I'm a graduate student looking for something close to campus.",
-      status: INTEREST_STATUS.ARCHIVED,
-      submittedAt: "2025-02-17T09:30:00",
-      isGeneral: false
-    }
-  ];
+  // Handle loading and error states
+  if (isLoading) {
+    return (
+      <LandlordLayout>
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Interest Inbox</h1>
+              <p className="text-gray-500 mt-1">
+                Manage tenant interest submissions and contact requests
+              </p>
+            </div>
+            <Skeleton className="h-10 w-[180px]" />
+          </div>
+          <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
+            <Card className="col-span-5">
+              <CardContent className="pt-6 space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-32 w-full" />
+                ))}
+              </CardContent>
+            </Card>
+            <Card className="col-span-7">
+              <CardContent className="pt-6">
+                <Skeleton className="h-64 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </LandlordLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <LandlordLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load interests</h3>
+            <p className="text-gray-500">
+              {error instanceof Error ? error.message : 'An error occurred while fetching interests'}
+            </p>
+          </div>
+        </div>
+      </LandlordLayout>
+    );
+  }
 
 
   return (
@@ -202,13 +206,13 @@ const InterestInbox = () => {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium">{interest.tenant.name}</h3>
+                        <h3 className="font-medium">{interest.contactInfo.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {interest.isGeneral ? 'General Interest' : interest.property}
+                          {interest.isGeneral ? 'General Interest' : interest.property?.address || 'Property Interest'}
                         </p>
                       </div>
                       <div className="flex items-center">
-                        {interest.tenant.hasRentCard ? (
+                        {interest.tenantId ? (
                           <FileText className="w-4 h-4 text-primary" />
                         ) : (
                           <User className="w-4 h-4 text-muted-foreground" />
@@ -222,11 +226,11 @@ const InterestInbox = () => {
                           {INTEREST_LABELS.STATUS[interest.status]}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {interest.tenant.preferredContact} preferred
+                          {interest.contactInfo.preferredContact} preferred
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(interest.submittedAt).toLocaleDateString()}
+                        {new Date(interest.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -242,38 +246,38 @@ const InterestInbox = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-xl font-semibold">{selectedInterest.tenant.name}</h2>
-                      {selectedInterest.tenant.hasRentCard && (
+                      <h2 className="text-xl font-semibold">{selectedInterest.contactInfo.name}</h2>
+                      {selectedInterest.tenantId && (
                         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                           <FileText className="w-3 h-3 mr-1" />
-                          Has RentCard
+                          Registered User
                         </Badge>
                       )}
                     </div>
                     <p className="text-muted-foreground">
-                      {selectedInterest.isGeneral ? 'General Portfolio Interest' : selectedInterest.property}
+                      {selectedInterest.isGeneral ? 'General Portfolio Interest' : selectedInterest.property?.address || 'Property Interest'}
                     </p>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <Button variant="outline" asChild data-testid="button-email-tenant">
-                      <a href={`mailto:${selectedInterest.tenant.email}`}>
+                      <a href={`mailto:${selectedInterest.contactInfo.email}`}>
                         <Mail className="w-4 h-4 mr-2" />
                         Email
                       </a>
                     </Button>
                     <Button variant="outline" asChild data-testid="button-call-tenant">
-                      <a href={`tel:${selectedInterest.tenant.phone}`}>
+                      <a href={`tel:${selectedInterest.contactInfo.phone}`}>
                         <Phone className="w-4 h-4 mr-2" />
                         Call
                       </a>
                     </Button>
                     <Button variant="outline" asChild data-testid="button-text-tenant">
-                      <a href={`sms:${selectedInterest.tenant.phone}`}>
+                      <a href={`sms:${selectedInterest.contactInfo.phone}`}>
                         <MessageSquare className="w-4 h-4 mr-2" />
                         Text
                       </a>
                     </Button>
-                    {selectedInterest.tenant.hasRentCard && (
+                    {selectedInterest.tenantId && (
                       <Button data-testid="button-view-rentcard">
                         <FileText className="w-4 h-4 mr-2" />
                         View RentCard
@@ -286,11 +290,11 @@ const InterestInbox = () => {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>{selectedInterest.tenant.email}</span>
+                    <span>{selectedInterest.contactInfo.email}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{selectedInterest.tenant.phone}</span>
+                    <span>{selectedInterest.contactInfo.phone}</span>
                   </div>
                 </div>
 
@@ -298,7 +302,7 @@ const InterestInbox = () => {
                 <Card className="mb-6">
                   <CardContent className="pt-6">
                     <h4 className="font-medium mb-3">Interest Message</h4>
-                    <p className="text-muted-foreground">{selectedInterest.message}</p>
+                    <p className="text-muted-foreground">{selectedInterest.message || 'No message provided'}</p>
                   </CardContent>
                 </Card>
 
@@ -309,17 +313,17 @@ const InterestInbox = () => {
                       <div>
                         <p className="text-sm text-muted-foreground mb-1">Preferred Contact</p>
                         <div className="flex items-center">
-                          {selectedInterest.tenant.preferredContact === 'email' && <Mail className="w-4 h-4 text-primary mr-2" />}
-                          {selectedInterest.tenant.preferredContact === 'phone' && <Phone className="w-4 h-4 text-primary mr-2" />}
-                          {selectedInterest.tenant.preferredContact === 'text' && <MessageSquare className="w-4 h-4 text-primary mr-2" />}
-                          <span className="capitalize">{selectedInterest.tenant.preferredContact}</span>
+                          {selectedInterest.contactInfo.preferredContact === 'email' && <Mail className="w-4 h-4 text-primary mr-2" />}
+                          {selectedInterest.contactInfo.preferredContact === 'phone' && <Phone className="w-4 h-4 text-primary mr-2" />}
+                          {selectedInterest.contactInfo.preferredContact === 'text' && <MessageSquare className="w-4 h-4 text-primary mr-2" />}
+                          <span className="capitalize">{selectedInterest.contactInfo.preferredContact}</span>
                         </div>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground mb-1">Submitted</p>
                         <div className="flex items-center">
                           <Clock className="w-4 h-4 text-primary mr-2" />
-                          <span>{new Date(selectedInterest.submittedAt).toLocaleDateString()}</span>
+                          <span>{new Date(selectedInterest.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
@@ -331,7 +335,8 @@ const InterestInbox = () => {
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => handleInterestAction(selectedInterest.id.toString(), 'archive')}
+                    onClick={() => handleInterestAction(selectedInterest.id, 'archive')}
+                    disabled={updateInterestMutation.isPending}
                     data-testid="button-archive-interest"
                   >
                     <Archive className="w-4 h-4 mr-2" />
@@ -339,7 +344,8 @@ const InterestInbox = () => {
                   </Button>
                   <Button 
                     className="flex-1"
-                    onClick={() => handleInterestAction(selectedInterest.id.toString(), 'contact')}
+                    onClick={() => handleInterestAction(selectedInterest.id, 'contact')}
+                    disabled={updateInterestMutation.isPending}
                     data-testid="button-mark-contacted"
                   >
                     Mark as Contacted
