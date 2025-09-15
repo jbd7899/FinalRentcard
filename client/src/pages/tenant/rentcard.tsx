@@ -1,15 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import {
   Star,
   Building2,
@@ -19,9 +11,7 @@ import {
   CheckCircle,
   Share2,
   Download,
-  Copy,
   Loader2,
-  Mail,
   Info,
   User,
   MessageSquare,
@@ -38,74 +28,15 @@ import { MESSAGES, APPLICATION_LABELS, ROUTES } from '@/constants';
 import { useAuthStore } from '@/stores/authStore';
 import { useParams } from 'wouter';
 import TenantLayout from '@/components/layouts/TenantLayout';
+import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
 
-const ShareDialog = ({ onClose, rentCardUrl }: { 
-  onClose: () => void; 
-  rentCardUrl: string;
-}) => {
-  const { addToast } = useUIStore();
-  const { modal } = useUIStore();
-
-  if (!modal || modal.type !== 'shareRentCard') return null;
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(rentCardUrl);
-      addToast({
-        title: MESSAGES.SUCCESS.COPIED,
-        description: "RentCard link copied to clipboard",
-        type: 'success'
-      });
-    } catch (err) {
-      addToast({
-        title: MESSAGES.ERRORS.GENERAL,
-        description: MESSAGES.ERRORS.GENERAL,
-        type: 'destructive'
-      });
-    }
-  };
-
-  const shareViaEmail = () => {
-    const subject = "My RentCard Profile";
-    const body = `Check out my RentCard profile: ${rentCardUrl}`;
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Share RentCard</DialogTitle>
-          <DialogDescription>
-            Share your RentCard profile with potential landlords
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              readOnly
-              value={rentCardUrl}
-              className="flex-1"
-            />
-            <Button onClick={copyToClipboard} variant="outline">
-              <Copy className="w-4 h-4" />
-            </Button>
-          </div>
-          <Button onClick={shareViaEmail} className="w-full">
-            <Mail className="w-4 h-4 mr-2" />
-            Share via Email
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 const RentCard = () => {
-  const { setLoading, loadingStates, openModal, closeModal, addToast } = useUIStore();
+  const { setLoading, loadingStates, addToast } = useUIStore();
   const { user } = useAuthStore();
   const { slug } = useParams();
   const isPublicView = Boolean(slug);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   // Demo data
   const rentCardData = {
@@ -157,11 +88,7 @@ const RentCard = () => {
   };
 
   const handleShare = () => {
-    openModal('shareRentCard');
-  };
-
-  const handleCloseShare = () => {
-    closeModal();
+    setShareModalOpen(true);
   };
 
   const handleDownloadPDF = async () => {
@@ -229,6 +156,7 @@ const RentCard = () => {
                   onClick={handleShare}
                   className="bg-white text-blue-600 hover:bg-blue-50"
                   disabled={loadingStates.downloadPDF}
+                  data-testid="button-share-rentcard"
                 >
                   <Share2 className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Share</span>
@@ -395,10 +323,13 @@ const RentCard = () => {
           </div>
         </div>
 
-        {/* Share Dialog */}
-        <ShareDialog 
-          onClose={handleCloseShare}
-          rentCardUrl={rentCardUrl}
+        {/* Enhanced Share Modal */}
+        <EnhancedShareModal
+          open={shareModalOpen}
+          onOpenChange={setShareModalOpen}
+          resourceType="rentcard"
+          title="Share Your RentCard"
+          description="Share your rental profile with landlords and property managers"
         />
       </div>
     </TenantLayout>
