@@ -2,8 +2,14 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, requireAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema, insertPropertyQRCodeSchema } from "@shared/schema";
-import { properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode } from "@shared/schema";
+import { 
+  insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema, insertPropertyQRCodeSchema,
+  insertTenantContactPreferencesSchema, insertCommunicationLogSchema, insertTenantBlockedContactsSchema, insertCommunicationTemplateSchema 
+} from "@shared/schema";
+import { 
+  properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode,
+  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate 
+} from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
 import { db } from "./db";
@@ -116,6 +122,23 @@ async function assertShareTokenOwnership(req: any, tokenId: number): Promise<voi
   const tenantProfile = await storage.getTenantProfile(req.user.id);
   if (!tenantProfile || tenantProfile.id !== shareToken.tenantId) {
     throw new Error("Forbidden: Access denied to this share token");
+  }
+}
+
+async function assertLandlordTenantAssociation(req: any, tenantId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  if (!landlordProfile) {
+    throw new Error("Landlord profile not found");
+  }
+  
+  // Check if tenant has submitted interest on any of the landlord's properties
+  const interests = await storage.getInterests(landlordProfile.id, tenantId);
+  if (interests.length === 0) {
+    throw new Error("Forbidden: No legitimate relationship with this tenant");
   }
 }
 
@@ -1912,6 +1935,577 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating property:', error);
       res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // ===== CONTACT PREFERENCE API ENDPOINTS =====
+
+  // Contact preferences routes
+  app.get("/api/tenant/contact-preferences", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'tenant') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const preferences = await storage.getTenantContactPreferences(tenantProfile.id);
+      res.json(preferences || null);
+    } catch (error) {
+      handleRouteError(error, res, 'get contact preferences');
+    }
+  });
+
+  app.post("/api/tenant/contact-preferences", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'tenant') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertTenantContactPreferencesSchema.parse(req.body);
+      
+      // Check if preferences already exist
+      const existingPreferences = await storage.getTenantContactPreferences(tenantProfile.id);
+      
+      let preferences;
+      if (existingPreferences) {
+        // Update existing preferences
+        preferences = await storage.updateTenantContactPreferences(tenantProfile.id, validatedData);
+      } else {
+        // Create new preferences
+        preferences = await storage.createTenantContactPreferences({
+          ...validatedData,
+          tenantId: tenantProfile.id
+        });
+      }
+
+      res.status(201).json(preferences);
+    } catch (error) {
+      handleRouteError(error, res, 'create/update contact preferences');
+    }
+  });
+
+  app.put("/api/tenant/contact-preferences", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'tenant') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertTenantContactPreferencesSchema.partial().parse(req.body);
+      
+      // Update preferences
+      const preferences = await storage.updateTenantContactPreferences(tenantProfile.id, validatedData);
+      res.json(preferences);
+    } catch (error) {
+      handleRouteError(error, res, 'update contact preferences');
+    }
+  });
+
+  // Communication logs routes
+  app.get("/api/communication-logs", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { tenantId, propertyId } = req.query;
+
+      let logs;
+      if (req.user.userType === 'landlord') {
+        const landlordProfile = await storage.getLandlordProfile(req.user.id);
+        if (!landlordProfile) {
+          return res.status(404).json({ message: "Landlord profile not found" });
+        }
+        
+        // Support filtering by tenantId or propertyId for landlords
+        const tenantIdNum = tenantId ? parseInt(tenantId as string) : undefined;
+        const propertyIdNum = propertyId ? parseInt(propertyId as string) : undefined;
+        
+        // SECURITY FIX: If tenantId is specified, verify landlord has legitimate association
+        if (tenantIdNum) {
+          await assertLandlordTenantAssociation(req, tenantIdNum);
+        }
+        
+        // SECURITY FIX: If propertyId is specified, verify landlord owns the property
+        if (propertyIdNum) {
+          await assertPropertyOwnership(req, propertyIdNum);
+        }
+        
+        logs = await storage.getCommunicationLogs(landlordProfile.id, tenantIdNum, propertyIdNum);
+      } else if (req.user.userType === 'tenant') {
+        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        if (!tenantProfile) {
+          return res.status(404).json({ message: "Tenant profile not found" });
+        }
+        logs = await storage.getCommunicationLogs(undefined, tenantProfile.id);
+      } else {
+        return res.status(403).json({ message: "Invalid user type" });
+      }
+
+      res.json(logs);
+    } catch (error) {
+      handleRouteError(error, res, 'get communication logs');
+    }
+  });
+
+  app.post("/api/communication-logs", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Only landlords can create communication logs" });
+      }
+
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(404).json({ message: "Landlord profile not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertCommunicationLogSchema.parse(req.body);
+      
+      // SECURITY FIX: Verify landlord has legitimate association with tenant
+      if (validatedData.tenantId) {
+        await assertLandlordTenantAssociation(req, validatedData.tenantId);
+      }
+      
+      // SECURITY FIX: If propertyId is specified, verify landlord owns the property
+      if (validatedData.propertyId) {
+        await assertPropertyOwnership(req, validatedData.propertyId);
+      }
+      
+      // CRITICAL: Enforce tenant contact preferences and blocked contacts
+      if (validatedData.tenantId) {
+        // Check if contact is blocked
+        const isBlocked = await storage.isContactBlocked(
+          validatedData.tenantId, 
+          landlordProfile.id
+        );
+
+        if (isBlocked) {
+          return res.status(403).json({ 
+            message: "Cannot contact tenant - contact is blocked" 
+          });
+        }
+
+        // Check tenant contact preferences
+        const preferences = await storage.getTenantContactPreferences(validatedData.tenantId);
+        
+        if (preferences && !preferences.preferredMethods.includes(validatedData.communicationType as any)) {
+          return res.status(403).json({ 
+            message: `Communication method '${validatedData.communicationType}' not allowed by tenant preferences`,
+            allowedMethods: preferences.preferredMethods 
+          });
+        }
+
+        // Check if current time respects tenant's time preferences
+        if (preferences && preferences.timePreferences) {
+          const now = new Date();
+          const currentHour = now.getHours();
+          const currentDay = now.getDay(); // 0 = Sunday
+          
+          const startHour = parseInt(preferences.timePreferences.startTime.split(':')[0]);
+          const endHour = parseInt(preferences.timePreferences.endTime.split(':')[0]);
+          
+          // Check if current day is allowed
+          if (!preferences.timePreferences.daysOfWeek.includes(currentDay)) {
+            return res.status(403).json({ 
+              message: "Current day not allowed by tenant's time preferences",
+              allowedDays: preferences.timePreferences.daysOfWeek 
+            });
+          }
+          
+          // Check if current time is allowed
+          if (currentHour < startHour || currentHour > endHour) {
+            return res.status(403).json({ 
+              message: "Current time not allowed by tenant's time preferences",
+              allowedTimeRange: `${preferences.timePreferences.startTime} - ${preferences.timePreferences.endTime}` 
+            });
+          }
+        }
+      }
+      
+      // Create the communication log
+      const log = await storage.createCommunicationLog({
+        ...validatedData,
+        landlordId: landlordProfile.id
+      });
+
+      // If a template was used, increment its usage count
+      if (validatedData.templateId) {
+        await storage.incrementTemplateUsage(validatedData.templateId);
+      }
+
+      res.status(201).json(log);
+    } catch (error) {
+      handleRouteError(error, res, 'create communication log');
+    }
+  });
+
+  app.get("/api/communication-logs/thread/:threadId", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { threadId } = req.params;
+      const logs = await storage.getCommunicationThread(threadId);
+      
+      // Verify user has access to this thread
+      const userCanAccess = logs.some(log => {
+        if (req.user?.userType === 'landlord') {
+          const landlordProfile = storage.getLandlordProfile(req.user.id);
+          return landlordProfile.then(profile => profile?.id === log.landlordId);
+        } else if (req.user?.userType === 'tenant') {
+          const tenantProfile = storage.getTenantProfile(req.user.id);
+          return tenantProfile.then(profile => profile?.id === log.tenantId);
+        }
+        return false;
+      });
+
+      if (!await userCanAccess) {
+        return res.status(403).json({ message: "Access denied to this communication thread" });
+      }
+
+      res.json(logs);
+    } catch (error) {
+      handleRouteError(error, res, 'get communication thread');
+    }
+  });
+
+  app.patch("/api/communication-logs/:id/status", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Only landlords can update communication log status" });
+      }
+
+      const logId = parseInt(req.params.id);
+      const { status, metadata } = req.body;
+
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      const updatedLog = await storage.updateCommunicationLogStatus(logId, status, metadata);
+      res.json(updatedLog);
+    } catch (error) {
+      handleRouteError(error, res, 'update communication log status');
+    }
+  });
+
+  // Blocked contacts routes
+  app.get("/api/tenant/blocked-contacts", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'tenant') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const blockedContacts = await storage.getTenantBlockedContacts(tenantProfile.id);
+      res.json(blockedContacts);
+    } catch (error) {
+      handleRouteError(error, res, 'get blocked contacts');
+    }
+  });
+
+  app.post("/api/tenant/blocked-contacts", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'tenant') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertTenantBlockedContactsSchema.parse(req.body);
+      
+      const blockedContact = await storage.createTenantBlockedContact({
+        ...validatedData,
+        tenantId: tenantProfile.id
+      });
+
+      res.status(201).json(blockedContact);
+    } catch (error) {
+      handleRouteError(error, res, 'create blocked contact');
+    }
+  });
+
+  app.delete("/api/tenant/blocked-contacts/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'tenant') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const contactId = parseInt(req.params.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Verify the blocked contact belongs to the tenant
+      const blockedContacts = await storage.getTenantBlockedContacts(tenantProfile.id);
+      const contactToDelete = blockedContacts.find(contact => contact.id === contactId);
+      
+      if (!contactToDelete) {
+        return res.status(404).json({ message: "Blocked contact not found" });
+      }
+
+      await storage.removeTenantBlockedContact(contactId);
+      res.status(204).send();
+    } catch (error) {
+      handleRouteError(error, res, 'remove blocked contact');
+    }
+  });
+
+  app.post("/api/tenant/check-blocked", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'tenant') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const { landlordId, email, phone } = req.body;
+      const isBlocked = await storage.isContactBlocked(tenantProfile.id, landlordId, email, phone);
+      
+      res.json({ isBlocked });
+    } catch (error) {
+      handleRouteError(error, res, 'check if contact is blocked');
+    }
+  });
+
+  // Communication templates routes
+  app.get("/api/landlord/communication-templates", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(404).json({ message: "Landlord profile not found" });
+      }
+
+      const { category } = req.query;
+      const templates = await storage.getCommunicationTemplates(
+        landlordProfile.id, 
+        category as string || undefined
+      );
+      
+      res.json(templates);
+    } catch (error) {
+      handleRouteError(error, res, 'get communication templates');
+    }
+  });
+
+  app.post("/api/landlord/communication-templates", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(404).json({ message: "Landlord profile not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertCommunicationTemplateSchema.parse(req.body);
+      
+      const template = await storage.createCommunicationTemplate({
+        ...validatedData,
+        landlordId: landlordProfile.id
+      });
+
+      res.status(201).json(template);
+    } catch (error) {
+      handleRouteError(error, res, 'create communication template');
+    }
+  });
+
+  app.put("/api/landlord/communication-templates/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const templateId = parseInt(req.params.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(404).json({ message: "Landlord profile not found" });
+      }
+
+      // Verify template belongs to landlord
+      const existingTemplate = await storage.getCommunicationTemplateById(templateId);
+      if (!existingTemplate || existingTemplate.landlordId !== landlordProfile.id) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Validate the request body
+      const validatedData = insertCommunicationTemplateSchema.partial().parse(req.body);
+      
+      const template = await storage.updateCommunicationTemplate(templateId, validatedData);
+      res.json(template);
+    } catch (error) {
+      handleRouteError(error, res, 'update communication template');
+    }
+  });
+
+  app.delete("/api/landlord/communication-templates/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const templateId = parseInt(req.params.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(404).json({ message: "Landlord profile not found" });
+      }
+
+      // Verify template belongs to landlord
+      const existingTemplate = await storage.getCommunicationTemplateById(templateId);
+      if (!existingTemplate || existingTemplate.landlordId !== landlordProfile.id) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      await storage.deleteCommunicationTemplate(templateId);
+      res.status(204).send();
+    } catch (error) {
+      handleRouteError(error, res, 'delete communication template');
+    }
+  });
+
+  // Landlord endpoint to get tenant contact preferences summary
+  app.get("/api/landlord/tenant/:tenantId/contact-preferences", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(404).json({ message: "Landlord profile not found" });
+      }
+
+      const tenantId = parseInt(req.params.tenantId);
+      if (isNaN(tenantId)) {
+        return res.status(400).json({ message: "Invalid tenant ID" });
+      }
+
+      // SECURITY FIX: Verify landlord has legitimate association with tenant
+      await assertLandlordTenantAssociation(req, tenantId);
+
+      // Check if tenant exists and get their profile for validation
+      const tenantProfile = await storage.getTenantProfileById(tenantId);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+
+      // Get tenant contact preferences (this is allowed for landlords to view summary)
+      const preferences = await storage.getTenantContactPreferences(tenantId);
+      
+      // Check if contact is blocked
+      const isBlocked = await storage.isContactBlocked(tenantId, landlordProfile.id);
+
+      // Return summarized preferences for landlord use
+      const response = {
+        canContact: !isBlocked,
+        isBlocked,
+        preferences: preferences ? {
+          id: preferences.id,
+          preferredMethods: preferences.preferredMethods,
+          timePreferences: preferences.timePreferences,
+          frequencyPreferences: preferences.frequencyPreferences,
+          allowUnknownContacts: preferences.allowUnknownContacts,
+          allowPhoneCalls: preferences.allowPhoneCalls,
+          allowTextMessages: preferences.allowTextMessages,
+          isActive: preferences.isActive
+        } : null
+      };
+
+      res.json(response);
+    } catch (error) {
+      handleRouteError(error, res, 'get tenant contact preferences for landlord');
+    }
+  });
+
+  // Helper endpoint for landlords to check if they can contact a tenant
+  app.post("/api/landlord/can-contact-tenant", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(404).json({ message: "Landlord profile not found" });
+      }
+
+      const { tenantId, communicationType } = req.body;
+      
+      if (!tenantId || !communicationType) {
+        return res.status(400).json({ message: "Tenant ID and communication type are required" });
+      }
+
+      // Check if contact is blocked
+      const isBlocked = await storage.isContactBlocked(
+        tenantId, 
+        landlordProfile.id
+      );
+
+      if (isBlocked) {
+        return res.json({ 
+          canContact: false, 
+          reason: "Contact is blocked by tenant" 
+        });
+      }
+
+      // Get tenant preferences
+      const preferences = await storage.getTenantContactPreferences(tenantId);
+      
+      if (!preferences) {
+        // No preferences set, assume all contact is allowed
+        return res.json({ 
+          canContact: true, 
+          preferences: null 
+        });
+      }
+
+      // Check if the communication type is allowed
+      const canContact = preferences.preferredMethods.includes(communicationType as any);
+      
+      res.json({ 
+        canContact, 
+        preferences,
+        suggestedMethods: preferences.preferredMethods,
+        timePreferences: preferences.timePreferences
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'check if can contact tenant');
     }
   });
 

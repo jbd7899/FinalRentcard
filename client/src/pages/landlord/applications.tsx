@@ -12,6 +12,7 @@ import {
   Archive,
   User
 } from 'lucide-react';
+import ContactTools from '@/components/landlord/ContactTools';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useUIStore } from '@/stores/uiStore';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -258,27 +259,46 @@ const InterestInbox = () => {
                       {selectedInterest.isGeneral ? 'General Portfolio Interest' : selectedInterest.property?.address || 'Property Interest'}
                     </p>
                   </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <Button variant="outline" asChild data-testid="button-email-tenant">
-                      <a href={`mailto:${selectedInterest.contactInfo.email}`}>
-                        <Mail className="w-4 h-4 mr-2" />
-                        Email
-                      </a>
-                    </Button>
-                    <Button variant="outline" asChild data-testid="button-call-tenant">
-                      <a href={`tel:${selectedInterest.contactInfo.phone}`}>
-                        <Phone className="w-4 h-4 mr-2" />
-                        Call
-                      </a>
-                    </Button>
-                    <Button variant="outline" asChild data-testid="button-text-tenant">
-                      <a href={`sms:${selectedInterest.contactInfo.phone}`}>
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Text
-                      </a>
-                    </Button>
+                  <div className="flex flex-col gap-4">
+                    {selectedInterest.tenantId ? (
+                      <ContactTools 
+                        tenantId={selectedInterest.tenantId}
+                        tenantInfo={{
+                          name: selectedInterest.contactInfo.name,
+                          email: selectedInterest.contactInfo.email,
+                          phone: selectedInterest.contactInfo.phone
+                        }}
+                        interestId={selectedInterest.id}
+                        propertyId={selectedInterest.propertyId || undefined}
+                        onContactComplete={() => {
+                          // Refresh the interests list after contact
+                          queryClient.invalidateQueries({ queryKey: ['/api/interests'] });
+                        }}
+                      />
+                    ) : (
+                      <div className="flex gap-2 flex-wrap">
+                        <Button variant="outline" asChild data-testid="button-email-tenant">
+                          <a href={`mailto:${selectedInterest.contactInfo.email}`}>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Email
+                          </a>
+                        </Button>
+                        <Button variant="outline" asChild data-testid="button-call-tenant">
+                          <a href={`tel:${selectedInterest.contactInfo.phone}`}>
+                            <Phone className="w-4 h-4 mr-2" />
+                            Call
+                          </a>
+                        </Button>
+                        <Button variant="outline" asChild data-testid="button-text-tenant">
+                          <a href={`sms:${selectedInterest.contactInfo.phone}`}>
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Text
+                          </a>
+                        </Button>
+                      </div>
+                    )}
                     {selectedInterest.tenantId && (
-                      <Button data-testid="button-view-rentcard">
+                      <Button data-testid="button-view-rentcard" className="self-start">
                         <FileText className="w-4 h-4 mr-2" />
                         View RentCard
                       </Button>

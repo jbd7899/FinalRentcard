@@ -156,13 +156,135 @@ export const propertyQRCodes = pgTable("property_qr_codes", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Contact preferences for tenants
+export const tenantContactPreferences = pgTable("tenant_contact_preferences", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id).notNull(),
+  preferredMethods: json("preferred_methods").$type<('email' | 'phone' | 'sms')[]>().notNull().default(['email']),
+  timePreferences: json("time_preferences").$type<{
+    startTime: string; // e.g. "09:00"
+    endTime: string;   // e.g. "17:00"
+    timezone: string;  // e.g. "America/New_York"
+    daysOfWeek: number[]; // 0-6, where 0 is Sunday
+  }>().notNull().default({
+    startTime: "09:00",
+    endTime: "17:00", 
+    timezone: "America/New_York",
+    daysOfWeek: [1, 2, 3, 4, 5] // Monday-Friday
+  }),
+  frequencyPreferences: json("frequency_preferences").$type<{
+    propertyInquiries: 'immediate' | 'daily' | 'weekly';
+    applicationUpdates: 'immediate' | 'daily' | 'weekly';
+    generalNotifications: 'immediate' | 'daily' | 'weekly';
+  }>().notNull().default({
+    propertyInquiries: "immediate",
+    applicationUpdates: "immediate", 
+    generalNotifications: "daily"
+  }),
+  allowUnknownContacts: boolean("allow_unknown_contacts").notNull().default(true),
+  allowPhoneCalls: boolean("allow_phone_calls").notNull().default(true),
+  allowTextMessages: boolean("allow_text_messages").notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Communication log to track all communications
+export const communicationLogs = pgTable("communication_logs", {
+  id: serial("id").primaryKey(),
+  landlordId: integer("landlord_id").references(() => landlordProfiles.id).notNull(),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id), // nullable for guest contacts
+  propertyId: integer("property_id").references(() => properties.id), // nullable for general communications
+  communicationType: text("communication_type").notNull(), // 'email', 'phone', 'sms', 'system'
+  communicationMethod: text("communication_method").notNull(), // 'manual', 'template', 'automated'
+  subject: text("subject"),
+  message: text("message"),
+  recipientInfo: json("recipient_info").$type<{
+    name: string;
+    email?: string;
+    phone?: string;
+  }>().notNull(),
+  status: text("status").notNull().default('sent'), // 'sent', 'delivered', 'read', 'failed'
+  threadId: text("thread_id"), // for grouping related communications
+  templateId: integer("template_id").references(() => communicationTemplates.id), // nullable
+  metadata: json("metadata").$type<{
+    deliveryTimestamp?: string;
+    readTimestamp?: string;
+    errorMessage?: string;
+    retryCount?: number;
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Blocked contacts list for tenants
+export const tenantBlockedContacts = pgTable("tenant_blocked_contacts", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id).notNull(),
+  landlordId: integer("landlord_id").references(() => landlordProfiles.id), // nullable for blocking by email/phone
+  blockedEmail: text("blocked_email"), // for blocking non-registered landlords
+  blockedPhone: text("blocked_phone"), // for blocking by phone number
+  reason: text("reason"), // optional reason for blocking
+  blockType: text("block_type").notNull().default('permanent'), // 'permanent', 'temporary'
+  blockedUntil: timestamp("blocked_until"), // for temporary blocks
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Communication templates for landlords
+export const communicationTemplates = pgTable("communication_templates", {
+  id: serial("id").primaryKey(),
+  landlordId: integer("landlord_id").references(() => landlordProfiles.id).notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  category: text("category").notNull(), // 'property_inquiry', 'application_update', 'general', 'follow_up'
+  variables: json("variables").$type<string[]>().notNull().default([]), // Available template variables like {{tenantName}}, {{propertyAddress}}
+  isActive: boolean("is_active").notNull().default(true),
+  usageCount: integer("usage_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Add relations for shareTokens
 export const shareTokenRelations = relations(shareTokens, ({ one }) => ({
   tenant: one(tenantProfiles, { fields: [shareTokens.tenantId], references: [tenantProfiles.id] }),
 }));
 
-export const tenantProfileRelations = relations(tenantProfiles, ({ many }) => ({
+export const tenantProfileRelations = relations(tenantProfiles, ({ many, one }) => ({
   shareTokens: many(shareTokens),
+  contactPreferences: one(tenantContactPreferences, { fields: [tenantProfiles.id], references: [tenantContactPreferences.tenantId] }),
+  blockedContacts: many(tenantBlockedContacts),
+  communicationLogs: many(communicationLogs),
+}));
+
+// Contact preference relations
+export const tenantContactPreferencesRelations = relations(tenantContactPreferences, ({ one }) => ({
+  tenant: one(tenantProfiles, { fields: [tenantContactPreferences.tenantId], references: [tenantProfiles.id] }),
+}));
+
+// Communication log relations
+export const communicationLogRelations = relations(communicationLogs, ({ one }) => ({
+  landlord: one(landlordProfiles, { fields: [communicationLogs.landlordId], references: [landlordProfiles.id] }),
+  tenant: one(tenantProfiles, { fields: [communicationLogs.tenantId], references: [tenantProfiles.id] }),
+  property: one(properties, { fields: [communicationLogs.propertyId], references: [properties.id] }),
+  template: one(communicationTemplates, { fields: [communicationLogs.templateId], references: [communicationTemplates.id] }),
+}));
+
+// Blocked contacts relations
+export const tenantBlockedContactsRelations = relations(tenantBlockedContacts, ({ one }) => ({
+  tenant: one(tenantProfiles, { fields: [tenantBlockedContacts.tenantId], references: [tenantProfiles.id] }),
+  landlord: one(landlordProfiles, { fields: [tenantBlockedContacts.landlordId], references: [landlordProfiles.id] }),
+}));
+
+// Communication templates relations
+export const communicationTemplatesRelations = relations(communicationTemplates, ({ one, many }) => ({
+  landlord: one(landlordProfiles, { fields: [communicationTemplates.landlordId], references: [landlordProfiles.id] }),
+  communicationLogs: many(communicationLogs),
+}));
+
+// Update landlord profile relations
+export const landlordProfileRelations = relations(landlordProfiles, ({ many }) => ({
+  communicationLogs: many(communicationLogs),
+  communicationTemplates: many(communicationTemplates),
+  blockedByTenants: many(tenantBlockedContacts),
 }));
 
 // Add relations for propertyQRCodes
@@ -281,6 +403,77 @@ export const insertPropertyQRCodeSchema = createInsertSchema(propertyQRCodes)
     qrCodeData: z.string().url("QR code data must be a valid URL"),
   });
 
+// Contact preference schemas
+export const insertTenantContactPreferencesSchema = createInsertSchema(tenantContactPreferences)
+  .omit({
+    id: true,
+    tenantId: true, // Set by server based on authenticated user
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    preferredMethods: z.array(z.enum(['email', 'phone', 'text'])).min(1, "At least one contact method must be selected"),
+    timePreferences: z.object({
+      startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Start time must be in HH:MM format"),
+      endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "End time must be in HH:MM format"),
+      timezone: z.string().min(1, "Timezone is required"),
+      daysOfWeek: z.array(z.number().min(0).max(6)).min(1, "At least one day must be selected"),
+    }),
+    frequencyPreferences: z.object({
+      propertyInquiries: z.enum(['immediate', 'daily', 'weekly']),
+      applicationUpdates: z.enum(['immediate', 'daily', 'weekly']),
+      generalNotifications: z.enum(['immediate', 'daily', 'weekly']),
+    }),
+  });
+
+export const insertCommunicationLogSchema = createInsertSchema(communicationLogs)
+  .omit({
+    id: true,
+    landlordId: true, // Set by server based on authenticated user
+    createdAt: true,
+  })
+  .extend({
+    communicationType: z.enum(['email', 'phone', 'sms', 'system']),
+    communicationMethod: z.enum(['manual', 'template', 'automated']),
+    recipientInfo: z.object({
+      name: z.string().min(1, "Recipient name is required"),
+      email: z.string().email().optional(),
+      phone: z.string().optional(),
+    }),
+    status: z.enum(['sent', 'delivered', 'read', 'failed']).default('sent'),
+  });
+
+export const insertTenantBlockedContactsSchema = createInsertSchema(tenantBlockedContacts)
+  .omit({
+    id: true,
+    tenantId: true, // Set by server based on authenticated user
+    createdAt: true,
+  })
+  .extend({
+    blockType: z.enum(['permanent', 'temporary']).default('permanent'),
+    blockedUntil: z.preprocess((val) => {
+      if (typeof val === 'string') {
+        return new Date(val);
+      }
+      return val;
+    }, z.date().optional()),
+  });
+
+export const insertCommunicationTemplateSchema = createInsertSchema(communicationTemplates)
+  .omit({
+    id: true,
+    landlordId: true, // Set by server based on authenticated user
+    usageCount: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    title: z.string().min(1, "Template title is required"),
+    content: z.string().min(1, "Template content is required"),
+    category: z.enum(['property_inquiry', 'application_update', 'general', 'follow_up']),
+    variables: z.array(z.string()).default([]),
+  });
+
 // Re-export all schema enhancements
 export * from "./schema-enhancements";
 
@@ -299,6 +492,14 @@ export type ShareToken = typeof shareTokens.$inferSelect;
 export type InsertShareToken = z.infer<typeof insertShareTokenSchema>;
 export type PropertyQRCode = typeof propertyQRCodes.$inferSelect;
 export type InsertPropertyQRCode = z.infer<typeof insertPropertyQRCodeSchema>;
+export type TenantContactPreferences = typeof tenantContactPreferences.$inferSelect;
+export type InsertTenantContactPreferences = z.infer<typeof insertTenantContactPreferencesSchema>;
+export type CommunicationLog = typeof communicationLogs.$inferSelect;
+export type InsertCommunicationLog = z.infer<typeof insertCommunicationLogSchema>;
+export type TenantBlockedContact = typeof tenantBlockedContacts.$inferSelect;
+export type InsertTenantBlockedContact = z.infer<typeof insertTenantBlockedContactsSchema>;
+export type CommunicationTemplate = typeof communicationTemplates.$inferSelect;
+export type InsertCommunicationTemplate = z.infer<typeof insertCommunicationTemplateSchema>;
 
 export type StatsTimeframe = 'today' | '7days' | '30days';
 
