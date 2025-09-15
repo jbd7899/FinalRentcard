@@ -35,6 +35,9 @@ import TenantRentCard from "@/pages/tenant/rentcard";
 import DocumentDashboard from "@/pages/tenant/documents";
 import TenantReferences from "@/pages/tenant/references";
 
+// Shared/Public Pages
+import SharedRentCard from "@/pages/shared-rentcard";
+
 function Router() {
   return (
     <Switch>
@@ -73,6 +76,9 @@ function Router() {
       <ProtectedRoute path={ROUTES.TENANT.REFERENCES} component={TenantReferences} />
       <Route path="/create-rentcard" component={CreateRentCard} />
       <Route path="/rentcard/:slug" component={TenantRentCard} />
+      
+      {/* Public Shared RentCard Route */}
+      <Route path="/rentcard/shared/:token" component={SharedRentCard} />
 
       <Route component={NotFound} />
     </Switch>
