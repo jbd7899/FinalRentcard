@@ -89,23 +89,23 @@ const ApplicationManagement = () => {
     setSelectedStatus(status);
   };
 
-  const handleApplicationAction = async (applicationId: string, action: 'approve' | 'reject') => {
-    setLoading(`application-${action}-${applicationId}`, true);
+  const handleInterestAction = async (applicationId: string, action: 'contact' | 'archive') => {
+    setLoading(`interest-${action}-${applicationId}`, true);
     try {
-      await apiRequest('POST', `/api/applications/${applicationId}/${action}`);
+      await apiRequest('POST', `/api/interests/${applicationId}/${action}`);
       addToast({
         title: 'Success',
-        description: `Application ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
+        description: `Interest ${action === 'contact' ? 'marked as contacted' : 'archived'} successfully`,
         type: 'success'
       });
     } catch (error) {
       addToast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to process application',
+        description: error instanceof Error ? error.message : 'Failed to process interest',
         type: 'error'
       });
     } finally {
-      setLoading(`application-${action}-${applicationId}`, false);
+      setLoading(`interest-${action}-${applicationId}`, false);
     }
   };
 
@@ -199,9 +199,9 @@ const ApplicationManagement = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Applications</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Interest Management</h1>
             <p className="text-gray-500 mt-1">
-              Review and manage tenant applications
+              Review and manage tenant interests
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -210,11 +210,10 @@ const ApplicationManagement = () => {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Applications</SelectItem>
+                <SelectItem value="all">All Interests</SelectItem>
                 <SelectItem value={APPLICATION_STATUS.NEW}>New</SelectItem>
-                <SelectItem value={APPLICATION_STATUS.REVIEWING}>Reviewing</SelectItem>
-                <SelectItem value={APPLICATION_STATUS.APPROVED}>Approved</SelectItem>
-                <SelectItem value={APPLICATION_STATUS.REJECTED}>Rejected</SelectItem>
+                <SelectItem value={APPLICATION_STATUS.CONTACTED}>Contacted</SelectItem>
+                <SelectItem value={APPLICATION_STATUS.ARCHIVED}>Archived</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -394,12 +393,19 @@ const ApplicationManagement = () => {
                   )}
 
                   <div className="mt-8 flex gap-4">
-                    <Button variant="outline" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => handleInterestAction(selectedApplication.id.toString(), 'archive')}
+                    >
                       <Archive className="w-4 h-4 mr-2" />
-                      Archive
+                      Archive Interest
                     </Button>
-                    <Button className="flex-1">
-                      Approve Application
+                    <Button 
+                      className="flex-1"
+                      onClick={() => handleInterestAction(selectedApplication.id.toString(), 'contact')}
+                    >
+                      Mark as Contacted
                     </Button>
                   </div>
                 </div>
