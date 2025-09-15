@@ -28,6 +28,7 @@ import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus, A
 import { Link, useLocation } from "wouter";
 import TenantLayout from '@/components/layouts/TenantLayout';
 import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
+import OneClickShareButton from '@/components/shared/OneClickShareButton';
 import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -117,26 +118,45 @@ const TenantDashboard = () => {
             </p>
           </div>
           
-          {/* Tab Navigation */}
-          <div className="flex gap-2">
-            <Button 
-              variant={activeTab === 'dashboard' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setActiveTab('dashboard')}
-              data-testid="tab-dashboard"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
-            <Button 
-              variant={activeTab === 'analytics' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setActiveTab('analytics')}
-              data-testid="tab-analytics"
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics
-            </Button>
+          {/* Tab Navigation and Share Button */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center">
+            <div className="flex gap-2">
+              <Button 
+                variant={activeTab === 'dashboard' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setActiveTab('dashboard')}
+                data-testid="tab-dashboard"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+              <Button 
+                variant={activeTab === 'analytics' ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setActiveTab('analytics')}
+                data-testid="tab-analytics"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <OneClickShareButton 
+                variant="default" 
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                showText={true}
+              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShareModalOpen(true)}
+                data-testid="button-advanced-share"
+                className="text-xs"
+              >
+                More Options
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -230,14 +250,20 @@ const TenantDashboard = () => {
                     </p>
                   </div>
                 </div>
-                <Button 
-                  onClick={() => setShareModalOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-                  data-testid="button-share-rentcard-dashboard"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share RentCard
-                </Button>
+                <div className="flex gap-2">
+                  <OneClickShareButton 
+                    variant="default"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                    showText={true}
+                  />
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShareModalOpen(true)}
+                    data-testid="button-share-rentcard-advanced"
+                  >
+                    Settings
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -291,15 +317,12 @@ const TenantDashboard = () => {
               >
                 Manage References
               </Button>
-              <Button 
+              <OneClickShareButton 
                 variant="outline" 
                 size="sm"
                 className="text-xs sm:text-sm h-8 sm:h-9 px-3"
-                onClick={() => setShareModalOpen(true)}
-                data-testid="button-share-from-rentcard-status"
-              >
-                <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Button>
+                showText={false}
+              />
             </div>
           </CardContent>
         </Card>
