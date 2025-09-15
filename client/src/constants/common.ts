@@ -11,17 +11,18 @@ export const USER_ROLES = {
 
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 
-// Application status
-export const APPLICATION_STATUS = {
+// Interest status (simplified)
+export const INTEREST_STATUS = {
   NEW: 'new',
-  REVIEWING: 'reviewing',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
-  CANCELLED: 'cancelled',
+  CONTACTED: 'contacted',
   ARCHIVED: 'archived',
 } as const;
 
-export type ApplicationStatus = typeof APPLICATION_STATUS[keyof typeof APPLICATION_STATUS];
+export type InterestStatus = typeof INTEREST_STATUS[keyof typeof INTEREST_STATUS];
+
+// Keep APPLICATION_STATUS as alias for backward compatibility
+export const APPLICATION_STATUS = INTEREST_STATUS;
+export type ApplicationStatus = InterestStatus;
 
 // Property types
 export const PROPERTY_TYPES = {
@@ -34,16 +35,18 @@ export const PROPERTY_TYPES = {
 
 export type PropertyType = typeof PROPERTY_TYPES[keyof typeof PROPERTY_TYPES];
 
-// Application labels
-export const APPLICATION_LABELS = {
+// Interest labels (simplified)
+export const INTEREST_LABELS = {
   STATUS: {
-    [APPLICATION_STATUS.NEW]: 'New',
-    [APPLICATION_STATUS.REVIEWING]: 'Under Review',
-    [APPLICATION_STATUS.APPROVED]: 'Approved',
-    [APPLICATION_STATUS.REJECTED]: 'Rejected',
-    [APPLICATION_STATUS.CANCELLED]: 'Cancelled',
-    [APPLICATION_STATUS.ARCHIVED]: 'Archived',
+    [INTEREST_STATUS.NEW]: 'New Interest',
+    [INTEREST_STATUS.CONTACTED]: 'Contacted',
+    [INTEREST_STATUS.ARCHIVED]: 'Archived',
   },
+};
+
+// Keep APPLICATION_LABELS as alias for backward compatibility
+export const APPLICATION_LABELS = {
+  STATUS: INTEREST_LABELS.STATUS,
   PAYMENT_HISTORY: {
     ON_TIME: 'Always on time',
     MOSTLY_ON_TIME: 'Usually on time',
@@ -73,11 +76,13 @@ export const MESSAGES = {
     DELETED: 'Deleted successfully.',
     COPIED: 'Link copied to clipboard!',
   },
+  INTEREST_STATUS: {
+    [INTEREST_STATUS.CONTACTED]: 'Successfully Contacted',
+    [INTEREST_STATUS.ARCHIVED]: 'Archived',
+  },
   APPLICATION_STATUS: {
-    [APPLICATION_STATUS.REVIEWING]: 'Under Review',
-    [APPLICATION_STATUS.APPROVED]: 'Approved',
-    [APPLICATION_STATUS.REJECTED]: 'Rejected',
-    [APPLICATION_STATUS.CANCELLED]: 'Cancelled',
+    [APPLICATION_STATUS.CONTACTED]: 'Successfully Contacted',
+    [APPLICATION_STATUS.ARCHIVED]: 'Archived',
   },
   TOAST: {
     AUTH: {
@@ -124,12 +129,16 @@ export const MESSAGES = {
     },
     APPLICATION: {
       STATUS_UPDATED: {
-        TITLE: 'Application Updated',
-        DESCRIPTION: 'Application status has been updated successfully',
+        TITLE: 'Interest Updated',
+        DESCRIPTION: 'Interest status has been updated successfully',
       },
       ARCHIVED: {
-        TITLE: 'Application Archived',
-        DESCRIPTION: 'Application has been archived successfully',
+        TITLE: 'Interest Archived',
+        DESCRIPTION: 'Interest has been archived successfully',
+      },
+      CONTACTED: {
+        TITLE: 'Tenant Contacted',
+        DESCRIPTION: 'Tenant has been successfully contacted',
       },
     },
   },

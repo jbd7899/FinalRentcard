@@ -48,7 +48,7 @@ const TenantDashboard = () => {
       id: 1,
       property: "123 Main Street Unit A",
       landlord: "John Smith",
-      status: APPLICATION_STATUS.REVIEWING as ApplicationStatus,
+      status: APPLICATION_STATUS.CONTACTED as ApplicationStatus,
       submittedAt: "2025-02-18T10:30:00",
       requirements: {
         creditScore: "✓ Meets requirement",
@@ -241,11 +241,11 @@ const TenantDashboard = () => {
                       </div>
                       <Badge 
                         className={`px-2 py-1 text-xs font-medium ${
-                          application.status === 'approved' 
+                          application.status === APPLICATION_STATUS.CONTACTED 
                             ? 'bg-green-100 text-green-800' 
-                            : application.status === 'rejected'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-amber-100 text-amber-800'
+                            : application.status === APPLICATION_STATUS.ARCHIVED
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-blue-100 text-blue-800'
                         }`}
                       >
                         {APPLICATION_LABELS.STATUS[application.status]}
