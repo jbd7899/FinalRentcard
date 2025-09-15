@@ -33,6 +33,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { APPLICATION_LABELS, MESSAGES } from '@/constants';
 import InterestSubmissionForm from '@/components/shared/InterestSubmissionForm';
+import MobileStickyActionBar from '@/components/shared/MobileStickyActionBar';
 import { apiRequest } from '@/lib/queryClient';
 import type { RentCard } from '@shared/schema';
 
@@ -639,6 +640,13 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Sticky Action Bar */}
+      <MobileStickyActionBar
+        onContactClick={handleShowInterest}
+        onDownloadClick={handleDownloadPDF}
+        isDownloadLoading={loadingStates.downloadPDF}
+      />
     </div>
   );
 };
