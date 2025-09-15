@@ -550,3 +550,89 @@ export type InsertSharingAnalytics = z.infer<typeof insertSharingAnalyticsSchema
 
 export type QRCodeAnalytics = typeof qrCodeAnalytics.$inferSelect;
 export type InsertQRCodeAnalytics = z.infer<typeof insertQRCodeAnalyticsSchema>;
+
+// 11. Onboarding Progress Tracking
+export const onboardingProgress = pgTable("onboarding_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  userType: text("user_type").notNull(), // 'tenant' or 'landlord'
+  currentStep: integer("current_step").notNull().default(1), // Current step user is on
+  totalSteps: integer("total_steps").notNull().default(4), // Total number of steps
+  completedSteps: integer("completed_steps").notNull().default(0), // Number of completed steps
+  progressPercentage: integer("progress_percentage").notNull().default(0), // Overall completion percentage
+  isCompleted: boolean("is_completed").notNull().default(false), // Whether onboarding is fully completed
+  completedAt: timestamp("completed_at"), // When onboarding was completed
+  lastActiveStep: text("last_active_step"), // Last step user was working on
+  timeToCompletion: integer("time_to_completion"), // Time in minutes to complete onboarding
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const onboardingSteps = pgTable("onboarding_steps", {
+  id: serial("id").primaryKey(),
+  progressId: integer("progress_id").references(() => onboardingProgress.id).notNull(),
+  stepNumber: integer("step_number").notNull(), // 1, 2, 3, 4
+  stepKey: text("step_key").notNull(), // 'complete_profile', 'add_references', 'preview_rentcard', 'share_first_link'
+  stepTitle: text("step_title").notNull(),
+  stepDescription: text("step_description"),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  requirementsMet: json("requirements_met").$type<{
+    [key: string]: boolean;
+  }>(), // Detailed requirements tracking
+  metadata: json("metadata").$type<{
+    [key: string]: any;
+  }>(), // Additional step-specific data
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Onboarding step constants for type safety
+export const ONBOARDING_STEPS = {
+  TENANT: {
+    COMPLETE_PROFILE: {
+      key: 'complete_profile',
+      title: 'Complete Your Profile',
+      description: 'Add your employment info, rental history, and credit details',
+      requirements: ['employment_info', 'rental_history', 'credit_score']
+    },
+    ADD_REFERENCES: {
+      key: 'add_references', 
+      title: 'Add References',
+      description: 'Add at least 2 references from previous landlords or employers',
+      requirements: ['min_references_count']
+    },
+    PREVIEW_RENTCARD: {
+      key: 'preview_rentcard',
+      title: 'Preview Your RentCard',
+      description: 'See how landlords will view your rental profile',
+      requirements: ['rentcard_viewed']
+    },
+    SHARE_FIRST_LINK: {
+      key: 'share_first_link',
+      title: 'Share Your First Link',
+      description: 'Create and share your first RentCard link with a landlord',
+      requirements: ['first_share_token_created']
+    }
+  }
+} as const;
+
+// Schema definitions for onboarding tables
+export const insertOnboardingProgressSchema = createInsertSchema(onboardingProgress).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOnboardingStepSchema = createInsertSchema(onboardingSteps).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Type definitions for onboarding tables
+export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
+export type InsertOnboardingProgress = z.infer<typeof insertOnboardingProgressSchema>;
+
+export type OnboardingStep = typeof onboardingSteps.$inferSelect;
+export type InsertOnboardingStep = z.infer<typeof insertOnboardingStepSchema>;
