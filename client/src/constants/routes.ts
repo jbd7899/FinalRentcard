@@ -15,10 +15,13 @@ export const ROUTES = {
   TENANT: {
     DASHBOARD: '/tenant/dashboard',
     INTERESTS: '/tenant/interests',
+    APPLICATIONS: '/tenant/applications',
     RENTCARD: '/tenant/rentcard',
     DOCUMENTS: '/tenant/documents',
     REFERENCES: '/tenant/references',
     CONTACT_PREFERENCES: '/tenant/contact-preferences',
+    CONTACTS: '/tenant/contacts',
+    MESSAGE_TEMPLATES: '/tenant/message-templates',
   },
   
   // Landlord routes
@@ -30,6 +33,7 @@ export const ROUTES = {
     SCREENING: '/landlord/screening',
     REFERENCE_FORM: '/landlord/reference-form',
     INTERESTS: '/landlord/interests',
+    APPLICATIONS: '/landlord/applications',
     VERIFY_DOCUMENTS: '/landlord/verify-documents',
     CONTACT_MANAGEMENT: '/landlord/contact-management',
   },

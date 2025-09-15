@@ -36,6 +36,8 @@ import TenantRentCard from "@/pages/tenant/rentcard";
 import DocumentDashboard from "@/pages/tenant/documents";
 import TenantReferences from "@/pages/tenant/references";
 import ContactPreferences from "@/pages/tenant/ContactPreferences";
+import ContactsPage from "@/pages/tenant/contacts";
+import MessageTemplatesPage from "@/pages/tenant/message-templates";
 
 // Shared/Public Pages
 import SharedRentCard from "@/pages/shared-rentcard";
@@ -77,6 +79,8 @@ function Router() {
       <ProtectedRoute path={ROUTES.TENANT.RENTCARD} component={TenantRentCard} />
       <ProtectedRoute path={ROUTES.TENANT.DOCUMENTS} component={DocumentDashboard} />
       <ProtectedRoute path={ROUTES.TENANT.REFERENCES} component={TenantReferences} />
+      <ProtectedRoute path={ROUTES.TENANT.CONTACTS} component={ContactsPage} />
+      <ProtectedRoute path={ROUTES.TENANT.MESSAGE_TEMPLATES} component={MessageTemplatesPage} />
       <ProtectedRoute path={ROUTES.TENANT.CONTACT_PREFERENCES} component={ContactPreferences} />
       <Route path="/create-rentcard" component={CreateRentCard} />
       <Route path="/rentcard/:slug" component={TenantRentCard} />

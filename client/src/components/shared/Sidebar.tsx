@@ -19,6 +19,8 @@ import {
   Star, 
   UserCheck,
   Settings,
+  MessageSquare,
+  BookOpen,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -137,6 +139,18 @@ const Sidebar: React.FC<SidebarProps> = ({
           label: "References", 
           route: ROUTES.TENANT.REFERENCES, 
           active: isActive(ROUTES.TENANT.REFERENCES)
+        },
+        { 
+          icon: <Users className="w-5 h-5" />, 
+          label: "Contacts", 
+          route: ROUTES.TENANT.CONTACTS, 
+          active: isActive(ROUTES.TENANT.CONTACTS) 
+        },
+        { 
+          icon: <BookOpen className="w-5 h-5" />, 
+          label: "Message Templates", 
+          route: ROUTES.TENANT.MESSAGE_TEMPLATES, 
+          active: isActive(ROUTES.TENANT.MESSAGE_TEMPLATES) 
         },
         { 
           icon: <Building2 className="w-5 h-5" />, 

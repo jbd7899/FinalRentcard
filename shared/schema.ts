@@ -289,6 +289,56 @@ export const communicationTemplates = pgTable("communication_templates", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Recipient contacts for tenants to store frequently contacted landlords/agents
+export const recipientContacts = pgTable("recipient_contacts", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id).notNull(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  company: text("company"),
+  contactType: text("contact_type").notNull(), // 'landlord', 'property_manager', 'real_estate_agent', 'other'
+  propertyAddress: text("property_address"), // Associated property if any
+  notes: text("notes"), // Additional notes about this contact
+  isFavorite: boolean("is_favorite").notNull().default(false),
+  lastContactedAt: timestamp("last_contacted_at"), // When tenant last shared with this contact
+  contactCount: integer("contact_count").notNull().default(0), // How many times tenant has shared with this contact
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Message templates for tenants to use when sharing RentCards
+export const tenantMessageTemplates = pgTable("tenant_message_templates", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id).notNull(),
+  templateName: text("template_name").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  category: text("category").notNull(), // 'initial_inquiry', 'follow_up', 'application_submission', 'custom'
+  variables: json("variables").$type<string[]>().notNull().default([]), // Available variables like {{contact_name}}, {{property_address}}, {{my_name}}
+  isDefault: boolean("is_default").notNull().default(false), // Whether this is a default template for the category
+  usageCount: integer("usage_count").notNull().default(0), // How many times this template has been used
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Contact sharing history to track when tenants share with specific contacts
+export const contactSharingHistory = pgTable("contact_sharing_history", {
+  id: serial("id").primaryKey(),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id).notNull(),
+  contactId: integer("contact_id").references(() => recipientContacts.id).notNull(),
+  shareTokenId: integer("share_token_id").references(() => shareTokens.id), // Link to the shared token
+  shortlinkId: integer("shortlink_id").references(() => shortlinks.id), // Link to the shortlink used
+  templateId: integer("template_id").references(() => tenantMessageTemplates.id), // Template used if any
+  messageUsed: text("message_used"), // The actual message sent (for history)
+  subjectUsed: text("subject_used"), // The subject line used
+  shareMethod: text("share_method").notNull(), // 'email', 'sms', 'copy_link', 'direct_share'
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+  responseReceived: boolean("response_received").notNull().default(false),
+  responseReceivedAt: timestamp("response_received_at"), // When response was received (manual tracking)
+  notes: text("notes"), // Follow-up notes
+});
+
 // Add relations for shareTokens
 export const shareTokenRelations = relations(shareTokens, ({ one }) => ({
   tenant: one(tenantProfiles, { fields: [shareTokens.tenantId], references: [tenantProfiles.id] }),
@@ -299,6 +349,9 @@ export const tenantProfileRelations = relations(tenantProfiles, ({ many, one }) 
   contactPreferences: one(tenantContactPreferences, { fields: [tenantProfiles.id], references: [tenantContactPreferences.tenantId] }),
   blockedContacts: many(tenantBlockedContacts),
   communicationLogs: many(communicationLogs),
+  recipientContacts: many(recipientContacts),
+  messageTemplates: many(tenantMessageTemplates),
+  sharingHistory: many(contactSharingHistory),
 }));
 
 // Contact preference relations
@@ -324,6 +377,27 @@ export const tenantBlockedContactsRelations = relations(tenantBlockedContacts, (
 export const communicationTemplatesRelations = relations(communicationTemplates, ({ one, many }) => ({
   landlord: one(landlordProfiles, { fields: [communicationTemplates.landlordId], references: [landlordProfiles.id] }),
   communicationLogs: many(communicationLogs),
+}));
+
+// Recipient contacts relations
+export const recipientContactsRelations = relations(recipientContacts, ({ one, many }) => ({
+  tenant: one(tenantProfiles, { fields: [recipientContacts.tenantId], references: [tenantProfiles.id] }),
+  sharingHistory: many(contactSharingHistory),
+}));
+
+// Tenant message templates relations
+export const tenantMessageTemplatesRelations = relations(tenantMessageTemplates, ({ one, many }) => ({
+  tenant: one(tenantProfiles, { fields: [tenantMessageTemplates.tenantId], references: [tenantProfiles.id] }),
+  sharingHistory: many(contactSharingHistory),
+}));
+
+// Contact sharing history relations
+export const contactSharingHistoryRelations = relations(contactSharingHistory, ({ one }) => ({
+  tenant: one(tenantProfiles, { fields: [contactSharingHistory.tenantId], references: [tenantProfiles.id] }),
+  contact: one(recipientContacts, { fields: [contactSharingHistory.contactId], references: [recipientContacts.id] }),
+  shareToken: one(shareTokens, { fields: [contactSharingHistory.shareTokenId], references: [shareTokens.id] }),
+  shortlink: one(shortlinks, { fields: [contactSharingHistory.shortlinkId], references: [shortlinks.id] }),
+  template: one(tenantMessageTemplates, { fields: [contactSharingHistory.templateId], references: [tenantMessageTemplates.id] }),
 }));
 
 // Update landlord profile relations
@@ -585,6 +659,61 @@ export const insertCommunicationTemplateSchema = createInsertSchema(communicatio
     variables: z.array(z.string()).default([]),
   });
 
+// Recipient contacts insert schema
+export const insertRecipientContactSchema = createInsertSchema(recipientContacts)
+  .omit({
+    id: true,
+    tenantId: true, // Set by server based on authenticated user
+    contactCount: true,
+    lastContactedAt: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    name: z.string().min(1, "Contact name is required").max(100, "Name must be under 100 characters"),
+    email: z.string().email("Valid email is required"),
+    phone: z.string().optional(),
+    company: z.string().optional(),
+    contactType: z.enum(['landlord', 'property_manager', 'real_estate_agent', 'other']),
+    propertyAddress: z.string().optional(),
+    notes: z.string().max(500, "Notes must be under 500 characters").optional(),
+    isFavorite: z.boolean().default(false),
+  });
+
+// Tenant message templates insert schema
+export const insertTenantMessageTemplateSchema = createInsertSchema(tenantMessageTemplates)
+  .omit({
+    id: true,
+    tenantId: true, // Set by server based on authenticated user
+    usageCount: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    templateName: z.string().min(1, "Template name is required").max(100, "Name must be under 100 characters"),
+    subject: z.string().min(1, "Subject is required").max(200, "Subject must be under 200 characters"),
+    body: z.string().min(1, "Message body is required").max(2000, "Message must be under 2000 characters"),
+    category: z.enum(['initial_inquiry', 'follow_up', 'application_submission', 'custom']),
+    variables: z.array(z.string()).default([]),
+    isDefault: z.boolean().default(false),
+  });
+
+// Contact sharing history insert schema
+export const insertContactSharingHistorySchema = createInsertSchema(contactSharingHistory)
+  .omit({
+    id: true,
+    tenantId: true, // Set by server based on authenticated user
+    sentAt: true,
+    responseReceived: true,
+    responseReceivedAt: true,
+  })
+  .extend({
+    shareMethod: z.enum(['email', 'sms', 'copy_link', 'direct_share']),
+    messageUsed: z.string().optional(),
+    subjectUsed: z.string().optional(),
+    notes: z.string().max(500, "Notes must be under 500 characters").optional(),
+  });
+
 // Re-export all schema enhancements
 export * from "./schema-enhancements";
 
@@ -615,6 +744,12 @@ export type TenantBlockedContact = typeof tenantBlockedContacts.$inferSelect;
 export type InsertTenantBlockedContact = z.infer<typeof insertTenantBlockedContactsSchema>;
 export type CommunicationTemplate = typeof communicationTemplates.$inferSelect;
 export type InsertCommunicationTemplate = z.infer<typeof insertCommunicationTemplateSchema>;
+export type RecipientContact = typeof recipientContacts.$inferSelect;
+export type InsertRecipientContact = z.infer<typeof insertRecipientContactSchema>;
+export type TenantMessageTemplate = typeof tenantMessageTemplates.$inferSelect;
+export type InsertTenantMessageTemplate = z.infer<typeof insertTenantMessageTemplateSchema>;
+export type ContactSharingHistory = typeof contactSharingHistory.$inferSelect;
+export type InsertContactSharingHistory = z.infer<typeof insertContactSharingHistorySchema>;
 
 export type StatsTimeframe = 'today' | '7days' | '30days';
 

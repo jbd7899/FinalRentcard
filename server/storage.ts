@@ -1,10 +1,12 @@
 import { 
   User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken, PropertyQRCode,
-  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick 
+  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick,
+  RecipientContact, TenantMessageTemplate, ContactSharingHistory
 } from "@shared/schema";
 import { 
   users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens, propertyQRCodes,
-  tenantContactPreferences, communicationLogs, tenantBlockedContacts, communicationTemplates, shortlinks, shortlinkClicks 
+  tenantContactPreferences, communicationLogs, tenantBlockedContacts, communicationTemplates, shortlinks, shortlinkClicks,
+  recipientContacts, tenantMessageTemplates, contactSharingHistory
 } from "@shared/schema";
 import { db, sql } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -292,6 +294,28 @@ export interface IStorage {
   updateCommunicationTemplate(id: number, template: Partial<CommunicationTemplate>): Promise<CommunicationTemplate>;
   deleteCommunicationTemplate(id: number): Promise<void>;
   incrementTemplateUsage(id: number): Promise<void>;
+
+  // Recipient contact operations
+  getRecipientContacts(tenantId: number, options?: { category?: string; isFavorite?: boolean }): Promise<RecipientContact[]>;
+  getRecipientContactById(id: number): Promise<RecipientContact | undefined>;
+  createRecipientContact(contact: Omit<RecipientContact, "id" | "contactCount" | "lastContactedAt" | "createdAt" | "updatedAt">): Promise<RecipientContact>;
+  updateRecipientContact(id: number, contact: Partial<RecipientContact>): Promise<RecipientContact>;
+  deleteRecipientContact(id: number): Promise<void>;
+  incrementContactUsage(id: number): Promise<void>; // Updates contactCount and lastContactedAt
+
+  // Tenant message template operations
+  getTenantMessageTemplates(tenantId: number, category?: string): Promise<TenantMessageTemplate[]>;
+  getTenantMessageTemplateById(id: number): Promise<TenantMessageTemplate | undefined>;
+  createTenantMessageTemplate(template: Omit<TenantMessageTemplate, "id" | "usageCount" | "createdAt" | "updatedAt">): Promise<TenantMessageTemplate>;
+  updateTenantMessageTemplate(id: number, template: Partial<TenantMessageTemplate>): Promise<TenantMessageTemplate>;
+  deleteTenantMessageTemplate(id: number): Promise<void>;
+  incrementTenantTemplateUsage(id: number): Promise<void>;
+
+  // Contact sharing history operations
+  getContactSharingHistory(tenantId: number, contactId?: number): Promise<ContactSharingHistory[]>;
+  createContactSharingHistory(history: Omit<ContactSharingHistory, "id" | "sentAt" | "responseReceived" | "responseReceivedAt">): Promise<ContactSharingHistory>;
+  updateContactSharingHistory(id: number, updates: Partial<ContactSharingHistory>): Promise<ContactSharingHistory>;
+  markSharingResponseReceived(id: number, notes?: string): Promise<ContactSharingHistory>;
 
   // Onboarding progress operations
   getOnboardingProgress(userId: number): Promise<OnboardingProgress | undefined>;
@@ -2253,6 +2277,200 @@ export class DatabaseStorage implements IStorage {
       isCompleted,
       completedAt: isCompleted ? new Date() : undefined
     });
+  }
+
+  // Recipient contact operations
+  async getRecipientContacts(tenantId: number, options?: { category?: string; isFavorite?: boolean }): Promise<RecipientContact[]> {
+    let query = db
+      .select()
+      .from(recipientContacts)
+      .where(eq(recipientContacts.tenantId, tenantId));
+
+    if (options?.category) {
+      query = query.where(eq(recipientContacts.contactType, options.category));
+    }
+
+    if (options?.isFavorite !== undefined) {
+      query = query.where(eq(recipientContacts.isFavorite, options.isFavorite));
+    }
+
+    return await query.orderBy(
+      recipientContacts.isFavorite, // Favorites first
+      sql`${recipientContacts.lastContactedAt} DESC NULLS LAST`, // Recent contacts next
+      recipientContacts.name // Then alphabetical
+    );
+  }
+
+  async getRecipientContactById(id: number): Promise<RecipientContact | undefined> {
+    const [contact] = await db
+      .select()
+      .from(recipientContacts)
+      .where(eq(recipientContacts.id, id));
+    return contact;
+  }
+
+  async createRecipientContact(contact: Omit<RecipientContact, "id" | "contactCount" | "lastContactedAt" | "createdAt" | "updatedAt">): Promise<RecipientContact> {
+    const [newContact] = await db
+      .insert(recipientContacts)
+      .values({
+        ...contact,
+        contactCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newContact;
+  }
+
+  async updateRecipientContact(id: number, contact: Partial<RecipientContact>): Promise<RecipientContact> {
+    const [updatedContact] = await db
+      .update(recipientContacts)
+      .set({
+        ...contact,
+        updatedAt: new Date()
+      })
+      .where(eq(recipientContacts.id, id))
+      .returning();
+    return updatedContact;
+  }
+
+  async deleteRecipientContact(id: number): Promise<void> {
+    await db.delete(recipientContacts).where(eq(recipientContacts.id, id));
+  }
+
+  async incrementContactUsage(id: number): Promise<void> {
+    await db
+      .update(recipientContacts)
+      .set({
+        contactCount: sql`${recipientContacts.contactCount} + 1`,
+        lastContactedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(recipientContacts.id, id));
+  }
+
+  // Tenant message template operations
+  async getTenantMessageTemplates(tenantId: number, category?: string): Promise<TenantMessageTemplate[]> {
+    let query = db
+      .select()
+      .from(tenantMessageTemplates)
+      .where(eq(tenantMessageTemplates.tenantId, tenantId));
+
+    if (category) {
+      query = query.where(eq(tenantMessageTemplates.category, category));
+    }
+
+    return await query.orderBy(
+      tenantMessageTemplates.isDefault, // Default templates first
+      tenantMessageTemplates.category,   // Then by category
+      tenantMessageTemplates.templateName // Then alphabetical
+    );
+  }
+
+  async getTenantMessageTemplateById(id: number): Promise<TenantMessageTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(tenantMessageTemplates)
+      .where(eq(tenantMessageTemplates.id, id));
+    return template;
+  }
+
+  async createTenantMessageTemplate(template: Omit<TenantMessageTemplate, "id" | "usageCount" | "createdAt" | "updatedAt">): Promise<TenantMessageTemplate> {
+    const [newTemplate] = await db
+      .insert(tenantMessageTemplates)
+      .values({
+        ...template,
+        usageCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newTemplate;
+  }
+
+  async updateTenantMessageTemplate(id: number, template: Partial<TenantMessageTemplate>): Promise<TenantMessageTemplate> {
+    const [updatedTemplate] = await db
+      .update(tenantMessageTemplates)
+      .set({
+        ...template,
+        updatedAt: new Date()
+      })
+      .where(eq(tenantMessageTemplates.id, id))
+      .returning();
+    return updatedTemplate;
+  }
+
+  async deleteTenantMessageTemplate(id: number): Promise<void> {
+    await db.delete(tenantMessageTemplates).where(eq(tenantMessageTemplates.id, id));
+  }
+
+  async incrementTenantTemplateUsage(id: number): Promise<void> {
+    await db
+      .update(tenantMessageTemplates)
+      .set({
+        usageCount: sql`${tenantMessageTemplates.usageCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(tenantMessageTemplates.id, id));
+  }
+
+  // Contact sharing history operations
+  async getContactSharingHistory(tenantId: number, contactId?: number): Promise<ContactSharingHistory[]> {
+    let query = db
+      .select()
+      .from(contactSharingHistory)
+      .where(eq(contactSharingHistory.tenantId, tenantId));
+
+    if (contactId) {
+      query = query.where(eq(contactSharingHistory.contactId, contactId));
+    }
+
+    return await query.orderBy(sql`${contactSharingHistory.sentAt} DESC`);
+  }
+
+  async createContactSharingHistory(history: Omit<ContactSharingHistory, "id" | "sentAt" | "responseReceived" | "responseReceivedAt">): Promise<ContactSharingHistory> {
+    const [newHistory] = await db
+      .insert(contactSharingHistory)
+      .values({
+        ...history,
+        sentAt: new Date(),
+        responseReceived: false
+      })
+      .returning();
+    
+    // Also increment the contact usage counter
+    if (history.contactId) {
+      await this.incrementContactUsage(history.contactId);
+    }
+
+    // Increment template usage if used
+    if (history.templateId) {
+      await this.incrementTenantTemplateUsage(history.templateId);
+    }
+
+    return newHistory;
+  }
+
+  async updateContactSharingHistory(id: number, updates: Partial<ContactSharingHistory>): Promise<ContactSharingHistory> {
+    const [updatedHistory] = await db
+      .update(contactSharingHistory)
+      .set(updates)
+      .where(eq(contactSharingHistory.id, id))
+      .returning();
+    return updatedHistory;
+  }
+
+  async markSharingResponseReceived(id: number, notes?: string): Promise<ContactSharingHistory> {
+    const [updatedHistory] = await db
+      .update(contactSharingHistory)
+      .set({
+        responseReceived: true,
+        responseReceivedAt: new Date(),
+        notes: notes || undefined
+      })
+      .where(eq(contactSharingHistory.id, id))
+      .returning();
+    return updatedHistory;
   }
 }
 
