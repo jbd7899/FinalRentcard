@@ -732,6 +732,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Interest routes
+  
+  // GET /api/interests - List interests with filtering
+  app.get("/api/interests", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { propertyId, status } = req.query;
+      
+      // Get user profile to determine access permissions
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      
+      if (!landlordProfile && !tenantProfile) {
+        return res.status(403).json({ message: "User profile not found" });
+      }
+
+      let interests: Interest[] = [];
+      
+      if (landlordProfile) {
+        // Landlords can see interests for their properties
+        interests = await storage.getInterests(landlordProfile.id, undefined, propertyId ? parseInt(propertyId as string) : undefined);
+        
+        // Filter by status if provided
+        if (status && status !== 'all') {
+          interests = interests.filter(interest => interest.status === status);
+        }
+      } else if (tenantProfile) {
+        // Tenants can only see their own interests
+        interests = await storage.getInterests(undefined, tenantProfile.id, propertyId ? parseInt(propertyId as string) : undefined);
+        
+        // Filter by status if provided
+        if (status && status !== 'all') {
+          interests = interests.filter(interest => interest.status === status);
+        }
+      }
+
+      // For landlords, also fetch property information for each interest
+      if (landlordProfile) {
+        const enrichedInterests = await Promise.all(
+          interests.map(async (interest) => {
+            let property = null;
+            if (interest.propertyId) {
+              property = await storage.getProperty(interest.propertyId);
+            }
+            return {
+              ...interest,
+              property: property ? {
+                id: property.id,
+                address: property.address,
+                rent: property.rent,
+                bedrooms: property.bedrooms,
+                bathrooms: property.bathrooms
+              } : null,
+              isGeneral: !interest.propertyId
+            };
+          })
+        );
+        return res.json(enrichedInterests);
+      }
+
+      // For tenants, enrich with basic property info
+      const enrichedInterests = await Promise.all(
+        interests.map(async (interest) => {
+          let property = null;
+          if (interest.propertyId) {
+            property = await storage.getProperty(interest.propertyId);
+          }
+          return {
+            ...interest,
+            property: property ? {
+              address: property.address,
+              rent: property.rent
+            } : null,
+            isGeneral: !interest.propertyId
+          };
+        })
+      );
+
+      res.json(enrichedInterests);
+    } catch (error) {
+      handleRouteError(error, res, 'list interests');
+    }
+  });
+
+  // GET /api/interests/:id - Get specific interest details
+  app.get("/api/interests/:id", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const interestId = parseInt(req.params.id);
+      if (isNaN(interestId)) {
+        return res.status(400).json({ message: "Invalid interest ID" });
+      }
+
+      // Get all interests to find the one we want (simple approach)
+      const allInterests = await storage.getInterests();
+      const interest = allInterests.find(i => i.id === interestId);
+      
+      if (!interest) {
+        return res.status(404).json({ message: "Interest not found" });
+      }
+
+      // Check authorization
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      
+      let hasAccess = false;
+      if (landlordProfile && interest.landlordId === landlordProfile.id) {
+        hasAccess = true;
+      } else if (tenantProfile && interest.tenantId === tenantProfile.id) {
+        hasAccess = true;
+      }
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied to this interest" });
+      }
+
+      // Enrich with property information if available
+      let property = null;
+      if (interest.propertyId) {
+        property = await storage.getProperty(interest.propertyId);
+      }
+
+      const enrichedInterest = {
+        ...interest,
+        property: property ? {
+          id: property.id,
+          address: property.address,
+          rent: property.rent,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms
+        } : null,
+        isGeneral: !interest.propertyId
+      };
+
+      // Mark as viewed if landlord is viewing it
+      if (landlordProfile && !interest.viewedAt) {
+        await storage.markInterestAsViewed(interestId);
+        enrichedInterest.viewedAt = new Date().toISOString();
+      }
+
+      res.json(enrichedInterest);
+    } catch (error) {
+      handleRouteError(error, res, 'get interest details');
+    }
+  });
+
   app.post("/api/interests/:id/contact", requireAuth, async (req, res) => {
     try {
       if (!req.user?.id) {
