@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import LandlordLayout from '@/components/layouts/LandlordLayout';
+import InterestSubmissionForm from "@/components/shared/InterestSubmissionForm";
 
 interface PreScreeningFormData {
   monthlyIncome: number;
@@ -306,6 +307,22 @@ const GeneralScreeningPage = () => {
                     </p>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* General Interest Submission Section */}
+            <div className="p-8 bg-gray-50 border-t border-gray-100">
+              <div className="max-w-2xl mx-auto">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold mb-2 text-gray-800">Interested in These Properties?</h2>
+                  <p className="text-gray-600">
+                    Submit your interest and we'll contact you about available properties that match your needs.
+                  </p>
+                </div>
+                <InterestSubmissionForm
+                  landlordId={screeningPage?.landlordId}
+                  propertyAddress="Multiple Properties Available"
+                />
               </div>
             </div>
 
