@@ -85,7 +85,7 @@ const TenantDashboard = () => {
     { icon: <Star className="w-5 h-5" />, label: "My RentCard", route: ROUTES.TENANT.RENTCARD },
     { icon: <FileText className="w-5 h-5" />, label: "Documents", route: ROUTES.TENANT.DOCUMENTS },
     { icon: <UserCheck className="w-5 h-5" />, label: "References", route: ROUTES.TENANT.REFERENCES },
-    { icon: <Building2 className="w-5 h-5" />, label: "Applications", route: ROUTES.TENANT.APPLICATIONS }
+    { icon: <Building2 className="w-5 h-5" />, label: "Applications", route: ROUTES.TENANT.INTERESTS }
   ];
 
   return (
@@ -158,7 +158,7 @@ const TenantDashboard = () => {
                 variant="ghost" 
                 size="sm" 
                 className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
-                onClick={() => setLocation(ROUTES.TENANT.APPLICATIONS)}
+                onClick={() => setLocation(ROUTES.TENANT.INTERESTS)}
               >
                 View
               </Button>
@@ -222,7 +222,7 @@ const TenantDashboard = () => {
         <section>
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <h2 className="text-base sm:text-lg font-medium">Active Applications</h2>
-            <Link href={ROUTES.TENANT.APPLICATIONS}>
+            <Link href={ROUTES.TENANT.INTERESTS}>
               <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs sm:text-sm">View All</Button>
             </Link>
           </div>
@@ -282,7 +282,7 @@ const TenantDashboard = () => {
                   variant="outline" 
                   size="sm" 
                   className="text-xs sm:text-sm h-8 sm:h-9"
-                  onClick={() => setLocation(ROUTES.TENANT.APPLICATIONS)}
+                  onClick={() => setLocation(ROUTES.TENANT.INTERESTS)}
                 >
                   Browse Properties
                 </Button>

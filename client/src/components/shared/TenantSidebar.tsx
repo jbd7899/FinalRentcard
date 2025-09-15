@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { 
   FileText, 
   Star, 
-  Building2, 
+  Inbox, 
   LogOut,
   Loader2,
   Home,
   UserCheck,
-  User
+  User,
+  Building2
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -54,7 +55,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
     { icon: <Star className="w-5 h-5" />, label: "My RentCard", route: ROUTES.TENANT.RENTCARD, active: activeRoute === ROUTES.TENANT.RENTCARD },
     { icon: <FileText className="w-5 h-5" />, label: "Documents", route: ROUTES.TENANT.DOCUMENTS, active: activeRoute === ROUTES.TENANT.DOCUMENTS },
     { icon: <UserCheck className="w-5 h-5" />, label: "References", route: ROUTES.TENANT.REFERENCES, active: activeRoute === ROUTES.TENANT.REFERENCES },
-    { icon: <Building2 className="w-5 h-5" />, label: "Applications", route: ROUTES.TENANT.APPLICATIONS, active: activeRoute === ROUTES.TENANT.APPLICATIONS }
+    { icon: <Inbox className="w-5 h-5" />, label: "Interests", route: ROUTES.TENANT.INTERESTS, active: activeRoute === ROUTES.TENANT.INTERESTS }
   ];
 
   return (

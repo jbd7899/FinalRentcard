@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
   Building, 
-  Users, 
+  Inbox, 
   CheckSquare,
   Plus,
   LogOut,
@@ -62,10 +62,10 @@ const LandlordSidebar: React.FC<SidebarProps> = ({
       active: isActive(ROUTES.LANDLORD.SCREENING)
     },
     { 
-      icon: <Users className="w-5 h-5" />, 
-      label: "Applications", 
-      route: ROUTES.LANDLORD.APPLICATIONS, 
-      active: isActive(ROUTES.LANDLORD.APPLICATIONS) 
+      icon: <Inbox className="w-5 h-5" />, 
+      label: "Interest Inbox", 
+      route: ROUTES.LANDLORD.INTERESTS, 
+      active: isActive(ROUTES.LANDLORD.INTERESTS) 
     },
     { 
       icon: <Send className="w-5 h-5" />, 

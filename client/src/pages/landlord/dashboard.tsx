@@ -12,7 +12,7 @@ import {
 // Import tab components
 import OverviewTab from '@/components/landlord/dashboard/OverviewTab';
 import PropertiesTab from '@/components/landlord/dashboard/PropertiesTab';
-import ApplicationsTab from '@/components/landlord/dashboard/ApplicationsTab';
+import InterestsTab from '@/components/landlord/dashboard/ApplicationsTab';
 
 // Import other components
 import RequestModal from '@/components/landlord/RequestModal';
@@ -22,7 +22,7 @@ import LandlordLayout from '@/components/layouts/LandlordLayout';
 import { useToast } from "@/components/ui/use-toast";
 
 type TimeFilter = '7days' | '30days' | '90days' | 'all';
-type TabType = 'overview' | 'properties' | 'applications';
+type TabType = 'overview' | 'properties' | 'interests';
 
 interface PropertyWithCount extends Omit<Property, 'isArchived'> {
   applicationCount: number | null;
@@ -44,7 +44,7 @@ const LandlordDashboard = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const tabParam = searchParams.get('tab') as TabType | null;
     
-    if (tabParam && ['overview', 'properties', 'applications'].includes(tabParam)) {
+    if (tabParam && ['overview', 'properties', 'interests'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [location]);
@@ -174,13 +174,13 @@ const LandlordDashboard = () => {
         </button>
         <button
           className={`px-4 py-2 font-medium text-sm sm:text-base whitespace-nowrap ${
-            activeTab === 'applications' 
+            activeTab === 'interests' 
               ? 'text-primary border-b-2 border-primary' 
               : 'text-muted-foreground hover:text-foreground'
           }`}
-          onClick={() => handleTabChange('applications')}
+          onClick={() => handleTabChange('interests')}
         >
-          Applications
+          Interests
         </button>
       </div>
 
@@ -206,8 +206,8 @@ const LandlordDashboard = () => {
         />
       )}
 
-      {activeTab === 'applications' && (
-        <ApplicationsTab
+      {activeTab === 'interests' && (
+        <InterestsTab
           openModal={openModal}
           setLocation={setLocation}
         />

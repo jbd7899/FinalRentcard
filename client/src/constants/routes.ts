@@ -14,7 +14,7 @@ export const ROUTES = {
   // Tenant routes
   TENANT: {
     DASHBOARD: '/tenant/dashboard',
-    APPLICATIONS: '/tenant/applications',
+    INTERESTS: '/tenant/interests',
     RENTCARD: '/tenant/rentcard',
     DOCUMENTS: '/tenant/documents',
     REFERENCES: '/tenant/references',
@@ -28,7 +28,7 @@ export const ROUTES = {
     EDIT_PROPERTY: '/landlord/properties/edit',
     SCREENING: '/landlord/screening',
     REFERENCE_FORM: '/landlord/reference-form',
-    APPLICATIONS: '/landlord/applications',
+    INTERESTS: '/landlord/interests',
     VERIFY_DOCUMENTS: '/landlord/verify-documents',
   },
 
@@ -49,7 +49,7 @@ export const ROUTES = {
 // Type for route parameters
 export type RouteParams = {
   propertyId: string;
-  applicationId: string;
+  interestId: string;
   rentcardId: string;
   documentId: string;
   tenantId: string;
@@ -60,7 +60,7 @@ export type RouteParams = {
 export const generateRoute = {
   property: (id: string | number) => `${ROUTES.LANDLORD.PROPERTIES}/${id}`,
   propertyEdit: (id: string | number) => `${ROUTES.LANDLORD.PROPERTIES}/${id}/edit`,
-  application: (id: string | number) => `${ROUTES.TENANT.APPLICATIONS}/${id}`,
+  interest: (id: string | number) => `${ROUTES.TENANT.INTERESTS}/${id}`,
   rentcard: (id: string | number) => `${ROUTES.TENANT.RENTCARD}/${id}`,
   screening: (slug: string) => `${ROUTES.SCREENING.PROPERTY}/${slug}`,
   generalScreening: (slug: string) => `${ROUTES.SCREENING.GENERAL}/${slug}`,
