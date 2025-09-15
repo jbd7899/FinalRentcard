@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import {
-  Star,
   CheckCircle,
   AlertCircle,
   Clock,
   Mail,
   Phone,
-  DollarSign,
+  MessageSquare,
   FileText,
   Building2,
   ExternalLink,
-  Archive
+  Archive,
+  User
 } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
 import { apiRequest } from '@/lib/queryClient';
@@ -27,65 +27,47 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { 
-  APPLICATION_STATUS, 
-  APPLICATION_LABELS, 
+  INTEREST_STATUS, 
+  INTEREST_LABELS, 
   MESSAGES,
-  type ApplicationStatus 
+  type InterestStatus 
 } from '@/constants';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Navbar from "@/components/shared/navbar";
 import LandlordLayout from '@/components/layouts/LandlordLayout';
 
-type StatusFilter = ApplicationStatus | 'all';
+type StatusFilter = InterestStatus | 'all';
 
-interface Application {
+interface Interest {
   id: number;
   tenant: {
     name: string;
     email: string;
     phone: string;
-    creditScore: string;
-    income: string;
-    score: number;
-    references: Array<{
-      name: string;
-      property: string;
-      dates: string;
-      rating: number;
-      payment: keyof typeof APPLICATION_LABELS.PAYMENT_HISTORY;
-      propertyCondition: keyof typeof APPLICATION_LABELS.PROPERTY_CONDITION;
-      comments: string;
-      verified: boolean;
-    }>;
-    employment: string;
-    moveIn: string;
+    preferredContact: 'email' | 'phone' | 'text';
+    hasRentCard: boolean;
   };
-  property: string;
-  status: ApplicationStatus;
+  property?: string; // undefined for general interests
+  propertyId?: number;
+  message: string;
+  status: InterestStatus;
   submittedAt: string;
-  matchScore: number;
+  isGeneral: boolean; // true for general interests, false for property-specific
 }
 
-const ApplicationManagement = () => {
+const InterestInbox = () => {
   const { 
-    modal, 
-    openModal, 
-    closeModal, 
     setLoading, 
     loadingStates, 
     addToast,
     applications: {
-      selectedProperty,
       selectedStatus,
-      showReferences,
-      setSelectedProperty,
       setSelectedStatus,
       setShowReferences
     }
   } = useUIStore();
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [selectedInterest, setSelectedInterest] = useState<Interest | null>(null);
 
-  const handleStatusChange = (status: ApplicationStatus | 'all') => {
+  const handleStatusChange = (status: InterestStatus | 'all') => {
     setSelectedStatus(status);
   };
 
@@ -110,156 +92,141 @@ const ApplicationManagement = () => {
   };
 
   // Demo data
-  const applications: Application[] = [
+  const interests: Interest[] = [
     {
       id: 1,
       tenant: {
         name: "Sarah Anderson",
         email: "sarah@email.com",
         phone: "(555) 123-4567",
-        creditScore: "720-750",
-        income: "85,000",
-        score: 4.9,
-        references: [
-          {
-            name: "Robert Wilson",
-            property: "Parkview Apartments",
-            dates: "Jan 2023 - Dec 2024",
-            rating: 5,
-            payment: "ON_TIME",
-            propertyCondition: "EXCELLENT",
-            comments: "Excellent tenant, kept property in pristine condition.",
-            verified: true
-          },
-          {
-            name: "Emily Davis",
-            property: "Riverfront Residences",
-            dates: "Mar 2020 - Dec 2022",
-            rating: 4.8,
-            payment: "ON_TIME",
-            propertyCondition: "GOOD",
-            comments: "Very responsible tenant, would rent to again.",
-            verified: true
-          }
-        ],
-        employment: "Full-time (3+ years)",
-        moveIn: "March 1, 2025"
+        preferredContact: "email",
+        hasRentCard: true
       },
       property: "123 Main Street Unit A",
-      status: APPLICATION_STATUS.NEW,
+      propertyId: 1,
+      message: "Hi! I'm very interested in this 2-bedroom unit. I'm looking to move in around March 1st. I have excellent references and would love to schedule a viewing.",
+      status: INTEREST_STATUS.NEW,
       submittedAt: "2025-02-19T10:30:00",
-      matchScore: 95
+      isGeneral: false
+    },
+    {
+      id: 2,
+      tenant: {
+        name: "Michael Chen",
+        email: "m.chen@email.com",
+        phone: "(555) 987-6543",
+        preferredContact: "phone",
+        hasRentCard: false
+      },
+      property: "456 Oak Avenue Unit 2B",
+      propertyId: 2,
+      message: "I saw your listing and it looks perfect for my family. Could we arrange a showing this weekend?",
+      status: INTEREST_STATUS.NEW,
+      submittedAt: "2025-02-19T14:15:00",
+      isGeneral: false
+    },
+    {
+      id: 3,
+      tenant: {
+        name: "Emily Rodriguez",
+        email: "emily.r@email.com",
+        phone: "(555) 456-7890",
+        preferredContact: "text",
+        hasRentCard: true
+      },
+      message: "I'm looking for a 1-2 bedroom apartment in your portfolio. Flexible on location, budget around $1500-2000. Please let me know what you have available.",
+      status: INTEREST_STATUS.CONTACTED,
+      submittedAt: "2025-02-18T16:45:00",
+      isGeneral: true
+    },
+    {
+      id: 4,
+      tenant: {
+        name: "David Thompson",
+        email: "d.thompson@email.com",
+        phone: "(555) 321-0987",
+        preferredContact: "email",
+        hasRentCard: false
+      },
+      property: "789 Pine Street Studio",
+      propertyId: 3,
+      message: "Is this studio still available? I'm a graduate student looking for something close to campus.",
+      status: INTEREST_STATUS.ARCHIVED,
+      submittedAt: "2025-02-17T09:30:00",
+      isGeneral: false
     }
   ];
 
-  const ReferencesSection = ({ references }: { references: any[] }) => (
-    <div className="space-y-4">
-      {references.map((ref, index) => (
-        <Card key={index}>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h4 className="font-medium">{ref.name}</h4>
-                <p className="text-sm text-muted-foreground">{ref.property}</p>
-                <p className="text-sm text-muted-foreground">{ref.dates}</p>
-              </div>
-              <div className="flex items-center">
-                {ref.verified && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Verified
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Payment History</p>
-                <p className="font-medium">{ref.payment}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Property Condition</p>
-                <p className="font-medium">{ref.propertyCondition}</p>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground">Landlord Comments</p>
-              <p className="text-sm mt-1">{ref.comments}</p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
 
   return (
     <LandlordLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Interest Management</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Interest Inbox</h1>
             <p className="text-gray-500 mt-1">
-              Review and manage tenant interests
+              Manage tenant interest submissions and contact requests
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={selectedStatus} onValueChange={handleStatusChange}>
+            <Select value={selectedStatus} onValueChange={handleStatusChange} data-testid="select-status-filter">
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Interests</SelectItem>
-                <SelectItem value={APPLICATION_STATUS.NEW}>New</SelectItem>
-                <SelectItem value={APPLICATION_STATUS.CONTACTED}>Contacted</SelectItem>
-                <SelectItem value={APPLICATION_STATUS.ARCHIVED}>Archived</SelectItem>
+                <SelectItem value={INTEREST_STATUS.NEW}>New</SelectItem>
+                <SelectItem value={INTEREST_STATUS.CONTACTED}>Contacted</SelectItem>
+                <SelectItem value={INTEREST_STATUS.ARCHIVED}>Archived</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto grid grid-cols-12 gap-6">
-          {/* Applications List */}
+          {/* Interests List */}
           <Card className="col-span-5">
             <ScrollArea className="h-[calc(100vh-12rem)]">
               <CardContent className="pt-6">
-                {applications.map((app) => (
+                {interests.map((interest) => (
                   <div 
-                    key={app.id}
+                    key={interest.id}
                     onClick={() => {
-                      setSelectedApplication(app);
+                      setSelectedInterest(interest);
                       setShowReferences(false);
                     }}
                     className={`p-4 cursor-pointer hover:bg-accent rounded-lg transition-colors ${
-                      selectedApplication?.id === app.id ? 'bg-accent' : ''
+                      selectedInterest?.id === interest.id ? 'bg-accent' : ''
                     }`}
+                    data-testid={`interest-item-${interest.id}`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium">{app.tenant.name}</h3>
-                        <p className="text-sm text-muted-foreground">{app.property}</p>
+                        <h3 className="font-medium">{interest.tenant.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {interest.isGeneral ? 'General Interest' : interest.property}
+                        </p>
                       </div>
                       <div className="flex items-center">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="ml-1">{app.tenant.score}</span>
+                        {interest.tenant.hasRentCard ? (
+                          <FileText className="w-4 h-4 text-primary" />
+                        ) : (
+                          <User className="w-4 h-4 text-muted-foreground" />
+                        )}
                       </div>
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <Badge variant={app.status === APPLICATION_STATUS.NEW ? 'default' : 'secondary'}>
-                          {APPLICATION_LABELS.STATUS[app.status]}
+                        <Badge variant={interest.status === INTEREST_STATUS.NEW ? 'default' : 'secondary'}>
+                          {INTEREST_LABELS.STATUS[interest.status]}
                         </Badge>
-                        {app.tenant.references?.length > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {app.tenant.references.length} references
-                          </span>
-                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {interest.tenant.preferredContact} preferred
+                        </span>
                       </div>
-                      <span className="text-sm">
-                        <span className="text-primary font-medium">{app.matchScore}%</span>
-                        <span className="text-muted-foreground ml-1">match</span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(interest.submittedAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -268,31 +235,50 @@ const ApplicationManagement = () => {
             </ScrollArea>
           </Card>
 
-          {/* Application Details */}
-          {selectedApplication ? (
+          {/* Interest Details */}
+          {selectedInterest ? (
             <Card className="col-span-7">
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <h2 className="text-xl font-semibold">{selectedApplication.tenant.name}</h2>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800">
-                        Verified Profile
-                      </Badge>
+                      <h2 className="text-xl font-semibold">{selectedInterest.tenant.name}</h2>
+                      {selectedInterest.tenant.hasRentCard && (
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                          <FileText className="w-3 h-3 mr-1" />
+                          Has RentCard
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-muted-foreground">{selectedApplication.property}</p>
+                    <p className="text-muted-foreground">
+                      {selectedInterest.isGeneral ? 'General Portfolio Interest' : selectedInterest.property}
+                    </p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" asChild>
-                      <a href={`mailto:${selectedApplication.tenant.email}`}>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button variant="outline" asChild data-testid="button-email-tenant">
+                      <a href={`mailto:${selectedInterest.tenant.email}`}>
                         <Mail className="w-4 h-4 mr-2" />
                         Email
                       </a>
                     </Button>
-                    <Button>
-                      <FileText className="w-4 h-4 mr-2" />
-                      View RentCard
+                    <Button variant="outline" asChild data-testid="button-call-tenant">
+                      <a href={`tel:${selectedInterest.tenant.phone}`}>
+                        <Phone className="w-4 h-4 mr-2" />
+                        Call
+                      </a>
                     </Button>
+                    <Button variant="outline" asChild data-testid="button-text-tenant">
+                      <a href={`sms:${selectedInterest.tenant.phone}`}>
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Text
+                      </a>
+                    </Button>
+                    {selectedInterest.tenant.hasRentCard && (
+                      <Button data-testid="button-view-rentcard">
+                        <FileText className="w-4 h-4 mr-2" />
+                        View RentCard
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -300,114 +286,64 @@ const ApplicationManagement = () => {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>{selectedApplication.tenant.email}</span>
+                    <span>{selectedInterest.tenant.email}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{selectedApplication.tenant.phone}</span>
+                    <span>{selectedInterest.tenant.phone}</span>
                   </div>
                 </div>
 
-                {/* Qualifications Summary */}
+                {/* Interest Message */}
                 <Card className="mb-6">
                   <CardContent className="pt-6">
-                    <div className="grid grid-cols-3 gap-4">
+                    <h4 className="font-medium mb-3">Interest Message</h4>
+                    <p className="text-muted-foreground">{selectedInterest.message}</p>
+                  </CardContent>
+                </Card>
+
+                {/* Interest Details */}
+                <Card className="mb-6">
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">Credit Score</p>
+                        <p className="text-sm text-muted-foreground mb-1">Preferred Contact</p>
                         <div className="flex items-center">
-                          <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                          <span>{selectedApplication.tenant.creditScore}</span>
+                          {selectedInterest.tenant.preferredContact === 'email' && <Mail className="w-4 h-4 text-primary mr-2" />}
+                          {selectedInterest.tenant.preferredContact === 'phone' && <Phone className="w-4 h-4 text-primary mr-2" />}
+                          {selectedInterest.tenant.preferredContact === 'text' && <MessageSquare className="w-4 h-4 text-primary mr-2" />}
+                          <span className="capitalize">{selectedInterest.tenant.preferredContact}</span>
                         </div>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">Annual Income</p>
+                        <p className="text-sm text-muted-foreground mb-1">Submitted</p>
                         <div className="flex items-center">
-                          <DollarSign className="w-4 h-4 text-primary mr-1" />
-                          <span>${selectedApplication.tenant.income}</span>
+                          <Clock className="w-4 h-4 text-primary mr-2" />
+                          <span>{new Date(selectedInterest.submittedAt).toLocaleDateString()}</span>
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Employment</p>
-                        <span>{selectedApplication.tenant.employment}</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* References or Details */}
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium">
-                      {showReferences ? 'Landlord References' : 'Application Details'}
-                    </h3>
-                    {selectedApplication.tenant.references?.length > 0 && (
-                      <Button 
-                        variant="link"
-                        onClick={() => setShowReferences(!showReferences)}
-                      >
-                        {showReferences ? 'View Details' : 'View References'}
-                      </Button>
-                    )}
-                  </div>
-
-                  {showReferences ? (
-                    <ReferencesSection references={selectedApplication.tenant.references} />
-                  ) : (
-                    <div className="space-y-4">
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-primary" />
-                              <span>Desired Move-in Date</span>
-                            </div>
-                            <span>{selectedApplication.tenant.moveIn}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Star className="w-4 h-4 text-yellow-400" />
-                              <span>Rental Score</span>
-                            </div>
-                            <span>{selectedApplication.tenant.score} / 5.0</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-primary" />
-                              <span>Verified References</span>
-                            </div>
-                            <span>{selectedApplication.tenant.references?.length || 0} references</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  )}
-
-                  <div className="mt-8 flex gap-4">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1"
-                      onClick={() => handleInterestAction(selectedApplication.id.toString(), 'archive')}
-                    >
-                      <Archive className="w-4 h-4 mr-2" />
-                      Archive Interest
-                    </Button>
-                    <Button 
-                      className="flex-1"
-                      onClick={() => handleInterestAction(selectedApplication.id.toString(), 'contact')}
-                    >
-                      Mark as Contacted
-                    </Button>
-                  </div>
+                {/* Interest Actions */}
+                <div className="mt-8 flex gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => handleInterestAction(selectedInterest.id.toString(), 'archive')}
+                    data-testid="button-archive-interest"
+                  >
+                    <Archive className="w-4 h-4 mr-2" />
+                    Archive Interest
+                  </Button>
+                  <Button 
+                    className="flex-1"
+                    onClick={() => handleInterestAction(selectedInterest.id.toString(), 'contact')}
+                    data-testid="button-mark-contacted"
+                  >
+                    Mark as Contacted
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -415,24 +351,16 @@ const ApplicationManagement = () => {
             <Card className="col-span-7 flex items-center justify-center">
               <CardContent className="pt-12 pb-12 text-center">
                 <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Application Selected</h3>
-                <p className="text-muted-foreground">Select an application from the list to view details</p>
+                <h3 className="text-lg font-medium mb-2">No Interest Selected</h3>
+                <p className="text-muted-foreground">Select an interest from the list to view details and contact options</p>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
 
-      <Dialog 
-        open={modal?.type === 'applicationDetails'} 
-        onOpenChange={() => closeModal()}
-      >
-        <DialogContent className="max-w-3xl">
-          {/* ... existing dialog content ... */}
-        </DialogContent>
-      </Dialog>
     </LandlordLayout>
   );
 };
 
-export default ApplicationManagement;
+export default InterestInbox;
