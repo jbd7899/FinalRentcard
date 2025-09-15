@@ -1,5 +1,5 @@
-import { User, TenantProfile, LandlordProfile, Property, Interest, RentCard } from "@shared/schema";
-import { users, tenantProfiles, landlordProfiles, properties, interests, rentCards } from "@shared/schema";
+import { User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken } from "@shared/schema";
+import { users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens } from "@shared/schema";
 import { db, sql } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -27,6 +27,7 @@ export interface IStorage {
 
   // Tenant profile operations
   getTenantProfile(userId: number): Promise<TenantProfile | undefined>;
+  getTenantProfileById(id: number): Promise<TenantProfile | undefined>;
   createTenantProfile(profile: Omit<TenantProfile, "id">): Promise<TenantProfile>;
   updateTenantProfile(id: number, profile: Partial<TenantProfile>): Promise<TenantProfile>;
 
@@ -51,6 +52,14 @@ export interface IStorage {
 
   // Rent card operations
   getRentCard(userId: number): Promise<RentCard | undefined>;
+
+  // Share token operations
+  createShareToken(tenantId: number, data: { scope?: string; expiresAt?: Date }): Promise<ShareToken>;
+  getShareToken(token: string): Promise<ShareToken | undefined>;
+  getShareTokenById(id: number): Promise<ShareToken | undefined>;
+  getShareTokensByTenant(tenantId: number): Promise<ShareToken[]>;
+  revokeShareToken(id: number): Promise<ShareToken>;
+  trackTokenView(token: string): Promise<void>;
 
   // Document operations
   getTenantDocuments(tenantId: number): Promise<TenantDocument[]>;
@@ -138,6 +147,11 @@ export class DatabaseStorage implements IStorage {
 
   async getTenantProfile(userId: number): Promise<TenantProfile | undefined> {
     const [profile] = await db.select().from(tenantProfiles).where(eq(tenantProfiles.userId, userId));
+    return profile;
+  }
+
+  async getTenantProfileById(id: number): Promise<TenantProfile | undefined> {
+    const [profile] = await db.select().from(tenantProfiles).where(eq(tenantProfiles.id, id));
     return profile;
   }
 
@@ -268,6 +282,66 @@ export class DatabaseStorage implements IStorage {
   async createRentCard(rentCard: Omit<RentCard, "id" | "createdAt" | "updatedAt">): Promise<RentCard> {
     const [newRentCard] = await db.insert(rentCards).values(rentCard).returning();
     return newRentCard;
+  }
+
+  // Share token operations
+  async createShareToken(tenantId: number, data: { scope?: string; expiresAt?: Date }): Promise<ShareToken> {
+    const { nanoid } = await import('nanoid');
+    const token = nanoid(32); // Generate a secure 32-character token
+    
+    const [newShareToken] = await db
+      .insert(shareTokens)
+      .values({
+        token,
+        tenantId,
+        scope: data.scope || 'rentcard',
+        expiresAt: data.expiresAt,
+      })
+      .returning();
+    
+    return newShareToken;
+  }
+
+  async getShareToken(token: string): Promise<ShareToken | undefined> {
+    const [shareToken] = await db
+      .select()
+      .from(shareTokens)
+      .where(eq(shareTokens.token, token));
+    return shareToken;
+  }
+
+  async getShareTokensByTenant(tenantId: number): Promise<ShareToken[]> {
+    return await db
+      .select()
+      .from(shareTokens)
+      .where(eq(shareTokens.tenantId, tenantId));
+  }
+
+  async revokeShareToken(id: number): Promise<ShareToken> {
+    const [updatedToken] = await db
+      .update(shareTokens)
+      .set({ revoked: true })
+      .where(eq(shareTokens.id, id))
+      .returning();
+    return updatedToken;
+  }
+
+  async getShareTokenById(id: number): Promise<ShareToken | undefined> {
+    const [shareToken] = await db
+      .select()
+      .from(shareTokens)
+      .where(eq(shareTokens.id, id));
+    return shareToken;
+  }
+
+  async trackTokenView(token: string): Promise<void> {
+    await db
+      .update(shareTokens)
+      .set({ 
+        viewCount: sql`${shareTokens.viewCount} + 1`,
+        lastViewedAt: new Date()
+      })
+      .where(eq(shareTokens.token, token));
   }
 
   // Document operations

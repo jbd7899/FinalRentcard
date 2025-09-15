@@ -2,8 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, requireAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema, insertInterestSchema } from "@shared/schema";
-import { properties, interests, propertyImages, propertyAmenities, Interest } from "@shared/schema";
+import { insertPropertySchema, insertInterestSchema, insertShareTokenSchema } from "@shared/schema";
+import { properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
 import { db } from "./db";
@@ -100,6 +100,22 @@ async function assertPropertyOwnership(req: any, propertyId: number): Promise<vo
   const landlordProfile = await storage.getLandlordProfile(req.user.id);
   if (!landlordProfile || landlordProfile.id !== property.landlordId) {
     throw new Error("Forbidden: Access denied to this property");
+  }
+}
+
+async function assertShareTokenOwnership(req: any, tokenId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const shareToken = await storage.getShareTokenById(tokenId);
+  if (!shareToken) {
+    throw new Error("Share token not found");
+  }
+  
+  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  if (!tenantProfile || tenantProfile.id !== shareToken.tenantId) {
+    throw new Error("Forbidden: Access denied to this share token");
   }
 }
 
@@ -717,6 +733,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error instanceof Error ? error.message : "Failed to fetch RentCard",
         error 
       });
+    }
+  });
+
+  // Share Token routes
+  app.post("/api/share-tokens", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Validate rent card exists
+      const rentCard = await storage.getRentCard(req.user.id);
+      if (!rentCard) {
+        return res.status(400).json({ message: "Please create your RentCard first" });
+      }
+
+      const validatedData = insertShareTokenSchema.parse(req.body);
+      const shareToken = await storage.createShareToken(tenantProfile.id, validatedData);
+
+      res.status(201).json(shareToken);
+    } catch (error) {
+      handleRouteError(error, res, 'create share token');
+    }
+  });
+
+  app.get("/api/share-tokens", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const shareTokens = await storage.getShareTokensByTenant(tenantProfile.id);
+      res.json(shareTokens);
+    } catch (error) {
+      handleRouteError(error, res, 'list share tokens');
+    }
+  });
+
+  app.patch("/api/share-tokens/:id/revoke", requireAuth, async (req, res) => {
+    try {
+      const tokenId = parseInt(req.params.id);
+      if (isNaN(tokenId)) {
+        return res.status(400).json({ message: "Invalid token ID" });
+      }
+
+      // Use the existing ownership validation function
+      await assertShareTokenOwnership(req, tokenId);
+
+      const revokedToken = await storage.revokeShareToken(tokenId);
+      res.json(revokedToken);
+    } catch (error) {
+      handleRouteError(error, res, 'revoke share token');
+    }
+  });
+
+  // Public endpoint for accessing shared rent cards
+  app.get("/api/rentcard/shared/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      const shareToken = await storage.getShareToken(token);
+      if (!shareToken) {
+        return res.status(404).json({ message: "Invalid or expired share link" });
+      }
+
+      // Check if token is revoked
+      if (shareToken.revoked) {
+        return res.status(403).json({ message: "This share link has been revoked" });
+      }
+
+      // Check if token is expired
+      if (shareToken.expiresAt && new Date() > shareToken.expiresAt) {
+        return res.status(403).json({ message: "This share link has expired" });
+      }
+
+      // Get the tenant profile to get user ID
+      const tenantProfile = await storage.getTenantProfileById(shareToken.tenantId);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      // Get the rent card
+      const rentCard = await storage.getRentCard(tenantProfile.userId!);
+      if (!rentCard) {
+        return res.status(404).json({ message: "RentCard not found" });
+      }
+
+      // Track the view
+      await storage.trackTokenView(token);
+
+      // Return the rent card data
+      res.json(rentCard);
+    } catch (error) {
+      handleRouteError(error, res, 'access shared rent card');
     }
   });
 
