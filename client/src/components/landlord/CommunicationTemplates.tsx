@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  Template, 
+  FileText, 
   Plus, 
   Edit2, 
   Trash2, 
@@ -226,7 +226,7 @@ const CommunicationTemplates = () => {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2">
-            <Template className="h-5 w-5" />
+            <FileText className="h-5 w-5" />
             Communication Templates
           </CardTitle>
           <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
@@ -398,7 +398,7 @@ const CommunicationTemplates = () => {
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            <Template className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+            <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
             <p>No templates created yet</p>
             <p className="text-sm">Create your first template to get started</p>
           </div>
