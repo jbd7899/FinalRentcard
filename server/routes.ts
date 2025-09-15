@@ -2,8 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, requireAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema } from "@shared/schema";
-import { properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken } from "@shared/schema";
+import { insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema, insertPropertyQRCodeSchema } from "@shared/schema";
+import { properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
 import { db } from "./db";
@@ -548,6 +548,216 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ message: "Error deleting property amenity", error });
+    }
+  });
+
+  // Property QR Code routes
+  app.get("/api/properties/:propertyId/qrcodes", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const propertyId = parseInt(req.params.propertyId);
+      
+      // Verify property ownership
+      await assertPropertyOwnership(req, propertyId);
+      
+      const qrCodes = await storage.getPropertyQRCodes(propertyId);
+      res.json(qrCodes);
+    } catch (error) {
+      console.error('Error fetching property QR codes:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
+      res.status(500).json({ message: "Error fetching QR codes", error });
+    }
+  });
+
+  app.post("/api/properties/:propertyId/qrcodes", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const propertyId = parseInt(req.params.propertyId);
+      
+      // Verify property ownership
+      await assertPropertyOwnership(req, propertyId);
+      
+      // Validate request body
+      const validationResult = insertPropertyQRCodeSchema.safeParse({
+        ...req.body,
+        propertyId
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const newQRCode = await storage.createPropertyQRCode({
+        propertyId,
+        qrCodeData: validationResult.data.qrCodeData,
+        title: validationResult.data.title,
+        description: validationResult.data.description || null,
+        isActive: true
+      });
+
+      res.status(201).json(newQRCode);
+    } catch (error) {
+      console.error('Error creating property QR code:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
+      res.status(400).json({ message: "Error creating QR code", error });
+    }
+  });
+
+  app.get("/api/properties/qrcodes/:qrCodeId", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const qrCodeId = parseInt(req.params.qrCodeId);
+      const qrCode = await storage.getPropertyQRCodeById(qrCodeId);
+      
+      if (!qrCode) {
+        return res.status(404).json({ message: "QR code not found" });
+      }
+      
+      // Verify property ownership
+      if (!qrCode.propertyId) {
+        return res.status(400).json({ message: "Invalid QR code: missing property reference" });
+      }
+      await assertPropertyOwnership(req, qrCode.propertyId);
+      
+      res.json(qrCode);
+    } catch (error) {
+      console.error('Error fetching QR code:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
+      res.status(500).json({ message: "Error fetching QR code", error });
+    }
+  });
+
+  app.put("/api/properties/qrcodes/:qrCodeId", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const qrCodeId = parseInt(req.params.qrCodeId);
+      const qrCode = await storage.getPropertyQRCodeById(qrCodeId);
+      
+      if (!qrCode) {
+        return res.status(404).json({ message: "QR code not found" });
+      }
+      
+      // Verify property ownership
+      if (!qrCode.propertyId) {
+        return res.status(400).json({ message: "Invalid QR code: missing property reference" });
+      }
+      await assertPropertyOwnership(req, qrCode.propertyId);
+      
+      const updatedQRCode = await storage.updatePropertyQRCode(qrCodeId, req.body);
+      res.json(updatedQRCode);
+    } catch (error) {
+      console.error('Error updating QR code:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
+      res.status(500).json({ message: "Error updating QR code", error });
+    }
+  });
+
+  app.delete("/api/properties/qrcodes/:qrCodeId", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const qrCodeId = parseInt(req.params.qrCodeId);
+      const qrCode = await storage.getPropertyQRCodeById(qrCodeId);
+      
+      if (!qrCode) {
+        return res.status(404).json({ message: "QR code not found" });
+      }
+      
+      // Verify property ownership
+      if (!qrCode.propertyId) {
+        return res.status(400).json({ message: "Invalid QR code: missing property reference" });
+      }
+      await assertPropertyOwnership(req, qrCode.propertyId);
+      
+      await storage.deletePropertyQRCode(qrCodeId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting QR code:', error);
+      
+      if (error instanceof Error && error.message.includes('Forbidden')) {
+        return res.status(403).json({ message: error.message });
+      }
+      
+      res.status(500).json({ message: "Error deleting QR code", error });
+    }
+  });
+
+  // Public route for tracking QR code scans (no auth required)
+  app.post("/api/qrcode/:qrCodeId/track", async (req, res) => {
+    try {
+      const qrCodeId = parseInt(req.params.qrCodeId);
+      const qrCode = await storage.getPropertyQRCodeById(qrCodeId);
+      
+      if (!qrCode || !qrCode.isActive) {
+        return res.status(404).json({ message: "QR code not found or inactive" });
+      }
+      
+      // Track the scan
+      await storage.trackQRCodeScan(qrCodeId);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error tracking QR code scan:', error);
+      res.status(500).json({ message: "Error tracking QR code scan", error });
+    }
+  });
+
+  // Public QR code redirect endpoint with scan tracking (no auth required)
+  app.get("/qr/:id", async (req, res) => {
+    try {
+      const qrCodeId = parseInt(req.params.id);
+      
+      if (isNaN(qrCodeId)) {
+        return res.status(400).send("Invalid QR code ID");
+      }
+      
+      const qrCode = await storage.getPropertyQRCodeById(qrCodeId);
+      
+      if (!qrCode || !qrCode.isActive) {
+        return res.status(404).send("QR code not found or inactive");
+      }
+      
+      // Track the scan
+      await storage.trackQRCodeScan(qrCodeId);
+      
+      // Redirect to the target URL
+      res.redirect(302, qrCode.qrCodeData);
+    } catch (error) {
+      console.error('Error in QR code redirect:', error);
+      res.status(500).send("Error processing QR code");
     }
   });
 

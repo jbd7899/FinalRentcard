@@ -1,5 +1,5 @@
-import { User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken } from "@shared/schema";
-import { users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens } from "@shared/schema";
+import { User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken, PropertyQRCode } from "@shared/schema";
+import { users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens, propertyQRCodes } from "@shared/schema";
 import { db, sql } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -117,6 +117,14 @@ export interface IStorage {
   getNeighborhoodInsight(propertyId: number): Promise<NeighborhoodInsight | undefined>;
   createNeighborhoodInsight(insight: Omit<NeighborhoodInsight, "id" | "createdAt" | "updatedAt">): Promise<NeighborhoodInsight>;
   updateNeighborhoodInsight(id: number, insight: Partial<NeighborhoodInsight>): Promise<NeighborhoodInsight>;
+
+  // Property QR Code operations
+  getPropertyQRCodes(propertyId: number): Promise<PropertyQRCode[]>;
+  getPropertyQRCodeById(id: number): Promise<PropertyQRCode | undefined>;
+  createPropertyQRCode(qrCode: Omit<PropertyQRCode, "id" | "scanCount" | "lastScannedAt" | "createdAt" | "updatedAt">): Promise<PropertyQRCode>;
+  updatePropertyQRCode(id: number, qrCode: Partial<PropertyQRCode>): Promise<PropertyQRCode>;
+  trackQRCodeScan(id: number): Promise<void>;
+  deletePropertyQRCode(id: number): Promise<void>;
 
   sessionStore: session.Store;
 }
@@ -698,6 +706,64 @@ export class DatabaseStorage implements IStorage {
         applicationCount: Number(interestCount[0]?.count) || 0
       });
     }
+  }
+
+  // Property QR Code operations
+  async getPropertyQRCodes(propertyId: number): Promise<PropertyQRCode[]> {
+    const qrCodes = await db
+      .select()
+      .from(propertyQRCodes)
+      .where(eq(propertyQRCodes.propertyId, propertyId));
+    return qrCodes;
+  }
+
+  async getPropertyQRCodeById(id: number): Promise<PropertyQRCode | undefined> {
+    const [qrCode] = await db
+      .select()
+      .from(propertyQRCodes)
+      .where(eq(propertyQRCodes.id, id));
+    return qrCode;
+  }
+
+  async createPropertyQRCode(qrCode: Omit<PropertyQRCode, "id" | "scanCount" | "lastScannedAt" | "createdAt" | "updatedAt">): Promise<PropertyQRCode> {
+    const [newQRCode] = await db
+      .insert(propertyQRCodes)
+      .values({
+        ...qrCode,
+        scanCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newQRCode;
+  }
+
+  async updatePropertyQRCode(id: number, qrCode: Partial<PropertyQRCode>): Promise<PropertyQRCode> {
+    const [updatedQRCode] = await db
+      .update(propertyQRCodes)
+      .set({
+        ...qrCode,
+        updatedAt: new Date()
+      })
+      .where(eq(propertyQRCodes.id, id))
+      .returning();
+    return updatedQRCode;
+  }
+
+  async trackQRCodeScan(id: number): Promise<void> {
+    await db
+      .update(propertyQRCodes)
+      .set({
+        scanCount: sql`${propertyQRCodes.scanCount} + 1`,
+        lastScannedAt: new Date()
+      })
+      .where(eq(propertyQRCodes.id, id));
+  }
+
+  async deletePropertyQRCode(id: number): Promise<void> {
+    await db
+      .delete(propertyQRCodes)
+      .where(eq(propertyQRCodes.id, id));
   }
 }
 
