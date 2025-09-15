@@ -1,7 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users, tenantProfiles, landlordProfiles, properties } from "./schema";
+import { users, tenantProfiles, landlordProfiles, properties, shareTokens, interests, propertyQRCodes } from "./schema";
 
 // 1. Document Storage and Verification
 export const tenantDocuments = pgTable("tenant_documents", {
@@ -225,3 +225,187 @@ export type InsertGroupApplication = z.infer<typeof insertGroupApplicationSchema
 
 export type NeighborhoodInsight = typeof neighborhoodInsights.$inferSelect;
 export type InsertNeighborhoodInsight = z.infer<typeof insertNeighborhoodInsightSchema>;
+
+// Enhanced Analytics and View Tracking System
+
+// 1. Comprehensive RentCard View Tracking
+export const rentcardViews = pgTable("rentcard_views", {
+  id: serial("id").primaryKey(),
+  shareTokenId: integer("share_token_id").references(() => shareTokens.id),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id),
+  viewerFingerprint: text("viewer_fingerprint"), // Unique browser/device identifier
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  referrer: text("referrer"), // Where the view came from
+  source: text("source").notNull(), // 'qr_code', 'share_link', 'direct', 'email', 'sms'
+  sourceId: text("source_id"), // QR code ID, email campaign ID, etc.
+  location: json("location").$type<{
+    city?: string;
+    region?: string;
+    country?: string;
+    coordinates?: { lat: number; lng: number };
+  }>(),
+  deviceInfo: json("device_info").$type<{
+    type: 'desktop' | 'mobile' | 'tablet';
+    os?: string;
+    browser?: string;
+    screenSize?: { width: number; height: number };
+  }>(),
+  viewDuration: integer("view_duration"), // Time spent viewing in seconds
+  actionsPerformed: json("actions_performed").$type<string[]>(), // ['scrolled', 'clicked_contact', 'downloaded_info']
+  isUnique: boolean("is_unique").default(true), // First time viewing this RentCard
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// 2. View Sessions - Group related views together
+export const viewSessions = pgTable("view_sessions", {
+  id: serial("id").primaryKey(),
+  sessionFingerprint: text("session_fingerprint").notNull().unique(),
+  shareTokenId: integer("share_token_id").references(() => shareTokens.id),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id),
+  startTime: timestamp("start_time").defaultNow().notNull(),
+  endTime: timestamp("end_time"),
+  totalViews: integer("total_views").default(1),
+  totalDuration: integer("total_duration").default(0), // Total time in seconds
+  convertedToInterest: boolean("converted_to_interest").default(false),
+  interestId: integer("interest_id").references(() => interests.id),
+  conversionTime: timestamp("conversion_time"), // When interest was submitted
+});
+
+// 3. Interest Analytics - Track conversion and engagement
+export const interestAnalytics = pgTable("interest_analytics", {
+  id: serial("id").primaryKey(),
+  interestId: integer("interest_id").references(() => interests.id),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id),
+  landlordId: integer("landlord_id").references(() => landlordProfiles.id),
+  propertyId: integer("property_id").references(() => properties.id),
+  sourceView: text("source_view"), // 'rentcard_share', 'property_listing', 'search_result'
+  viewsBeforeInterest: integer("views_before_interest").default(0),
+  timeToInterest: integer("time_to_interest"), // Minutes from first view to interest
+  engagementScore: real("engagement_score"), // Calculated based on various factors
+  responseTime: integer("response_time"), // Landlord response time in minutes
+  finalStatus: text("final_status"), // 'contacted', 'rejected', 'accepted', 'withdrawn'
+  metadata: json("metadata").$type<{
+    viewSources: string[];
+    deviceTypes: string[];
+    totalViewDuration: number;
+    documentsViewed?: string[];
+  }>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// 4. Analytics Aggregations - Pre-computed metrics for performance
+export const analyticsAggregations = pgTable("analytics_aggregations", {
+  id: serial("id").primaryKey(),
+  entityType: text("entity_type").notNull(), // 'tenant', 'landlord', 'property', 'shareToken'
+  entityId: integer("entity_id").notNull(),
+  aggregationType: text("aggregation_type").notNull(), // 'daily', 'weekly', 'monthly'
+  date: timestamp("date").notNull(),
+  metrics: json("metrics").$type<{
+    views?: number;
+    uniqueViews?: number;
+    interests?: number;
+    conversionRate?: number;
+    avgViewDuration?: number;
+    topSources?: { source: string; count: number }[];
+    deviceBreakdown?: { type: string; count: number }[];
+    locationBreakdown?: { country: string; count: number }[];
+  }>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// 5. Sharing Performance Analytics
+export const sharingAnalytics = pgTable("sharing_analytics", {
+  id: serial("id").primaryKey(),
+  shareTokenId: integer("share_token_id").references(() => shareTokens.id),
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id),
+  sharingMethod: text("sharing_method").notNull(), // 'qr_code', 'email', 'sms', 'social', 'copy_link'
+  recipientInfo: json("recipient_info").$type<{
+    email?: string;
+    phone?: string;
+    platform?: string; // For social sharing
+    recipientType?: 'landlord' | 'agent' | 'friend' | 'unknown';
+  }>(),
+  shareDate: timestamp("share_date").defaultNow().notNull(),
+  firstViewDate: timestamp("first_view_date"),
+  totalViews: integer("total_views").default(0),
+  uniqueViewers: integer("unique_viewers").default(0),
+  conversionToInterest: boolean("conversion_to_interest").default(false),
+  conversionDate: timestamp("conversion_date"),
+  performanceScore: real("performance_score"), // Calculated based on engagement
+});
+
+// 6. Enhanced QR Code Analytics
+export const qrCodeAnalytics = pgTable("qr_code_analytics", {
+  id: serial("id").primaryKey(),
+  qrCodeId: integer("qr_code_id").references(() => propertyQRCodes.id),
+  propertyId: integer("property_id").references(() => properties.id),
+  scanDate: timestamp("scan_date").defaultNow().notNull(),
+  scanLocation: json("scan_location").$type<{
+    lat?: number;
+    lng?: number;
+    accuracy?: number;
+    address?: string;
+  }>(),
+  scannerInfo: json("scanner_info").$type<{
+    deviceType: 'mobile' | 'tablet' | 'desktop';
+    os?: string;
+    browser?: string;
+    appName?: string; // If scanned from QR scanner app
+  }>(),
+  subsequentAction: text("subsequent_action"), // 'viewed_rentcard', 'submitted_interest', 'bookmarked', 'shared'
+  sessionDuration: integer("session_duration"), // Time from scan to last action
+  conversionValue: text("conversion_value"), // Type of conversion achieved
+});
+
+// Insert schemas for new analytics tables
+export const insertRentcardViewSchema = createInsertSchema(rentcardViews).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertViewSessionSchema = createInsertSchema(viewSessions).omit({
+  id: true,
+  startTime: true,
+});
+
+export const insertInterestAnalyticsSchema = createInsertSchema(interestAnalytics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAnalyticsAggregationSchema = createInsertSchema(analyticsAggregations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSharingAnalyticsSchema = createInsertSchema(sharingAnalytics).omit({
+  id: true,
+  shareDate: true,
+});
+
+export const insertQRCodeAnalyticsSchema = createInsertSchema(qrCodeAnalytics).omit({
+  id: true,
+  scanDate: true,
+});
+
+// Type definitions for new analytics tables
+export type RentcardView = typeof rentcardViews.$inferSelect;
+export type InsertRentcardView = z.infer<typeof insertRentcardViewSchema>;
+
+export type ViewSession = typeof viewSessions.$inferSelect;
+export type InsertViewSession = z.infer<typeof insertViewSessionSchema>;
+
+export type InterestAnalytics = typeof interestAnalytics.$inferSelect;
+export type InsertInterestAnalytics = z.infer<typeof insertInterestAnalyticsSchema>;
+
+export type AnalyticsAggregation = typeof analyticsAggregations.$inferSelect;
+export type InsertAnalyticsAggregation = z.infer<typeof insertAnalyticsAggregationSchema>;
+
+export type SharingAnalytics = typeof sharingAnalytics.$inferSelect;
+export type InsertSharingAnalytics = z.infer<typeof insertSharingAnalyticsSchema>;
+
+export type QRCodeAnalytics = typeof qrCodeAnalytics.$inferSelect;
+export type InsertQRCodeAnalytics = z.infer<typeof insertQRCodeAnalyticsSchema>;
