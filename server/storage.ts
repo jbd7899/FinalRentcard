@@ -1,10 +1,10 @@
 import { 
   User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken, PropertyQRCode,
-  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate 
+  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick 
 } from "@shared/schema";
 import { 
   users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens, propertyQRCodes,
-  tenantContactPreferences, communicationLogs, tenantBlockedContacts, communicationTemplates 
+  tenantContactPreferences, communicationLogs, tenantBlockedContacts, communicationTemplates, shortlinks, shortlinkClicks 
 } from "@shared/schema";
 import { db, sql } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -175,6 +175,15 @@ export interface IStorage {
     conversionRate: number;
     topActions: { action: string; count: number }[];
   }>;
+
+  // Shortlink operations
+  getShortlinks(tenantId?: number, landlordId?: number): Promise<Shortlink[]>;
+  getShortlinkBySlug(slug: string): Promise<Shortlink | undefined>;
+  createShortlink(shortlink: Omit<Shortlink, "id" | "clickCount" | "lastClickedAt" | "createdAt" | "updatedAt">): Promise<Shortlink>;
+  updateShortlink(id: number, shortlink: Partial<Shortlink>): Promise<Shortlink>;
+  incrementShortlinkClick(slug: string): Promise<void>;
+  recordShortlinkClick(click: Omit<ShortlinkClick, "id" | "clickedAt">): Promise<ShortlinkClick>;
+  getShortlinkAnalytics(shortlinkId: number, timeframe?: string): Promise<ShortlinkClick[]>;
 
   // Neighborhood insights operations
   getNeighborhoodInsight(propertyId: number): Promise<NeighborhoodInsight | undefined>;
@@ -1481,6 +1490,115 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(communicationTemplates.id, id));
+  }
+
+  // Shortlink implementations
+  async getShortlinks(tenantId?: number, landlordId?: number): Promise<Shortlink[]> {
+    let query = db.select().from(shortlinks).where(eq(shortlinks.isActive, true));
+    
+    const conditions = [eq(shortlinks.isActive, true)];
+    if (tenantId) conditions.push(eq(shortlinks.tenantId, tenantId));
+    if (landlordId) conditions.push(eq(shortlinks.landlordId, landlordId));
+    
+    if (conditions.length > 1) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(sql`${shortlinks.createdAt} DESC`);
+  }
+
+  async getShortlinkBySlug(slug: string): Promise<Shortlink | undefined> {
+    const [shortlink] = await db
+      .select()
+      .from(shortlinks)
+      .where(and(
+        eq(shortlinks.slug, slug),
+        eq(shortlinks.isActive, true)
+      ));
+    return shortlink;
+  }
+
+  async createShortlink(shortlink: Omit<Shortlink, "id" | "clickCount" | "lastClickedAt" | "createdAt" | "updatedAt">): Promise<Shortlink> {
+    const [newShortlink] = await db
+      .insert(shortlinks)
+      .values({
+        ...shortlink,
+        clickCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newShortlink;
+  }
+
+  async updateShortlink(id: number, shortlink: Partial<Shortlink>): Promise<Shortlink> {
+    const [updatedShortlink] = await db
+      .update(shortlinks)
+      .set({
+        ...shortlink,
+        updatedAt: new Date()
+      })
+      .where(eq(shortlinks.id, id))
+      .returning();
+    return updatedShortlink;
+  }
+
+  async incrementShortlinkClick(slug: string): Promise<void> {
+    await db
+      .update(shortlinks)
+      .set({
+        clickCount: sql`${shortlinks.clickCount} + 1`,
+        lastClickedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(shortlinks.slug, slug),
+        eq(shortlinks.isActive, true)
+      ));
+  }
+
+  async recordShortlinkClick(click: Omit<ShortlinkClick, "id" | "clickedAt">): Promise<ShortlinkClick> {
+    const [newClick] = await db
+      .insert(shortlinkClicks)
+      .values({
+        ...click,
+        clickedAt: new Date()
+      })
+      .returning();
+    return newClick;
+  }
+
+  async getShortlinkAnalytics(shortlinkId: number, timeframe?: string): Promise<ShortlinkClick[]> {
+    let query = db
+      .select()
+      .from(shortlinkClicks)
+      .where(eq(shortlinkClicks.shortlinkId, shortlinkId));
+
+    if (timeframe) {
+      const now = new Date();
+      let startDate: Date;
+      
+      switch (timeframe) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case '7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30days':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(0); // All time
+      }
+      
+      query = query.where(and(
+        eq(shortlinkClicks.shortlinkId, shortlinkId),
+        sql`${shortlinkClicks.clickedAt} >= ${startDate}`
+      ));
+    }
+
+    return await query.orderBy(sql`${shortlinkClicks.clickedAt} DESC`);
   }
 }
 

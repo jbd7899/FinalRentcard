@@ -156,6 +156,52 @@ export const propertyQRCodes = pgTable("property_qr_codes", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Shortlinks table for clean, short URLs with channel attribution
+export const shortlinks = pgTable("shortlinks", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(), // Short unique identifier (e.g., "abc123")
+  targetUrl: text("target_url").notNull(), // The full URL to redirect to
+  shareTokenId: integer("share_token_id").references(() => shareTokens.id), // Link to share token if applicable
+  tenantId: integer("tenant_id").references(() => tenantProfiles.id), // Optional tenant owner
+  landlordId: integer("landlord_id").references(() => landlordProfiles.id), // Optional landlord owner
+  propertyId: integer("property_id").references(() => properties.id), // Optional property association
+  resourceType: text("resource_type").notNull(), // 'rentcard', 'property', 'screening_page', etc.
+  resourceId: text("resource_id"), // ID of the specific resource
+  title: text("title"), // Optional title for analytics
+  description: text("description"), // Optional description
+  channelAttributed: text("channel_attributed"), // The channel that created this shortlink
+  clickCount: integer("click_count").notNull().default(0),
+  lastClickedAt: timestamp("last_clicked_at"), // When last accessed
+  isActive: boolean("is_active").notNull().default(true),
+  expiresAt: timestamp("expires_at"), // Optional expiration
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Shortlink click analytics for detailed tracking
+export const shortlinkClicks = pgTable("shortlink_clicks", {
+  id: serial("id").primaryKey(),
+  shortlinkId: integer("shortlink_id").references(() => shortlinks.id).notNull(),
+  clickedAt: timestamp("clicked_at").defaultNow().notNull(),
+  channel: text("channel").notNull(), // 'copy', 'email', 'sms', 'qr', 'pdf', 'direct', etc.
+  ipAddress: text("ip_address"), // For analytics
+  userAgent: text("user_agent"), // For device/browser analytics
+  referrer: text("referrer"), // HTTP referrer if available
+  deviceInfo: json("device_info").$type<{
+    type: 'desktop' | 'mobile' | 'tablet';
+    os?: string;
+    browser?: string;
+  }>(),
+  locationInfo: json("location_info").$type<{
+    country?: string;
+    region?: string;
+    city?: string;
+    timezone?: string;
+  }>(),
+  sessionId: text("session_id"), // To group related actions
+  userId: integer("user_id").references(() => users.id), // If user is authenticated
+});
+
 // Contact preferences for tenants
 export const tenantContactPreferences = pgTable("tenant_contact_preferences", {
   id: serial("id").primaryKey(),
@@ -298,6 +344,20 @@ export const updatedPropertyRelations = relations(properties, ({ many }) => ({
   qrCodes: many(propertyQRCodes),
 }));
 
+// Add relations for shortlinks
+export const shortlinkRelations = relations(shortlinks, ({ one, many }) => ({
+  shareToken: one(shareTokens, { fields: [shortlinks.shareTokenId], references: [shareTokens.id] }),
+  tenant: one(tenantProfiles, { fields: [shortlinks.tenantId], references: [tenantProfiles.id] }),
+  landlord: one(landlordProfiles, { fields: [shortlinks.landlordId], references: [landlordProfiles.id] }),
+  property: one(properties, { fields: [shortlinks.propertyId], references: [properties.id] }),
+  clicks: many(shortlinkClicks),
+}));
+
+export const shortlinkClickRelations = relations(shortlinkClicks, ({ one }) => ({
+  shortlink: one(shortlinks, { fields: [shortlinkClicks.shortlinkId], references: [shortlinks.id] }),
+  user: one(users, { fields: [shortlinkClicks.userId], references: [users.id] }),
+}));
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true
@@ -403,6 +463,57 @@ export const insertPropertyQRCodeSchema = createInsertSchema(propertyQRCodes)
     qrCodeData: z.string().url("QR code data must be a valid URL"),
   });
 
+export const insertShortlinkSchema = createInsertSchema(shortlinks).omit({
+  id: true,
+  clickCount: true,
+  lastClickedAt: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  slug: z.string().min(3, "Slug must be at least 3 characters").max(12, "Slug must be at most 12 characters").regex(/^[a-zA-Z0-9-_]+$/, "Slug can only contain letters, numbers, hyphens, and underscores"),
+  targetUrl: z.string().url("Target URL must be a valid URL").refine((url) => {
+    // Only allow internal routes - prevent open redirect vulnerability
+    const urlObj = new URL(url);
+    const allowedPaths = [
+      '/rentcard/shared/',
+      '/property/',
+      '/screening/',
+      '/tenant/',
+      '/landlord/',
+      '/'
+    ];
+    const isValidProtocol = urlObj.protocol === 'https:' || urlObj.protocol === 'http:';
+    const isValidHostname = urlObj.hostname === 'localhost' || 
+                           urlObj.hostname.includes('replit') || 
+                           urlObj.hostname.includes('myrentcard') ||
+                           urlObj.hostname === '127.0.0.1' ||
+                           urlObj.hostname === '0.0.0.0';
+    const isValidPath = allowedPaths.some(path => urlObj.pathname.startsWith(path));
+    
+    return isValidProtocol && isValidHostname && isValidPath;
+  }, "Target URL must be an internal route only"),
+  resourceType: z.enum(['rentcard', 'property', 'screening_page', 'qr_code', 'general']),
+  channelAttributed: z.enum(['copy', 'mobile_share', 'email', 'sms', 'qr', 'pdf', 'direct', 'unknown']).optional(),
+});
+
+export const insertShortlinkClickSchema = createInsertSchema(shortlinkClicks).omit({
+  id: true,
+  clickedAt: true,
+}).extend({
+  channel: z.enum(['copy', 'mobile_share', 'email', 'sms', 'qr', 'pdf', 'direct', 'unknown']),
+  deviceInfo: z.object({
+    type: z.enum(['desktop', 'mobile', 'tablet']),
+    os: z.string().optional(),
+    browser: z.string().optional(),
+  }).optional(),
+  locationInfo: z.object({
+    country: z.string().optional(),
+    region: z.string().optional(),
+    city: z.string().optional(),
+    timezone: z.string().optional(),
+  }).optional(),
+});
+
 // Contact preference schemas
 export const insertTenantContactPreferencesSchema = createInsertSchema(tenantContactPreferences)
   .omit({
@@ -492,6 +603,10 @@ export type ShareToken = typeof shareTokens.$inferSelect;
 export type InsertShareToken = z.infer<typeof insertShareTokenSchema>;
 export type PropertyQRCode = typeof propertyQRCodes.$inferSelect;
 export type InsertPropertyQRCode = z.infer<typeof insertPropertyQRCodeSchema>;
+export type Shortlink = typeof shortlinks.$inferSelect;
+export type InsertShortlink = z.infer<typeof insertShortlinkSchema>;
+export type ShortlinkClick = typeof shortlinkClicks.$inferSelect;
+export type InsertShortlinkClick = z.infer<typeof insertShortlinkClickSchema>;
 export type TenantContactPreferences = typeof tenantContactPreferences.$inferSelect;
 export type InsertTenantContactPreferences = z.infer<typeof insertTenantContactPreferencesSchema>;
 export type CommunicationLog = typeof communicationLogs.$inferSelect;
