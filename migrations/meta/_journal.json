@@ -22,6 +22,13 @@
       "when": 1757944639609,
       "tag": "0002_add_property_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1757949798976,
+      "tag": "0003_equal_black_knight",
+      "breakpoints": true
     }
   ]
 }

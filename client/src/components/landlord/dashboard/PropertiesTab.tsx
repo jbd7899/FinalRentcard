@@ -114,6 +114,7 @@ const PropertiesTab: React.FC<PropertiesTabProps> = ({
             viewCount={property.viewCount || 0}
             isArchived={Boolean(property.isArchived)}
             onArchiveToggle={() => handleArchiveToggle(property.id)}
+            property={property}
           />
         </CardContent>
       </Card>
@@ -165,6 +166,7 @@ const PropertiesTab: React.FC<PropertiesTabProps> = ({
                   viewCount={property.viewCount || 0}
                   isArchived={Boolean(property.isArchived)}
                   onArchiveToggle={() => handleArchiveToggle(property.id)}
+                  property={property}
                 />
               </CardContent>
             </Card>

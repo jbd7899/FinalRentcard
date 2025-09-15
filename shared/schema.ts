@@ -143,6 +143,19 @@ export const shareTokens = pgTable("share_tokens", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const propertyQRCodes = pgTable("property_qr_codes", {
+  id: serial("id").primaryKey(),
+  propertyId: integer("property_id").references(() => properties.id).notNull(),
+  qrCodeData: text("qr_code_data").notNull(), // The URL/data encoded in the QR code
+  title: text("title").notNull(), // Display name for the QR code
+  description: text("description"), // Optional description
+  scanCount: integer("scan_count").notNull().default(0),
+  lastScannedAt: timestamp("last_scanned_at"), // when last scanned
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Add relations for shareTokens
 export const shareTokenRelations = relations(shareTokens, ({ one }) => ({
   tenant: one(tenantProfiles, { fields: [shareTokens.tenantId], references: [tenantProfiles.id] }),
@@ -150,6 +163,17 @@ export const shareTokenRelations = relations(shareTokens, ({ one }) => ({
 
 export const tenantProfileRelations = relations(tenantProfiles, ({ many }) => ({
   shareTokens: many(shareTokens),
+}));
+
+// Add relations for propertyQRCodes
+export const propertyQRCodeRelations = relations(propertyQRCodes, ({ one }) => ({
+  property: one(properties, { fields: [propertyQRCodes.propertyId], references: [properties.id] }),
+}));
+
+// Update property relations to include QR codes
+export const updatedPropertyRelations = relations(properties, ({ many }) => ({
+  interests: many(interests),
+  qrCodes: many(propertyQRCodes),
 }));
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -243,6 +267,20 @@ export const insertShareTokenSchema = createInsertSchema(shareTokens)
     }, z.date().optional()),
   });
 
+export const insertPropertyQRCodeSchema = createInsertSchema(propertyQRCodes)
+  .omit({
+    id: true,
+    scanCount: true,
+    lastScannedAt: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    title: z.string().min(1, "QR code title is required"),
+    description: z.string().optional(),
+    qrCodeData: z.string().url("QR code data must be a valid URL"),
+  });
+
 // Re-export all schema enhancements
 export * from "./schema-enhancements";
 
@@ -259,6 +297,8 @@ export type InsertRentCard = z.infer<typeof insertRentCardSchema>;
 export type InsertInterest = z.infer<typeof insertInterestSchema>;
 export type ShareToken = typeof shareTokens.$inferSelect;
 export type InsertShareToken = z.infer<typeof insertShareTokenSchema>;
+export type PropertyQRCode = typeof propertyQRCodes.$inferSelect;
+export type InsertPropertyQRCode = z.infer<typeof insertPropertyQRCodeSchema>;
 
 export type StatsTimeframe = 'today' | '7days' | '30days';
 
