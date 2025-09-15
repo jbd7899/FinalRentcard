@@ -18,6 +18,7 @@ export const ROUTES = {
     RENTCARD: '/tenant/rentcard',
     DOCUMENTS: '/tenant/documents',
     REFERENCES: '/tenant/references',
+    CONTACT_PREFERENCES: '/tenant/contact-preferences',
   },
   
   // Landlord routes
@@ -30,6 +31,7 @@ export const ROUTES = {
     REFERENCE_FORM: '/landlord/reference-form',
     INTERESTS: '/landlord/interests',
     VERIFY_DOCUMENTS: '/landlord/verify-documents',
+    CONTACT_MANAGEMENT: '/landlord/contact-management',
   },
 
   // Property routes

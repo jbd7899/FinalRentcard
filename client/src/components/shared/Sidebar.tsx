@@ -18,6 +18,7 @@ import {
   FileText, 
   Star, 
   UserCheck,
+  Settings,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -100,6 +101,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           active: isActive(ROUTES.LANDLORD.APPLICATIONS) 
         },
         { 
+          icon: <MessageSquare className="w-5 h-5" />, 
+          label: "Contact Management", 
+          route: ROUTES.LANDLORD.CONTACT_MANAGEMENT, 
+          active: isActive(ROUTES.LANDLORD.CONTACT_MANAGEMENT)
+        },
+        { 
           icon: <Send className="w-5 h-5" />, 
           label: "Request RentCard", 
           action: () => openModal('requestRentCard'),
@@ -136,6 +143,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           label: "Applications", 
           route: ROUTES.TENANT.APPLICATIONS, 
           active: isActive(ROUTES.TENANT.APPLICATIONS) 
+        },
+        { 
+          icon: <Settings className="w-5 h-5" />, 
+          label: "Contact Preferences", 
+          route: ROUTES.TENANT.CONTACT_PREFERENCES, 
+          active: isActive(ROUTES.TENANT.CONTACT_PREFERENCES)
         }
       ];
 

@@ -27,6 +27,7 @@ import AddProperty from "@/pages/landlord/add-property";
 import PropertyScreeningPage from "@/pages/landlord/screening-page";
 import ScreeningManagement from "@/pages/landlord/screening";
 import VerifyDocumentsPage from "@/pages/landlord/verify-documents";
+import ContactManagement from "@/pages/landlord/ContactManagement";
 
 // Tenant Pages
 import TenantDashboard from "@/pages/tenant/dashboard";
@@ -34,6 +35,7 @@ import TenantApplications from "@/pages/tenant/applications";
 import TenantRentCard from "@/pages/tenant/rentcard";
 import DocumentDashboard from "@/pages/tenant/documents";
 import TenantReferences from "@/pages/tenant/references";
+import ContactPreferences from "@/pages/tenant/ContactPreferences";
 
 // Shared/Public Pages
 import SharedRentCard from "@/pages/shared-rentcard";
@@ -52,6 +54,7 @@ function Router() {
       <ProtectedRoute path={ROUTES.LANDLORD.ADD_PROPERTY} component={AddProperty} />
       <ProtectedRoute path="/landlord/properties/:id/edit" component={AddProperty} />
       <ProtectedRoute path={ROUTES.LANDLORD.VERIFY_DOCUMENTS} component={VerifyDocumentsPage} />
+      <ProtectedRoute path={ROUTES.LANDLORD.CONTACT_MANAGEMENT} component={ContactManagement} />
       <Route path="/landlord/screening/:slug" component={PropertyScreeningPage} />
       <ProtectedRoute path={ROUTES.LANDLORD.SCREENING} component={ScreeningManagement} />
       <Route path="/property/archived/:slug" component={ArchivedPropertyPage} />
@@ -74,6 +77,7 @@ function Router() {
       <ProtectedRoute path={ROUTES.TENANT.RENTCARD} component={TenantRentCard} />
       <ProtectedRoute path={ROUTES.TENANT.DOCUMENTS} component={DocumentDashboard} />
       <ProtectedRoute path={ROUTES.TENANT.REFERENCES} component={TenantReferences} />
+      <ProtectedRoute path={ROUTES.TENANT.CONTACT_PREFERENCES} component={ContactPreferences} />
       <Route path="/create-rentcard" component={CreateRentCard} />
       <Route path="/rentcard/:slug" component={TenantRentCard} />
       

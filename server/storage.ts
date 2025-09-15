@@ -1,5 +1,11 @@
-import { User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken, PropertyQRCode } from "@shared/schema";
-import { users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens, propertyQRCodes } from "@shared/schema";
+import { 
+  User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken, PropertyQRCode,
+  TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate 
+} from "@shared/schema";
+import { 
+  users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens, propertyQRCodes,
+  tenantContactPreferences, communicationLogs, tenantBlockedContacts, communicationTemplates 
+} from "@shared/schema";
 import { db, sql } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -125,6 +131,31 @@ export interface IStorage {
   updatePropertyQRCode(id: number, qrCode: Partial<PropertyQRCode>): Promise<PropertyQRCode>;
   trackQRCodeScan(id: number): Promise<void>;
   deletePropertyQRCode(id: number): Promise<void>;
+
+  // Contact preference operations
+  getTenantContactPreferences(tenantId: number): Promise<TenantContactPreferences | undefined>;
+  createTenantContactPreferences(preferences: Omit<TenantContactPreferences, "id" | "createdAt" | "updatedAt">): Promise<TenantContactPreferences>;
+  updateTenantContactPreferences(tenantId: number, preferences: Partial<TenantContactPreferences>): Promise<TenantContactPreferences>;
+
+  // Communication log operations
+  getCommunicationLogs(landlordId?: number, tenantId?: number, propertyId?: number): Promise<CommunicationLog[]>;
+  createCommunicationLog(log: Omit<CommunicationLog, "id" | "createdAt">): Promise<CommunicationLog>;
+  updateCommunicationLogStatus(id: number, status: string, metadata?: any): Promise<CommunicationLog>;
+  getCommunicationThread(threadId: string): Promise<CommunicationLog[]>;
+
+  // Blocked contacts operations
+  getTenantBlockedContacts(tenantId: number): Promise<TenantBlockedContact[]>;
+  createTenantBlockedContact(blockedContact: Omit<TenantBlockedContact, "id" | "createdAt">): Promise<TenantBlockedContact>;
+  removeTenantBlockedContact(id: number): Promise<void>;
+  isContactBlocked(tenantId: number, landlordId?: number, email?: string, phone?: string): Promise<boolean>;
+
+  // Communication template operations
+  getCommunicationTemplates(landlordId: number, category?: string): Promise<CommunicationTemplate[]>;
+  getCommunicationTemplateById(id: number): Promise<CommunicationTemplate | undefined>;
+  createCommunicationTemplate(template: Omit<CommunicationTemplate, "id" | "usageCount" | "createdAt" | "updatedAt">): Promise<CommunicationTemplate>;
+  updateCommunicationTemplate(id: number, template: Partial<CommunicationTemplate>): Promise<CommunicationTemplate>;
+  deleteCommunicationTemplate(id: number): Promise<void>;
+  incrementTemplateUsage(id: number): Promise<void>;
 
   sessionStore: session.Store;
 }
@@ -764,6 +795,219 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(propertyQRCodes)
       .where(eq(propertyQRCodes.id, id));
+  }
+
+  // Contact preference operations
+  async getTenantContactPreferences(tenantId: number): Promise<TenantContactPreferences | undefined> {
+    const [preferences] = await db
+      .select()
+      .from(tenantContactPreferences)
+      .where(eq(tenantContactPreferences.tenantId, tenantId));
+    return preferences;
+  }
+
+  async createTenantContactPreferences(preferences: Omit<TenantContactPreferences, "id" | "createdAt" | "updatedAt">): Promise<TenantContactPreferences> {
+    const [newPreferences] = await db
+      .insert(tenantContactPreferences)
+      .values({
+        ...preferences,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newPreferences;
+  }
+
+  async updateTenantContactPreferences(tenantId: number, preferences: Partial<TenantContactPreferences>): Promise<TenantContactPreferences> {
+    const [updatedPreferences] = await db
+      .update(tenantContactPreferences)
+      .set({
+        ...preferences,
+        updatedAt: new Date()
+      })
+      .where(eq(tenantContactPreferences.tenantId, tenantId))
+      .returning();
+    return updatedPreferences;
+  }
+
+  // Communication log operations
+  async getCommunicationLogs(landlordId?: number, tenantId?: number, propertyId?: number): Promise<CommunicationLog[]> {
+    let query = db.select().from(communicationLogs);
+    
+    const conditions = [];
+    if (landlordId) conditions.push(eq(communicationLogs.landlordId, landlordId));
+    if (tenantId) conditions.push(eq(communicationLogs.tenantId, tenantId));
+    if (propertyId) conditions.push(eq(communicationLogs.propertyId, propertyId));
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    const logs = await query.orderBy(sql`${communicationLogs.createdAt} DESC`);
+    return logs;
+  }
+
+  async createCommunicationLog(log: Omit<CommunicationLog, "id" | "createdAt">): Promise<CommunicationLog> {
+    const [newLog] = await db
+      .insert(communicationLogs)
+      .values({
+        ...log,
+        createdAt: new Date()
+      })
+      .returning();
+    return newLog;
+  }
+
+  async updateCommunicationLogStatus(id: number, status: string, metadata?: any): Promise<CommunicationLog> {
+    const [updatedLog] = await db
+      .update(communicationLogs)
+      .set({
+        status,
+        metadata: metadata || undefined
+      })
+      .where(eq(communicationLogs.id, id))
+      .returning();
+    return updatedLog;
+  }
+
+  async getCommunicationThread(threadId: string): Promise<CommunicationLog[]> {
+    const logs = await db
+      .select()
+      .from(communicationLogs)
+      .where(eq(communicationLogs.threadId, threadId))
+      .orderBy(sql`${communicationLogs.createdAt} ASC`);
+    return logs;
+  }
+
+  // Blocked contacts operations
+  async getTenantBlockedContacts(tenantId: number): Promise<TenantBlockedContact[]> {
+    const blockedContacts = await db
+      .select()
+      .from(tenantBlockedContacts)
+      .where(eq(tenantBlockedContacts.tenantId, tenantId));
+    return blockedContacts;
+  }
+
+  async createTenantBlockedContact(blockedContact: Omit<TenantBlockedContact, "id" | "createdAt">): Promise<TenantBlockedContact> {
+    const [newBlockedContact] = await db
+      .insert(tenantBlockedContacts)
+      .values({
+        ...blockedContact,
+        createdAt: new Date()
+      })
+      .returning();
+    return newBlockedContact;
+  }
+
+  async removeTenantBlockedContact(id: number): Promise<void> {
+    await db
+      .delete(tenantBlockedContacts)
+      .where(eq(tenantBlockedContacts.id, id));
+  }
+
+  async isContactBlocked(tenantId: number, landlordId?: number, email?: string, phone?: string): Promise<boolean> {
+    const conditions = [eq(tenantBlockedContacts.tenantId, tenantId)];
+    
+    if (landlordId) {
+      conditions.push(eq(tenantBlockedContacts.landlordId, landlordId));
+    }
+    if (email) {
+      conditions.push(eq(tenantBlockedContacts.blockedEmail, email));
+    }
+    if (phone) {
+      conditions.push(eq(tenantBlockedContacts.blockedPhone, phone));
+    }
+
+    const [blockedContact] = await db
+      .select()
+      .from(tenantBlockedContacts)
+      .where(and(...conditions))
+      .limit(1);
+
+    if (!blockedContact) return false;
+
+    // Check if temporary block has expired
+    if (blockedContact.blockType === 'temporary' && blockedContact.blockedUntil) {
+      const now = new Date();
+      if (now > blockedContact.blockedUntil) {
+        // Remove expired temporary block
+        await this.removeTenantBlockedContact(blockedContact.id);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Communication template operations
+  async getCommunicationTemplates(landlordId: number, category?: string): Promise<CommunicationTemplate[]> {
+    let query = db
+      .select()
+      .from(communicationTemplates)
+      .where(and(
+        eq(communicationTemplates.landlordId, landlordId),
+        eq(communicationTemplates.isActive, true)
+      ));
+    
+    if (category) {
+      query = query.where(and(
+        eq(communicationTemplates.landlordId, landlordId),
+        eq(communicationTemplates.category, category),
+        eq(communicationTemplates.isActive, true)
+      ));
+    }
+    
+    const templates = await query.orderBy(sql`${communicationTemplates.title} ASC`);
+    return templates;
+  }
+
+  async getCommunicationTemplateById(id: number): Promise<CommunicationTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(communicationTemplates)
+      .where(eq(communicationTemplates.id, id));
+    return template;
+  }
+
+  async createCommunicationTemplate(template: Omit<CommunicationTemplate, "id" | "usageCount" | "createdAt" | "updatedAt">): Promise<CommunicationTemplate> {
+    const [newTemplate] = await db
+      .insert(communicationTemplates)
+      .values({
+        ...template,
+        usageCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newTemplate;
+  }
+
+  async updateCommunicationTemplate(id: number, template: Partial<CommunicationTemplate>): Promise<CommunicationTemplate> {
+    const [updatedTemplate] = await db
+      .update(communicationTemplates)
+      .set({
+        ...template,
+        updatedAt: new Date()
+      })
+      .where(eq(communicationTemplates.id, id))
+      .returning();
+    return updatedTemplate;
+  }
+
+  async deleteCommunicationTemplate(id: number): Promise<void> {
+    await db
+      .delete(communicationTemplates)
+      .where(eq(communicationTemplates.id, id));
+  }
+
+  async incrementTemplateUsage(id: number): Promise<void> {
+    await db
+      .update(communicationTemplates)
+      .set({
+        usageCount: sql`${communicationTemplates.usageCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(communicationTemplates.id, id));
   }
 }
 
