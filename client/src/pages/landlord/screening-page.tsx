@@ -42,6 +42,7 @@ import { Link } from "wouter";
 import { PropertyImage, PropertyAmenity } from '@shared/schema';
 import LandlordLayout from '@/components/layouts/LandlordLayout';
 import { NeighborhoodInsights } from '@/components/shared/NeighborhoodInsights';
+import InterestSubmissionForm from "@/components/shared/InterestSubmissionForm";
 
 // Existing hooks (unchanged)
 const useRentCard = (userId?: number) => {
@@ -439,6 +440,23 @@ const ScreeningPage = () => {
               </div>
             </div>
             
+            {/* Interest Submission Section */}
+            <div className="p-8 bg-gray-50 border-t border-gray-100">
+              <div className="max-w-2xl mx-auto">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold mb-2 text-gray-800">Interested in This Property?</h2>
+                  <p className="text-gray-600">
+                    Express your interest and the landlord will contact you directly.
+                  </p>
+                </div>
+                <InterestSubmissionForm
+                  propertyId={property?.id}
+                  landlordId={property?.landlordId}
+                  propertyAddress={property?.address}
+                />
+              </div>
+            </div>
+
             {/* Neighborhood Insights Section */}
             <div className="p-8 bg-white border-t border-gray-100">
               <NeighborhoodInsights propertyId={property?.id} />

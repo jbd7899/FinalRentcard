@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, requireAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema, insertInterestSchema, insertShareTokenSchema } from "@shared/schema";
+import { insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema } from "@shared/schema";
 import { properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
@@ -664,6 +664,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error instanceof Error ? error.message : "Failed to create application",
         error 
       });
+    }
+  });
+
+  // Interest submission (supports both authenticated and guest users)
+  app.post("/api/interests", async (req, res) => {
+    try {
+      // SECURITY: Validate request body using CLIENT-SAFE schema (excludes tenantId)
+      const validationResult = clientInterestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation error",
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const clientData = validationResult.data;
+      
+      // SECURITY: Derive tenantId from authenticated session, NEVER from client payload
+      let tenantId = null;
+      if (req.user?.id) {
+        // User is authenticated - get their tenant profile
+        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        if (tenantProfile) {
+          tenantId = tenantProfile.id;
+        }
+      }
+
+      // Validate the propertyId if provided
+      if (clientData.propertyId) {
+        const property = await storage.getProperty(clientData.propertyId);
+        if (!property) {
+          return res.status(400).json({ message: "Property not found" });
+        }
+
+        // Get the landlord ID from the property
+        if (!property.landlordId) {
+          return res.status(400).json({ message: "Property has no associated landlord" });
+        }
+
+        // Ensure landlordId matches the property's landlord
+        if (clientData.landlordId !== property.landlordId) {
+          return res.status(400).json({ message: "Invalid landlord for this property" });
+        }
+      } else {
+        // For general interests, verify the landlord exists
+        const landlordProfile = await storage.getLandlordProfileById(clientData.landlordId);
+        if (!landlordProfile) {
+          return res.status(400).json({ message: "Landlord not found" });
+        }
+      }
+
+      // SECURITY: Create interest with server-controlled tenantId
+      const interest = await storage.createInterest({
+        status: "new",
+        propertyId: clientData.propertyId || null,
+        tenantId, // Server-derived value, NEVER from client
+        landlordId: clientData.landlordId,
+        contactInfo: clientData.contactInfo,
+        message: clientData.message || null
+      });
+
+      res.status(201).json(interest);
+    } catch (error) {
+      handleRouteError(error, res, 'interest submission');
     }
   });
 

@@ -186,6 +186,11 @@ export const insertInterestSchema = createInsertSchema(interests).omit({
   status: z.enum(['new', 'contacted', 'archived']).default('new')
 });
 
+// Client-safe schema for API requests - omits tenantId to prevent client manipulation
+export const clientInterestSchema = insertInterestSchema.omit({
+  tenantId: true
+});
+
 export const insertScreeningPageSchema = createInsertSchema(screeningPages).omit({
   id: true,
   createdAt: true,

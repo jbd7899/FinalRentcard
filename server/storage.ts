@@ -33,6 +33,7 @@ export interface IStorage {
 
   // Landlord profile operations
   getLandlordProfile(userId: number): Promise<LandlordProfile | undefined>;
+  getLandlordProfileById(id: number): Promise<LandlordProfile | undefined>;
   createLandlordProfile(profile: Omit<LandlordProfile, "id">): Promise<LandlordProfile>;
   updateLandlordProfile(id: number, profile: Partial<LandlordProfile>): Promise<LandlordProfile>;
 
@@ -171,6 +172,11 @@ export class DatabaseStorage implements IStorage {
 
   async getLandlordProfile(userId: number): Promise<LandlordProfile | undefined> {
     const [profile] = await db.select().from(landlordProfiles).where(eq(landlordProfiles.userId, userId));
+    return profile;
+  }
+
+  async getLandlordProfileById(id: number): Promise<LandlordProfile | undefined> {
+    const [profile] = await db.select().from(landlordProfiles).where(eq(landlordProfiles.id, id));
     return profile;
   }
 
