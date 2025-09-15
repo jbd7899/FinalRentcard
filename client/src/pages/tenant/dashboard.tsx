@@ -30,6 +30,7 @@ import TenantLayout from '@/components/layouts/TenantLayout';
 import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
 import OneClickShareButton from '@/components/shared/OneClickShareButton';
 import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
+import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
 import { apiRequest } from '@/lib/queryClient';
 
 const generateRoute = {
@@ -43,6 +44,8 @@ const TenantDashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics'>('dashboard');
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const [onboardingCollapsed, setOnboardingCollapsed] = useState(false);
 
   // Fetch the authenticated user's tenant profile
   const { data: tenantProfile, isLoading: isTenantProfileLoading, error: tenantProfileError } = useQuery({
@@ -164,6 +167,15 @@ const TenantDashboard = () => {
       {/* Conditional Content Based on Active Tab */}
       {activeTab === 'dashboard' ? (
         <>
+        {/* Onboarding Checklist - Prominent placement for new users */}
+        {!onboardingDismissed && (
+          <OnboardingChecklist 
+            onDismiss={() => setOnboardingDismissed(true)}
+            collapsed={onboardingCollapsed}
+            onToggleCollapse={() => setOnboardingCollapsed(!onboardingCollapsed)}
+          />
+        )}
+        
         {/* Quick Actions */}
         <section className="mb-8 md:mb-10">
         <h2 className="text-base sm:text-lg font-medium mb-4 md:mb-5">Quick Actions</h2>

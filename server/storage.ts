@@ -18,11 +18,13 @@ import {
   Conversation, Message, Notification, NotificationPreferences, NotificationDeliveryLog,
   RoommateGroup, GroupApplication, NeighborhoodInsight, RentcardView, ViewSession, 
   InterestAnalytics, AnalyticsAggregation, SharingAnalytics, QRCodeAnalytics,
+  OnboardingProgress, OnboardingStep, ONBOARDING_STEPS,
   tenantDocuments, propertyImages, propertyAmenities, tenantReferences,
   conversations, messages, notifications, notificationPreferences, notificationDeliveryLog,
   roommateGroups, groupApplications, conversationParticipants, roommateGroupMembers, 
   propertyAnalytics, userActivity, neighborhoodInsights, rentcardViews, viewSessions, 
-  interestAnalytics, analyticsAggregations, sharingAnalytics, qrCodeAnalytics
+  interestAnalytics, analyticsAggregations, sharingAnalytics, qrCodeAnalytics,
+  onboardingProgress, onboardingSteps
 } from "@shared/schema-enhancements";
 
 const PostgresSessionStore = connectPg(session);
@@ -290,6 +292,17 @@ export interface IStorage {
   updateCommunicationTemplate(id: number, template: Partial<CommunicationTemplate>): Promise<CommunicationTemplate>;
   deleteCommunicationTemplate(id: number): Promise<void>;
   incrementTemplateUsage(id: number): Promise<void>;
+
+  // Onboarding progress operations
+  getOnboardingProgress(userId: number): Promise<OnboardingProgress | undefined>;
+  createOnboardingProgress(progress: Omit<OnboardingProgress, "id" | "createdAt" | "updatedAt">): Promise<OnboardingProgress>;
+  updateOnboardingProgress(userId: number, updates: Partial<OnboardingProgress>): Promise<OnboardingProgress>;
+  getOnboardingSteps(progressId: number): Promise<OnboardingStep[]>;
+  updateOnboardingStep(progressId: number, stepKey: string, updates: Partial<OnboardingStep>): Promise<OnboardingStep>;
+  markStepCompleted(userId: number, stepKey: string, metadata?: any): Promise<void>;
+  checkStepCompletion(userId: number, stepKey: string): Promise<boolean>;
+  calculateOnboardingProgress(userId: number): Promise<{ percentage: number; completedSteps: number; totalSteps: number }>;
+  initializeOnboarding(userId: number, userType: 'tenant' | 'landlord'): Promise<OnboardingProgress>;
 
   sessionStore: session.Store;
 }
@@ -2059,6 +2072,187 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query.orderBy(sql`${shortlinkClicks.clickedAt} DESC`);
+  }
+
+  // Onboarding progress operations
+  async getOnboardingProgress(userId: number): Promise<OnboardingProgress | undefined> {
+    const [progress] = await db
+      .select()
+      .from(onboardingProgress)
+      .where(eq(onboardingProgress.userId, userId));
+    return progress;
+  }
+
+  async createOnboardingProgress(progress: Omit<OnboardingProgress, "id" | "createdAt" | "updatedAt">): Promise<OnboardingProgress> {
+    const [newProgress] = await db
+      .insert(onboardingProgress)
+      .values({
+        ...progress,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newProgress;
+  }
+
+  async updateOnboardingProgress(userId: number, updates: Partial<OnboardingProgress>): Promise<OnboardingProgress> {
+    const [updatedProgress] = await db
+      .update(onboardingProgress)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(onboardingProgress.userId, userId))
+      .returning();
+    return updatedProgress;
+  }
+
+  async getOnboardingSteps(progressId: number): Promise<OnboardingStep[]> {
+    return await db
+      .select()
+      .from(onboardingSteps)
+      .where(eq(onboardingSteps.progressId, progressId))
+      .orderBy(onboardingSteps.stepNumber);
+  }
+
+  async updateOnboardingStep(progressId: number, stepKey: string, updates: Partial<OnboardingStep>): Promise<OnboardingStep> {
+    const [updatedStep] = await db
+      .update(onboardingSteps)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(onboardingSteps.progressId, progressId),
+        eq(onboardingSteps.stepKey, stepKey)
+      ))
+      .returning();
+    return updatedStep;
+  }
+
+  async markStepCompleted(userId: number, stepKey: string, metadata?: any): Promise<void> {
+    const progress = await this.getOnboardingProgress(userId);
+    if (!progress) return;
+
+    // Update the specific step
+    await this.updateOnboardingStep(progress.id, stepKey, {
+      isCompleted: true,
+      completedAt: new Date(),
+      metadata
+    });
+
+    // Recalculate overall progress
+    await this.calculateAndUpdateProgress(userId);
+  }
+
+  async checkStepCompletion(userId: number, stepKey: string): Promise<boolean> {
+    const progress = await this.getOnboardingProgress(userId);
+    if (!progress) return false;
+
+    const steps = await this.getOnboardingSteps(progress.id);
+    const step = steps.find(s => s.stepKey === stepKey);
+    
+    return step?.isCompleted || false;
+  }
+
+  async calculateOnboardingProgress(userId: number): Promise<{ percentage: number; completedSteps: number; totalSteps: number }> {
+    const progress = await this.getOnboardingProgress(userId);
+    if (!progress) {
+      return { percentage: 0, completedSteps: 0, totalSteps: 4 };
+    }
+
+    const steps = await this.getOnboardingSteps(progress.id);
+    const completedCount = steps.filter(s => s.isCompleted).length;
+    const totalSteps = steps.length;
+    const percentage = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0;
+
+    return {
+      percentage,
+      completedSteps: completedCount,
+      totalSteps
+    };
+  }
+
+  async initializeOnboarding(userId: number, userType: 'tenant' | 'landlord'): Promise<OnboardingProgress> {
+    // Create onboarding progress record
+    const progress = await this.createOnboardingProgress({
+      userId,
+      userType,
+      currentStep: 1,
+      totalSteps: 4,
+      completedSteps: 0,
+      progressPercentage: 0,
+      isCompleted: false,
+      lastActiveStep: 'complete_profile'
+    });
+
+    // Create individual steps for tenant onboarding
+    if (userType === 'tenant') {
+      const tenantSteps = [
+        {
+          stepNumber: 1,
+          stepKey: ONBOARDING_STEPS.TENANT.COMPLETE_PROFILE.key,
+          stepTitle: ONBOARDING_STEPS.TENANT.COMPLETE_PROFILE.title,
+          stepDescription: ONBOARDING_STEPS.TENANT.COMPLETE_PROFILE.description,
+          requirementsMet: {
+            employment_info: false,
+            rental_history: false,
+            credit_score: false
+          }
+        },
+        {
+          stepNumber: 2,
+          stepKey: ONBOARDING_STEPS.TENANT.ADD_REFERENCES.key,
+          stepTitle: ONBOARDING_STEPS.TENANT.ADD_REFERENCES.title,
+          stepDescription: ONBOARDING_STEPS.TENANT.ADD_REFERENCES.description,
+          requirementsMet: {
+            min_references_count: false
+          }
+        },
+        {
+          stepNumber: 3,
+          stepKey: ONBOARDING_STEPS.TENANT.PREVIEW_RENTCARD.key,
+          stepTitle: ONBOARDING_STEPS.TENANT.PREVIEW_RENTCARD.title,
+          stepDescription: ONBOARDING_STEPS.TENANT.PREVIEW_RENTCARD.description,
+          requirementsMet: {
+            rentcard_viewed: false
+          }
+        },
+        {
+          stepNumber: 4,
+          stepKey: ONBOARDING_STEPS.TENANT.SHARE_FIRST_LINK.key,
+          stepTitle: ONBOARDING_STEPS.TENANT.SHARE_FIRST_LINK.title,
+          stepDescription: ONBOARDING_STEPS.TENANT.SHARE_FIRST_LINK.description,
+          requirementsMet: {
+            first_share_token_created: false
+          }
+        }
+      ];
+
+      for (const step of tenantSteps) {
+        await db.insert(onboardingSteps).values({
+          progressId: progress.id,
+          ...step,
+          isCompleted: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+    }
+
+    return progress;
+  }
+
+  private async calculateAndUpdateProgress(userId: number): Promise<void> {
+    const { percentage, completedSteps, totalSteps } = await this.calculateOnboardingProgress(userId);
+    const isCompleted = completedSteps === totalSteps;
+
+    await this.updateOnboardingProgress(userId, {
+      completedSteps,
+      progressPercentage: percentage,
+      isCompleted,
+      completedAt: isCompleted ? new Date() : undefined
+    });
   }
 }
 

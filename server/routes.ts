@@ -15,8 +15,9 @@ import {
   insertRentcardViewSchema, insertViewSessionSchema, insertInterestAnalyticsSchema,
   insertSharingAnalyticsSchema, insertQRCodeAnalyticsSchema, insertNotificationSchema,
   insertNotificationPreferencesSchema, insertNotificationDeliveryLogSchema,
+  insertOnboardingProgressSchema, insertOnboardingStepSchema, ONBOARDING_STEPS,
   RentcardView, ViewSession, InterestAnalytics, SharingAnalytics, QRCodeAnalytics,
-  Notification, NotificationPreferences, NotificationDeliveryLog
+  Notification, NotificationPreferences, NotificationDeliveryLog, OnboardingProgress, OnboardingStep
 } from "@shared/schema-enhancements";
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
@@ -3686,6 +3687,243 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       handleRouteError(error, res, 'get landlord interests analytics');
+    }
+  });
+
+  // ===== ONBOARDING ROUTES =====
+  
+  // Get user's onboarding progress
+  app.get("/api/onboarding/progress", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      let progress = await storage.getOnboardingProgress(req.user.id);
+
+      // Initialize onboarding if not exists
+      if (!progress) {
+        progress = await storage.initializeOnboarding(req.user.id, req.user.userType as 'tenant' | 'landlord');
+      }
+
+      const steps = await storage.getOnboardingSteps(progress.id);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
+
+      res.json({
+        progress: {
+          ...progress,
+          ...calculatedProgress,
+          progressPercentage: calculatedProgress.percentage
+        },
+        steps: steps.map(step => ({
+          ...step,
+          requirements: ONBOARDING_STEPS.TENANT[step.stepKey.toUpperCase() as keyof typeof ONBOARDING_STEPS.TENANT] || null
+        }))
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get onboarding progress');
+    }
+  });
+
+  // Update onboarding progress
+  app.put("/api/onboarding/progress", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const validatedData = insertOnboardingProgressSchema.parse(req.body);
+      const updatedProgress = await storage.updateOnboardingProgress(req.user.id, validatedData);
+
+      res.json(updatedProgress);
+    } catch (error) {
+      handleRouteError(error, res, 'update onboarding progress');
+    }
+  });
+
+  // Mark an onboarding step as completed (with validation)
+  app.post("/api/onboarding/steps/:stepKey/complete", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { stepKey } = req.params;
+      const { metadata } = req.body;
+
+      // SECURITY: Validate prerequisites before marking complete
+      // This prevents manual completion without meeting requirements
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const rentCard = await storage.getRentCard(req.user.id);
+      let canComplete = false;
+      let validationError = "";
+
+      switch (stepKey) {
+        case 'complete_profile':
+          canComplete = !!(
+            tenantProfile?.employmentInfo && 
+            tenantProfile?.rentalHistory && 
+            tenantProfile?.creditScore &&
+            rentCard?.firstName &&
+            rentCard?.lastName &&
+            rentCard?.monthlyIncome
+          );
+          validationError = canComplete ? "" : "Profile information incomplete. Missing employment info, rental history, credit score, or personal details.";
+          break;
+
+        case 'add_references':
+          if (tenantProfile?.id) {
+            const references = await storage.getTenantReferences(tenantProfile.id);
+            canComplete = references.length >= 2;
+            validationError = canComplete ? "" : `Need at least 2 references. Currently have ${references.length}.`;
+          } else {
+            validationError = "Tenant profile not found.";
+          }
+          break;
+
+        case 'preview_rentcard':
+          // Allow manual completion for preview step as it's just a UI interaction
+          canComplete = !!(tenantProfile && rentCard);
+          validationError = canComplete ? "" : "Profile or rent card data not found.";
+          break;
+
+        case 'share_first_link':
+          if (tenantProfile?.id) {
+            const shareTokens = await storage.getShareTokensByTenant(tenantProfile.id);
+            canComplete = shareTokens.length > 0;
+            validationError = canComplete ? "" : "No share links created yet. Create a share link first.";
+          } else {
+            validationError = "Tenant profile not found.";
+          }
+          break;
+
+        default:
+          validationError = `Unknown step: ${stepKey}`;
+      }
+
+      if (!canComplete) {
+        return res.status(400).json({ 
+          message: "Prerequisites not met",
+          stepKey,
+          validationError,
+          success: false
+        });
+      }
+
+      await storage.markStepCompleted(req.user.id, stepKey, {
+        ...metadata,
+        manuallyCompleted: true,
+        validatedAt: new Date().toISOString()
+      });
+
+      // Get updated progress
+      const progress = await storage.getOnboardingProgress(req.user.id);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
+
+      res.json({
+        success: true,
+        progress: {
+          ...progress,
+          ...calculatedProgress,
+          progressPercentage: calculatedProgress.percentage
+        }
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'mark step completed');
+    }
+  });
+
+  // Check specific step completion
+  app.get("/api/onboarding/steps/:stepKey/status", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { stepKey } = req.params;
+      const isCompleted = await storage.checkStepCompletion(req.user.id, stepKey);
+
+      res.json({ stepKey, isCompleted });
+    } catch (error) {
+      handleRouteError(error, res, 'check step completion');
+    }
+  });
+
+  // Auto-check and update step completion based on current data
+  app.post("/api/onboarding/auto-check", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const results: { [key: string]: boolean } = {};
+
+      // Check profile completion
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const rentCard = await storage.getRentCard(req.user.id);
+      
+      const profileCompleted = !!(
+        tenantProfile?.employmentInfo && 
+        tenantProfile?.rentalHistory && 
+        tenantProfile?.creditScore &&
+        rentCard?.firstName &&
+        rentCard?.lastName &&
+        rentCard?.monthlyIncome
+      );
+
+      if (profileCompleted) {
+        await storage.markStepCompleted(req.user.id, 'complete_profile', {
+          checkedAt: new Date().toISOString(),
+          autoDetected: true
+        });
+        results['complete_profile'] = true;
+      }
+
+      // Check references
+      if (tenantProfile?.id) {
+        const references = await storage.getTenantReferences(tenantProfile.id);
+        const referencesCompleted = references.length >= 2;
+        
+        if (referencesCompleted) {
+          await storage.markStepCompleted(req.user.id, 'add_references', {
+            referenceCount: references.length,
+            checkedAt: new Date().toISOString(),
+            autoDetected: true
+          });
+          results['add_references'] = true;
+        }
+      }
+
+      // Check first share
+      if (tenantProfile?.id) {
+        const shareTokens = await storage.getShareTokensByTenant(tenantProfile.id);
+        const hasShared = shareTokens.length > 0;
+        
+        if (hasShared) {
+          await storage.markStepCompleted(req.user.id, 'share_first_link', {
+            firstShareAt: shareTokens[0]?.createdAt,
+            checkedAt: new Date().toISOString(),
+            autoDetected: true
+          });
+          results['share_first_link'] = true;
+        }
+      }
+
+      // Get updated progress
+      const progress = await storage.getOnboardingProgress(req.user.id);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
+
+      res.json({
+        success: true,
+        checkedSteps: results,
+        progress: {
+          ...progress,
+          ...calculatedProgress,
+          progressPercentage: calculatedProgress.percentage
+        }
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'auto-check progress');
     }
   });
 
