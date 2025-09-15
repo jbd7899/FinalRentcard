@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus, APPLICATION_LABELS } from "@/constants";
 import { Link, useLocation } from "wouter";
 import TenantLayout from '@/components/layouts/TenantLayout';
+import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
 
 const generateRoute = {
   application: (id: string) => `/tenant/applications/${id}`
@@ -34,6 +35,7 @@ const TenantDashboard = () => {
   const { setLoading, loadingStates, addToast } = useUIStore();
   const [, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   // Demo data
   const rentCardStatus = {
@@ -165,6 +167,36 @@ const TenantDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Share RentCard Section */}
+        <div className="mt-8 md:mt-10">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardContent className="p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Share2 className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-medium text-gray-800 mb-1">Share Your RentCard</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Share your verified rental profile with landlords and property managers. 
+                      Create secure links with custom expiration settings.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => setShareModalOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+                  data-testid="button-share-rentcard-dashboard"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share RentCard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </section>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 md:gap-8">
@@ -206,19 +238,27 @@ const TenantDashboard = () => {
               </div>
             </div>
             
-            <div className="mt-4 sm:mt-6">
+            <div className="mt-4 sm:mt-6 flex gap-2">
               <Button 
                 variant="default" 
-                className="w-full text-xs sm:text-sm h-8 sm:h-9"
+                className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                 onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
               >
                 Manage References
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-xs sm:text-sm h-8 sm:h-9 px-3"
+                onClick={() => setShareModalOpen(true)}
+                data-testid="button-share-from-rentcard-status"
+              >
+                <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </div>
           </CardContent>
         </Card>
         
-        {/* Active Applications */}
         <section>
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <h2 className="text-base sm:text-lg font-medium">Active Applications</h2>
@@ -324,6 +364,15 @@ const TenantDashboard = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Enhanced Share Modal */}
+      <EnhancedShareModal
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+        resourceType="rentcard"
+        title="Share Your RentCard"
+        description="Share your rental profile with landlords and property managers"
+      />
     </TenantLayout>
   );
 };
