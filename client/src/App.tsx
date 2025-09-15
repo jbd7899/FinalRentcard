@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { ROUTES } from "@/constants/routes";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
@@ -37,19 +38,19 @@ import TenantReferences from "@/pages/tenant/references";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path={ROUTES.HOME} component={HomePage} />
+      <Route path={ROUTES.AUTH} component={AuthPage} />
       <Route path="/create-screening" component={ScreeningPage} />
       <Route path="/debug-auth" component={DebugAuthPage} />
 
       {/* Landlord Routes */}
-      <ProtectedRoute path="/landlord/dashboard" component={LandlordDashboard} />
-      <ProtectedRoute path="/landlord/applications" component={LandlordApplications} />
-      <ProtectedRoute path="/landlord/add-property" component={AddProperty} />
+      <ProtectedRoute path={ROUTES.LANDLORD.DASHBOARD} component={LandlordDashboard} />
+      <ProtectedRoute path={ROUTES.LANDLORD.INTERESTS} component={LandlordApplications} />
+      <ProtectedRoute path={ROUTES.LANDLORD.ADD_PROPERTY} component={AddProperty} />
       <ProtectedRoute path="/landlord/properties/:id/edit" component={AddProperty} />
-      <ProtectedRoute path="/landlord/verify-documents" component={VerifyDocumentsPage} />
+      <ProtectedRoute path={ROUTES.LANDLORD.VERIFY_DOCUMENTS} component={VerifyDocumentsPage} />
       <Route path="/landlord/screening/:slug" component={PropertyScreeningPage} />
-      <ProtectedRoute path="/landlord/screening" component={ScreeningManagement} />
+      <ProtectedRoute path={ROUTES.LANDLORD.SCREENING} component={ScreeningManagement} />
       <Route path="/property/archived/:slug" component={ArchivedPropertyPage} />
 
       {/* Property Screening Pages */}
@@ -65,11 +66,11 @@ function Router() {
       <Route path="/samples/screening-page" component={SampleScreeningPage} />
 
       {/* Tenant Routes */}
-      <ProtectedRoute path="/tenant/dashboard" component={TenantDashboard} />
-      <ProtectedRoute path="/tenant/applications" component={TenantApplications} />
-      <ProtectedRoute path="/tenant/rentcard" component={TenantRentCard} />
-      <ProtectedRoute path="/tenant/documents" component={DocumentDashboard} />
-      <ProtectedRoute path="/tenant/references" component={TenantReferences} />
+      <ProtectedRoute path={ROUTES.TENANT.DASHBOARD} component={TenantDashboard} />
+      <ProtectedRoute path={ROUTES.TENANT.INTERESTS} component={TenantApplications} />
+      <ProtectedRoute path={ROUTES.TENANT.RENTCARD} component={TenantRentCard} />
+      <ProtectedRoute path={ROUTES.TENANT.DOCUMENTS} component={DocumentDashboard} />
+      <ProtectedRoute path={ROUTES.TENANT.REFERENCES} component={TenantReferences} />
       <Route path="/create-rentcard" component={CreateRentCard} />
       <Route path="/rentcard/:slug" component={TenantRentCard} />
 
