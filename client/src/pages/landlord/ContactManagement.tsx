@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { 
   MessageSquare, 
-  Template, 
+  FileText, 
   History, 
   Users,
   Mail, 
@@ -373,7 +373,7 @@ const ContactManagement = () => {
                         
                         {log.templateId && (
                           <div className="flex items-center gap-1 mt-2">
-                            <Template className="h-3 w-3 text-gray-500" />
+                            <FileText className="h-3 w-3 text-gray-500" />
                             <span className="text-xs text-gray-500">Used template ID: {log.templateId}</span>
                           </div>
                         )}
