@@ -2,8 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, requireAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema, insertApplicationSchema } from "@shared/schema";
-import { properties, applications, propertyImages, propertyAmenities } from "@shared/schema";
+import { insertPropertySchema, insertInterestSchema } from "@shared/schema";
+import { properties, interests, propertyImages, propertyAmenities, Interest } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
 import { db } from "./db";
@@ -247,10 +247,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get application counts for each property
       const applicationCounts = await Promise.all(
         propertiesData.map(async (property) => {
-          const propertyApplications = await storage.getApplications(undefined, property.id);
+          const propertyInterests = await storage.getInterests(undefined, property.id);
           return {
             propertyId: property.id,
-            count: propertyApplications.length
+            count: propertyInterests.length
           };
         })
       );
@@ -551,8 +551,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let applications;
       
       if (tenantProfile) {
-        // Tenants can only see their own applications
-        applications = await storage.getApplications(
+        // Tenants can only see their own interests
+        applications = await storage.getInterests(
           tenantProfile.id,
           propertyId ? parseInt(propertyId as string) : undefined
         );
@@ -564,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(403).json({ message: "Access denied to property applications" });
           }
         }
-        applications = await storage.getApplications(
+        applications = await storage.getInterests(
           undefined,
           propertyId ? parseInt(propertyId as string) : undefined
         );
@@ -572,7 +572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!propertyId) {
           const landlordProperties = await storage.getProperties(landlordProfile.id);
           const landlordPropertyIds = landlordProperties.map(p => p.id);
-          applications = applications.filter(app => app.propertyId !== null && landlordPropertyIds.includes(app.propertyId));
+          applications = applications.filter((app: Interest) => app.propertyId !== null && landlordPropertyIds.includes(app.propertyId));
         }
       } else {
         return res.status(403).json({ message: "User profile not found" });
@@ -615,11 +615,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Property not found" });
       }
 
-      // Create the application
-      const application = await storage.createApplication({
-        status: "pending",
+      // Get the landlord ID from the property
+      const landlordId = property.landlordId;
+      if (!landlordId) {
+        return res.status(400).json({ message: "Property has no associated landlord" });
+      }
+
+      // Get tenant contact info from user and tenant profile
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(400).json({ message: "User not found" });
+      }
+
+      // Create the interest
+      const application = await storage.createInterest({
+        status: "new",
         propertyId,
-        tenantId: tenantProfile.id
+        tenantId: tenantProfile.id,
+        landlordId,
+        contactInfo: {
+          name: `${rentCard.firstName} ${rentCard.lastName}`,
+          email: user.email,
+          phone: user.phone,
+          preferredContact: 'email'
+        },
+        message: `Interest in property at ${property.address}`
       });
 
       res.status(201).json(application);
@@ -628,6 +648,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error instanceof Error ? error.message : "Failed to create application",
         error 
       });
+    }
+  });
+
+  // Interest routes
+  app.post("/api/interests/:id/contact", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const interestId = parseInt(req.params.id);
+      if (isNaN(interestId)) {
+        return res.status(400).json({ message: "Invalid interest ID" });
+      }
+
+      // Verify landlord ownership via interest -> landlord relationship
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(403).json({ message: "Only landlords can manage interests" });
+      }
+
+      const updatedInterest = await storage.updateInterestStatus(interestId, 'contacted');
+      res.json(updatedInterest);
+    } catch (error) {
+      handleRouteError(error, res, 'contact interest');
+    }
+  });
+
+  app.post("/api/interests/:id/archive", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const interestId = parseInt(req.params.id);
+      if (isNaN(interestId)) {
+        return res.status(400).json({ message: "Invalid interest ID" });
+      }
+
+      // Verify landlord ownership via interest -> landlord relationship
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(403).json({ message: "Only landlords can manage interests" });
+      }
+
+      const updatedInterest = await storage.updateInterestStatus(interestId, 'archived');
+      res.json(updatedInterest);
+    } catch (error) {
+      handleRouteError(error, res, 'archive interest');
     }
   });
 
@@ -660,8 +729,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const applicationId = parseInt(req.params.id);
       
       // Get the application to verify ownership
-      const applications = await storage.getApplications();
-      const application = applications.find(app => app.id === applicationId);
+      const applications = await storage.getInterests();
+      const application = applications.find((app: Interest) => app.id === applicationId);
       
       if (!application) {
         return res.status(404).json({ message: "Application not found" });
@@ -682,7 +751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied to this application" });
       }
       
-      const updatedApplication = await storage.updateApplicationStatus(
+      const updatedApplication = await storage.updateInterestStatus(
         applicationId,
         req.body.status
       );

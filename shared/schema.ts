@@ -70,11 +70,6 @@ export const properties = pgTable("properties", {
   isArchived: boolean("is_archived").default(false),
 });
 
-// Add explicit relation between properties and interests
-export const propertyRelations = relations(properties, ({ many }) => ({
-  interests: many(interests)
-}));
-
 export const interests = pgTable("interests", {
   id: serial("id").primaryKey(),
   tenantId: integer("tenant_id").references(() => tenantProfiles.id), // optional - for authenticated users
@@ -91,6 +86,11 @@ export const interests = pgTable("interests", {
   createdAt: timestamp("created_at").defaultNow(),
   viewedAt: timestamp("viewed_at"), // when landlord first viewed
 });
+
+// Add explicit relation between properties and interests
+export const propertyRelations = relations(properties, ({ many }) => ({
+  interests: many(interests)
+}));
 
 export const screeningPages = pgTable("screening_pages", {
   id: serial("id").primaryKey(),
