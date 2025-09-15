@@ -29,6 +29,7 @@ import VerifyDocumentsPage from "@/pages/landlord/verify-documents";
 
 // Tenant Pages
 import TenantDashboard from "@/pages/tenant/dashboard";
+import TenantApplications from "@/pages/tenant/applications";
 import TenantRentCard from "@/pages/tenant/rentcard";
 import DocumentDashboard from "@/pages/tenant/documents";
 import TenantReferences from "@/pages/tenant/references";
@@ -65,6 +66,7 @@ function Router() {
 
       {/* Tenant Routes */}
       <ProtectedRoute path="/tenant/dashboard" component={TenantDashboard} />
+      <ProtectedRoute path="/tenant/applications" component={TenantApplications} />
       <ProtectedRoute path="/tenant/rentcard" component={TenantRentCard} />
       <ProtectedRoute path="/tenant/documents" component={DocumentDashboard} />
       <ProtectedRoute path="/tenant/references" component={TenantReferences} />
