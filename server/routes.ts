@@ -600,6 +600,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PUT endpoint for updating tenant profile
+  app.put("/api/tenant/profile", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      console.log(`Updating tenant profile for user ID: ${req.user.id}`);
+      
+      // Get the user's tenant profile to get the profile ID
+      const existingProfile = await storage.getTenantProfile(req.user.id);
+      if (!existingProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+      
+      // Update the profile
+      const updatedProfile = await storage.updateTenantProfile(existingProfile.id, req.body);
+      
+      console.log(`Successfully updated tenant profile for user ID: ${req.user.id}`);
+      res.json(updatedProfile);
+    } catch (error) {
+      handleRouteError(error, res, '/api/tenant/profile PUT endpoint');
+    }
+  });
+
   // Property routes
   app.get("/api/properties", async (req, res) => {
     try {
