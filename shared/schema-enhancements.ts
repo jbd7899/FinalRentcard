@@ -72,16 +72,130 @@ export const userActivity = pgTable("user_activity", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
-// 5. Notifications System
+// 5. Enhanced Notifications System
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
-  type: text("type").notNull(), // 'application_update', 'new_message', 'document_verified', etc.
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: text("type").notNull(), // 'rentcard_view', 'interest_submission', 'weekly_summary', 'document_verified', etc.
+  title: text("title").notNull(),
   content: text("content").notNull(),
   isRead: boolean("is_read").default(false),
-  relatedEntityType: text("related_entity_type"), // 'property', 'application', 'message', etc.
+  priority: text("priority").notNull().default('normal'), // 'low', 'normal', 'high', 'urgent'
+  
+  // Entity relationships
+  relatedEntityType: text("related_entity_type"), // 'rentcard', 'property', 'interest', 'shareToken', etc.
   relatedEntityId: integer("related_entity_id"),
-  createdAt: timestamp("created_at").defaultNow(),
+  
+  // Engagement data
+  viewData: json("view_data").$type<{
+    shareTokenId?: number;
+    viewerInfo?: {
+      deviceType?: 'desktop' | 'mobile' | 'tablet';
+      location?: string;
+      source?: string;
+    };
+    viewDuration?: number;
+    isUnique?: boolean;
+  }>(),
+  
+  interestData: json("interest_data").$type<{
+    landlordInfo?: {
+      name?: string;
+      companyName?: string;
+      email?: string;
+    };
+    propertyInfo?: {
+      address?: string;
+      rent?: number;
+    };
+    message?: string;
+  }>(),
+  
+  // Notification delivery tracking
+  deliveryMethods: json("delivery_methods").$type<string[]>(), // ['in_app', 'email', 'sms']
+  emailSent: boolean("email_sent").default(false),
+  emailSentAt: timestamp("email_sent_at"),
+  clickedAt: timestamp("clicked_at"), // When user clicked/viewed the notification
+  
+  // Metadata
+  metadata: json("metadata").$type<{
+    aggregationKey?: string; // For grouping similar notifications
+    suppressEmail?: boolean; // Override email sending
+    expiresAt?: string; // When notification becomes irrelevant
+    actionUrl?: string; // Deep link to relevant page
+  }>(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Notification Preferences System
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  
+  // RentCard View Notifications
+  rentcardViewsEnabled: boolean("rentcard_views_enabled").default(true),
+  rentcardViewsEmail: boolean("rentcard_views_email").default(false),
+  rentcardViewsFrequency: text("rentcard_views_frequency").default('instant'), // 'instant', 'hourly', 'daily', 'off'
+  
+  // Interest Submission Notifications
+  interestSubmissionsEnabled: boolean("interest_submissions_enabled").default(true),
+  interestSubmissionsEmail: boolean("interest_submissions_email").default(true),
+  interestSubmissionsFrequency: text("interest_submissions_frequency").default('instant'),
+  
+  // Weekly Summary
+  weeklySummaryEnabled: boolean("weekly_summary_enabled").default(true),
+  weeklySummaryEmail: boolean("weekly_summary_email").default(true),
+  weeklySummaryDay: text("weekly_summary_day").default('monday'), // Day of week
+  
+  // System Notifications (document verification, etc.)
+  systemNotificationsEnabled: boolean("system_notifications_enabled").default(true),
+  systemNotificationsEmail: boolean("system_notifications_email").default(false),
+  
+  // General Settings
+  quietHoursStart: text("quiet_hours_start"), // "22:00"
+  quietHoursEnd: text("quiet_hours_end"), // "08:00"
+  timezone: text("timezone").default('America/New_York'),
+  emailDigestEnabled: boolean("email_digest_enabled").default(false),
+  emailDigestFrequency: text("email_digest_frequency").default('daily'), // 'daily', 'weekly'
+  
+  // Advanced Settings
+  maxNotificationsPerHour: integer("max_notifications_per_hour").default(10),
+  groupSimilarNotifications: boolean("group_similar_notifications").default(true),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Notification Delivery Log for tracking and debugging
+export const notificationDeliveryLog = pgTable("notification_delivery_log", {
+  id: serial("id").primaryKey(),
+  notificationId: integer("notification_id").references(() => notifications.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  
+  deliveryMethod: text("delivery_method").notNull(), // 'in_app', 'email', 'sms', 'push'
+  status: text("status").notNull(), // 'queued', 'sent', 'delivered', 'failed', 'bounced'
+  
+  // Delivery details
+  recipientEmail: text("recipient_email"),
+  recipientPhone: text("recipient_phone"),
+  
+  // Tracking data
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  readAt: timestamp("read_at"),
+  clickedAt: timestamp("clicked_at"),
+  
+  // Error handling
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").default(0),
+  
+  // Email-specific tracking
+  emailSubject: text("email_subject"),
+  emailProvider: text("email_provider"), // 'nodemailer', 'sendgrid', etc.
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // 7. Tenant References
@@ -194,6 +308,24 @@ export const insertNeighborhoodInsightSchema = createInsertSchema(neighborhoodIn
   updatedAt: true,
 });
 
+// Enhanced Notification System Insert Schemas
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationDeliveryLogSchema = createInsertSchema(notificationDeliveryLog).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Type definitions
 export type TenantDocument = typeof tenantDocuments.$inferSelect;
 export type InsertTenantDocument = z.infer<typeof insertTenantDocumentSchema>;
@@ -212,7 +344,16 @@ export type InsertPropertyAmenity = z.infer<typeof insertPropertyAmenitySchema>;
 
 export type PropertyAnalytic = typeof propertyAnalytics.$inferSelect;
 export type UserActivity = typeof userActivity.$inferSelect;
+
+// Enhanced Notification Types
 export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;
+
+export type NotificationDeliveryLog = typeof notificationDeliveryLog.$inferSelect;
+export type InsertNotificationDeliveryLog = z.infer<typeof insertNotificationDeliveryLogSchema>;
 
 export type TenantReference = typeof tenantReferences.$inferSelect;
 export type InsertTenantReference = z.infer<typeof insertTenantReferenceSchema>;

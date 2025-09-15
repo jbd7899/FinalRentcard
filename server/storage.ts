@@ -15,14 +15,14 @@ import { pool } from "./db";
 // Import new schema types
 import {
   TenantDocument, PropertyImage, PropertyAmenity, TenantReference,
-  Conversation, Message, Notification, RoommateGroup, GroupApplication,
-  NeighborhoodInsight, RentcardView, ViewSession, InterestAnalytics,
-  AnalyticsAggregation, SharingAnalytics, QRCodeAnalytics,
+  Conversation, Message, Notification, NotificationPreferences, NotificationDeliveryLog,
+  RoommateGroup, GroupApplication, NeighborhoodInsight, RentcardView, ViewSession, 
+  InterestAnalytics, AnalyticsAggregation, SharingAnalytics, QRCodeAnalytics,
   tenantDocuments, propertyImages, propertyAmenities, tenantReferences,
-  conversations, messages, notifications, roommateGroups, groupApplications,
-  conversationParticipants, roommateGroupMembers, propertyAnalytics, userActivity,
-  neighborhoodInsights, rentcardViews, viewSessions, interestAnalytics,
-  analyticsAggregations, sharingAnalytics, qrCodeAnalytics
+  conversations, messages, notifications, notificationPreferences, notificationDeliveryLog,
+  roommateGroups, groupApplications, conversationParticipants, roommateGroupMembers, 
+  propertyAnalytics, userActivity, neighborhoodInsights, rentcardViews, viewSessions, 
+  interestAnalytics, analyticsAggregations, sharingAnalytics, qrCodeAnalytics
 } from "@shared/schema-enhancements";
 
 const PostgresSessionStore = connectPg(session);
@@ -104,10 +104,78 @@ export interface IStorage {
   createMessage(message: Omit<Message, "id" | "sentAt" | "readAt">): Promise<Message>;
   markMessageAsRead(id: number): Promise<Message>;
 
-  // Notification operations
-  getUserNotifications(userId: number): Promise<Notification[]>;
-  createNotification(notification: Omit<Notification, "id" | "createdAt">): Promise<Notification>;
+  // Enhanced Notification System operations
+  // Core notification operations
+  getUserNotifications(userId: number, options?: { 
+    limit?: number; 
+    offset?: number; 
+    unreadOnly?: boolean;
+    type?: string;
+  }): Promise<Notification[]>;
+  getUserNotificationCount(userId: number, unreadOnly?: boolean): Promise<number>;
+  createNotification(notification: Omit<Notification, "id" | "createdAt" | "updatedAt">): Promise<Notification>;
   markNotificationAsRead(id: number): Promise<Notification>;
+  markNotificationAsClicked(id: number): Promise<Notification>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
+  deleteNotification(id: number): Promise<void>;
+  deleteUserNotifications(userId: number, olderThan?: Date): Promise<void>;
+  
+  // Notification preferences operations
+  getUserNotificationPreferences(userId: number): Promise<NotificationPreferences | undefined>;
+  createUserNotificationPreferences(preferences: Omit<NotificationPreferences, "id" | "createdAt" | "updatedAt">): Promise<NotificationPreferences>;
+  updateUserNotificationPreferences(userId: number, preferences: Partial<NotificationPreferences>): Promise<NotificationPreferences>;
+  
+  // Notification delivery operations
+  createNotificationDeliveryLog(log: Omit<NotificationDeliveryLog, "id" | "createdAt">): Promise<NotificationDeliveryLog>;
+  updateNotificationDeliveryStatus(id: number, status: string, metadata?: any): Promise<NotificationDeliveryLog>;
+  getNotificationDeliveryLogs(notificationId: number): Promise<NotificationDeliveryLog[]>;
+  
+  // Smart notification operations
+  createRentCardViewNotification(tenantId: number, viewData: {
+    shareTokenId?: number;
+    viewerInfo?: {
+      deviceType?: 'desktop' | 'mobile' | 'tablet';
+      location?: string;
+      source?: string;
+    };
+    viewDuration?: number;
+    isUnique?: boolean;
+  }): Promise<Notification | null>; // Returns null if notification is suppressed
+  
+  createInterestSubmissionNotification(tenantId: number, interestData: {
+    landlordInfo?: {
+      name?: string;
+      companyName?: string;
+      email?: string;
+    };
+    propertyInfo?: {
+      address?: string;
+      rent?: number;
+    };
+    message?: string;
+  }): Promise<Notification | null>;
+  
+  createWeeklySummaryNotification(tenantId: number, summaryData: {
+    totalViews: number;
+    newInterests: number;
+    weekStartDate: Date;
+    weekEndDate: Date;
+    topSources?: { source: string; count: number }[];
+  }): Promise<Notification | null>;
+  
+  // Notification analytics and aggregation
+  getUserNotificationStats(userId: number, timeframe?: string): Promise<{
+    totalNotifications: number;
+    unreadCount: number;
+    readRate: number;
+    clickRate: number;
+    notificationsByType: { type: string; count: number }[];
+    averageResponseTime: number; // time to read notifications
+  }>;
+  
+  // Batch notification operations for performance
+  createBulkNotifications(notifications: Omit<Notification, "id" | "createdAt" | "updatedAt">[]): Promise<Notification[]>;
+  shouldSendNotification(userId: number, notificationType: string, metadata?: any): Promise<boolean>; // Rate limiting check
 
   // Roommate operations
   getRoommateGroups(tenantId?: number): Promise<RoommateGroup[]>;
@@ -639,26 +707,418 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Notification operations
-  async getUserNotifications(userId: number): Promise<Notification[]> {
-    return await db
+  // Enhanced Notification System Implementation
+  
+  async getUserNotifications(userId: number, options?: { 
+    limit?: number; 
+    offset?: number; 
+    unreadOnly?: boolean;
+    type?: string;
+  }): Promise<Notification[]> {
+    let query = db
       .select()
       .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(sql`${notifications.createdAt} DESC`);
+      .where(eq(notifications.userId, userId));
+      
+    if (options?.unreadOnly) {
+      query = query.where(eq(notifications.isRead, false));
+    }
+    
+    if (options?.type) {
+      query = query.where(eq(notifications.type, options.type));
+    }
+    
+    query = query.orderBy(sql`${notifications.createdAt} DESC`);
+    
+    if (options?.limit) {
+      query = query.limit(options.limit);
+    }
+    
+    if (options?.offset) {
+      query = query.offset(options.offset);
+    }
+    
+    return await query;
+  }
+  
+  async getUserNotificationCount(userId: number, unreadOnly?: boolean): Promise<number> {
+    let query = db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(eq(notifications.userId, userId));
+      
+    if (unreadOnly) {
+      query = query.where(eq(notifications.isRead, false));
+    }
+    
+    const [result] = await query;
+    return result?.count || 0;
   }
 
-  async createNotification(notification: Omit<Notification, "id" | "createdAt">): Promise<Notification> {
-    const [newNotification] = await db.insert(notifications).values(notification).returning();
+  async createNotification(notification: Omit<Notification, "id" | "createdAt" | "updatedAt">): Promise<Notification> {
+    const [newNotification] = await db.insert(notifications).values({
+      ...notification,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
     return newNotification;
   }
 
   async markNotificationAsRead(id: number): Promise<Notification> {
     const [updatedNotification] = await db
       .update(notifications)
-      .set({ isRead: true })
+      .set({ 
+        isRead: true,
+        updatedAt: new Date()
+      })
       .where(eq(notifications.id, id))
       .returning();
     return updatedNotification;
+  }
+  
+  async markNotificationAsClicked(id: number): Promise<Notification> {
+    const [updatedNotification] = await db
+      .update(notifications)
+      .set({ 
+        clickedAt: new Date(),
+        isRead: true,
+        updatedAt: new Date()
+      })
+      .where(eq(notifications.id, id))
+      .returning();
+    return updatedNotification;
+  }
+  
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ 
+        isRead: true,
+        updatedAt: new Date()
+      })
+      .where(eq(notifications.userId, userId));
+  }
+  
+  async deleteNotification(id: number): Promise<void> {
+    await db.delete(notifications).where(eq(notifications.id, id));
+  }
+  
+  async deleteUserNotifications(userId: number, olderThan?: Date): Promise<void> {
+    let query = db.delete(notifications).where(eq(notifications.userId, userId));
+    
+    if (olderThan) {
+      query = query.where(sql`${notifications.createdAt} < ${olderThan}`);
+    }
+    
+    await query;
+  }
+  
+  // Notification Preferences Implementation
+  async getUserNotificationPreferences(userId: number): Promise<NotificationPreferences | undefined> {
+    const [preferences] = await db
+      .select()
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId));
+    return preferences;
+  }
+  
+  async createUserNotificationPreferences(preferences: Omit<NotificationPreferences, "id" | "createdAt" | "updatedAt">): Promise<NotificationPreferences> {
+    const [newPreferences] = await db.insert(notificationPreferences).values({
+      ...preferences,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newPreferences;
+  }
+  
+  async updateUserNotificationPreferences(userId: number, preferences: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
+    const [updatedPreferences] = await db
+      .update(notificationPreferences)
+      .set({
+        ...preferences,
+        updatedAt: new Date()
+      })
+      .where(eq(notificationPreferences.userId, userId))
+      .returning();
+    return updatedPreferences;
+  }
+  
+  // Notification Delivery Log Implementation
+  async createNotificationDeliveryLog(log: Omit<NotificationDeliveryLog, "id" | "createdAt">): Promise<NotificationDeliveryLog> {
+    const [newLog] = await db.insert(notificationDeliveryLog).values({
+      ...log,
+      createdAt: new Date()
+    }).returning();
+    return newLog;
+  }
+  
+  async updateNotificationDeliveryStatus(id: number, status: string, metadata?: any): Promise<NotificationDeliveryLog> {
+    const [updatedLog] = await db
+      .update(notificationDeliveryLog)
+      .set({ 
+        status,
+        deliveredAt: status === 'delivered' ? new Date() : undefined,
+        errorMessage: metadata?.errorMessage
+      })
+      .where(eq(notificationDeliveryLog.id, id))
+      .returning();
+    return updatedLog;
+  }
+  
+  async getNotificationDeliveryLogs(notificationId: number): Promise<NotificationDeliveryLog[]> {
+    return await db
+      .select()
+      .from(notificationDeliveryLog)
+      .where(eq(notificationDeliveryLog.notificationId, notificationId))
+      .orderBy(sql`${notificationDeliveryLog.createdAt} DESC`);
+  }
+  
+  // Smart Notification Creation Methods
+  async createRentCardViewNotification(tenantId: number, viewData: {
+    shareTokenId?: number;
+    viewerInfo?: {
+      deviceType?: 'desktop' | 'mobile' | 'tablet';
+      location?: string;
+      source?: string;
+    };
+    viewDuration?: number;
+    isUnique?: boolean;
+  }): Promise<Notification | null> {
+    // Check user preferences first
+    const userPreferences = await this.getUserNotificationPreferences(tenantId);
+    if (userPreferences && !userPreferences.rentcardViewsEnabled) {
+      return null; // User has disabled view notifications
+    }
+    
+    // Check rate limiting
+    const shouldSend = await this.shouldSendNotification(tenantId, 'rentcard_view', viewData);
+    if (!shouldSend) {
+      return null;
+    }
+    
+    // Create notification
+    const deviceEmoji = viewData.viewerInfo?.deviceType === 'mobile' ? '📱' : 
+                       viewData.viewerInfo?.deviceType === 'tablet' ? '📱' : '💻';
+    
+    const title = viewData.isUnique ? '👀 New RentCard View!' : '👀 RentCard Viewed Again!';
+    const content = `Someone viewed your RentCard ${deviceEmoji} ${viewData.viewerInfo?.location ? `from ${viewData.viewerInfo.location}` : ''}`;
+    
+    const notification = await this.createNotification({
+      userId: tenantId,
+      type: 'rentcard_view',
+      title,
+      content,
+      priority: viewData.isUnique ? 'high' : 'normal',
+      relatedEntityType: 'shareToken',
+      relatedEntityId: viewData.shareTokenId,
+      viewData,
+      deliveryMethods: ['in_app'],
+      metadata: {
+        aggregationKey: `rentcard_view_${tenantId}_${new Date().toDateString()}`,
+        actionUrl: '/tenant/dashboard'
+      }
+    });
+    
+    // Send email if enabled and frequency allows
+    if (userPreferences?.rentcardViewsEmail && userPreferences?.rentcardViewsFrequency === 'instant') {
+      await this.createNotificationDeliveryLog({
+        notificationId: notification.id,
+        userId: tenantId,
+        deliveryMethod: 'email',
+        status: 'queued'
+      });
+    }
+    
+    return notification;
+  }
+  
+  async createInterestSubmissionNotification(tenantId: number, interestData: {
+    landlordInfo?: {
+      name?: string;
+      companyName?: string;
+      email?: string;
+    };
+    propertyInfo?: {
+      address?: string;
+      rent?: number;
+    };
+    message?: string;
+  }): Promise<Notification | null> {
+    // Check user preferences
+    const userPreferences = await this.getUserNotificationPreferences(tenantId);
+    if (userPreferences && !userPreferences.interestSubmissionsEnabled) {
+      return null;
+    }
+    
+    const landlordName = interestData.landlordInfo?.name || interestData.landlordInfo?.companyName || 'A landlord';
+    const propertyText = interestData.propertyInfo?.address ? ` for ${interestData.propertyInfo.address}` : '';
+    
+    const title = '🎉 New Interest Submission!';
+    const content = `${landlordName} has submitted interest in your RentCard${propertyText}`;
+    
+    const notification = await this.createNotification({
+      userId: tenantId,
+      type: 'interest_submission',
+      title,
+      content,
+      priority: 'high',
+      relatedEntityType: 'interest',
+      interestData,
+      deliveryMethods: ['in_app'],
+      metadata: {
+        actionUrl: '/tenant/applications'
+      }
+    });
+    
+    // Send email if enabled
+    if (userPreferences?.interestSubmissionsEmail) {
+      await this.createNotificationDeliveryLog({
+        notificationId: notification.id,
+        userId: tenantId,
+        deliveryMethod: 'email',
+        status: 'queued'
+      });
+    }
+    
+    return notification;
+  }
+  
+  async createWeeklySummaryNotification(tenantId: number, summaryData: {
+    totalViews: number;
+    newInterests: number;
+    weekStartDate: Date;
+    weekEndDate: Date;
+    topSources?: { source: string; count: number }[];
+  }): Promise<Notification | null> {
+    // Check user preferences
+    const userPreferences = await this.getUserNotificationPreferences(tenantId);
+    if (userPreferences && !userPreferences.weeklySummaryEnabled) {
+      return null;
+    }
+    
+    const title = '📊 Your Weekly RentCard Summary';
+    const content = `This week: ${summaryData.totalViews} views, ${summaryData.newInterests} new interests`;
+    
+    const notification = await this.createNotification({
+      userId: tenantId,
+      type: 'weekly_summary',
+      title,
+      content,
+      priority: 'normal',
+      relatedEntityType: 'summary',
+      deliveryMethods: ['in_app'],
+      metadata: {
+        summaryData,
+        actionUrl: '/tenant/dashboard'
+      }
+    });
+    
+    return notification;
+  }
+  
+  // Notification Analytics
+  async getUserNotificationStats(userId: number, timeframe?: string): Promise<{
+    totalNotifications: number;
+    unreadCount: number;
+    readRate: number;
+    clickRate: number;
+    notificationsByType: { type: string; count: number }[];
+    averageResponseTime: number;
+  }> {
+    // Get basic counts
+    const totalNotifications = await this.getUserNotificationCount(userId);
+    const unreadCount = await this.getUserNotificationCount(userId, true);
+    
+    // Calculate read rate
+    const readRate = totalNotifications > 0 ? ((totalNotifications - unreadCount) / totalNotifications) * 100 : 0;
+    
+    // Get notifications with click data for click rate
+    const allNotifications = await this.getUserNotifications(userId);
+    const clickedNotifications = allNotifications.filter(n => n.clickedAt);
+    const clickRate = totalNotifications > 0 ? (clickedNotifications.length / totalNotifications) * 100 : 0;
+    
+    // Group by type
+    const typeGroups = allNotifications.reduce((acc, notification) => {
+      acc[notification.type] = (acc[notification.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const notificationsByType = Object.entries(typeGroups).map(([type, count]) => ({ type, count }));
+    
+    // Calculate average response time (time from creation to read)
+    const readNotifications = allNotifications.filter(n => n.isRead && n.createdAt);
+    let averageResponseTime = 0;
+    if (readNotifications.length > 0) {
+      const totalResponseTime = readNotifications.reduce((sum, notification) => {
+        const responseTime = new Date().getTime() - new Date(notification.createdAt).getTime();
+        return sum + responseTime;
+      }, 0);
+      averageResponseTime = Math.round(totalResponseTime / readNotifications.length / 1000 / 60); // Convert to minutes
+    }
+    
+    return {
+      totalNotifications,
+      unreadCount,
+      readRate: Math.round(readRate * 100) / 100,
+      clickRate: Math.round(clickRate * 100) / 100,
+      notificationsByType,
+      averageResponseTime
+    };
+  }
+  
+  // Batch operations
+  async createBulkNotifications(notifications: Omit<Notification, "id" | "createdAt" | "updatedAt">[]): Promise<Notification[]> {
+    const notificationsWithTimestamps = notifications.map(notification => ({
+      ...notification,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }));
+    
+    return await db.insert(notifications).values(notificationsWithTimestamps).returning();
+  }
+  
+  // Rate limiting check
+  async shouldSendNotification(userId: number, notificationType: string, metadata?: any): Promise<boolean> {
+    const userPreferences = await this.getUserNotificationPreferences(userId);
+    
+    // Check max notifications per hour
+    const maxPerHour = userPreferences?.maxNotificationsPerHour || 10;
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    
+    const recentNotifications = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        sql`${notifications.createdAt} > ${oneHourAgo}`
+      ));
+    
+    const recentCount = recentNotifications[0]?.count || 0;
+    if (recentCount >= maxPerHour) {
+      return false;
+    }
+    
+    // Check quiet hours
+    if (userPreferences?.quietHoursStart && userPreferences?.quietHoursEnd) {
+      const now = new Date();
+      const currentTime = now.getHours() * 100 + now.getMinutes();
+      const quietStart = parseInt(userPreferences.quietHoursStart.replace(':', ''));
+      const quietEnd = parseInt(userPreferences.quietHoursEnd.replace(':', ''));
+      
+      if (quietStart <= quietEnd) {
+        // Same day quiet hours
+        if (currentTime >= quietStart && currentTime <= quietEnd) {
+          return false;
+        }
+      } else {
+        // Overnight quiet hours
+        if (currentTime >= quietStart || currentTime <= quietEnd) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
   }
 
   // Roommate operations

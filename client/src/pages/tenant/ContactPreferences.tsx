@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import TenantLayout from '@/components/layouts/TenantLayout';
 import { ROUTES } from "@/constants/routes";
 import type { TenantContactPreferences, TenantBlockedContact } from '@shared/schema';
+import { useNotificationPreferences } from '@/hooks/useNotifications';
 
 interface ContactPreferenceFormData {
   preferredMethods: string[];
@@ -68,6 +69,9 @@ interface BlockedContactForm {
 const ContactPreferences = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Notification preferences hook
+  const { preferences: notificationPreferences, isLoading: notificationPrefsLoading, updatePreferences: updateNotificationPreferences } = useNotificationPreferences();
   
   const [formData, setFormData] = useState<ContactPreferenceFormData>({
     preferredMethods: [],
@@ -201,17 +205,18 @@ const ContactPreferences = () => {
   // Load existing preferences into form
   useEffect(() => {
     if (preferences) {
+      const methods = preferences.preferredMethods || [];
       setFormData({
-        preferredMethods: preferences.preferredMethods || [],
-        emailEnabled: preferences.emailEnabled ?? true,
-        phoneEnabled: preferences.phoneEnabled ?? true,
-        smsEnabled: preferences.smsEnabled ?? false,
+        preferredMethods: methods,
+        emailEnabled: methods.includes('email'),
+        phoneEnabled: methods.includes('phone'),
+        smsEnabled: methods.includes('sms'),
         timePreferences: preferences.timePreferences || formData.timePreferences,
         frequencyPreferences: preferences.frequencyPreferences || formData.frequencyPreferences,
-        topicPreferences: preferences.topicPreferences || formData.topicPreferences,
-        doNotContactHours: preferences.doNotContactHours || '',
-        emergencyContactAllowed: preferences.emergencyContactAllowed ?? true,
-        notes: preferences.notes || ''
+        topicPreferences: formData.topicPreferences, // These don't exist in schema, use defaults
+        doNotContactHours: formData.doNotContactHours, // These don't exist in schema, use defaults
+        emergencyContactAllowed: formData.emergencyContactAllowed, // These don't exist in schema, use defaults
+        notes: formData.notes // These don't exist in schema, use defaults
       });
     }
   }, [preferences]);
@@ -500,6 +505,258 @@ const ContactPreferences = () => {
             </CardContent>
           </Card>
 
+          {/* Notification Preferences */}
+          <Card data-testid="card-notification-preferences">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notification Preferences
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Control when and how you receive notifications about RentCard activity
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {notificationPrefsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : (
+                <>
+                  {/* RentCard View Notifications */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-gray-900">RentCard Views</h4>
+                    <div className="bg-blue-50 p-4 rounded-lg border">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <Label className="font-medium">RentCard View Notifications</Label>
+                          <p className="text-sm text-gray-600">Get notified when someone views your RentCard</p>
+                        </div>
+                        <Switch
+                          data-testid="switch-rentcard-views-enabled"
+                          checked={(notificationPreferences as any)?.rentcardViewsEnabled ?? true}
+                          onCheckedChange={(checked) => {
+                            updateNotificationPreferences.mutate({
+                              ...(notificationPreferences || {}),
+                              rentcardViewsEnabled: checked
+                            });
+                          }}
+                        />
+                      </div>
+                      
+                      {((notificationPreferences as any)?.rentcardViewsEnabled ?? true) && (
+                        <div className="space-y-3 pl-4 border-l-2 border-blue-200">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Email notifications</Label>
+                            <Switch
+                              data-testid="switch-rentcard-views-email"
+                              checked={(notificationPreferences as any)?.rentcardViewsEmail ?? false}
+                              onCheckedChange={(checked) => {
+                                updateNotificationPreferences.mutate({
+                                  ...(notificationPreferences || {}),
+                                  rentcardViewsEmail: checked
+                                });
+                              }}
+                            />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Frequency</Label>
+                            <select
+                              data-testid="select-rentcard-views-frequency"
+                              value={(notificationPreferences as any)?.rentcardViewsFrequency || 'instant'}
+                              onChange={(e) => {
+                                updateNotificationPreferences.mutate({
+                                  ...(notificationPreferences || {}),
+                                  rentcardViewsFrequency: e.target.value
+                                });
+                              }}
+                              className="border rounded px-3 py-1 bg-white text-sm"
+                            >
+                              <option value="instant">Instant</option>
+                              <option value="hourly">Hourly digest</option>
+                              <option value="daily">Daily digest</option>
+                              <option value="weekly">Weekly summary</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Interest Submission Notifications */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-gray-900">Interest Submissions</h4>
+                    <div className="bg-green-50 p-4 rounded-lg border">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <Label className="font-medium">Interest Submission Notifications</Label>
+                          <p className="text-sm text-gray-600">Get notified when landlords submit interest in you</p>
+                        </div>
+                        <Switch
+                          data-testid="switch-interest-submissions-enabled"
+                          checked={(notificationPreferences as any)?.interestSubmissionsEnabled ?? true}
+                          onCheckedChange={(checked) => {
+                            updateNotificationPreferences.mutate({
+                              ...(notificationPreferences || {}),
+                              interestSubmissionsEnabled: checked
+                            });
+                          }}
+                        />
+                      </div>
+                      
+                      {((notificationPreferences as any)?.interestSubmissionsEnabled ?? true) && (
+                        <div className="space-y-3 pl-4 border-l-2 border-green-200">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Email notifications</Label>
+                            <Switch
+                              data-testid="switch-interest-submissions-email"
+                              checked={(notificationPreferences as any)?.interestSubmissionsEmail ?? true}
+                              onCheckedChange={(checked) => {
+                                updateNotificationPreferences.mutate({
+                                  ...(notificationPreferences || {}),
+                                  interestSubmissionsEmail: checked
+                                });
+                              }}
+                            />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Frequency</Label>
+                            <select
+                              data-testid="select-interest-submissions-frequency"
+                              value={(notificationPreferences as any)?.interestSubmissionsFrequency || 'instant'}
+                              onChange={(e) => {
+                                updateNotificationPreferences.mutate({
+                                  ...(notificationPreferences || {}),
+                                  interestSubmissionsFrequency: e.target.value
+                                });
+                              }}
+                              className="border rounded px-3 py-1 bg-white text-sm"
+                            >
+                              <option value="instant">Instant</option>
+                              <option value="hourly">Hourly digest</option>
+                              <option value="daily">Daily digest</option>
+                              <option value="weekly">Weekly summary</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Weekly Summary */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-gray-900">Weekly Summary</h4>
+                    <div className="bg-purple-50 p-4 rounded-lg border">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <Label className="font-medium">Weekly Activity Summary</Label>
+                          <p className="text-sm text-gray-600">Get a weekly recap of your RentCard activity</p>
+                        </div>
+                        <Switch
+                          data-testid="switch-weekly-summary-enabled"
+                          checked={(notificationPreferences as any)?.weeklySummaryEnabled ?? true}
+                          onCheckedChange={(checked) => {
+                            updateNotificationPreferences.mutate({
+                              ...(notificationPreferences || {}),
+                              weeklySummaryEnabled: checked
+                            });
+                          }}
+                        />
+                      </div>
+                      
+                      {((notificationPreferences as any)?.weeklySummaryEnabled ?? true) && (
+                        <div className="space-y-3 pl-4 border-l-2 border-purple-200">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Email summary</Label>
+                            <Switch
+                              data-testid="switch-weekly-summary-email"
+                              checked={(notificationPreferences as any)?.weeklySummaryEmail ?? true}
+                              onCheckedChange={(checked) => {
+                                updateNotificationPreferences.mutate({
+                                  ...(notificationPreferences || {}),
+                                  weeklySummaryEmail: checked
+                                });
+                              }}
+                            />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">Summary day</Label>
+                            <select
+                              data-testid="select-weekly-summary-day"
+                              value={(notificationPreferences as any)?.weeklySummaryDay || 'monday'}
+                              onChange={(e) => {
+                                updateNotificationPreferences.mutate({
+                                  ...(notificationPreferences || {}),
+                                  weeklySummaryDay: e.target.value
+                                });
+                              }}
+                              className="border rounded px-3 py-1 bg-white text-sm"
+                            >
+                              <option value="monday">Monday</option>
+                              <option value="tuesday">Tuesday</option>
+                              <option value="wednesday">Wednesday</option>
+                              <option value="thursday">Thursday</option>
+                              <option value="friday">Friday</option>
+                              <option value="saturday">Saturday</option>
+                              <option value="sunday">Sunday</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Advanced Settings */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-gray-900">Advanced Settings</h4>
+                    <div className="bg-gray-50 p-4 rounded-lg border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="font-medium text-sm">Group similar notifications</Label>
+                          <p className="text-xs text-gray-600">Combine multiple similar notifications into one</p>
+                        </div>
+                        <Switch
+                          data-testid="switch-group-similar-notifications"
+                          checked={(notificationPreferences as any)?.groupSimilarNotifications ?? true}
+                          onCheckedChange={(checked) => {
+                            updateNotificationPreferences.mutate({
+                              ...(notificationPreferences || {}),
+                              groupSimilarNotifications: checked
+                            });
+                          }}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm">Max notifications per hour</Label>
+                        <select
+                          data-testid="select-max-notifications-per-hour"
+                          value={(notificationPreferences as any)?.maxNotificationsPerHour || 10}
+                          onChange={(e) => {
+                            updateNotificationPreferences.mutate({
+                              ...(notificationPreferences || {}),
+                              maxNotificationsPerHour: parseInt(e.target.value)
+                            });
+                          }}
+                          className="border rounded px-3 py-1 bg-white text-sm"
+                        >
+                          <option value="5">5</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                          <option value="50">50</option>
+                          <option value="999">Unlimited</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Blocked Contacts */}
           <Card data-testid="card-blocked-contacts">
             <CardHeader>
@@ -600,10 +857,10 @@ const ContactPreferences = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline">
-                              {contact.contactType}
+                              {contact.blockType}
                             </Badge>
                             <span className="font-medium">
-                              {contact.email || contact.phone || `Landlord ID: ${contact.landlordId}`}
+                              {contact.blockedEmail || contact.blockedPhone || `Landlord ID: ${contact.landlordId}`}
                             </span>
                           </div>
                           {contact.reason && (
