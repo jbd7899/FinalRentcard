@@ -10,6 +10,11 @@ import {
   properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode,
   TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate 
 } from "@shared/schema";
+import {
+  insertRentcardViewSchema, insertViewSessionSchema, insertInterestAnalyticsSchema,
+  insertSharingAnalyticsSchema, insertQRCodeAnalyticsSchema, RentcardView, ViewSession,
+  InterestAnalytics, SharingAnalytics, QRCodeAnalytics
+} from "@shared/schema-enhancements";
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
 import { db } from "./db";
@@ -142,6 +147,63 @@ async function assertLandlordTenantAssociation(req: any, tenantId: number): Prom
   }
 }
 
+// Analytics utility functions
+function extractRequestMetadata(req: any): {
+  ipAddress?: string;
+  userAgent?: string;
+  referrer?: string;
+  deviceInfo?: { type: 'desktop' | 'mobile' | 'tablet'; os?: string; browser?: string };
+} {
+  const userAgent = req.headers['user-agent'] || '';
+  const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+  const referrer = req.headers.referer || req.headers.referrer;
+  
+  // Simple device detection based on user agent
+  let deviceType: 'desktop' | 'mobile' | 'tablet' = 'desktop';
+  if (/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+    if (/iPad|tablet/i.test(userAgent)) {
+      deviceType = 'tablet';
+    } else {
+      deviceType = 'mobile';
+    }
+  }
+  
+  // Extract OS and browser (simplified)
+  let os: string | undefined;
+  let browser: string | undefined;
+  
+  if (/Windows/i.test(userAgent)) os = 'Windows';
+  else if (/Mac/i.test(userAgent)) os = 'macOS';
+  else if (/Linux/i.test(userAgent)) os = 'Linux';
+  else if (/Android/i.test(userAgent)) os = 'Android';
+  else if (/iOS/i.test(userAgent)) os = 'iOS';
+  
+  if (/Chrome/i.test(userAgent)) browser = 'Chrome';
+  else if (/Firefox/i.test(userAgent)) browser = 'Firefox';
+  else if (/Safari/i.test(userAgent)) browser = 'Safari';
+  else if (/Edge/i.test(userAgent)) browser = 'Edge';
+  
+  return {
+    ipAddress: Array.isArray(ipAddress) ? ipAddress[0] : ipAddress,
+    userAgent,
+    referrer,
+    deviceInfo: { type: deviceType, os, browser }
+  };
+}
+
+function generateViewerFingerprint(req: any): string {
+  const metadata = extractRequestMetadata(req);
+  const fingerprint = `${metadata.ipAddress}-${metadata.deviceInfo?.type}-${metadata.userAgent}`;
+  return Buffer.from(fingerprint).toString('base64').substring(0, 32);
+}
+
+function generateSessionFingerprint(req: any): string {
+  const metadata = extractRequestMetadata(req);
+  const timestamp = Date.now();
+  const fingerprint = `${metadata.ipAddress}-${timestamp}-${Math.random()}`;
+  return Buffer.from(fingerprint).toString('base64').substring(0, 32);
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
@@ -227,6 +289,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Server error while fetching tenant profile",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Add endpoint for current user's landlord profile
+  app.get("/api/landlord/profile", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        console.error('Unauthorized access to landlord profile: No user ID in request');
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      console.log(`Fetching landlord profile for user ID: ${req.user.id}`);
+      const profile = await storage.getLandlordProfile(req.user.id);
+      
+      if (!profile) {
+        console.log(`No landlord profile found for user ID: ${req.user.id}`);
+        return res.status(404).json({ message: "Profile not found" });
+      }
+      
+      console.log(`Successfully retrieved landlord profile for user ID: ${req.user.id}`);
+      res.json(profile);
+    } catch (error) {
+      handleRouteError(error, res, '/api/landlord/profile endpoint');
     }
   });
 
@@ -748,8 +833,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "QR code not found or inactive" });
       }
       
-      // Track the scan
+      // Track the scan (existing simple tracking)
       await storage.trackQRCodeScan(qrCodeId);
+      
+      // Enhanced analytics tracking
+      try {
+        const metadata = extractRequestMetadata(req);
+        await storage.recordQRCodeAnalytics({
+          qrCodeId: qrCodeId,
+          source: 'qr_code',
+          sourceId: qrCodeId.toString(),
+          ...metadata
+        });
+      } catch (analyticsError) {
+        // Don't fail the request if analytics fails
+        console.error('QR analytics tracking failed:', analyticsError);
+      }
       
       res.json({ success: true });
     } catch (error) {
@@ -773,8 +872,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).send("QR code not found or inactive");
       }
       
-      // Track the scan
+      // Track the scan (existing simple tracking)
       await storage.trackQRCodeScan(qrCodeId);
+      
+      // Enhanced analytics tracking
+      try {
+        const metadata = extractRequestMetadata(req);
+        await storage.recordQRCodeAnalytics({
+          qrCodeId: qrCodeId,
+          source: 'qr_code',
+          sourceId: qrCodeId.toString(),
+          ...metadata
+        });
+      } catch (analyticsError) {
+        // Don't fail the request if analytics fails
+        console.error('QR analytics tracking failed:', analyticsError);
+      }
       
       // Redirect to the target URL
       res.redirect(302, qrCode.qrCodeData);
@@ -1278,8 +1391,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "RentCard not found" });
       }
 
-      // Track the view
+      // Track the view (existing simple tracking)
       await storage.trackTokenView(token);
+
+      // Enhanced analytics tracking
+      try {
+        const metadata = extractRequestMetadata(req);
+        await storage.recordRentCardView({
+          shareTokenId: shareToken.id,
+          tenantId: shareToken.tenantId,
+          source: 'share_link',
+          sourceId: token,
+          ...metadata
+        });
+      } catch (analyticsError) {
+        // Don't fail the request if analytics fails
+        console.error('Analytics tracking failed:', analyticsError);
+      }
 
       // Return the rent card data
       res.json(rentCard);
@@ -2506,6 +2634,497 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       handleRouteError(error, res, 'check if can contact tenant');
+    }
+  });
+
+  // ============== ENHANCED ANALYTICS ENDPOINTS ==============
+
+  // Data Collection Endpoints
+
+  // Track RentCard view
+  app.post("/api/analytics/rentcard-view", async (req, res) => {
+    try {
+      const metadata = extractRequestMetadata(req);
+      const {
+        shareTokenId,
+        tenantId,
+        source = 'direct',
+        sourceId,
+        viewDuration = 0,
+        actionsPerformed = []
+      } = req.body;
+
+      // Validate required fields
+      if (!shareTokenId && !tenantId) {
+        return res.status(400).json({ message: "Either shareTokenId or tenantId is required" });
+      }
+
+      // Check if this is a unique view
+      const viewerFingerprint = generateViewerFingerprint(req);
+      const existingViews = await storage.getRentcardViews(shareTokenId, tenantId);
+      const isUnique = !existingViews.some(v => v.viewerFingerprint === viewerFingerprint);
+
+      // Create view record
+      const viewData = {
+        shareTokenId: shareTokenId || null,
+        tenantId: tenantId || null,
+        viewerFingerprint,
+        ipAddress: metadata.ipAddress,
+        userAgent: metadata.userAgent,
+        referrer: metadata.referrer,
+        source,
+        sourceId,
+        deviceInfo: metadata.deviceInfo,
+        viewDuration,
+        actionsPerformed,
+        isUnique
+      };
+
+      const newView = await storage.createRentcardView(viewData);
+
+      // Track share token view count if applicable
+      if (shareTokenId) {
+        await storage.trackTokenView(shareTokenId.toString());
+      }
+
+      res.status(201).json({ 
+        success: true, 
+        viewId: newView.id,
+        isUnique
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'track rentcard view');
+    }
+  });
+
+  // Track sharing action
+  app.post("/api/analytics/sharing", async (req, res) => {
+    try {
+      const {
+        shareTokenId,
+        tenantId,
+        sharingMethod,
+        recipientInfo = {}
+      } = req.body;
+
+      if (!shareTokenId || !tenantId || !sharingMethod) {
+        return res.status(400).json({ 
+          message: "shareTokenId, tenantId, and sharingMethod are required" 
+        });
+      }
+
+      const sharingData = {
+        shareTokenId,
+        tenantId,
+        sharingMethod,
+        recipientInfo,
+        performanceScore: 0 // Will be calculated later based on engagement
+      };
+
+      const newSharing = await storage.createSharingAnalytics(sharingData);
+      res.status(201).json({ success: true, sharingId: newSharing.id });
+    } catch (error) {
+      handleRouteError(error, res, 'track sharing action');
+    }
+  });
+
+  // Track QR code scan
+  app.post("/api/analytics/qr-scan", async (req, res) => {
+    try {
+      const metadata = extractRequestMetadata(req);
+      const {
+        qrCodeId,
+        propertyId,
+        scanLocation,
+        subsequentAction = 'scanned'
+      } = req.body;
+
+      if (!qrCodeId || !propertyId) {
+        return res.status(400).json({ 
+          message: "qrCodeId and propertyId are required" 
+        });
+      }
+
+      const scanData = {
+        qrCodeId,
+        propertyId,
+        scanLocation,
+        scannerInfo: {
+          deviceType: metadata.deviceInfo?.type,
+          os: metadata.deviceInfo?.os,
+          browser: metadata.deviceInfo?.browser
+        },
+        subsequentAction,
+        sessionDuration: 0,
+        conversionValue: subsequentAction !== 'scanned' ? subsequentAction : null
+      };
+
+      const newScan = await storage.createQRCodeAnalytics(scanData);
+
+      // Track QR code usage in the property QR codes table
+      if (qrCodeId) {
+        await storage.trackQRCodeScan(qrCodeId);
+      }
+
+      res.status(201).json({ success: true, scanId: newScan.id });
+    } catch (error) {
+      handleRouteError(error, res, 'track QR scan');
+    }
+  });
+
+  // Track interest conversion
+  app.post("/api/analytics/interest-conversion", async (req, res) => {
+    try {
+      const {
+        interestId,
+        tenantId,
+        landlordId,
+        propertyId,
+        sourceView = 'unknown',
+        viewsBeforeInterest = 0,
+        timeToInterest = 0,
+        metadata: analyticsMetadata = {}
+      } = req.body;
+
+      if (!interestId || !tenantId || !landlordId) {
+        return res.status(400).json({ 
+          message: "interestId, tenantId, and landlordId are required" 
+        });
+      }
+
+      const conversionData = {
+        interestId,
+        tenantId,
+        landlordId,
+        propertyId: propertyId || null,
+        sourceView,
+        viewsBeforeInterest,
+        timeToInterest,
+        engagementScore: Math.min(100, Math.max(0, 
+          50 + (viewsBeforeInterest * 10) - (timeToInterest / 60)
+        )), // Simple engagement score calculation
+        responseTime: null,
+        finalStatus: 'new',
+        metadata: analyticsMetadata
+      };
+
+      const newConversion = await storage.createInterestAnalytics(conversionData);
+      res.status(201).json({ success: true, conversionId: newConversion.id });
+    } catch (error) {
+      handleRouteError(error, res, 'track interest conversion');
+    }
+  });
+
+  // Reporting Endpoints
+
+  // Get tenant view analytics
+  app.get("/api/analytics/tenant/:tenantId/views", requireAuth, async (req, res) => {
+    try {
+      const tenantId = parseInt(req.params.tenantId);
+      if (isNaN(tenantId)) {
+        return res.status(400).json({ message: "Invalid tenant ID" });
+      }
+
+      // Verify tenant ownership
+      await assertTenantOwnership(req, tenantId);
+
+      const timeframe = req.query.timeframe as string;
+      const stats = await storage.getRentcardViewStats(tenantId, timeframe);
+      const views = await storage.getRentcardViews(undefined, tenantId, timeframe);
+
+      res.json({
+        stats,
+        recentViews: views.slice(0, 10), // Last 10 views for detail
+        viewHistory: views.map(v => ({
+          date: v.timestamp,
+          source: v.source,
+          deviceType: v.deviceInfo?.type,
+          duration: v.viewDuration,
+          isUnique: v.isUnique
+        }))
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get tenant view analytics');
+    }
+  });
+
+  // Get tenant sharing performance
+  app.get("/api/analytics/tenant/:tenantId/sharing", requireAuth, async (req, res) => {
+    try {
+      const tenantId = parseInt(req.params.tenantId);
+      if (isNaN(tenantId)) {
+        return res.status(400).json({ message: "Invalid tenant ID" });
+      }
+
+      await assertTenantOwnership(req, tenantId);
+
+      const stats = await storage.getSharingPerformanceStats(tenantId);
+      const sharingHistory = await storage.getSharingAnalytics(undefined, tenantId);
+
+      res.json({
+        stats,
+        sharingHistory: sharingHistory.slice(0, 20).map(s => ({
+          date: s.shareDate,
+          method: s.sharingMethod,
+          totalViews: s.totalViews,
+          uniqueViewers: s.uniqueViewers,
+          converted: s.conversionToInterest,
+          performanceScore: s.performanceScore
+        }))
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get tenant sharing analytics');
+    }
+  });
+
+  // Get landlord conversion analytics
+  app.get("/api/analytics/landlord/:landlordId/conversions", requireAuth, async (req, res) => {
+    try {
+      const landlordId = parseInt(req.params.landlordId);
+      if (isNaN(landlordId)) {
+        return res.status(400).json({ message: "Invalid landlord ID" });
+      }
+
+      await assertLandlordOwnership(req, landlordId);
+
+      const timeframe = req.query.timeframe as string;
+      const stats = await storage.getInterestConversionStats(landlordId, timeframe);
+      const analytics = await storage.getInterestAnalytics(landlordId);
+
+      res.json({
+        stats,
+        conversionTrends: analytics.slice(0, 50).map(a => ({
+          date: a.createdAt,
+          source: a.sourceView,
+          timeToInterest: a.timeToInterest,
+          engagementScore: a.engagementScore,
+          finalStatus: a.finalStatus
+        }))
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get landlord conversion analytics');
+    }
+  });
+
+  // Get property QR code statistics
+  app.get("/api/analytics/property/:propertyId/qr-stats", requireAuth, async (req, res) => {
+    try {
+      const propertyId = parseInt(req.params.propertyId);
+      if (isNaN(propertyId)) {
+        return res.status(400).json({ message: "Invalid property ID" });
+      }
+
+      await assertPropertyOwnership(req, propertyId);
+
+      const stats = await storage.getQRCodeStats(propertyId);
+      const scanHistory = await storage.getQRCodeAnalytics(undefined, propertyId);
+
+      res.json({
+        stats,
+        scanHistory: scanHistory.slice(0, 50).map(scan => ({
+          date: scan.scanDate,
+          deviceType: scan.scannerInfo?.deviceType,
+          action: scan.subsequentAction,
+          location: scan.scanLocation,
+          sessionDuration: scan.sessionDuration
+        }))
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get property QR analytics');
+    }
+  });
+
+  // General analytics dashboard endpoint for landlords
+  app.get("/api/analytics/landlord/dashboard", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'landlord') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(404).json({ message: "Landlord profile not found" });
+      }
+
+      const timeframe = req.query.timeframe as string;
+
+      // Get conversion stats
+      const conversionStats = await storage.getInterestConversionStats(landlordProfile.id, timeframe);
+      
+      // Get properties for property-level analytics
+      const properties = await storage.getProperties(landlordProfile.id);
+      
+      // Aggregate QR stats across all properties
+      let totalQRScans = 0;
+      let totalQRConversions = 0;
+      for (const property of properties) {
+        const qrStats = await storage.getQRCodeStats(property.id);
+        totalQRScans += qrStats.totalScans;
+        totalQRConversions += Math.round(qrStats.totalScans * qrStats.conversionRate / 100);
+      }
+
+      res.json({
+        summary: {
+          totalInterests: conversionStats.totalInterests,
+          conversionRate: conversionStats.conversionRate,
+          avgTimeToInterest: conversionStats.avgTimeToInterest,
+          totalQRScans,
+          qrConversionRate: totalQRScans > 0 ? (totalQRConversions / totalQRScans) * 100 : 0
+        },
+        conversionStats,
+        propertyPerformance: properties.map(p => ({
+          id: p.id,
+          address: p.address,
+          viewCount: p.viewCount || 0,
+          interests: 0 // Would need to calculate from interests table
+        }))
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get landlord dashboard analytics');
+    }
+  });
+
+  // General analytics dashboard endpoint for tenants
+  app.get("/api/analytics/tenant/dashboard", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id || req.user.userType !== 'tenant') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      if (!tenantProfile) {
+        return res.status(404).json({ message: "Tenant profile not found" });
+      }
+
+      const timeframe = req.query.timeframe as string;
+
+      // Get view stats
+      const viewStats = await storage.getRentcardViewStats(tenantProfile.id, timeframe);
+      
+      // Get sharing performance
+      const sharingStats = await storage.getSharingPerformanceStats(tenantProfile.id);
+      
+      // Get share tokens for additional metrics
+      const shareTokens = await storage.getShareTokensByTenant(tenantProfile.id);
+      const totalShares = shareTokens.length;
+      const totalViews = shareTokens.reduce((sum, token) => sum + token.viewCount, 0);
+
+      res.json({
+        summary: {
+          totalViews: viewStats.totalViews,
+          uniqueViews: viewStats.uniqueViews,
+          avgViewDuration: viewStats.avgViewDuration,
+          totalShares,
+          shareTokens: totalShares
+        },
+        viewStats,
+        sharingStats,
+        topSources: viewStats.topSources,
+        deviceBreakdown: viewStats.deviceBreakdown
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get tenant dashboard analytics');
+    }
+  });
+
+  // Get landlord properties analytics
+  app.get("/api/analytics/landlord/:landlordId/properties", requireAuth, async (req, res) => {
+    try {
+      const landlordId = parseInt(req.params.landlordId);
+      if (isNaN(landlordId)) {
+        return res.status(400).json({ message: "Invalid landlord ID" });
+      }
+
+      await assertLandlordOwnership(req, landlordId);
+      
+      const timeframe = req.query.timeframe as string;
+
+      // Get all properties for this landlord
+      const properties = await storage.getProperties(landlordId);
+      
+      // Get analytics for each property
+      const propertyAnalytics = await Promise.all(
+        properties.map(async (property) => {
+          // Get interest count for this property
+          const interests = await storage.getInterests(landlordId, undefined, property.id);
+          const interestCount = interests.length;
+          
+          // Get view stats
+          const viewCount = property.viewCount || 0;
+          const uniqueViews = Math.floor(viewCount * 0.7); // Estimate unique views
+          const avgViewDuration = 120; // Default 2 minutes
+          const conversionRate = viewCount > 0 ? (interestCount / viewCount) : 0;
+          
+          return {
+            propertyId: property.id,
+            address: property.address,
+            totalViews: viewCount,
+            uniqueViews,
+            avgViewDuration,
+            totalShares: 0, // Could be enhanced with share token data
+            interestCount,
+            conversionRate,
+            trendData: [] // Could be enhanced with historical data
+          };
+        })
+      );
+
+      res.json({
+        properties: propertyAnalytics
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get landlord properties analytics');
+    }
+  });
+
+  // Get landlord interests analytics
+  app.get("/api/analytics/landlord/:landlordId/interests", requireAuth, async (req, res) => {
+    try {
+      const landlordId = parseInt(req.params.landlordId);
+      if (isNaN(landlordId)) {
+        return res.status(400).json({ message: "Invalid landlord ID" });
+      }
+
+      await assertLandlordOwnership(req, landlordId);
+      
+      const timeframe = req.query.timeframe as string;
+
+      // Get interest conversion stats
+      const conversionStats = await storage.getInterestConversionStats(landlordId, timeframe);
+      
+      // Get all interests for this landlord
+      const interests = await storage.getInterests(landlordId);
+      
+      // Get recent interests with property info
+      const recentInterests = await Promise.all(
+        interests.slice(0, 10).map(async (interest) => {
+          const property = interest.propertyId ? await storage.getProperty(interest.propertyId) : null;
+          return {
+            id: interest.id,
+            property: property?.address || 'General Interest',
+            date: interest.createdAt,
+            source: 'direct', // Could be enhanced with source tracking
+            status: interest.status
+          };
+        })
+      );
+
+      res.json({
+        stats: {
+          totalInterests: conversionStats.totalInterests,
+          avgConversionRate: conversionStats.conversionRate,
+          avgTimeToInterest: conversionStats.avgTimeToInterest
+        },
+        recentInterests,
+        conversionTrends: interests.map(interest => ({
+          date: interest.createdAt,
+          conversions: 1,
+          views: 10, // Estimated
+          rate: 0.1
+        })).slice(0, 30)
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get landlord interests analytics');
     }
   });
 

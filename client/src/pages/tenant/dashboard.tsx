@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   FileText, 
   Star, 
@@ -17,7 +19,8 @@ import {
   UserCheck,
   Menu,
   X,
-  User
+  User,
+  BarChart3
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -25,6 +28,8 @@ import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus, A
 import { Link, useLocation } from "wouter";
 import TenantLayout from '@/components/layouts/TenantLayout';
 import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
+import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
+import { apiRequest } from '@/lib/queryClient';
 
 const generateRoute = {
   application: (id: string) => `/tenant/applications/${id}`
@@ -36,6 +41,17 @@ const TenantDashboard = () => {
   const [, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics'>('dashboard');
+
+  // Fetch the authenticated user's tenant profile
+  const { data: tenantProfile, isLoading: isTenantProfileLoading, error: tenantProfileError } = useQuery({
+    queryKey: ['tenant-profile'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/tenant/profile');
+      return response.json();
+    },
+    enabled: !!user // Only fetch if user is authenticated
+  });
 
   // Demo data
   const rentCardStatus = {
@@ -93,14 +109,43 @@ const TenantDashboard = () => {
   return (
     <TenantLayout activeRoute={ROUTES.TENANT.DASHBOARD}>
       <header className="mb-6 md:mb-8">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Welcome to your Dashboard</h1>
-        <p className="text-sm sm:text-base text-gray-500 mt-1">
-          Manage your rental profile, documents, and applications
-        </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Welcome to your Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-500 mt-1">
+              Manage your rental profile, documents, and applications
+            </p>
+          </div>
+          
+          {/* Tab Navigation */}
+          <div className="flex gap-2">
+            <Button 
+              variant={activeTab === 'dashboard' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setActiveTab('dashboard')}
+              data-testid="tab-dashboard"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Dashboard
+            </Button>
+            <Button 
+              variant={activeTab === 'analytics' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setActiveTab('analytics')}
+              data-testid="tab-analytics"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics
+            </Button>
+          </div>
+        </div>
       </header>
       
-      {/* Quick Actions */}
-      <section className="mb-8 md:mb-10">
+      {/* Conditional Content Based on Active Tab */}
+      {activeTab === 'dashboard' ? (
+        <>
+        {/* Quick Actions */}
+        <section className="mb-8 md:mb-10">
         <h2 className="text-base sm:text-lg font-medium mb-4 md:mb-5">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
           <Card className="hover:shadow-md transition-shadow">
@@ -373,6 +418,41 @@ const TenantDashboard = () => {
         title="Share Your RentCard"
         description="Share your rental profile with landlords and property managers"
       />
+        </>
+      ) : (
+        /* Analytics Content */
+        <div className="mt-6">
+          {isTenantProfileLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          ) : tenantProfileError ? (
+            <Card className="p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-red-600 mb-2">Profile Error</h3>
+                <p className="text-gray-500">Unable to load tenant profile. Please try refreshing the page.</p>
+              </div>
+            </Card>
+          ) : tenantProfile?.id ? (
+            <TenantAnalyticsDashboard tenantId={tenantProfile.id} />
+          ) : (
+            <Card className="p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-600 mb-2">Profile Incomplete</h3>
+                <p className="text-gray-500 mb-4">Please complete your tenant profile to view analytics.</p>
+                <Button 
+                  onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+                  data-testid="button-complete-profile"
+                >
+                  Complete Profile
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
     </TenantLayout>
   );
 };

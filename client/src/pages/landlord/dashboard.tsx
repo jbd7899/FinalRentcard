@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, BarChart3 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -13,6 +13,7 @@ import {
 import OverviewTab from '@/components/landlord/dashboard/OverviewTab';
 import PropertiesTab from '@/components/landlord/dashboard/PropertiesTab';
 import InterestsTab from '@/components/landlord/dashboard/ApplicationsTab';
+import LandlordAnalyticsDashboard from '@/components/landlord/AnalyticsDashboard';
 
 // Import other components
 import RequestModal from '@/components/landlord/RequestModal';
@@ -22,7 +23,7 @@ import LandlordLayout from '@/components/layouts/LandlordLayout';
 import { useToast } from "@/components/ui/use-toast";
 
 type TimeFilter = '7days' | '30days' | '90days' | 'all';
-type TabType = 'overview' | 'properties' | 'interests';
+type TabType = 'overview' | 'properties' | 'interests' | 'analytics';
 
 interface PropertyWithCount extends Omit<Property, 'isArchived'> {
   applicationCount: number | null;
@@ -44,10 +45,20 @@ const LandlordDashboard = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const tabParam = searchParams.get('tab') as TabType | null;
     
-    if (tabParam && ['overview', 'properties', 'interests'].includes(tabParam)) {
+    if (tabParam && ['overview', 'properties', 'interests', 'analytics'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [location]);
+
+  // Fetch the authenticated user's landlord profile
+  const { data: landlordProfile, isLoading: isLandlordProfileLoading, error: landlordProfileError } = useQuery({
+    queryKey: ['landlord-profile'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/landlord/profile');
+      return response.json();
+    },
+    enabled: !!user // Only fetch if user is authenticated
+  });
 
   const { data: properties, isLoading: propertiesLoading } = useQuery({
     queryKey: [API_ENDPOINTS.PROPERTIES.BASE],
@@ -182,6 +193,20 @@ const LandlordDashboard = () => {
         >
           Interests
         </button>
+        <button
+          className={`px-4 py-2 font-medium text-sm sm:text-base whitespace-nowrap ${
+            activeTab === 'analytics' 
+              ? 'text-primary border-b-2 border-primary' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+          onClick={() => handleTabChange('analytics')}
+          data-testid="tab-analytics"
+        >
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </div>
+        </button>
       </div>
 
       {activeTab === 'overview' && (
@@ -211,6 +236,41 @@ const LandlordDashboard = () => {
           openModal={openModal}
           setLocation={setLocation}
         />
+      )}
+
+      {activeTab === 'analytics' && (
+        <div className="mt-6">
+          {isLandlordProfileLoading ? (
+            <div className="space-y-4">
+              <div className="h-8 w-48 bg-gray-200 rounded animate-pulse" />
+              <div className="h-32 w-full bg-gray-200 rounded animate-pulse" />
+              <div className="h-32 w-full bg-gray-200 rounded animate-pulse" />
+            </div>
+          ) : landlordProfileError ? (
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-red-600 mb-2">Profile Error</h3>
+                <p className="text-gray-500">Unable to load landlord profile. Please try refreshing the page.</p>
+              </div>
+            </div>
+          ) : landlordProfile?.id ? (
+            <LandlordAnalyticsDashboard landlordId={landlordProfile.id} />
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-600 mb-2">Profile Incomplete</h3>
+                <p className="text-gray-500 mb-4">Please complete your landlord profile to view analytics.</p>
+                <button 
+                  onClick={() => setLocation('/landlord/profile')}
+                  className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+                  data-testid="button-complete-profile"
+                >
+                  Complete Profile
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       <RequestModal />

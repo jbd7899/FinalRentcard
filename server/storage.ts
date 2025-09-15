@@ -16,11 +16,13 @@ import { pool } from "./db";
 import {
   TenantDocument, PropertyImage, PropertyAmenity, TenantReference,
   Conversation, Message, Notification, RoommateGroup, GroupApplication,
-  NeighborhoodInsight,
+  NeighborhoodInsight, RentcardView, ViewSession, InterestAnalytics,
+  AnalyticsAggregation, SharingAnalytics, QRCodeAnalytics,
   tenantDocuments, propertyImages, propertyAmenities, tenantReferences,
   conversations, messages, notifications, roommateGroups, groupApplications,
   conversationParticipants, roommateGroupMembers, propertyAnalytics, userActivity,
-  neighborhoodInsights
+  neighborhoodInsights, rentcardViews, viewSessions, interestAnalytics,
+  analyticsAggregations, sharingAnalytics, qrCodeAnalytics
 } from "@shared/schema-enhancements";
 
 const PostgresSessionStore = connectPg(session);
@@ -118,6 +120,61 @@ export interface IStorage {
   // Analytics operations
   recordUserActivity(userId: number, activityType: string, metadata?: any): Promise<void>;
   updatePropertyAnalytics(propertyId: number): Promise<void>;
+
+  // Enhanced Analytics operations
+  // RentCard View Tracking
+  createRentcardView(view: Omit<RentcardView, "id" | "timestamp">): Promise<RentcardView>;
+  getRentcardViews(shareTokenId?: number, tenantId?: number, timeframe?: string): Promise<RentcardView[]>;
+  getRentcardViewStats(tenantId: number, timeframe?: string): Promise<{
+    totalViews: number;
+    uniqueViews: number;
+    avgViewDuration: number;
+    topSources: { source: string; count: number }[];
+    deviceBreakdown: { type: string; count: number }[];
+  }>;
+
+  // View Sessions
+  createViewSession(session: Omit<ViewSession, "id" | "startTime">): Promise<ViewSession>;
+  updateViewSession(id: number, updates: Partial<ViewSession>): Promise<ViewSession>;
+  getViewSession(sessionFingerprint: string): Promise<ViewSession | undefined>;
+  getViewSessions(shareTokenId?: number, tenantId?: number): Promise<ViewSession[]>;
+
+  // Interest Analytics
+  createInterestAnalytics(analytics: Omit<InterestAnalytics, "id" | "createdAt" | "updatedAt">): Promise<InterestAnalytics>;
+  updateInterestAnalytics(id: number, updates: Partial<InterestAnalytics>): Promise<InterestAnalytics>;
+  getInterestAnalytics(landlordId?: number, tenantId?: number, propertyId?: number): Promise<InterestAnalytics[]>;
+  getInterestConversionStats(landlordId: number, timeframe?: string): Promise<{
+    conversionRate: number;
+    avgTimeToInterest: number;
+    totalInterests: number;
+    topSources: { source: string; count: number }[];
+  }>;
+
+  // Analytics Aggregations
+  createAnalyticsAggregation(aggregation: Omit<AnalyticsAggregation, "id" | "createdAt">): Promise<AnalyticsAggregation>;
+  getAnalyticsAggregations(entityType: string, entityId: number, aggregationType: string, startDate?: Date, endDate?: Date): Promise<AnalyticsAggregation[]>;
+  updateDailyAggregations(): Promise<void>;
+
+  // Sharing Analytics
+  createSharingAnalytics(analytics: Omit<SharingAnalytics, "id" | "shareDate">): Promise<SharingAnalytics>;
+  updateSharingAnalytics(id: number, updates: Partial<SharingAnalytics>): Promise<SharingAnalytics>;
+  getSharingAnalytics(shareTokenId?: number, tenantId?: number): Promise<SharingAnalytics[]>;
+  getSharingPerformanceStats(tenantId: number): Promise<{
+    bestPerformingMethod: string;
+    totalShares: number;
+    avgPerformanceScore: number;
+    conversionsByMethod: { method: string; conversions: number }[];
+  }>;
+
+  // QR Code Analytics  
+  createQRCodeAnalytics(analytics: Omit<QRCodeAnalytics, "id" | "scanDate">): Promise<QRCodeAnalytics>;
+  getQRCodeAnalytics(qrCodeId?: number, propertyId?: number): Promise<QRCodeAnalytics[]>;
+  getQRCodeStats(propertyId: number): Promise<{
+    totalScans: number;
+    uniqueScans: number;
+    conversionRate: number;
+    topActions: { action: string; count: number }[];
+  }>;
 
   // Neighborhood insights operations
   getNeighborhoodInsight(propertyId: number): Promise<NeighborhoodInsight | undefined>;
@@ -737,6 +794,422 @@ export class DatabaseStorage implements IStorage {
         applicationCount: Number(interestCount[0]?.count) || 0
       });
     }
+  }
+
+  // Enhanced Analytics operations implementation
+
+  // RentCard View Tracking
+  async createRentcardView(view: Omit<RentcardView, "id" | "timestamp">): Promise<RentcardView> {
+    const [newView] = await db
+      .insert(rentcardViews)
+      .values({
+        ...view,
+        timestamp: new Date()
+      })
+      .returning();
+    return newView;
+  }
+
+  async getRentcardViews(shareTokenId?: number, tenantId?: number, timeframe?: string): Promise<RentcardView[]> {
+    let query = db.select().from(rentcardViews);
+    
+    const conditions = [];
+    if (shareTokenId) conditions.push(eq(rentcardViews.shareTokenId, shareTokenId));
+    if (tenantId) conditions.push(eq(rentcardViews.tenantId, tenantId));
+    
+    // Add timeframe filtering
+    if (timeframe) {
+      const now = new Date();
+      let startDate: Date;
+      switch (timeframe) {
+        case '7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30days':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case '90days':
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(0); // All time
+      }
+      conditions.push(sql`${rentcardViews.timestamp} >= ${startDate}`);
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(sql`${rentcardViews.timestamp} DESC`);
+  }
+
+  async getRentcardViewStats(tenantId: number, timeframe?: string): Promise<{
+    totalViews: number;
+    uniqueViews: number;
+    avgViewDuration: number;
+    topSources: { source: string; count: number }[];
+    deviceBreakdown: { type: string; count: number }[];
+  }> {
+    const views = await this.getRentcardViews(undefined, tenantId, timeframe);
+    
+    const totalViews = views.length;
+    const uniqueViews = new Set(views.map(v => v.viewerFingerprint)).size;
+    const avgViewDuration = views.reduce((sum, v) => sum + (v.viewDuration || 0), 0) / Math.max(totalViews, 1);
+    
+    // Calculate top sources
+    const sourceMap = new Map<string, number>();
+    views.forEach(v => {
+      const source = v.source || 'unknown';
+      sourceMap.set(source, (sourceMap.get(source) || 0) + 1);
+    });
+    const topSources = Array.from(sourceMap.entries())
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    
+    // Calculate device breakdown
+    const deviceMap = new Map<string, number>();
+    views.forEach(v => {
+      const deviceType = v.deviceInfo?.type || 'unknown';
+      deviceMap.set(deviceType, (deviceMap.get(deviceType) || 0) + 1);
+    });
+    const deviceBreakdown = Array.from(deviceMap.entries())
+      .map(([type, count]) => ({ type, count }));
+    
+    return {
+      totalViews,
+      uniqueViews,
+      avgViewDuration: Math.round(avgViewDuration),
+      topSources,
+      deviceBreakdown
+    };
+  }
+
+  // View Sessions
+  async createViewSession(session: Omit<ViewSession, "id" | "startTime">): Promise<ViewSession> {
+    const [newSession] = await db
+      .insert(viewSessions)
+      .values({
+        ...session,
+        startTime: new Date()
+      })
+      .returning();
+    return newSession;
+  }
+
+  async updateViewSession(id: number, updates: Partial<ViewSession>): Promise<ViewSession> {
+    const [updatedSession] = await db
+      .update(viewSessions)
+      .set(updates)
+      .where(eq(viewSessions.id, id))
+      .returning();
+    return updatedSession;
+  }
+
+  async getViewSession(sessionFingerprint: string): Promise<ViewSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(viewSessions)
+      .where(eq(viewSessions.sessionFingerprint, sessionFingerprint));
+    return session;
+  }
+
+  async getViewSessions(shareTokenId?: number, tenantId?: number): Promise<ViewSession[]> {
+    let query = db.select().from(viewSessions);
+    
+    const conditions = [];
+    if (shareTokenId) conditions.push(eq(viewSessions.shareTokenId, shareTokenId));
+    if (tenantId) conditions.push(eq(viewSessions.tenantId, tenantId));
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(sql`${viewSessions.startTime} DESC`);
+  }
+
+  // Interest Analytics
+  async createInterestAnalytics(analytics: Omit<InterestAnalytics, "id" | "createdAt" | "updatedAt">): Promise<InterestAnalytics> {
+    const [newAnalytics] = await db
+      .insert(interestAnalytics)
+      .values({
+        ...analytics,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newAnalytics;
+  }
+
+  async updateInterestAnalytics(id: number, updates: Partial<InterestAnalytics>): Promise<InterestAnalytics> {
+    const [updatedAnalytics] = await db
+      .update(interestAnalytics)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(interestAnalytics.id, id))
+      .returning();
+    return updatedAnalytics;
+  }
+
+  async getInterestAnalytics(landlordId?: number, tenantId?: number, propertyId?: number): Promise<InterestAnalytics[]> {
+    let query = db.select().from(interestAnalytics);
+    
+    const conditions = [];
+    if (landlordId) conditions.push(eq(interestAnalytics.landlordId, landlordId));
+    if (tenantId) conditions.push(eq(interestAnalytics.tenantId, tenantId));
+    if (propertyId) conditions.push(eq(interestAnalytics.propertyId, propertyId));
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(sql`${interestAnalytics.createdAt} DESC`);
+  }
+
+  async getInterestConversionStats(landlordId: number, timeframe?: string): Promise<{
+    conversionRate: number;
+    avgTimeToInterest: number;
+    totalInterests: number;
+    topSources: { source: string; count: number }[];
+  }> {
+    let analytics = await this.getInterestAnalytics(landlordId);
+    
+    // Apply timeframe filtering
+    if (timeframe) {
+      const now = new Date();
+      let startDate: Date;
+      switch (timeframe) {
+        case '7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30days':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case '90days':
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(0);
+      }
+      analytics = analytics.filter(a => a.createdAt && a.createdAt >= startDate);
+    }
+    
+    const totalInterests = analytics.length;
+    const validTimeToInterest = analytics.filter(a => a.timeToInterest != null).map(a => a.timeToInterest!);
+    const avgTimeToInterest = validTimeToInterest.length > 0 
+      ? validTimeToInterest.reduce((sum, time) => sum + time, 0) / validTimeToInterest.length 
+      : 0;
+    
+    // Get total views for conversion rate calculation (simplified)
+    const totalViews = analytics.reduce((sum, a) => sum + (a.viewsBeforeInterest || 0), 0);
+    const conversionRate = totalViews > 0 ? (totalInterests / totalViews) * 100 : 0;
+    
+    // Calculate top sources
+    const sourceMap = new Map<string, number>();
+    analytics.forEach(a => {
+      const source = a.sourceView || 'unknown';
+      sourceMap.set(source, (sourceMap.get(source) || 0) + 1);
+    });
+    const topSources = Array.from(sourceMap.entries())
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    
+    return {
+      conversionRate: Math.round(conversionRate * 100) / 100,
+      avgTimeToInterest: Math.round(avgTimeToInterest),
+      totalInterests,
+      topSources
+    };
+  }
+
+  // Analytics Aggregations
+  async createAnalyticsAggregation(aggregation: Omit<AnalyticsAggregation, "id" | "createdAt">): Promise<AnalyticsAggregation> {
+    const [newAggregation] = await db
+      .insert(analyticsAggregations)
+      .values({
+        ...aggregation,
+        createdAt: new Date()
+      })
+      .returning();
+    return newAggregation;
+  }
+
+  async getAnalyticsAggregations(
+    entityType: string, 
+    entityId: number, 
+    aggregationType: string, 
+    startDate?: Date, 
+    endDate?: Date
+  ): Promise<AnalyticsAggregation[]> {
+    let query = db.select().from(analyticsAggregations)
+      .where(and(
+        eq(analyticsAggregations.entityType, entityType),
+        eq(analyticsAggregations.entityId, entityId),
+        eq(analyticsAggregations.aggregationType, aggregationType)
+      ));
+    
+    const conditions = [];
+    if (startDate) conditions.push(sql`${analyticsAggregations.date} >= ${startDate}`);
+    if (endDate) conditions.push(sql`${analyticsAggregations.date} <= ${endDate}`);
+    
+    if (conditions.length > 0) {
+      query = query.where(and(
+        eq(analyticsAggregations.entityType, entityType),
+        eq(analyticsAggregations.entityId, entityId),
+        eq(analyticsAggregations.aggregationType, aggregationType),
+        ...conditions
+      ));
+    }
+    
+    return await query.orderBy(sql`${analyticsAggregations.date} DESC`);
+  }
+
+  async updateDailyAggregations(): Promise<void> {
+    // This would be called by a background job to compute daily aggregations
+    // Implementation would aggregate data from the detail tables into summary records
+    console.log('Daily aggregations update - implementation needed for production');
+  }
+
+  // Sharing Analytics
+  async createSharingAnalytics(analytics: Omit<SharingAnalytics, "id" | "shareDate">): Promise<SharingAnalytics> {
+    const [newAnalytics] = await db
+      .insert(sharingAnalytics)
+      .values({
+        ...analytics,
+        shareDate: new Date()
+      })
+      .returning();
+    return newAnalytics;
+  }
+
+  async updateSharingAnalytics(id: number, updates: Partial<SharingAnalytics>): Promise<SharingAnalytics> {
+    const [updatedAnalytics] = await db
+      .update(sharingAnalytics)
+      .set(updates)
+      .where(eq(sharingAnalytics.id, id))
+      .returning();
+    return updatedAnalytics;
+  }
+
+  async getSharingAnalytics(shareTokenId?: number, tenantId?: number): Promise<SharingAnalytics[]> {
+    let query = db.select().from(sharingAnalytics);
+    
+    const conditions = [];
+    if (shareTokenId) conditions.push(eq(sharingAnalytics.shareTokenId, shareTokenId));
+    if (tenantId) conditions.push(eq(sharingAnalytics.tenantId, tenantId));
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(sql`${sharingAnalytics.shareDate} DESC`);
+  }
+
+  async getSharingPerformanceStats(tenantId: number): Promise<{
+    bestPerformingMethod: string;
+    totalShares: number;
+    avgPerformanceScore: number;
+    conversionsByMethod: { method: string; conversions: number }[];
+  }> {
+    const analytics = await this.getSharingAnalytics(undefined, tenantId);
+    
+    const totalShares = analytics.length;
+    const avgPerformanceScore = analytics.reduce((sum, a) => sum + (a.performanceScore || 0), 0) / Math.max(totalShares, 1);
+    
+    // Find best performing method
+    const methodPerformance = new Map<string, { score: number; count: number; conversions: number }>();
+    analytics.forEach(a => {
+      const method = a.sharingMethod;
+      const current = methodPerformance.get(method) || { score: 0, count: 0, conversions: 0 };
+      methodPerformance.set(method, {
+        score: current.score + (a.performanceScore || 0),
+        count: current.count + 1,
+        conversions: current.conversions + (a.conversionToInterest ? 1 : 0)
+      });
+    });
+    
+    let bestPerformingMethod = 'none';
+    let bestScore = 0;
+    const conversionsByMethod: { method: string; conversions: number }[] = [];
+    
+    methodPerformance.forEach((stats, method) => {
+      const avgScore = stats.score / stats.count;
+      if (avgScore > bestScore) {
+        bestScore = avgScore;
+        bestPerformingMethod = method;
+      }
+      conversionsByMethod.push({ method, conversions: stats.conversions });
+    });
+    
+    return {
+      bestPerformingMethod,
+      totalShares,
+      avgPerformanceScore: Math.round(avgPerformanceScore * 100) / 100,
+      conversionsByMethod
+    };
+  }
+
+  // QR Code Analytics
+  async createQRCodeAnalytics(analytics: Omit<QRCodeAnalytics, "id" | "scanDate">): Promise<QRCodeAnalytics> {
+    const [newAnalytics] = await db
+      .insert(qrCodeAnalytics)
+      .values({
+        ...analytics,
+        scanDate: new Date()
+      })
+      .returning();
+    return newAnalytics;
+  }
+
+  async getQRCodeAnalytics(qrCodeId?: number, propertyId?: number): Promise<QRCodeAnalytics[]> {
+    let query = db.select().from(qrCodeAnalytics);
+    
+    const conditions = [];
+    if (qrCodeId) conditions.push(eq(qrCodeAnalytics.qrCodeId, qrCodeId));
+    if (propertyId) conditions.push(eq(qrCodeAnalytics.propertyId, propertyId));
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(sql`${qrCodeAnalytics.scanDate} DESC`);
+  }
+
+  async getQRCodeStats(propertyId: number): Promise<{
+    totalScans: number;
+    uniqueScans: number;
+    conversionRate: number;
+    topActions: { action: string; count: number }[];
+  }> {
+    const analytics = await this.getQRCodeAnalytics(undefined, propertyId);
+    
+    const totalScans = analytics.length;
+    const uniqueScans = new Set(analytics.map(a => `${a.scannerInfo?.deviceType}-${a.scanLocation?.lat}-${a.scanLocation?.lng}`)).size;
+    
+    const conversions = analytics.filter(a => a.subsequentAction && a.subsequentAction !== 'none').length;
+    const conversionRate = totalScans > 0 ? (conversions / totalScans) * 100 : 0;
+    
+    // Calculate top actions
+    const actionMap = new Map<string, number>();
+    analytics.forEach(a => {
+      const action = a.subsequentAction || 'none';
+      actionMap.set(action, (actionMap.get(action) || 0) + 1);
+    });
+    const topActions = Array.from(actionMap.entries())
+      .map(([action, count]) => ({ action, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    
+    return {
+      totalScans,
+      uniqueScans,
+      conversionRate: Math.round(conversionRate * 100) / 100,
+      topActions
+    };
   }
 
   // Property QR Code operations
