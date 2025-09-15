@@ -4240,10 +4240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profileCompleted = !!(
         tenantProfile?.employmentInfo && 
         tenantProfile?.rentalHistory && 
-        tenantProfile?.creditScore &&
-        rentCard?.firstName &&
-        rentCard?.lastName &&
-        rentCard?.monthlyIncome
+        tenantProfile?.creditScore
       );
 
       if (profileCompleted) {
