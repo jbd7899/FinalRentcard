@@ -17,6 +17,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 
 export default function Navbar() {
   const { user, logout } = useAuthStore();
@@ -84,6 +85,11 @@ export default function Navbar() {
                 </>
               )}
             </div>
+          )}
+
+          {/* Notification Bell for Tenants */}
+          {user && user.userType === 'tenant' && (
+            <NotificationCenter userId={user.id} />
           )}
 
           {/* User Menu or Login Button */}

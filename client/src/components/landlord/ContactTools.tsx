@@ -31,7 +31,7 @@ import {
   Shield,
   Send,
   History,
-  Template,
+  FileText,
   Loader2,
   UserX,
   Settings
@@ -321,7 +321,7 @@ const ContactTools = ({ tenantId, tenantInfo, interestId, propertyId, onContactC
                           {templates.map((template) => (
                             <SelectItem key={template.id} value={template.id.toString()}>
                               <div className="flex items-center gap-2">
-                                <Template className="h-4 w-4" />
+                                <FileText className="h-4 w-4" />
                                 <span>{template.name}</span>
                               </div>
                             </SelectItem>

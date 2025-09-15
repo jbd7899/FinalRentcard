@@ -13,8 +13,10 @@ import {
 } from "@shared/schema";
 import {
   insertRentcardViewSchema, insertViewSessionSchema, insertInterestAnalyticsSchema,
-  insertSharingAnalyticsSchema, insertQRCodeAnalyticsSchema, RentcardView, ViewSession,
-  InterestAnalytics, SharingAnalytics, QRCodeAnalytics
+  insertSharingAnalyticsSchema, insertQRCodeAnalyticsSchema, insertNotificationSchema,
+  insertNotificationPreferencesSchema, insertNotificationDeliveryLogSchema,
+  RentcardView, ViewSession, InterestAnalytics, SharingAnalytics, QRCodeAnalytics,
+  Notification, NotificationPreferences, NotificationDeliveryLog
 } from "@shared/schema-enhancements";
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
@@ -1305,6 +1307,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: clientData.message || null
       });
 
+      // Create notification for interest submission (for user engagement)
+      try {
+        if (tenantId) {
+          // Get tenant profile to get userId for notification
+          const tenantProfile = await storage.getTenantProfileById(tenantId);
+          
+          if (tenantProfile?.userId) {
+            // Check user's notification preferences before creating notification
+            const preferences = await storage.getUserNotificationPreferences(tenantProfile.userId);
+            
+            if (!preferences || preferences.interestSubmissionsEnabled) {
+              // Get landlord info for better notification messaging
+              const landlordProfile = await storage.getLandlordProfileById(clientData.landlordId);
+              const landlordName = landlordProfile?.companyName || 'A landlord';
+              
+              // Get property info if available
+              let propertyInfo = '';
+              if (clientData.propertyId) {
+                const property = await storage.getProperty(clientData.propertyId);
+                propertyInfo = property ? ` for ${property.title}` : '';
+              }
+
+              const title = "Someone is interested in you!";
+              const message = `${landlordName} submitted interest in your RentCard${propertyInfo}`;
+
+              // Create the notification
+              await storage.createNotification({
+                userId: tenantProfile.userId,
+                type: 'interest_submission',
+                title,
+                message,
+                metadata: {
+                  interestId: interest.id,
+                  landlordId: clientData.landlordId,
+                  propertyId: clientData.propertyId,
+                  landlordName,
+                  hasMessage: !!clientData.message
+                },
+                actionUrl: `/tenant/dashboard?tab=interests`,
+                priority: 'high',
+                category: 'engagement'
+              });
+            }
+          }
+        }
+      } catch (notificationError) {
+        // Don't fail the request if notification creation fails
+        console.error('Interest notification creation failed:', notificationError);
+      }
+
       res.status(201).json(interest);
     } catch (error) {
       handleRouteError(error, res, 'interest submission');
@@ -1641,6 +1693,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (analyticsError) {
         // Don't fail the request if analytics fails
         console.error('Analytics tracking failed:', analyticsError);
+      }
+
+      // Create notification for RentCard view (for user engagement)
+      try {
+        if (tenantProfile.userId) {
+          // Check user's notification preferences before creating notification
+          const preferences = await storage.getUserNotificationPreferences(tenantProfile.userId);
+          
+          if (!preferences || preferences.rentcardViewsEnabled) {
+            // Determine viewer context for better notification messaging
+            const metadata = extractRequestMetadata(req);
+            const location = metadata.location;
+            const deviceType = metadata.deviceInfo?.type || 'unknown';
+            
+            let title = "Someone viewed your RentCard!";
+            let message = `Your RentCard was viewed from ${deviceType}`;
+            
+            if (location?.city && location?.region) {
+              message += ` in ${location.city}, ${location.region}`;
+            } else if (location?.region) {
+              message += ` in ${location.region}`;
+            }
+
+            // Create the notification
+            await storage.createNotification({
+              userId: tenantProfile.userId,
+              type: 'rentcard_view',
+              title,
+              message,
+              metadata: {
+                shareTokenId: shareToken.id,
+                viewId: shareToken.id, // Could link to specific view record
+                source: 'share_link',
+                location: location,
+                deviceType
+              },
+              actionUrl: `/tenant/dashboard?tab=analytics`,
+              priority: 'normal',
+              category: 'engagement'
+            });
+          }
+        }
+      } catch (notificationError) {
+        // Don't fail the request if notification creation fails
+        console.error('Notification creation failed:', notificationError);
       }
 
       // Return the rent card data
@@ -2076,6 +2173,236 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending verification email:", error);
       res.status(500).json({ message: "Failed to send verification email" });
+    }
+  });
+
+  // ========================
+  // NOTIFICATION API ENDPOINTS
+  // ========================
+
+  // Get user notifications with pagination and filtering
+  app.get("/api/tenant/notifications", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { limit, offset, unreadOnly, type } = req.query;
+      
+      const options = {
+        limit: limit ? parseInt(limit as string) : 20,
+        offset: offset ? parseInt(offset as string) : 0,
+        unreadOnly: unreadOnly === 'true',
+        type: type as string
+      };
+
+      const notifications = await storage.getUserNotifications(req.user.id, options);
+      res.json(notifications);
+    } catch (error) {
+      handleRouteError(error, res, 'get user notifications');
+    }
+  });
+
+  // Get notification count/badge count
+  app.get("/api/tenant/notifications/count", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { unreadOnly } = req.query;
+      const count = await storage.getUserNotificationCount(req.user.id, unreadOnly === 'true');
+      
+      res.json({ count });
+    } catch (error) {
+      handleRouteError(error, res, 'get notification count');
+    }
+  });
+
+  // Mark notification as read
+  app.post("/api/tenant/notifications/:id/read", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const notificationId = parseInt(req.params.id);
+      
+      // Verify ownership by getting the notification first
+      const notifications = await storage.getUserNotifications(req.user.id);
+      const notification = notifications.find(n => n.id === notificationId);
+      
+      if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+
+      const updatedNotification = await storage.markNotificationAsRead(notificationId);
+      res.json(updatedNotification);
+    } catch (error) {
+      handleRouteError(error, res, 'mark notification as read');
+    }
+  });
+
+  // Mark notification as clicked
+  app.post("/api/tenant/notifications/:id/click", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const notificationId = parseInt(req.params.id);
+      
+      // Verify ownership
+      const notifications = await storage.getUserNotifications(req.user.id);
+      const notification = notifications.find(n => n.id === notificationId);
+      
+      if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+
+      const updatedNotification = await storage.markNotificationAsClicked(notificationId);
+      res.json(updatedNotification);
+    } catch (error) {
+      handleRouteError(error, res, 'mark notification as clicked');
+    }
+  });
+
+  // Mark all notifications as read
+  app.post("/api/tenant/notifications/read-all", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      await storage.markAllNotificationsAsRead(req.user.id);
+      res.json({ message: "All notifications marked as read" });
+    } catch (error) {
+      handleRouteError(error, res, 'mark all notifications as read');
+    }
+  });
+
+  // Get notification preferences
+  app.get("/api/tenant/notification-preferences", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      let preferences = await storage.getUserNotificationPreferences(req.user.id);
+      
+      // Create default preferences if none exist
+      if (!preferences) {
+        preferences = await storage.createUserNotificationPreferences({
+          userId: req.user.id,
+          rentcardViewsEnabled: true,
+          rentcardViewsEmail: false,
+          rentcardViewsFrequency: 'instant',
+          interestSubmissionsEnabled: true,
+          interestSubmissionsEmail: true,
+          interestSubmissionsFrequency: 'instant',
+          weeklySummaryEnabled: true,
+          weeklySummaryEmail: true,
+          weeklySummaryDay: 'monday',
+          systemNotificationsEnabled: true,
+          systemNotificationsEmail: false,
+          timezone: 'America/New_York',
+          emailDigestEnabled: false,
+          emailDigestFrequency: 'daily',
+          maxNotificationsPerHour: 10,
+          groupSimilarNotifications: true
+        });
+      }
+      
+      res.json(preferences);
+    } catch (error) {
+      handleRouteError(error, res, 'get notification preferences');
+    }
+  });
+
+  // Update notification preferences
+  app.put("/api/tenant/notification-preferences", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const validationResult = insertNotificationPreferencesSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid notification preferences", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      // Check if preferences exist, create if not
+      let preferences = await storage.getUserNotificationPreferences(req.user.id);
+      
+      if (!preferences) {
+        preferences = await storage.createUserNotificationPreferences({
+          userId: req.user.id,
+          ...validationResult.data
+        });
+      } else {
+        preferences = await storage.updateUserNotificationPreferences(req.user.id, validationResult.data);
+      }
+      
+      res.json(preferences);
+    } catch (error) {
+      handleRouteError(error, res, 'update notification preferences');
+    }
+  });
+
+  // Get notification statistics and analytics
+  app.get("/api/tenant/notification-stats", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { timeframe } = req.query;
+      const stats = await storage.getUserNotificationStats(req.user.id, timeframe as string);
+      
+      res.json(stats);
+    } catch (error) {
+      handleRouteError(error, res, 'get notification stats');
+    }
+  });
+
+  // Delete old notifications (cleanup endpoint)
+  app.delete("/api/tenant/notifications/cleanup", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { olderThanDays } = req.query;
+      const days = olderThanDays ? parseInt(olderThanDays as string) : 30;
+      const olderThanDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      await storage.deleteUserNotifications(req.user.id, olderThanDate);
+      res.json({ message: `Deleted notifications older than ${days} days` });
+    } catch (error) {
+      handleRouteError(error, res, 'cleanup old notifications');
+    }
+  });
+
+  // Internal API endpoint for creating notifications (used by system triggers)
+  app.post("/api/internal/notifications", async (req, res) => {
+    try {
+      // This endpoint should be protected or only accessible internally
+      // For now, we'll validate the request has required fields
+      const validationResult = insertNotificationSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid notification data", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const notification = await storage.createNotification(validationResult.data);
+      res.json(notification);
+    } catch (error) {
+      handleRouteError(error, res, 'create notification');
     }
   });
 
