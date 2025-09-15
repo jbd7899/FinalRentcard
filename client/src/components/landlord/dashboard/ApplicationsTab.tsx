@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Users,
+  Inbox,
   ExternalLink,
   FileText,
   AlertCircle
@@ -10,15 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 /**
- * ApplicationsTab component displays recent applications and documents
+ * InterestsTab component displays recent interests and documents
  * that need verification for the landlord
  */
-interface ApplicationsTabProps {
+interface InterestsTabProps {
   openModal: (modalType: string) => void;
   setLocation: (path: string) => void;
 }
 
-const ApplicationsTab: React.FC<ApplicationsTabProps> = ({
+const InterestsTab: React.FC<InterestsTabProps> = ({
   openModal,
   setLocation,
 }) => {
@@ -26,23 +26,23 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({
     <div>
       <div className="flex justify-between items-center mb-4 sm:mb-5">
         <h2 className="text-base sm:text-lg font-semibold flex items-center">
-          <Users className="w-5 h-5 mr-2 text-primary" />
-          Recent Applications
+          <Inbox className="w-5 h-5 mr-2 text-primary" />
+          Recent Interests
         </h2>
         <Button 
-          onClick={() => setLocation(ROUTES.LANDLORD.APPLICATIONS)} 
+          onClick={() => setLocation(ROUTES.LANDLORD.INTERESTS)} 
           className="text-xs sm:text-sm h-9 sm:h-10"
         >
           <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-          View All Applications
+          View All Interests
         </Button>
       </div>
 
       <Card>
         <CardContent className="p-5 sm:p-6">
           <div className="text-center p-8 sm:p-10">
-            <Users className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4 sm:mb-5" />
-            <p className="text-muted-foreground text-sm sm:text-base">Applications will appear here</p>
+            <Inbox className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4 sm:mb-5" />
+            <p className="text-muted-foreground text-sm sm:text-base">Interests will appear here</p>
             <Button 
               variant="link" 
               className="mt-2 sm:mt-3 text-xs sm:text-sm"
@@ -79,4 +79,4 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({
   );
 };
 
-export default ApplicationsTab; 
+export default InterestsTab; 

@@ -149,7 +149,7 @@ function TenantApplicationsPage() {
   const rejectedApplications = applications.filter(app => app.status === 'rejected');
 
   return (
-    <TenantLayout activeRoute={ROUTES.TENANT.APPLICATIONS}>
+    <TenantLayout activeRoute={ROUTES.TENANT.INTERESTS}>
       <div className="container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-6">
           <div>
