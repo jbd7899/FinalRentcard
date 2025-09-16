@@ -101,8 +101,12 @@ const RentCard = () => {
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
   // Fetch real tenant profile data
-  const { data: tenantProfile, isLoading: profileLoading, error: profileError } = useQuery({
+  const { data: tenantProfile, isLoading: profileLoading, error: profileError } = useQuery<TenantProfile>({
     queryKey: ['/api/tenant/profile'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/tenant/profile');
+      return response.json();
+    },
     enabled: !!user && !isPublicView,
   });
 
@@ -118,18 +122,18 @@ const RentCard = () => {
   const employmentInfoForm = useForm<EmploymentInfoForm>({
     resolver: zodResolver(employmentInfoSchema),
     defaultValues: {
-      employer: tenantProfile?.employmentInfo?.employer || '',
-      position: tenantProfile?.employmentInfo?.position || '',
-      monthlyIncome: tenantProfile?.employmentInfo?.monthlyIncome || 0,
-      startDate: tenantProfile?.employmentInfo?.startDate || '',
+      employer: '',
+      position: '',
+      monthlyIncome: 0,
+      startDate: '',
     },
   });
 
   const rentalPreferencesForm = useForm<RentalPreferencesForm>({
     resolver: zodResolver(rentalPreferencesSchema),
     defaultValues: {
-      maxRent: tenantProfile?.maxRent || 0,
-      moveInDate: tenantProfile?.moveInDate ? new Date(tenantProfile.moveInDate).toISOString().split('T')[0] : '',
+      maxRent: 0,
+      moveInDate: '',
     },
   });
 
