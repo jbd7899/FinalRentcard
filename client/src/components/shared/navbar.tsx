@@ -16,6 +16,7 @@ import {
   CheckSquare,
   UserCheck,
 } from "lucide-react";
+import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { ROUTES } from "@/constants/routes";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 
@@ -54,6 +55,7 @@ export default function Navbar() {
                     <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
                       <CheckSquare className="w-4 h-4" />
                       Verify Documents
+                      <ComingSoonBadge type="feature" size="sm" title="Beta" />
                     </span>
                   </Link>
                 </>
@@ -80,6 +82,7 @@ export default function Navbar() {
                     <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
                       <UserCheck className="w-4 h-4" />
                       References
+                      <ComingSoonBadge type="feature" size="sm" title="Beta" />
                     </span>
                   </Link>
                 </>

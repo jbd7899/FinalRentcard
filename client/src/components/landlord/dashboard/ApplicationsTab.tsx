@@ -5,6 +5,7 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
+import { ComingSoonCard, ComingSoonBadge } from "@/components/ui/coming-soon";
 import { ROUTES } from '@/constants';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,10 +26,13 @@ const InterestsTab: React.FC<InterestsTabProps> = ({
   return (
     <div>
       <div className="flex justify-between items-center mb-4 sm:mb-5">
-        <h2 className="text-base sm:text-lg font-semibold flex items-center">
-          <Inbox className="w-5 h-5 mr-2 text-primary" />
-          Recent Interests
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-semibold flex items-center">
+            <Inbox className="w-5 h-5 mr-2 text-primary" />
+            Recent Interests
+          </h2>
+          <ComingSoonBadge type="feature" size="sm" title="Beta" />
+        </div>
         <Button 
           onClick={() => setLocation(ROUTES.LANDLORD.INTERESTS)} 
           className="text-xs sm:text-sm h-9 sm:h-10"
@@ -38,42 +42,43 @@ const InterestsTab: React.FC<InterestsTabProps> = ({
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-5 sm:p-6">
-          <div className="text-center p-8 sm:p-10">
-            <Inbox className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4 sm:mb-5" />
-            <p className="text-muted-foreground text-sm sm:text-base">Interests will appear here</p>
-            <Button 
-              variant="link" 
-              className="mt-2 sm:mt-3 text-xs sm:text-sm"
-              onClick={() => openModal('requestRentCard')}
-            >
-              Request a RentCard to get started
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ComingSoonCard
+        type="feature"
+        title="Interest Tracking"
+        description="Real-time interest tracking and automated lead management coming soon. This will help you manage all tenant inquiries in one place."
+        estimatedDate="Q2 2025"
+      >
+        <Button 
+          variant="outline"
+          className="mt-2 text-xs sm:text-sm"
+          onClick={() => openModal('requestRentCard')}
+        >
+          Request a RentCard to get started
+        </Button>
+      </ComingSoonCard>
 
       <div className="mt-8">
-        <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center">
-          <AlertCircle className="w-5 h-5 mr-2 text-amber-500" />
-          Documents Needing Verification
-        </h2>
-        <Card>
-          <CardContent className="p-5 sm:p-6">
-            <div className="text-center p-8 sm:p-10">
-              <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4 sm:mb-5" />
-              <p className="text-muted-foreground text-sm sm:text-base">No documents pending verification</p>
-              <Button 
-                variant="link" 
-                className="mt-2 sm:mt-3 text-xs sm:text-sm"
-                onClick={() => setLocation(ROUTES.LANDLORD.VERIFY_DOCUMENTS)}
-              >
-                Go to document verification
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-base sm:text-lg font-semibold flex items-center">
+            <AlertCircle className="w-5 h-5 mr-2 text-amber-500" />
+            Documents Needing Verification
+          </h2>
+          <ComingSoonBadge type="feature" size="sm" title="Beta" />
+        </div>
+        <ComingSoonCard
+          type="feature"
+          title="Automated Document Verification"
+          description="AI-powered document verification and automated tenant screening coming soon. This will streamline your verification process significantly."
+          estimatedDate="Q2 2025"
+        >
+          <Button 
+            variant="outline" 
+            className="mt-2 text-xs sm:text-sm"
+            onClick={() => setLocation(ROUTES.LANDLORD.VERIFY_DOCUMENTS)}
+          >
+            Preview document verification
+          </Button>
+        </ComingSoonCard>
       </div>
     </div>
   );

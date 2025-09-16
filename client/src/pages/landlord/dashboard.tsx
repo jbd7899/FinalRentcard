@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Property } from "@shared/schema";
+import { ComingSoonBadge, ComingSoonCard } from "@/components/ui/coming-soon";
 import { 
   ROUTES, 
   API_ENDPOINTS, 
@@ -205,6 +206,7 @@ const LandlordDashboard = () => {
           <div className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Analytics
+            <ComingSoonBadge type="analytics" size="sm" title="Beta" />
           </div>
         </button>
       </div>

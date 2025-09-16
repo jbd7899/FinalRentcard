@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ComingSoonBadge, ComingSoonCard, ComingSoonWithMockData } from "@/components/ui/coming-soon";
 import { 
   FileText, 
   Star, 
@@ -341,58 +342,69 @@ const TenantDashboard = () => {
         
         <section>
           <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h2 className="text-base sm:text-lg font-medium">Active Applications</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-medium">Active Applications</h2>
+              <ComingSoonBadge type="feature" size="sm" title="Beta" />
+            </div>
             <Link href={ROUTES.TENANT.INTERESTS}>
               <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs sm:text-sm">View All</Button>
             </Link>
           </div>
           
           {applications.length > 0 ? (
-            <Card>
-              <CardContent className="p-5 sm:p-6">
-                {applications.map((application) => (
-                  <div key={application.id} className="border-b pb-4 mb-4 last:border-0 last:pb-0 last:mb-0">
-                    <div className="flex justify-between items-start mb-2 sm:mb-3">
-                      <div>
-                        <h3 className="font-medium text-sm sm:text-base">{application.property}</h3>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
-                          Landlord: {application.landlord}
-                        </p>
+            <ComingSoonWithMockData
+              type="feature"
+              title="Application Tracking"
+              description="Real-time application tracking with landlord communications is coming soon. Currently showing demo data."
+              overlay={false}
+              mockDataComponent={
+                <Card>
+                  <CardContent className="p-5 sm:p-6">
+                    {applications.map((application) => (
+                      <div key={application.id} className="border-b pb-4 mb-4 last:border-0 last:pb-0 last:mb-0">
+                        <div className="flex justify-between items-start mb-2 sm:mb-3">
+                          <div>
+                            <h3 className="font-medium text-sm sm:text-base">{application.property}</h3>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
+                              Landlord: {application.landlord}
+                            </p>
+                          </div>
+                          <Badge 
+                            className={`px-2 py-1 text-xs font-medium ${
+                              application.status === APPLICATION_STATUS.CONTACTED 
+                                ? 'bg-green-100 text-green-800' 
+                                : application.status === APPLICATION_STATUS.ARCHIVED
+                                ? 'bg-gray-100 text-gray-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {APPLICATION_LABELS.STATUS[application.status]}
+                          </Badge>
+                        </div>
+                        
+                        <div className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+                          <div className="flex items-center gap-1 sm:gap-1.5">
+                            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span>Submitted {new Date(application.submittedAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        
+                        <Link href={generateRoute.application(application.id.toString())}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="w-full text-xs sm:text-sm h-7 sm:h-8 flex items-center justify-center gap-1 sm:gap-2"
+                          >
+                            <span>View Details</span>
+                            <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </Button>
+                        </Link>
                       </div>
-                      <Badge 
-                        className={`px-2 py-1 text-xs font-medium ${
-                          application.status === APPLICATION_STATUS.CONTACTED 
-                            ? 'bg-green-100 text-green-800' 
-                            : application.status === APPLICATION_STATUS.ARCHIVED
-                            ? 'bg-gray-100 text-gray-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}
-                      >
-                        {APPLICATION_LABELS.STATUS[application.status]}
-                      </Badge>
-                    </div>
-                    
-                    <div className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-                      <div className="flex items-center gap-1 sm:gap-1.5">
-                        <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span>Submitted {new Date(application.submittedAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    
-                    <Link href={generateRoute.application(application.id.toString())}>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full text-xs sm:text-sm h-7 sm:h-8 flex items-center justify-center gap-1 sm:gap-2"
-                      >
-                        <span>View Details</span>
-                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              }
+            />
           ) : (
             <Card>
               <CardContent className="p-5 sm:p-6 text-center">
