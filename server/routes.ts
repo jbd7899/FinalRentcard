@@ -622,8 +622,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
       
+      // Process the request body and convert string dates to Date objects
+      const profileData = { ...req.body };
+      
+      // Convert moveInDate string to Date object if present
+      if (profileData.moveInDate && typeof profileData.moveInDate === 'string') {
+        profileData.moveInDate = new Date(profileData.moveInDate);
+      }
+      
       // Update the profile
-      const updatedProfile = await storage.updateTenantProfile(existingProfile.id, req.body);
+      const updatedProfile = await storage.updateTenantProfile(existingProfile.id, profileData);
       
       console.log(`Successfully updated tenant profile for user ID: ${req.user.id}`);
       res.json(updatedProfile);
