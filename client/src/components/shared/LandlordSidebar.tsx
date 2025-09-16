@@ -15,6 +15,7 @@ import {
   Globe,
   Send
 } from 'lucide-react';
+import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { ROUTES } from '@/constants';
@@ -65,7 +66,8 @@ const LandlordSidebar: React.FC<SidebarProps> = ({
       icon: <Inbox className="w-5 h-5" />, 
       label: "Interest Inbox", 
       route: ROUTES.LANDLORD.INTERESTS, 
-      active: isActive(ROUTES.LANDLORD.INTERESTS) 
+      active: isActive(ROUTES.LANDLORD.INTERESTS),
+      comingSoon: true 
     },
     { 
       icon: <Send className="w-5 h-5" />, 
@@ -100,6 +102,9 @@ const LandlordSidebar: React.FC<SidebarProps> = ({
                   }`}>
                     {item.icon}
                     <span className="text-sm md:text-base">{item.label}</span>
+                    {(item as any).comingSoon && (
+                      <ComingSoonBadge type="feature" size="sm" title="Beta" />
+                    )}
                     {item.active && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600"></div>
                     )}

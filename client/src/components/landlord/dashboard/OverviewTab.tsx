@@ -12,6 +12,7 @@ import {
   CheckSquare,
   Loader2
 } from 'lucide-react';
+import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { Link } from 'wouter';
 import { ROUTES } from '@/constants';
 import { Button } from "@/components/ui/button";
@@ -231,11 +232,14 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
           
           <Button 
             variant="outline" 
-            className="h-auto py-3 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm"
+            className="h-auto py-3 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm relative"
             onClick={() => setLocation(ROUTES.LANDLORD.VERIFY_DOCUMENTS)}
           >
             <CheckSquare className="h-5 w-5 text-purple-500" />
-            Verify Documents
+            <div className="flex items-center gap-1">
+              <span>Verify Documents</span>
+              <ComingSoonBadge type="feature" size="sm" title="Beta" />
+            </div>
           </Button>
         </div>
       </div>
