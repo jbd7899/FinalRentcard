@@ -123,6 +123,9 @@ export const notifications = pgTable("notifications", {
     suppressEmail?: boolean; // Override email sending
     expiresAt?: string; // When notification becomes irrelevant
     actionUrl?: string; // Deep link to relevant page
+    landlordId?: number; // For landlord-related notifications
+    shareTokenId?: number; // For share token related notifications
+    summaryData?: any; // For weekly summary data
   }>(),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -319,11 +322,27 @@ export const insertNotificationPreferencesSchema = createInsertSchema(notificati
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  // Make nullable fields explicit to handle undefined -> null conversion
+  quietHoursStart: z.string().nullable().default(null),
+  quietHoursEnd: z.string().nullable().default(null),
 });
 
 export const insertNotificationDeliveryLogSchema = createInsertSchema(notificationDeliveryLog).omit({
   id: true,
   createdAt: true,
+}).extend({
+  // Make all nullable fields explicit to handle undefined -> null conversion
+  recipientEmail: z.string().nullable().default(null),
+  recipientPhone: z.string().nullable().default(null),
+  sentAt: z.date().nullable().default(null),
+  deliveredAt: z.date().nullable().default(null),
+  readAt: z.date().nullable().default(null),
+  clickedAt: z.date().nullable().default(null),
+  errorMessage: z.string().nullable().default(null),
+  retryCount: z.number().nullable().default(null),
+  emailSubject: z.string().nullable().default(null),
+  emailProvider: z.string().nullable().default(null),
 });
 
 // Type definitions
@@ -504,6 +523,14 @@ export const qrCodeAnalytics = pgTable("qr_code_analytics", {
 export const insertRentcardViewSchema = createInsertSchema(rentcardViews).omit({
   id: true,
   timestamp: true,
+}).extend({
+  // Make location required since it's being used as such in routes
+  location: z.object({
+    city: z.string().optional(),
+    region: z.string().optional(),
+    country: z.string().optional(),
+    coordinates: z.object({ lat: z.number(), lng: z.number() }).optional(),
+  }).nullable().default(null),
 });
 
 export const insertViewSessionSchema = createInsertSchema(viewSessions).omit({
@@ -525,6 +552,13 @@ export const insertAnalyticsAggregationSchema = createInsertSchema(analyticsAggr
 export const insertSharingAnalyticsSchema = createInsertSchema(sharingAnalytics).omit({
   id: true,
   shareDate: true,
+}).extend({
+  // Add missing required fields for sharing analytics
+  firstViewDate: z.date().nullable().default(null),
+  totalViews: z.number().default(0),
+  uniqueViewers: z.number().default(0),
+  conversionToInterest: z.boolean().default(false),
+  conversionDate: z.date().nullable().default(null),
 });
 
 export const insertQRCodeAnalyticsSchema = createInsertSchema(qrCodeAnalytics).omit({

@@ -289,10 +289,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.recordShortlinkClick({
           shortlinkId: shortlink.id,
           channel: channel as any,
-          ipAddress: metadata.ipAddress,
-          userAgent: metadata.userAgent,
-          referrer: metadata.referrer,
-          deviceInfo: metadata.deviceInfo,
+          ipAddress: metadata.ipAddress || null,
+          userAgent: metadata.userAgent || null,
+          referrer: metadata.referrer || null,
+          deviceInfo: metadata.deviceInfo || undefined,
           locationInfo: undefined, // Could be enhanced with GeoIP
           sessionId: generateSessionFingerprint(req),
           userId: (req as any).user?.id || null,
@@ -364,13 +364,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const shortlink = await storage.createShortlink({
+      const shortlinkData: any = {
         ...data,
         slug,
-        tenantId,
-        landlordId,
         isActive: true,
-      });
+      };
+      
+      // Only include fields if they have values (omit undefined)
+      if (tenantId) shortlinkData.tenantId = tenantId;
+      if (landlordId) shortlinkData.landlordId = landlordId;
+      if (data.description) shortlinkData.description = data.description;
+      if (data.expiresAt) shortlinkData.expiresAt = data.expiresAt;
+      if (data.propertyId) shortlinkData.propertyId = data.propertyId;
+      
+      const shortlink = await storage.createShortlink(shortlinkData);
 
       res.json(shortlink);
     } catch (error) {
@@ -1102,11 +1109,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enhanced analytics tracking
       try {
         const metadata = extractRequestMetadata(req);
-        await storage.recordQRCodeAnalytics({
+        await storage.createQRCodeAnalytics({
           qrCodeId: qrCodeId,
-          source: 'qr_code',
-          sourceId: qrCodeId.toString(),
-          ...metadata
+          propertyId: qrCode.propertyId || null,
+          scanLocation: null,
+          scannerInfo: metadata.deviceInfo ? {
+            deviceType: metadata.deviceInfo.type,
+            os: metadata.deviceInfo.os,
+            browser: metadata.deviceInfo.browser
+          } : null,
+          subsequentAction: 'qr_scanned',
+          sessionDuration: null,
+          conversionValue: null
         });
       } catch (analyticsError) {
         // Don't fail the request if analytics fails
@@ -1141,11 +1155,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enhanced analytics tracking
       try {
         const metadata = extractRequestMetadata(req);
-        await storage.recordQRCodeAnalytics({
+        await storage.createQRCodeAnalytics({
           qrCodeId: qrCodeId,
-          source: 'qr_code',
-          sourceId: qrCodeId.toString(),
-          ...metadata
+          propertyId: qrCode.propertyId || null,
+          scanLocation: null,
+          scannerInfo: metadata.deviceInfo ? {
+            deviceType: metadata.deviceInfo.type,
+            os: metadata.deviceInfo.os,
+            browser: metadata.deviceInfo.browser
+          } : null,
+          subsequentAction: 'qr_scanned',
+          sessionDuration: null,
+          conversionValue: null
         });
       } catch (analyticsError) {
         // Don't fail the request if analytics fails
@@ -1353,29 +1374,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
               let propertyInfo = '';
               if (clientData.propertyId) {
                 const property = await storage.getProperty(clientData.propertyId);
-                propertyInfo = property ? ` for ${property.title}` : '';
+                propertyInfo = property ? ` for ${property.address}` : '';
               }
 
               const title = "Someone is interested in you!";
               const message = `${landlordName} submitted interest in your RentCard${propertyInfo}`;
 
-              // Create the notification
-              await storage.createNotification({
+              // Create the notification with all required fields
+              const notificationData: any = {
                 userId: tenantProfile.userId,
                 type: 'interest_submission',
                 title,
-                message,
-                metadata: {
-                  interestId: interest.id,
-                  landlordId: clientData.landlordId,
-                  propertyId: clientData.propertyId,
-                  landlordName,
-                  hasMessage: !!clientData.message
-                },
-                actionUrl: `/tenant/dashboard?tab=interests`,
+                content: message,
                 priority: 'high',
-                category: 'engagement'
-              });
+                isRead: false,
+                relatedEntityType: 'interest',
+                deliveryMethods: ['in_app'],
+                emailSent: false,
+                metadata: {
+                  landlordId: clientData.landlordId,
+                  actionUrl: `/tenant/dashboard?tab=interests`
+                }
+              };
+              
+              if (clientData.propertyId) {
+                notificationData.relatedEntityId = clientData.propertyId;
+              }
+              
+              await storage.createNotification(notificationData);
             }
           }
         }
@@ -1533,7 +1559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Mark as viewed if landlord is viewing it
       if (landlordProfile && !interest.viewedAt) {
         await storage.markInterestAsViewed(interestId);
-        enrichedInterest.viewedAt = new Date().toISOString();
+        enrichedInterest.viewedAt = new Date();
       }
 
       res.json(enrichedInterest);
@@ -1710,12 +1736,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enhanced analytics tracking
       try {
         const metadata = extractRequestMetadata(req);
-        await storage.recordRentCardView({
+        await storage.createRentcardView({
           shareTokenId: shareToken.id,
           tenantId: shareToken.tenantId,
+          viewerFingerprint: generateViewerFingerprint(req),
+          ipAddress: metadata.ipAddress || null,
+          userAgent: metadata.userAgent || null,
+          referrer: metadata.referrer || null,
           source: 'share_link',
           sourceId: token,
-          ...metadata
+          location: null, // Could be enhanced with GeoIP
+          deviceInfo: metadata.deviceInfo || null,
+          viewDuration: null, // Could be tracked with frontend analytics
+          actionsPerformed: null, // Could be tracked with frontend analytics
+          isUnique: true // Could be determined by checking previous views
         });
       } catch (analyticsError) {
         // Don't fail the request if analytics fails
@@ -1731,34 +1765,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!preferences || preferences.rentcardViewsEnabled) {
             // Determine viewer context for better notification messaging
             const metadata = extractRequestMetadata(req);
-            const location = metadata.location;
-            const deviceType = metadata.deviceInfo?.type || 'unknown';
+            const deviceType = metadata.deviceInfo?.type || 'desktop';
             
             let title = "Someone viewed your RentCard!";
             let message = `Your RentCard was viewed from ${deviceType}`;
             
-            if (location?.city && location?.region) {
-              message += ` in ${location.city}, ${location.region}`;
-            } else if (location?.region) {
-              message += ` in ${location.region}`;
-            }
+            // Location info could be added here with GeoIP
 
-            // Create the notification
+            // Create the notification with all required fields
             await storage.createNotification({
               userId: tenantProfile.userId,
               type: 'rentcard_view',
               title,
-              message,
+              content: message,
+              priority: 'normal',
+              isRead: false,
+              relatedEntityType: 'shareToken',
+              relatedEntityId: shareToken.id,
+              deliveryMethods: ['in_app'],
+              emailSent: false,
+              emailSentAt: null,
+              clickedAt: null,
+              viewData: {
+                shareTokenId: shareToken.id,
+                viewerInfo: {
+                  deviceType: deviceType,
+                  source: 'direct'
+                }
+              },
+              interestData: null,
               metadata: {
                 shareTokenId: shareToken.id,
-                viewId: shareToken.id, // Could link to specific view record
-                source: 'share_link',
-                location: location,
-                deviceType
-              },
-              actionUrl: `/tenant/dashboard?tab=analytics`,
-              priority: 'normal',
-              category: 'engagement'
+                actionUrl: `/tenant/dashboard?tab=analytics`
+              }
             });
           }
         }
@@ -2273,7 +2312,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const contact = await storage.createRecipientContact({
         ...validatedData,
-        tenantId: tenantProfile.id
+        tenantId: tenantProfile.id,
+        phone: validatedData.phone || null,
+        notes: validatedData.notes || null,
+        company: validatedData.company || null,
+        propertyAddress: validatedData.propertyAddress || null
       });
 
       res.status(201).json(contact);
@@ -2508,7 +2551,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const history = await storage.createContactSharingHistory({
         ...validatedData,
-        tenantId: tenantProfile.id
+        tenantId: tenantProfile.id,
+        notes: validatedData.notes || null,
+        shareTokenId: validatedData.shareTokenId ?? null,
+        templateId: validatedData.templateId ?? null,
+        shortlinkId: validatedData.shortlinkId ?? null,
+        messageUsed: validatedData.messageUsed || null,
+        subjectUsed: validatedData.subjectUsed || null
       });
 
       res.status(201).json(history);
@@ -2685,7 +2734,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           emailDigestEnabled: false,
           emailDigestFrequency: 'daily',
           maxNotificationsPerHour: 10,
-          groupSimilarNotifications: true
+          groupSimilarNotifications: true,
+          quietHoursStart: null,
+          quietHoursEnd: null
         });
       }
       
@@ -2715,8 +2766,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!preferences) {
         preferences = await storage.createUserNotificationPreferences({
+          ...validationResult.data,
           userId: req.user.id,
-          ...validationResult.data
+          quietHoursStart: validationResult.data.quietHoursStart ?? null,
+          quietHoursEnd: validationResult.data.quietHoursEnd ?? null,
+          rentcardViewsEnabled: validationResult.data.rentcardViewsEnabled ?? true,
+          rentcardViewsEmail: validationResult.data.rentcardViewsEmail ?? false,
+          rentcardViewsFrequency: validationResult.data.rentcardViewsFrequency ?? 'instant',
+          interestSubmissionsEnabled: validationResult.data.interestSubmissionsEnabled ?? true,
+          interestSubmissionsEmail: validationResult.data.interestSubmissionsEmail ?? true,
+          interestSubmissionsFrequency: validationResult.data.interestSubmissionsFrequency ?? 'instant',
+          weeklySummaryEnabled: validationResult.data.weeklySummaryEnabled ?? true,
+          weeklySummaryEmail: validationResult.data.weeklySummaryEmail ?? true,
+          weeklySummaryDay: validationResult.data.weeklySummaryDay ?? 'monday',
+          systemNotificationsEnabled: validationResult.data.systemNotificationsEnabled ?? true,
+          systemNotificationsEmail: validationResult.data.systemNotificationsEmail ?? false,
+          timezone: validationResult.data.timezone ?? 'America/New_York',
+          emailDigestEnabled: validationResult.data.emailDigestEnabled ?? false,
+          emailDigestFrequency: validationResult.data.emailDigestFrequency ?? 'daily',
+          maxNotificationsPerHour: validationResult.data.maxNotificationsPerHour ?? 10,
+          groupSimilarNotifications: validationResult.data.groupSimilarNotifications ?? true
         });
       } else {
         preferences = await storage.updateUserNotificationPreferences(req.user.id, validationResult.data);
@@ -2775,7 +2844,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const notification = await storage.createNotification(validationResult.data);
+      const notification = await storage.createNotification({
+        ...validationResult.data,
+        isRead: validationResult.data.isRead ?? false,
+        priority: validationResult.data.priority ?? 'normal',
+        relatedEntityType: validationResult.data.relatedEntityType ?? null,
+        relatedEntityId: validationResult.data.relatedEntityId ?? null,
+        deliveryMethods: Array.isArray(validationResult.data.deliveryMethods) ? validationResult.data.deliveryMethods as string[] : null,
+        viewData: validationResult.data.viewData as {
+          shareTokenId?: number;
+          viewerInfo?: {
+            deviceType?: 'desktop' | 'mobile' | 'tablet';
+            location?: string;
+            source?: string;
+          };
+          viewDuration?: number;
+          isUnique?: boolean;
+        } | null ?? null,
+        interestData: validationResult.data.interestData as {
+          landlordInfo?: {
+            name?: string;
+            companyName?: string;
+            email?: string;
+          };
+          propertyInfo?: {
+            address?: string;
+            rent?: number;
+          };
+          message?: string;
+        } | null ?? null,
+        emailSent: validationResult.data.emailSent ?? false,
+        emailSentAt: validationResult.data.emailSentAt ?? null,
+        clickedAt: validationResult.data.clickedAt ?? null,
+        metadata: validationResult.data.metadata ? {
+          aggregationKey: validationResult.data.metadata.aggregationKey as string,
+          suppressEmail: validationResult.data.metadata.suppressEmail as boolean,
+          expiresAt: validationResult.data.metadata.expiresAt as string,
+          actionUrl: validationResult.data.metadata.actionUrl as string,
+          landlordId: validationResult.data.metadata.landlordId as number,
+          shareTokenId: validationResult.data.metadata.shareTokenId as number,
+          summaryData: validationResult.data.metadata.summaryData
+        } : null
+      });
       res.json(notification);
     } catch (error) {
       handleRouteError(error, res, 'create notification');
@@ -3049,7 +3159,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create new preferences
         preferences = await storage.createTenantContactPreferences({
           ...validatedData,
-          tenantId: tenantProfile.id
+          tenantId: tenantProfile.id,
+          isActive: validatedData.isActive ?? true,
+          allowUnknownContacts: validatedData.allowUnknownContacts ?? false,
+          allowPhoneCalls: validatedData.allowPhoneCalls ?? true,
+          allowTextMessages: validatedData.allowTextMessages ?? true,
         });
       }
 
@@ -3206,7 +3320,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create the communication log
       const log = await storage.createCommunicationLog({
         ...validatedData,
-        landlordId: landlordProfile.id
+        landlordId: landlordProfile.id,
+        tenantId: validatedData.tenantId ?? null,
+        propertyId: validatedData.propertyId ?? null,
+        message: validatedData.message || null,
+        subject: validatedData.subject ?? null,
+        recipientInfo: validatedData.recipientInfo || { name: '', email: '', phone: '' },
+        threadId: validatedData.threadId || null,
+        templateId: validatedData.templateId ?? null,
+        metadata: validatedData.metadata as {
+          deliveryTimestamp?: string;
+          readTimestamp?: string;
+          errorMessage?: string;
+          retryCount?: number;
+        } | null || null
       });
 
       // If a template was used, increment its usage count
@@ -3306,7 +3433,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const blockedContact = await storage.createTenantBlockedContact({
         ...validatedData,
-        tenantId: tenantProfile.id
+        tenantId: tenantProfile.id,
+        landlordId: validatedData.landlordId ?? null,
+        blockedEmail: validatedData.blockedEmail ?? null,
+        blockedPhone: validatedData.blockedPhone ?? null,
+        reason: validatedData.reason ?? null,
+        blockedUntil: validatedData.blockedUntil ?? null
       });
 
       res.status(201).json(blockedContact);
@@ -3402,7 +3534,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const template = await storage.createCommunicationTemplate({
         ...validatedData,
-        landlordId: landlordProfile.id
+        landlordId: landlordProfile.id,
+        isActive: validatedData.isActive ?? true
       });
 
       res.status(201).json(template);
@@ -3606,12 +3739,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shareTokenId: shareTokenId || null,
         tenantId: tenantId || null,
         viewerFingerprint,
-        ipAddress: metadata.ipAddress,
-        userAgent: metadata.userAgent,
-        referrer: metadata.referrer,
+        ipAddress: metadata.ipAddress || null,
+        userAgent: metadata.userAgent || null,
+        referrer: metadata.referrer || null,
         source,
         sourceId,
-        deviceInfo: metadata.deviceInfo,
+        deviceInfo: metadata.deviceInfo || null,
+        location: null, // Can be enhanced with GeoIP later
         viewDuration,
         actionsPerformed,
         isUnique
@@ -3655,7 +3789,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId,
         sharingMethod,
         recipientInfo,
-        performanceScore: 0 // Will be calculated later based on engagement
+        performanceScore: 0, // Will be calculated later based on engagement
+        firstViewDate: null,
+        totalViews: 0,
+        uniqueViewers: 0,
+        conversionToInterest: false,
+        conversionDate: null
       };
 
       const newSharing = await storage.createSharingAnalytics(sharingData);
@@ -3687,7 +3826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         propertyId,
         scanLocation,
         scannerInfo: {
-          deviceType: metadata.deviceInfo?.type,
+          deviceType: metadata.deviceInfo?.type || 'desktop',
           os: metadata.deviceInfo?.os,
           browser: metadata.deviceInfo?.browser
         },
