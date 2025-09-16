@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { insertRentCardSchema, type InsertRentCard } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuthStore } from '@/stores/authStore';
 import { z } from "zod";
 import { VALIDATION, FORM_MESSAGES, MESSAGES, ROUTES } from '@/constants';
@@ -21,6 +21,8 @@ import { useRentCardStore } from '@/stores/rentCardStore';
 import { useUIStore } from '@/stores/uiStore';
 import { MultiStepForm, StepConfig } from '@/components/ui/multi-step-form';
 import { convertFormNumericValues } from '@/utils/form-utils';
+import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
+import OneClickShareButton from '@/components/shared/OneClickShareButton';
 
 // Registration schema (unchanged)
 const registrationSchema = z.object({
@@ -36,9 +38,15 @@ type RegistrationForm = z.infer<typeof registrationSchema>;
 
 type SidebarPreviewProps = {
   formData: Partial<InsertRentCard>;
+  onPublish?: () => Promise<void>;
+  isPublishing?: boolean;
+  isPublished?: boolean;
 };
 
-const SidebarPreview = React.memo(({ formData }: SidebarPreviewProps) => {
+const SidebarPreview = React.memo(({ formData, onPublish, isPublishing = false, isPublished = false }: SidebarPreviewProps) => {
+  const [shareModalOpen, setShareModalOpen] = React.useState(false);
+  const { toast } = useToast();
+  
   const completedFields = Object.keys(formData).filter(
     key => formData[key as keyof InsertRentCard] && formData[key as keyof InsertRentCard] !== '0'
   ).length;
@@ -49,7 +57,30 @@ const SidebarPreview = React.memo(({ formData }: SidebarPreviewProps) => {
     const previewData = JSON.stringify(formData);
     const previewUrl = `${window.location.origin}/rentcard/preview/${btoa(previewData)}`;
     navigator.clipboard.writeText(previewUrl);
-    alert("Preview link copied to clipboard! Note: This is a preview only and not saved yet.");
+    toast({
+      title: "Preview link copied!",
+      description: "Note: This is a preview only and not saved yet.",
+    });
+  };
+
+  const handlePublish = async () => {
+    if (onPublish) {
+      try {
+        await onPublish();
+        setShareModalOpen(true);
+        toast({
+          title: "RentCard published!",
+          description: "Your RentCard is now ready to share with landlords.",
+        });
+      } catch (error) {
+        console.error('Publish error:', error);
+        toast({
+          title: "Publishing failed",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   return (
@@ -65,18 +96,52 @@ const SidebarPreview = React.memo(({ formData }: SidebarPreviewProps) => {
                   : "Your RentCard Preview"}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Profile in progress ({profileStrength}%)
+                {isPublished ? "Published and ready to share!" : `Profile in progress (${profileStrength}%)`}
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSharePreview}
-              className="flex items-center gap-1"
-            >
-              <Share2 className="w-4 h-4" />
-              Share Preview
-            </Button>
+            <div className="flex flex-col gap-2">
+              {!isPublished ? (
+                <>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    onClick={handlePublish}
+                    disabled={isPublishing || !onPublish}
+                    className="flex items-center gap-1"
+                    data-testid="button-publish-rentcard"
+                  >
+                    {isPublishing ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" />Publishing...</>
+                    ) : (
+                      <><Share2 className="w-4 h-4" />Publish RentCard</>
+                    )}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleSharePreview}
+                    className="flex items-center gap-1 text-xs"
+                  >
+                    Preview Only
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <OneClickShareButton 
+                    className="flex items-center gap-1"
+                    size="sm"
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setShareModalOpen(true)}
+                    className="flex items-center gap-1 text-xs"
+                  >
+                    Manage Links
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Profile Strength */}
@@ -125,9 +190,20 @@ const SidebarPreview = React.memo(({ formData }: SidebarPreviewProps) => {
           )}
 
           {/* Prompt to Complete */}
-          <p className="text-xs text-muted-foreground italic">
-            Fill out more details to make your RentCard stand out!
-          </p>
+          {!isPublished && (
+            <p className="text-xs text-muted-foreground italic">
+              Fill out more details to make your RentCard stand out!
+            </p>
+          )}
+          
+          {/* Enhanced Share Modal */}
+          <EnhancedShareModal
+            open={shareModalOpen}
+            onOpenChange={setShareModalOpen}
+            resourceType="rentcard"
+            title="Share Your RentCard"
+            description="Share this link with landlords to let them view your rental profile"
+          />
         </CardContent>
       </Card>
     </div>
@@ -143,6 +219,7 @@ export default function CreateRentCard() {
   const { step, setStep, formData, setFormData, reset } = useRentCardStore();
   const { setLoading } = useUIStore();
   const [showPasswordForm, setShowPasswordForm] = React.useState(false);
+  const [isPublished, setIsPublished] = React.useState(false);
 
   const form = useForm<InsertRentCard>({
     resolver: zodResolver(insertRentCardSchema),
@@ -181,13 +258,19 @@ export default function CreateRentCard() {
         setLoading('createRentCard', false);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('RentCard created successfully:', data);
+      
+      setIsPublished(true);
+      
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['share-tokens'] });
+      
       toast({
-        title: MESSAGES.TOAST.RENTCARD.CREATE_SUCCESS.TITLE,
-        description: MESSAGES.TOAST.RENTCARD.CREATE_SUCCESS.DESCRIPTION,
+        title: MESSAGES.SUCCESS.GENERAL,
+        description: "Your RentCard has been created successfully!",
       });
-      reset();
-      setLocation(ROUTES.TENANT.DASHBOARD);
     },
     onError: (error) => {
       toast({
@@ -234,6 +317,18 @@ export default function CreateRentCard() {
       const processedData = convertFormNumericValues(data, numericFields);
       createRentCardMutation.mutate(processedData);
     }
+  };
+
+  // Handler for publishing from preview
+  const handlePublishFromPreview = async () => {
+    const currentFormData = form.getValues();
+    const processedData = convertFormNumericValues(currentFormData, numericFields);
+    
+    // Update the store with current form data
+    setFormData(processedData);
+    
+    // Create the RentCard
+    await createRentCardMutation.mutateAsync(processedData);
   };
 
   const PersonalInfoStep = useMemo(() => (
@@ -459,7 +554,14 @@ export default function CreateRentCard() {
                 />
               </div>
               
-              {step < 4 && <SidebarPreview formData={formData} />}
+              {step < 4 && (
+                <SidebarPreview 
+                  formData={form.getValues()} 
+                  onPublish={handlePublishFromPreview}
+                  isPublishing={createRentCardMutation.isPending}
+                  isPublished={isPublished}
+                />
+              )}
             </div>
           </CardContent>
         </Card>
