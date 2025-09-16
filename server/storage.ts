@@ -1,7 +1,9 @@
 import { 
   User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken, PropertyQRCode,
   TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick,
-  RecipientContact, TenantMessageTemplate, ContactSharingHistory
+  RecipientContact, TenantMessageTemplate, ContactSharingHistory,
+  // Import insert types for shortlinks
+  InsertShortlink, InsertShortlinkClick
 } from "@shared/schema";
 import { 
   users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens, propertyQRCodes,
@@ -21,6 +23,11 @@ import {
   RoommateGroup, GroupApplication, NeighborhoodInsight, RentcardView, ViewSession, 
   InterestAnalytics, AnalyticsAggregation, SharingAnalytics, QRCodeAnalytics,
   OnboardingProgress, OnboardingStep, ONBOARDING_STEPS,
+  // Import insert schema types
+  InsertNotification, InsertNotificationPreferences, InsertNotificationDeliveryLog,
+  InsertRentcardView, InsertViewSession, InsertInterestAnalytics, InsertAnalyticsAggregation,
+  InsertSharingAnalytics, InsertQRCodeAnalytics, InsertOnboardingProgress, InsertOnboardingStep,
+  // Import table definitions
   tenantDocuments, propertyImages, propertyAmenities, tenantReferences,
   conversations, messages, notifications, notificationPreferences, notificationDeliveryLog,
   roommateGroups, groupApplications, conversationParticipants, roommateGroupMembers, 
@@ -118,7 +125,7 @@ export interface IStorage {
     type?: string;
   }): Promise<Notification[]>;
   getUserNotificationCount(userId: number, unreadOnly?: boolean): Promise<number>;
-  createNotification(notification: Omit<Notification, "id" | "createdAt" | "updatedAt">): Promise<Notification>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationAsRead(id: number): Promise<Notification>;
   markNotificationAsClicked(id: number): Promise<Notification>;
   markAllNotificationsAsRead(userId: number): Promise<void>;
@@ -127,11 +134,11 @@ export interface IStorage {
   
   // Notification preferences operations
   getUserNotificationPreferences(userId: number): Promise<NotificationPreferences | undefined>;
-  createUserNotificationPreferences(preferences: Omit<NotificationPreferences, "id" | "createdAt" | "updatedAt">): Promise<NotificationPreferences>;
+  createUserNotificationPreferences(preferences: InsertNotificationPreferences): Promise<NotificationPreferences>;
   updateUserNotificationPreferences(userId: number, preferences: Partial<NotificationPreferences>): Promise<NotificationPreferences>;
   
   // Notification delivery operations
-  createNotificationDeliveryLog(log: Omit<NotificationDeliveryLog, "id" | "createdAt">): Promise<NotificationDeliveryLog>;
+  createNotificationDeliveryLog(log: InsertNotificationDeliveryLog): Promise<NotificationDeliveryLog>;
   updateNotificationDeliveryStatus(id: number, status: string, metadata?: any): Promise<NotificationDeliveryLog>;
   getNotificationDeliveryLogs(notificationId: number): Promise<NotificationDeliveryLog[]>;
   
@@ -179,7 +186,7 @@ export interface IStorage {
   }>;
   
   // Batch notification operations for performance
-  createBulkNotifications(notifications: Omit<Notification, "id" | "createdAt" | "updatedAt">[]): Promise<Notification[]>;
+  createBulkNotifications(notifications: InsertNotification[]): Promise<Notification[]>;
   shouldSendNotification(userId: number, notificationType: string, metadata?: any): Promise<boolean>; // Rate limiting check
 
   // Roommate operations
@@ -196,7 +203,7 @@ export interface IStorage {
 
   // Enhanced Analytics operations
   // RentCard View Tracking
-  createRentcardView(view: Omit<RentcardView, "id" | "timestamp">): Promise<RentcardView>;
+  createRentcardView(view: InsertRentcardView): Promise<RentcardView>;
   getRentcardViews(shareTokenId?: number, tenantId?: number, timeframe?: string): Promise<RentcardView[]>;
   getRentcardViewStats(tenantId: number, timeframe?: string): Promise<{
     totalViews: number;
@@ -207,13 +214,13 @@ export interface IStorage {
   }>;
 
   // View Sessions
-  createViewSession(session: Omit<ViewSession, "id" | "startTime">): Promise<ViewSession>;
+  createViewSession(session: InsertViewSession): Promise<ViewSession>;
   updateViewSession(id: number, updates: Partial<ViewSession>): Promise<ViewSession>;
   getViewSession(sessionFingerprint: string): Promise<ViewSession | undefined>;
   getViewSessions(shareTokenId?: number, tenantId?: number): Promise<ViewSession[]>;
 
   // Interest Analytics
-  createInterestAnalytics(analytics: Omit<InterestAnalytics, "id" | "createdAt" | "updatedAt">): Promise<InterestAnalytics>;
+  createInterestAnalytics(analytics: InsertInterestAnalytics): Promise<InterestAnalytics>;
   updateInterestAnalytics(id: number, updates: Partial<InterestAnalytics>): Promise<InterestAnalytics>;
   getInterestAnalytics(landlordId?: number, tenantId?: number, propertyId?: number): Promise<InterestAnalytics[]>;
   getInterestConversionStats(landlordId: number, timeframe?: string): Promise<{
@@ -224,12 +231,12 @@ export interface IStorage {
   }>;
 
   // Analytics Aggregations
-  createAnalyticsAggregation(aggregation: Omit<AnalyticsAggregation, "id" | "createdAt">): Promise<AnalyticsAggregation>;
+  createAnalyticsAggregation(aggregation: InsertAnalyticsAggregation): Promise<AnalyticsAggregation>;
   getAnalyticsAggregations(entityType: string, entityId: number, aggregationType: string, startDate?: Date, endDate?: Date): Promise<AnalyticsAggregation[]>;
   updateDailyAggregations(): Promise<void>;
 
   // Sharing Analytics
-  createSharingAnalytics(analytics: Omit<SharingAnalytics, "id" | "shareDate">): Promise<SharingAnalytics>;
+  createSharingAnalytics(analytics: InsertSharingAnalytics): Promise<SharingAnalytics>;
   updateSharingAnalytics(id: number, updates: Partial<SharingAnalytics>): Promise<SharingAnalytics>;
   getSharingAnalytics(shareTokenId?: number, tenantId?: number): Promise<SharingAnalytics[]>;
   getSharingPerformanceStats(tenantId: number): Promise<{
@@ -240,7 +247,7 @@ export interface IStorage {
   }>;
 
   // QR Code Analytics  
-  createQRCodeAnalytics(analytics: Omit<QRCodeAnalytics, "id" | "scanDate">): Promise<QRCodeAnalytics>;
+  createQRCodeAnalytics(analytics: InsertQRCodeAnalytics): Promise<QRCodeAnalytics>;
   getQRCodeAnalytics(qrCodeId?: number, propertyId?: number): Promise<QRCodeAnalytics[]>;
   getQRCodeStats(propertyId: number): Promise<{
     totalScans: number;
@@ -252,10 +259,10 @@ export interface IStorage {
   // Shortlink operations
   getShortlinks(tenantId?: number, landlordId?: number): Promise<Shortlink[]>;
   getShortlinkBySlug(slug: string): Promise<Shortlink | undefined>;
-  createShortlink(shortlink: Omit<Shortlink, "id" | "clickCount" | "lastClickedAt" | "createdAt" | "updatedAt">): Promise<Shortlink>;
+  createShortlink(shortlink: InsertShortlink): Promise<Shortlink>;
   updateShortlink(id: number, shortlink: Partial<Shortlink>): Promise<Shortlink>;
   incrementShortlinkClick(slug: string): Promise<void>;
-  recordShortlinkClick(click: Omit<ShortlinkClick, "id" | "clickedAt">): Promise<ShortlinkClick>;
+  recordShortlinkClick(click: InsertShortlinkClick): Promise<ShortlinkClick>;
   getShortlinkAnalytics(shortlinkId: number, timeframe?: string): Promise<ShortlinkClick[]>;
 
   // Neighborhood insights operations
@@ -762,43 +769,46 @@ export class DatabaseStorage implements IStorage {
     unreadOnly?: boolean;
     type?: string;
   }): Promise<Notification[]> {
-    let query = db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId));
-      
+    const conditions = [eq(notifications.userId, userId)];
+    
     if (options?.unreadOnly) {
-      query = query.where(eq(notifications.isRead, false));
+      conditions.push(eq(notifications.isRead, false));
     }
     
     if (options?.type) {
-      query = query.where(eq(notifications.type, options.type));
+      conditions.push(eq(notifications.type, options.type));
     }
     
-    query = query.orderBy(sql`${notifications.createdAt} DESC`);
+    const baseQuery = db
+      .select()
+      .from(notifications)
+      .where(and(...conditions))
+      .orderBy(sql`${notifications.createdAt} DESC`);
     
-    if (options?.limit) {
-      query = query.limit(options.limit);
+    // Apply limit and offset if provided
+    if (options?.limit && options?.offset) {
+      return await baseQuery.limit(options.limit).offset(options.offset);
+    } else if (options?.limit) {
+      return await baseQuery.limit(options.limit);
+    } else if (options?.offset) {
+      return await baseQuery.offset(options.offset);
     }
     
-    if (options?.offset) {
-      query = query.offset(options.offset);
-    }
-    
-    return await query;
+    return await baseQuery;
   }
   
   async getUserNotificationCount(userId: number, unreadOnly?: boolean): Promise<number> {
-    let query = db
-      .select({ count: sql<number>`count(*)` })
-      .from(notifications)
-      .where(eq(notifications.userId, userId));
-      
+    const conditions = [eq(notifications.userId, userId)];
+    
     if (unreadOnly) {
-      query = query.where(eq(notifications.isRead, false));
+      conditions.push(eq(notifications.isRead, false));
     }
     
-    const [result] = await query;
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(and(...conditions));
+      
     return result?.count || 0;
   }
 
@@ -851,13 +861,13 @@ export class DatabaseStorage implements IStorage {
   }
   
   async deleteUserNotifications(userId: number, olderThan?: Date): Promise<void> {
-    let query = db.delete(notifications).where(eq(notifications.userId, userId));
+    const conditions = [eq(notifications.userId, userId)];
     
     if (olderThan) {
-      query = query.where(sql`${notifications.createdAt} < ${olderThan}`);
+      conditions.push(sql`${notifications.createdAt} < ${olderThan}`);
     }
     
-    await query;
+    await db.delete(notifications).where(and(...conditions));
   }
   
   // Notification Preferences Implementation
@@ -956,9 +966,14 @@ export class DatabaseStorage implements IStorage {
       title,
       content,
       priority: viewData.isUnique ? 'high' : 'normal',
+      isRead: false,
       relatedEntityType: 'shareToken',
-      relatedEntityId: viewData.shareTokenId,
+      relatedEntityId: viewData.shareTokenId || null,
       viewData,
+      interestData: null,
+      emailSent: false,
+      emailSentAt: null,
+      clickedAt: null,
       deliveryMethods: ['in_app'],
       metadata: {
         aggregationKey: `rentcard_view_${tenantId}_${new Date().toDateString()}`,
@@ -972,7 +987,17 @@ export class DatabaseStorage implements IStorage {
         notificationId: notification.id,
         userId: tenantId,
         deliveryMethod: 'email',
-        status: 'queued'
+        status: 'queued',
+        readAt: null,
+        recipientEmail: null,
+        recipientPhone: null,
+        emailSubject: null,
+        clickedAt: null,
+        errorMessage: null,
+        retryCount: 0,
+        sentAt: null,
+        deliveredAt: null,
+        emailProvider: null
       });
     }
     
@@ -1009,8 +1034,14 @@ export class DatabaseStorage implements IStorage {
       title,
       content,
       priority: 'high',
+      isRead: false,
       relatedEntityType: 'interest',
+      relatedEntityId: null,
+      viewData: null,
       interestData,
+      emailSent: false,
+      emailSentAt: null,
+      clickedAt: null,
       deliveryMethods: ['in_app'],
       metadata: {
         actionUrl: '/tenant/applications'
@@ -1023,7 +1054,17 @@ export class DatabaseStorage implements IStorage {
         notificationId: notification.id,
         userId: tenantId,
         deliveryMethod: 'email',
-        status: 'queued'
+        status: 'queued',
+        readAt: null,
+        recipientEmail: null,
+        recipientPhone: null,
+        emailSubject: null,
+        clickedAt: null,
+        errorMessage: null,
+        retryCount: 0,
+        sentAt: null,
+        deliveredAt: null,
+        emailProvider: null
       });
     }
     
@@ -1052,7 +1093,14 @@ export class DatabaseStorage implements IStorage {
       title,
       content,
       priority: 'normal',
+      isRead: false,
       relatedEntityType: 'summary',
+      relatedEntityId: null,
+      viewData: null,
+      interestData: null,
+      emailSent: false,
+      emailSentAt: null,
+      clickedAt: null,
       deliveryMethods: ['in_app'],
       metadata: {
         summaryData,
@@ -1114,8 +1162,8 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Batch operations
-  async createBulkNotifications(notifications: Omit<Notification, "id" | "createdAt" | "updatedAt">[]): Promise<Notification[]> {
-    const notificationsWithTimestamps = notifications.map(notification => ({
+  async createBulkNotifications(notificationsData: Omit<Notification, "id" | "createdAt" | "updatedAt">[]): Promise<Notification[]> {
+    const notificationsWithTimestamps = notificationsData.map(notification => ({
       ...notification,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -1327,8 +1375,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRentcardViews(shareTokenId?: number, tenantId?: number, timeframe?: string): Promise<RentcardView[]> {
-    let query = db.select().from(rentcardViews);
-    
     const conditions = [];
     if (shareTokenId) conditions.push(eq(rentcardViews.shareTokenId, shareTokenId));
     if (tenantId) conditions.push(eq(rentcardViews.tenantId, tenantId));
@@ -1353,9 +1399,9 @@ export class DatabaseStorage implements IStorage {
       conditions.push(sql`${rentcardViews.timestamp} >= ${startDate}`);
     }
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    const query = conditions.length > 0 
+      ? db.select().from(rentcardViews).where(and(...conditions))
+      : db.select().from(rentcardViews);
     
     return await query.orderBy(sql`${rentcardViews.timestamp} DESC`);
   }
@@ -1432,15 +1478,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getViewSessions(shareTokenId?: number, tenantId?: number): Promise<ViewSession[]> {
-    let query = db.select().from(viewSessions);
-    
     const conditions = [];
     if (shareTokenId) conditions.push(eq(viewSessions.shareTokenId, shareTokenId));
     if (tenantId) conditions.push(eq(viewSessions.tenantId, tenantId));
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    const query = conditions.length > 0 
+      ? db.select().from(viewSessions).where(and(...conditions))
+      : db.select().from(viewSessions);
     
     return await query.orderBy(sql`${viewSessions.startTime} DESC`);
   }
@@ -1471,16 +1515,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getInterestAnalytics(landlordId?: number, tenantId?: number, propertyId?: number): Promise<InterestAnalytics[]> {
-    let query = db.select().from(interestAnalytics);
-    
     const conditions = [];
     if (landlordId) conditions.push(eq(interestAnalytics.landlordId, landlordId));
     if (tenantId) conditions.push(eq(interestAnalytics.tenantId, tenantId));
     if (propertyId) conditions.push(eq(interestAnalytics.propertyId, propertyId));
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    const query = conditions.length > 0 
+      ? db.select().from(interestAnalytics).where(and(...conditions))
+      : db.select().from(interestAnalytics);
     
     return await query.orderBy(sql`${interestAnalytics.createdAt} DESC`);
   }
@@ -1561,27 +1603,18 @@ export class DatabaseStorage implements IStorage {
     startDate?: Date, 
     endDate?: Date
   ): Promise<AnalyticsAggregation[]> {
-    let query = db.select().from(analyticsAggregations)
-      .where(and(
-        eq(analyticsAggregations.entityType, entityType),
-        eq(analyticsAggregations.entityId, entityId),
-        eq(analyticsAggregations.aggregationType, aggregationType)
-      ));
+    const conditions = [
+      eq(analyticsAggregations.entityType, entityType),
+      eq(analyticsAggregations.entityId, entityId),
+      eq(analyticsAggregations.aggregationType, aggregationType)
+    ];
     
-    const conditions = [];
     if (startDate) conditions.push(sql`${analyticsAggregations.date} >= ${startDate}`);
     if (endDate) conditions.push(sql`${analyticsAggregations.date} <= ${endDate}`);
     
-    if (conditions.length > 0) {
-      query = query.where(and(
-        eq(analyticsAggregations.entityType, entityType),
-        eq(analyticsAggregations.entityId, entityId),
-        eq(analyticsAggregations.aggregationType, aggregationType),
-        ...conditions
-      ));
-    }
-    
-    return await query.orderBy(sql`${analyticsAggregations.date} DESC`);
+    return await db.select().from(analyticsAggregations)
+      .where(and(...conditions))
+      .orderBy(sql`${analyticsAggregations.date} DESC`);
   }
 
   async updateDailyAggregations(): Promise<void> {
@@ -1591,7 +1624,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Sharing Analytics
-  async createSharingAnalytics(analytics: Omit<SharingAnalytics, "id" | "shareDate">): Promise<SharingAnalytics> {
+  async createSharingAnalytics(analytics: InsertSharingAnalytics): Promise<SharingAnalytics> {
     const [newAnalytics] = await db
       .insert(sharingAnalytics)
       .values({
@@ -1612,17 +1645,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSharingAnalytics(shareTokenId?: number, tenantId?: number): Promise<SharingAnalytics[]> {
-    let query = db.select().from(sharingAnalytics);
-    
     const conditions = [];
     if (shareTokenId) conditions.push(eq(sharingAnalytics.shareTokenId, shareTokenId));
     if (tenantId) conditions.push(eq(sharingAnalytics.tenantId, tenantId));
     
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      return await db.select().from(sharingAnalytics)
+        .where(and(...conditions))
+        .orderBy(sql`${sharingAnalytics.shareDate} DESC`);
     }
     
-    return await query.orderBy(sql`${sharingAnalytics.shareDate} DESC`);
+    return await db.select().from(sharingAnalytics)
+      .orderBy(sql`${sharingAnalytics.shareDate} DESC`);
   }
 
   async getSharingPerformanceStats(tenantId: number): Promise<{
@@ -1682,17 +1716,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getQRCodeAnalytics(qrCodeId?: number, propertyId?: number): Promise<QRCodeAnalytics[]> {
-    let query = db.select().from(qrCodeAnalytics);
-    
     const conditions = [];
     if (qrCodeId) conditions.push(eq(qrCodeAnalytics.qrCodeId, qrCodeId));
     if (propertyId) conditions.push(eq(qrCodeAnalytics.propertyId, propertyId));
     
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      return await db.select().from(qrCodeAnalytics)
+        .where(and(...conditions))
+        .orderBy(sql`${qrCodeAnalytics.scanDate} DESC`);
     }
     
-    return await query.orderBy(sql`${qrCodeAnalytics.scanDate} DESC`);
+    return await db.select().from(qrCodeAnalytics)
+      .orderBy(sql`${qrCodeAnalytics.scanDate} DESC`);
   }
 
   async getQRCodeStats(propertyId: number): Promise<{
@@ -1821,16 +1856,14 @@ export class DatabaseStorage implements IStorage {
 
   // Communication log operations
   async getCommunicationLogs(landlordId?: number, tenantId?: number, propertyId?: number): Promise<CommunicationLog[]> {
-    let query = db.select().from(communicationLogs);
-    
     const conditions = [];
     if (landlordId) conditions.push(eq(communicationLogs.landlordId, landlordId));
     if (tenantId) conditions.push(eq(communicationLogs.tenantId, tenantId));
     if (propertyId) conditions.push(eq(communicationLogs.propertyId, propertyId));
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    const query = conditions.length > 0 
+      ? db.select().from(communicationLogs).where(and(...conditions))
+      : db.select().from(communicationLogs);
     
     const logs = await query.orderBy(sql`${communicationLogs.createdAt} DESC`);
     return logs;
@@ -1930,21 +1963,19 @@ export class DatabaseStorage implements IStorage {
 
   // Communication template operations
   async getCommunicationTemplates(landlordId: number, category?: string): Promise<CommunicationTemplate[]> {
-    let query = db
+    const baseConditions = [
+      eq(communicationTemplates.landlordId, landlordId),
+      eq(communicationTemplates.isActive, true)
+    ];
+    
+    const conditions = category 
+      ? [...baseConditions, eq(communicationTemplates.category, category)]
+      : baseConditions;
+    
+    const query = db
       .select()
       .from(communicationTemplates)
-      .where(and(
-        eq(communicationTemplates.landlordId, landlordId),
-        eq(communicationTemplates.isActive, true)
-      ));
-    
-    if (category) {
-      query = query.where(and(
-        eq(communicationTemplates.landlordId, landlordId),
-        eq(communicationTemplates.category, category),
-        eq(communicationTemplates.isActive, true)
-      ));
-    }
+      .where(and(...conditions));
     
     const templates = await query.orderBy(sql`${communicationTemplates.title} ASC`);
     return templates;
@@ -2001,15 +2032,11 @@ export class DatabaseStorage implements IStorage {
 
   // Shortlink implementations
   async getShortlinks(tenantId?: number, landlordId?: number): Promise<Shortlink[]> {
-    let query = db.select().from(shortlinks).where(eq(shortlinks.isActive, true));
-    
     const conditions = [eq(shortlinks.isActive, true)];
     if (tenantId) conditions.push(eq(shortlinks.tenantId, tenantId));
     if (landlordId) conditions.push(eq(shortlinks.landlordId, landlordId));
     
-    if (conditions.length > 1) {
-      query = query.where(and(...conditions));
-    }
+    const query = db.select().from(shortlinks).where(and(...conditions));
     
     return await query.orderBy(sql`${shortlinks.createdAt} DESC`);
   }
@@ -2025,11 +2052,16 @@ export class DatabaseStorage implements IStorage {
     return shortlink;
   }
 
-  async createShortlink(shortlink: Omit<Shortlink, "id" | "clickCount" | "lastClickedAt" | "createdAt" | "updatedAt">): Promise<Shortlink> {
+  async createShortlink(shortlink: InsertShortlink): Promise<Shortlink> {
     const [newShortlink] = await db
       .insert(shortlinks)
       .values({
         ...shortlink,
+        tenantId: shortlink.tenantId ?? null,
+        landlordId: shortlink.landlordId ?? null,
+        propertyId: shortlink.propertyId ?? null,
+        description: shortlink.description ?? null,
+        expiresAt: shortlink.expiresAt ?? null,
         clickCount: 0,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -2064,11 +2096,16 @@ export class DatabaseStorage implements IStorage {
       ));
   }
 
-  async recordShortlinkClick(click: Omit<ShortlinkClick, "id" | "clickedAt">): Promise<ShortlinkClick> {
+  async recordShortlinkClick(click: InsertShortlinkClick): Promise<ShortlinkClick> {
     const [newClick] = await db
       .insert(shortlinkClicks)
       .values({
         ...click,
+        userId: click.userId ?? null,
+        ipAddress: click.ipAddress ?? null,
+        userAgent: click.userAgent ?? null,
+        referrer: click.referrer ?? null,
+        sessionId: click.sessionId ?? null,
         clickedAt: new Date()
       })
       .returning();
@@ -2076,10 +2113,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getShortlinkAnalytics(shortlinkId: number, timeframe?: string): Promise<ShortlinkClick[]> {
-    let query = db
-      .select()
-      .from(shortlinkClicks)
-      .where(eq(shortlinkClicks.shortlinkId, shortlinkId));
+    const conditions = [eq(shortlinkClicks.shortlinkId, shortlinkId)];
 
     if (timeframe) {
       const now = new Date();
@@ -2099,11 +2133,13 @@ export class DatabaseStorage implements IStorage {
           startDate = new Date(0); // All time
       }
       
-      query = query.where(and(
-        eq(shortlinkClicks.shortlinkId, shortlinkId),
-        sql`${shortlinkClicks.clickedAt} >= ${startDate}`
-      ));
+      conditions.push(sql`${shortlinkClicks.clickedAt} >= ${startDate}`);
     }
+
+    const query = db
+      .select()
+      .from(shortlinkClicks)
+      .where(and(...conditions));
 
     return await query.orderBy(sql`${shortlinkClicks.clickedAt} DESC`);
   }
@@ -2217,7 +2253,9 @@ export class DatabaseStorage implements IStorage {
       completedSteps: 0,
       progressPercentage: 0,
       isCompleted: false,
-      lastActiveStep: 'complete_profile'
+      lastActiveStep: 'complete_profile',
+      completedAt: null,
+      timeToCompletion: null
     });
 
     // Create individual steps for tenant onboarding
@@ -2266,10 +2304,11 @@ export class DatabaseStorage implements IStorage {
       for (const step of tenantSteps) {
         await db.insert(onboardingSteps).values({
           progressId: progress.id,
-          ...step,
-          isCompleted: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          stepNumber: step.stepNumber,
+          stepKey: step.stepKey,
+          stepTitle: step.stepTitle,
+          stepDescription: step.stepDescription,
+          requirementsMet: step.requirementsMet
         });
       }
     }
@@ -2291,18 +2330,20 @@ export class DatabaseStorage implements IStorage {
 
   // Recipient contact operations
   async getRecipientContacts(tenantId: number, options?: { category?: string; isFavorite?: boolean }): Promise<RecipientContact[]> {
-    let query = db
-      .select()
-      .from(recipientContacts)
-      .where(eq(recipientContacts.tenantId, tenantId));
+    const conditions = [eq(recipientContacts.tenantId, tenantId)];
 
     if (options?.category) {
-      query = query.where(eq(recipientContacts.contactType, options.category));
+      conditions.push(eq(recipientContacts.contactType, options.category));
     }
 
     if (options?.isFavorite !== undefined) {
-      query = query.where(eq(recipientContacts.isFavorite, options.isFavorite));
+      conditions.push(eq(recipientContacts.isFavorite, options.isFavorite));
     }
+
+    const query = db
+      .select()
+      .from(recipientContacts)
+      .where(and(...conditions));
 
     return await query.orderBy(
       recipientContacts.isFavorite, // Favorites first
@@ -2361,14 +2402,16 @@ export class DatabaseStorage implements IStorage {
 
   // Tenant message template operations
   async getTenantMessageTemplates(tenantId: number, category?: string): Promise<TenantMessageTemplate[]> {
-    let query = db
-      .select()
-      .from(tenantMessageTemplates)
-      .where(eq(tenantMessageTemplates.tenantId, tenantId));
+    const conditions = [eq(tenantMessageTemplates.tenantId, tenantId)];
 
     if (category) {
-      query = query.where(eq(tenantMessageTemplates.category, category));
+      conditions.push(eq(tenantMessageTemplates.category, category));
     }
+
+    const query = db
+      .select()
+      .from(tenantMessageTemplates)
+      .where(and(...conditions));
 
     return await query.orderBy(
       tenantMessageTemplates.isDefault, // Default templates first
@@ -2426,14 +2469,16 @@ export class DatabaseStorage implements IStorage {
 
   // Contact sharing history operations
   async getContactSharingHistory(tenantId: number, contactId?: number): Promise<ContactSharingHistory[]> {
-    let query = db
-      .select()
-      .from(contactSharingHistory)
-      .where(eq(contactSharingHistory.tenantId, tenantId));
+    const conditions = [eq(contactSharingHistory.tenantId, tenantId)];
 
     if (contactId) {
-      query = query.where(eq(contactSharingHistory.contactId, contactId));
+      conditions.push(eq(contactSharingHistory.contactId, contactId));
     }
+
+    const query = db
+      .select()
+      .from(contactSharingHistory)
+      .where(and(...conditions));
 
     return await query.orderBy(sql`${contactSharingHistory.sentAt} DESC`);
   }

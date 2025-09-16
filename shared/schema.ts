@@ -206,7 +206,7 @@ export const shortlinkClicks = pgTable("shortlink_clicks", {
 export const tenantContactPreferences = pgTable("tenant_contact_preferences", {
   id: serial("id").primaryKey(),
   tenantId: integer("tenant_id").references(() => tenantProfiles.id).notNull(),
-  preferredMethods: json("preferred_methods").$type<('email' | 'phone' | 'sms')[]>().notNull().default(['email']),
+  preferredMethods: json("preferred_methods").$type<('email' | 'phone' | 'text')[]>().notNull().default(['email']),
   timePreferences: json("time_preferences").$type<{
     startTime: string; // e.g. "09:00"
     endTime: string;   // e.g. "17:00"
