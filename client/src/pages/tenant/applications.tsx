@@ -113,13 +113,14 @@ function TenantInterestsPage() {
   // Fetch tenant's interests using React Query
   const { data: interests = [], isLoading, error } = useQuery({
     queryKey: ['/api/interests'],
-    queryFn: () => apiRequest('GET', '/api/interests'),
     enabled: !!user // Only fetch if user is authenticated
   });
 
-  const newInterests = interests.filter((interest: TenantInterest) => interest.status === 'new');
-  const contactedInterests = interests.filter((interest: TenantInterest) => interest.status === 'contacted');
-  const archivedInterests = interests.filter((interest: TenantInterest) => interest.status === 'archived');
+  // Ensure interests is always an array and perform filtering safely
+  const safeInterests = Array.isArray(interests) ? interests : [];
+  const newInterests = safeInterests.filter((interest: TenantInterest) => interest.status === 'new');
+  const contactedInterests = safeInterests.filter((interest: TenantInterest) => interest.status === 'contacted');
+  const archivedInterests = safeInterests.filter((interest: TenantInterest) => interest.status === 'archived');
 
   // Handle loading state
   if (isLoading) {
@@ -209,7 +210,7 @@ function TenantInterestsPage() {
             <CardContent>
               <div className="flex items-center">
                 <Heart className="h-8 w-8 text-red-500 mr-3" />
-                <span className="text-3xl font-bold" data-testid="text-total-count">{interests.length}</span>
+                <span className="text-3xl font-bold" data-testid="text-total-count">{safeInterests.length}</span>
               </div>
             </CardContent>
           </Card>
@@ -252,7 +253,7 @@ function TenantInterestsPage() {
             </p>
           </div>
 
-          {interests.length === 0 ? (
+          {safeInterests.length === 0 ? (
             <div className="text-center py-12">
               <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900">No interests yet</h3>
@@ -260,7 +261,7 @@ function TenantInterestsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {interests.map((interest: TenantInterest) => (
+              {safeInterests.map((interest: TenantInterest) => (
                 <InterestCard key={interest.id} interest={interest} />
               ))}
             </div>
