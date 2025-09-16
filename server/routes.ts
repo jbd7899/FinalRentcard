@@ -640,6 +640,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST endpoint for creating tenant RentCard
+  app.post("/api/tenant/rentcard", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      console.log(`Creating RentCard for user ID: ${req.user.id}`);
+      
+      // Validate the request body against the RentCard schema
+      const validatedData = {
+        ...req.body,
+        userId: req.user.id
+      };
+      
+      // Create the RentCard
+      const rentCard = await storage.createRentCard(validatedData);
+      
+      console.log(`Successfully created RentCard for user ID: ${req.user.id}`);
+      res.status(201).json(rentCard);
+    } catch (error) {
+      handleRouteError(error, res, '/api/tenant/rentcard POST endpoint');
+    }
+  });
+
   // Property routes
   app.get("/api/properties", async (req, res) => {
     try {
