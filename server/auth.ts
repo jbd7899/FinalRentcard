@@ -44,10 +44,29 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  // Handle malformed password data
+  const parts = stored.split(".");
+  if (parts.length !== 2) {
+    console.error(`Invalid password format for stored password: expected 'hash.salt' format, got: ${stored.substring(0, 20)}...`);
+    return false;
+  }
+  
+  const [hashed, salt] = parts;
+  
+  // Validate that both hash and salt exist and are hex strings
+  if (!hashed || !salt) {
+    console.error(`Missing hash or salt components in stored password`);
+    return false;
+  }
+  
+  try {
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (err) {
+    console.error(`Error comparing passwords:`, err);
+    return false;
+  }
 }
 
 export function setupAuth(app: Express) {
