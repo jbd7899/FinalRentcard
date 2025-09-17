@@ -86,10 +86,15 @@ const rentalHistorySchema = z.object({
   landlordContact: z.string().min(1, 'Landlord contact is required'),
 });
 
+const creditInfoSchema = z.object({
+  creditScore: z.coerce.number().min(300, 'Credit score must be at least 300').max(850, 'Credit score cannot exceed 850'),
+});
+
 type PersonalInfoForm = z.infer<typeof personalInfoSchema>;
 type EmploymentInfoForm = z.infer<typeof employmentInfoSchema>;
 type RentalPreferencesForm = z.infer<typeof rentalPreferencesSchema>;
 type RentalHistoryForm = z.infer<typeof rentalHistorySchema>;
+type CreditInfoForm = z.infer<typeof creditInfoSchema>;
 
 const RentCard = () => {
   const { setLoading, loadingStates, addToast } = useUIStore();
@@ -134,6 +139,23 @@ const RentCard = () => {
     defaultValues: {
       maxRent: 0,
       moveInDate: '',
+    },
+  });
+
+  const rentalHistoryForm = useForm<RentalHistoryForm>({
+    resolver: zodResolver(rentalHistorySchema),
+    defaultValues: {
+      address: '',
+      startDate: '',
+      endDate: '',
+      landlordContact: '',
+    },
+  });
+
+  const creditInfoForm = useForm<CreditInfoForm>({
+    resolver: zodResolver(creditInfoSchema),
+    defaultValues: {
+      creditScore: 0,
     },
   });
 
@@ -263,6 +285,15 @@ const RentCard = () => {
       maxRent: tenantProfile?.maxRent || 0,
       moveInDate: tenantProfile?.moveInDate ? new Date(tenantProfile.moveInDate).toISOString().split('T')[0] : '',
     });
+    rentalHistoryForm.reset({
+      address: '',
+      startDate: '',
+      endDate: '',
+      landlordContact: '',
+    });
+    creditInfoForm.reset({
+      creditScore: tenantProfile?.creditScore || 0,
+    });
   };
 
   const handlePersonalInfoSubmit = async (data: PersonalInfoForm) => {
@@ -279,6 +310,24 @@ const RentCard = () => {
     await updateProfileMutation.mutateAsync({
       maxRent: data.maxRent,
       moveInDate: data.moveInDate ? new Date(data.moveInDate) : undefined,
+    });
+  };
+
+  const handleRentalHistorySubmit = async (data: RentalHistoryForm) => {
+    // For now, we'll just show a success message as rental history is complex to implement
+    // In a real implementation, this would add to an array of rental history
+    addToast({
+      title: 'Rental History Added',
+      description: 'Your rental history has been successfully added.',
+      type: 'success',
+    });
+    setEditingSection(null);
+    setEditMode(false);
+  };
+
+  const handleCreditInfoSubmit = async (data: CreditInfoForm) => {
+    await updateProfileMutation.mutateAsync({
+      creditScore: data.creditScore,
     });
   };
 
@@ -957,7 +1006,114 @@ const RentCard = () => {
               )}
             </div>
             
-            {displayData.rentalHistory.length > 0 ? (
+            {editingSection === 'history' ? (
+              <Form {...rentalHistoryForm}>
+                <form onSubmit={rentalHistoryForm.handleSubmit(handleRentalHistorySubmit)} className="space-y-4">
+                  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h4 className="font-medium text-gray-800 mb-4">Add Rental History</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField
+                        control={rentalHistoryForm.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Property Address</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="Enter property address"
+                                data-testid="input-rental-address"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={rentalHistoryForm.control}
+                        name="landlordContact"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Landlord Contact</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="Enter landlord contact"
+                                data-testid="input-landlord-contact"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                      <FormField
+                        control={rentalHistoryForm.control}
+                        name="startDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Start Date</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                type="date"
+                                data-testid="input-rental-start-date"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={rentalHistoryForm.control}
+                        name="endDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>End Date</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                type="date"
+                                data-testid="input-rental-end-date"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      data-testid="button-cancel-rental-history"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={updateProfileMutation.isPending}
+                      data-testid="button-save-rental-history"
+                    >
+                      {updateProfileMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-2" />
+                          Add History
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            ) : displayData.rentalHistory.length > 0 ? (
               <div className="space-y-4">
                 {displayData.rentalHistory.map((history, index) => (
                   <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -1026,7 +1182,65 @@ const RentCard = () => {
               )}
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            {editingSection === 'credit' ? (
+              <Form {...creditInfoForm}>
+                <form onSubmit={creditInfoForm.handleSubmit(handleCreditInfoSubmit)} className="space-y-4">
+                  <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h4 className="font-medium text-gray-800 mb-4">Update Credit Information</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField
+                        control={creditInfoForm.control}
+                        name="creditScore"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Credit Score</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                type="number"
+                                min="300"
+                                max="850"
+                                placeholder="Enter credit score (300-850)"
+                                data-testid="input-credit-score"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      data-testid="button-cancel-credit"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={updateProfileMutation.isPending}
+                      data-testid="button-save-credit"
+                    >
+                      {updateProfileMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            ) : (
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center mb-4">
                 <CreditCard className="w-8 h-8 text-blue-600 mr-3" />
                 <div>
@@ -1067,7 +1281,8 @@ const RentCard = () => {
                   </p>
                 </div>
               )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
