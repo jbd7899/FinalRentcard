@@ -1853,6 +1853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         phone: user.phone || '',
         moveInDate: tenantProfile.moveInDate,
         maxRent: tenantProfile.maxRent,
+        currentRent: tenantProfile.maxRent || 0, // Use maxRent as fallback for currentRent
         creditScore: tenantProfile.creditScore,
         employmentInfo: tenantProfile.employmentInfo,
         rentalHistory: tenantProfile.rentalHistory || [],
