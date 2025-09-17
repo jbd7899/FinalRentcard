@@ -1757,10 +1757,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
 
-      // Get the rent card
-      const rentCard = await storage.getRentCard(tenantProfile.userId!);
-      if (!rentCard) {
-        return res.status(404).json({ message: "RentCard not found" });
+      // Get the user info for the tenant profile
+      const user = await storage.getUser(tenantProfile.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if tenant profile is complete enough to share
+      const hasBasicInfo = tenantProfile.employmentInfo && tenantProfile.creditScore && tenantProfile.maxRent;
+      if (!hasBasicInfo) {
+        return res.status(404).json({ message: "RentCard profile is incomplete" });
       }
 
       // Track the view (existing simple tracking)
@@ -1839,8 +1845,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Notification creation failed:', notificationError);
       }
 
-      // Return the rent card data
-      res.json(rentCard);
+      // Return the tenant profile data formatted as a RentCard
+      const rentCardData = {
+        firstName: user.email.split('@')[0], // Use email username as first name for now
+        lastName: '', // Can be enhanced when we add name fields
+        email: user.email,
+        phone: user.phone || '',
+        moveInDate: tenantProfile.moveInDate,
+        maxRent: tenantProfile.maxRent,
+        creditScore: tenantProfile.creditScore,
+        employmentInfo: tenantProfile.employmentInfo,
+        rentalHistory: tenantProfile.rentalHistory || [],
+        references: tenantProfile.references || [],
+        documents: [], // Documents can be added later if needed
+        interests: tenantProfile.interests || []
+      };
+      
+      res.json(rentCardData);
     } catch (error) {
       handleRouteError(error, res, 'access shared rent card');
     }
