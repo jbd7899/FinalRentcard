@@ -1276,10 +1276,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Tenant profile not found" });
       }
 
-      // Validate the user has a RentCard
-      const rentCard = await storage.getRentCard(req.user.id);
-      if (!rentCard) {
-        return res.status(400).json({ message: "Please create your RentCard first" });
+      // Check if tenant profile is complete enough to share (alternative to requiring a separate RentCard)
+      const hasBasicInfo = tenantProfile.employmentInfo && tenantProfile.creditScore && tenantProfile.maxRent;
+      if (!hasBasicInfo) {
+        return res.status(400).json({ message: "Please complete your profile before applying" });
       }
 
       // Validate the propertyId
@@ -1313,7 +1313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tenantId: tenantProfile.id,
         landlordId,
         contactInfo: {
-          name: `${rentCard.firstName} ${rentCard.lastName}`,
+          name: user.email.split('@')[0], // Use email username as name for now
           email: user.email,
           phone: user.phone,
           preferredContact: 'email'
@@ -1681,10 +1681,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
 
-      // Validate rent card exists
-      const rentCard = await storage.getRentCard(req.user.id);
-      if (!rentCard) {
-        return res.status(400).json({ message: "Please create your RentCard first" });
+      // Check if tenant profile is complete enough to share (alternative to requiring a separate RentCard)
+      const hasBasicInfo = tenantProfile.employmentInfo && tenantProfile.creditScore && tenantProfile.maxRent;
+      if (!hasBasicInfo) {
+        return res.status(400).json({ message: "Please complete your profile before sharing" });
       }
 
       const validatedData = insertShareTokenSchema.parse(req.body);
