@@ -586,10 +586,10 @@ const RentCard = () => {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={updateProfileMutation.isPending}
+                      disabled={updateUserMutation.isPending}
                       data-testid="button-save-personal-info"
                     >
-                      {updateProfileMutation.isPending ? (
+                      {updateUserMutation.isPending ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Saving...
