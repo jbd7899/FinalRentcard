@@ -314,15 +314,23 @@ const RentCard = () => {
   };
 
   const handleRentalHistorySubmit = async (data: RentalHistoryForm) => {
-    // For now, we'll just show a success message as rental history is complex to implement
-    // In a real implementation, this would add to an array of rental history
-    addToast({
-      title: 'Rental History Added',
-      description: 'Your rental history has been successfully added.',
-      type: 'success',
+    // Get existing rental history or create new array
+    const existingHistory = tenantProfile?.rentalHistory?.previousAddresses || [];
+    
+    // Add new rental history entry
+    const newHistory = {
+      address: data.address,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      landlordContact: data.landlordContact,
+    };
+    
+    // Update the profile with the new rental history
+    await updateProfileMutation.mutateAsync({
+      rentalHistory: {
+        previousAddresses: [...existingHistory, newHistory]
+      }
     });
-    setEditingSection(null);
-    setEditMode(false);
   };
 
   const handleCreditInfoSubmit = async (data: CreditInfoForm) => {
