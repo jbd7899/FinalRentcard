@@ -68,12 +68,17 @@ export default function MobileStickyActionBar({
     mutationFn: async (shortlinkData) => {
       const response = await apiRequest('POST', '/api/shortlinks', shortlinkData);
       if (!response.ok) {
-        throw new Error('Failed to create shortlink');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/shortlinks'] });
+    },
+    onError: (error) => {
+      console.error('Shortlink creation failed:', error);
     },
   });
 

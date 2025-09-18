@@ -93,12 +93,17 @@ export function OneClickShareButton({
     mutationFn: async (shortlinkData) => {
       const response = await apiRequest('POST', '/api/shortlinks', shortlinkData);
       if (!response.ok) {
-        throw new Error('Failed to create shortlink');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/shortlinks'] });
+    },
+    onError: (error) => {
+      console.error('Shortlink creation failed:', error);
     },
   });
 
@@ -223,9 +228,27 @@ export function OneClickShareButton({
 
     } catch (error) {
       console.error('Share failed:', error);
+      let errorMessage = 'Unable to share RentCard';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid shortlink data')) {
+          errorMessage = 'Failed to create share link - invalid data format';
+        } else if (error.message.includes('Forbidden')) {
+          errorMessage = 'Permission denied - please refresh and try again';
+        } else if (error.message.includes('Unable to create share token')) {
+          errorMessage = 'Failed to create secure sharing token';
+        } else if (error.message.includes('Failed to create shortlink')) {
+          errorMessage = 'Share link generation failed - please try again';
+        } else if (error.message.includes('Failed to copy')) {
+          errorMessage = 'Link copied but clipboard access failed';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       addToast({
         title: 'Share Failed',
-        description: error instanceof Error ? error.message : 'Unable to share RentCard',
+        description: errorMessage,
         type: 'destructive'
       });
     }

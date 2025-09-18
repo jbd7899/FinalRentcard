@@ -117,12 +117,22 @@ export function EnhancedShareModal({
     mutationFn: async (shortlinkData) => {
       const response = await apiRequest('POST', '/api/shortlinks', shortlinkData);
       if (!response.ok) {
-        throw new Error('Failed to create shortlink');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          // Include validation errors if available
+          const validationErrors = errorData.errors.map((err: any) => err.message).join(', ');
+          throw new Error(`${errorMessage}: ${validationErrors}`);
+        }
+        throw new Error(errorMessage);
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/shortlinks'] });
+    },
+    onError: (error) => {
+      console.error('Shortlink creation failed:', error);
     },
   });
 
@@ -652,7 +662,7 @@ Best regards`
                             <div className="flex items-center gap-2 ml-4">
                               {isTokenValid(token) && (
                                 <Button
-                                  onClick={() => copyToClipboard(generateShareUrl(token.token))}
+                                  onClick={() => copyToClipboard(token)}
                                   variant="ghost"
                                   size="sm"
                                   data-testid={`button-copy-token-${token.id}`}

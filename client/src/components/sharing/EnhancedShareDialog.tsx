@@ -130,12 +130,21 @@ export const EnhancedShareDialog = ({
     mutationFn: async (shortlinkData) => {
       const response = await apiRequest('POST', '/api/shortlinks', shortlinkData);
       if (!response.ok) {
-        throw new Error('Failed to create shortlink');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const validationErrors = errorData.errors.map((err: any) => err.message).join(', ');
+          throw new Error(`${errorMessage}: ${validationErrors}`);
+        }
+        throw new Error(errorMessage);
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/shortlinks'] });
+    },
+    onError: (error) => {
+      console.error('Shortlink creation failed:', error);
     },
   });
 
