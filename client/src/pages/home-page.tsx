@@ -31,63 +31,63 @@ export default function HomePage() {
 
   const roleContent = {
     tenant: {
-      title: "Connect with Individual Landlords",
-      subtitle: "Through Your Completed RentCard", 
-      description: NETWORK_VALUE_PROPS.TENANT.HERO,
+      title: "Join the Network to Create Your Standardized RentCard",
+      subtitle: "Connect with Individual Landlords Who Own 70-75% of US Rentals", 
+      description: "Join the network to create your standardized RentCard once, then easily share your prequalification information with individual landlords. Skip corporate application fees and bureaucracy.",
       benefits: [
         {
           icon: Users,
-          title: "Direct Individual Connections", 
-          desc: NETWORK_VALUE_PROPS.TENANT.BENEFITS[0],
-          stat: "Personal relationships"
+          title: "Standardized Network Access", 
+          desc: "Join the network to create your standardized RentCard once",
+          stat: "One profile, many landlords"
         },
         {
           icon: Clock,
-          title: "Faster Decisions",
-          desc: NETWORK_VALUE_PROPS.TENANT.BENEFITS[2],
-          stat: "No corporate delays"
+          title: "2-3x Faster Responses",
+          desc: "Individual landlords respond faster and build personal relationships",
+          stat: "Personal connections"
         },
         {
           icon: Shield,
-          title: "Skip Junk Fees",
-          desc: NETWORK_VALUE_PROPS.TENANT.BENEFITS[1], 
-          stat: "No hidden costs"
+          title: "Skip Corporate Bureaucracy",
+          desc: "Skip corporate application fees and rigid policies", 
+          stat: "Direct communication"
         }
       ],
       cta: {
-        primary: NETWORK_CTA.PRIMARY.TENANT.MAIN,
+        primary: "Join Individual Landlord Network",
         secondary: "View Sample RentCard",
         primaryHref: "/auth?type=tenant&mode=register",
         secondaryHref: "/samples/rentcard"
       }
     },
     landlord: {
-      title: "Individual Landlord Network",
-      subtitle: "Compete with Corporate Efficiency",
-      description: NETWORK_VALUE_PROPS.LANDLORD.HERO,
+      title: "Join the Network to Streamline Tenant Connections",
+      subtitle: "Maintain Your Individual Landlord Competitive Edge",
+      description: "Join the network to streamline how tenants connect with your properties while maintaining your competitive edge. Allow qualified tenants to submit interest with one click using standardized RentCards.",
       benefits: [
         {
           icon: Users,
-          title: "Professional Efficiency",
-          desc: NETWORK_VALUE_PROPS.LANDLORD.BENEFITS[0],
-          stat: "Corporate-level tools"
+          title: "One-Click Tenant Submissions",
+          desc: "Allow qualified tenants to submit interest with standardized RentCards",
+          stat: "Streamlined connections"
         },
         {
           icon: Clock,
-          title: "Keep Personal Touch",
-          desc: NETWORK_VALUE_PROPS.LANDLORD.BENEFITS[2],
-          stat: "Personal + professional"
+          title: "Review Before Showings",
+          desc: "Review prequalification details before showings and cross-sell properties",
+          stat: "Efficient screening"
         },
         {
           icon: Shield,
-          title: "Attract Better Tenants",
-          desc: NETWORK_VALUE_PROPS.LANDLORD.BENEFITS[1],
-          stat: "Quality tenant pool"
+          title: "QR Code Marketing Tools",
+          desc: "Generate marketing flyers with scannable QR codes with one click",
+          stat: "Professional marketing"
         }
       ],
       cta: {
-        primary: NETWORK_CTA.PRIMARY.LANDLORD.MAIN,
-        secondary: "View Screening Tools",
+        primary: "Join Individual Landlord Network",
+        secondary: "View Screening Tools", 
         primaryHref: "/auth?type=landlord&mode=register",
         secondaryHref: "/samples/screening-page"
       }

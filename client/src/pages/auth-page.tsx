@@ -171,7 +171,7 @@ const AuthPage = () => {
             <div className="flex justify-center mb-6">
               <Building2 className="w-12 h-12 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Connect with Individual Landlords</h1>
+            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Join the Individual Landlord Network</h1>
             <div className="text-center mb-4">
               <div className="flex flex-wrap justify-center gap-2 mb-2">
                 <Badge variant="outline" className="text-blue-600 border-blue-600">
@@ -183,7 +183,7 @@ const AuthPage = () => {
                   {INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-600">{INDIVIDUAL_LANDLORD_STATS.PERSONAL_APPROACH} - {INDIVIDUAL_LANDLORD_STATS.NO_JUNK_FEES}</p>
+              <p className="text-sm text-gray-600">Standardized prequalification process - Skip corporate bureaucracy</p>
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
@@ -197,10 +197,10 @@ const AuthPage = () => {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl font-semibold text-gray-900">{MESSAGES.AUTH.TITLES.LOGIN}</CardTitle>
                     <CardDescription className="space-y-2">
-                      <div>Access your profile to connect with individual landlords</div>
+                      <div>Access your standardized RentCard to share with individual landlords</div>
                       <div className="flex items-center gap-2 text-sm text-blue-600">
                         <Building2 className="w-4 h-4" />
-                        <span>Skip corporate bureaucracy - individual landlords respond faster</span>
+                        <span>Join the network - create once, share easily</span>
                       </div>
                     </CardDescription>
                   </CardHeader>
