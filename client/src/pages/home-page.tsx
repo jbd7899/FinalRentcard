@@ -33,25 +33,25 @@ export default function HomePage() {
     tenant: {
       title: "Get Connected Faster",
       subtitle: "Through Our Prequalification Network",
-      description: "15,000+ landlords can instantly see your qualifications. No wasted showings, no back-and-forth – your prequalified profile speaks first.",
+      description: "Landlords can instantly see your qualifications. No wasted showings, no back-and-forth – your prequalified profile speaks first.",
       benefits: [
         {
           icon: Users,
           title: "Instant Connections",
-          desc: `${SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} verified landlords can see your qualifications immediately`,
+          desc: "Verified landlords can see your qualifications immediately – no waiting for responses or callbacks",
           stat: "Pre-qualified matches only"
         },
         {
           icon: Clock,
           title: "Skip the Back-and-Forth",
           desc: "Landlords know you're qualified before contact. No repetitive questions or document requests",
-          stat: "Eliminate 5-8 emails per connection"
+          stat: "Eliminate email chains"
         },
         {
           icon: Shield,
           title: "No Wasted Showings",
           desc: "Only serious, compatible landlords reach out. Your time is protected through smart matching",
-          stat: "Higher success rate connections"
+          stat: "Quality connections"
         }
       ],
       cta: {
@@ -64,19 +64,19 @@ export default function HomePage() {
     landlord: {
       title: "Connect with Prequalified Tenants",
       subtitle: "Instantly",
-      description: "15,000+ verified tenants ready for instant connection. No screening delays, no unqualified inquiries – only serious, prequalified candidates.",
+      description: "Verified tenants ready for instant connection. No screening delays, no unqualified inquiries – only serious, prequalified candidates.",
       benefits: [
         {
           icon: Users,
           title: "Prequalified Inquiries Only",
-          desc: `${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified tenants with complete profiles and references`,
+          desc: "Verified tenants with complete profiles and references – no incomplete applications",
           stat: "Serious candidates only"
         },
         {
           icon: Clock,
           title: "Skip the Screening Process",
           desc: "Tenants arrive pre-verified with all documentation. Connect faster, fill properties quicker",
-          stat: `Save ${SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} weekly`
+          stat: "Save hours weekly"
         },
         {
           icon: Shield,
@@ -142,20 +142,8 @@ export default function HomePage() {
         )}
 
         <div className="text-center mb-16 relative">
-          {/* Network Growth Badge */}
+          {/* Value Badge */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <div className="inline-block bg-blue-100 text-blue-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <Users className="w-4 h-4" />
-                <span>{SOCIAL_PROOF_STATS.TOTAL_USERS} trusted members</span>
-              </span>
-            </div>
-            <div className="inline-block bg-green-100 text-green-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <TrendingUp className="w-4 h-4" />
-                <span>{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} joining daily</span>
-              </span>
-            </div>
             <div className="inline-block bg-purple-100 text-purple-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
               <span className="flex items-center gap-2 text-sm font-medium">
                 <CheckCircle className="w-4 h-4" />
@@ -182,35 +170,9 @@ export default function HomePage() {
             </h1>
           </div>
 
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed transition-all duration-300">
+          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed transition-all duration-300">
             {currentContent.description}
           </p>
-          
-          {/* Network Value Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
-            <div className="text-center">
-              <div className={`text-3xl font-bold mb-2 transition-colors duration-300 ${
-                selectedRole === 'tenant' ? 'text-blue-600' : 'text-green-600'
-              }`}>
-                {selectedRole === 'tenant' ? SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS : SOCIAL_PROOF_STATS.VERIFIED_RENTERS}
-              </div>
-              <div className="text-sm text-gray-600">
-                {selectedRole === 'tenant' ? 'Verified Landlords' : 'Verified Tenants'}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">{SOCIAL_PROOF_STATS.SUCCESSFUL_MATCHES}</div>
-              <div className="text-sm text-gray-600">Successful Connections</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">{SOCIAL_PROOF_STATS.CITIES_SERVED}</div>
-              <div className="text-sm text-gray-600">Cities Served</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-teal-600 mb-2">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5</div>
-              <div className="text-sm text-gray-600">Network Rating</div>
-            </div>
-          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
@@ -346,13 +308,13 @@ export default function HomePage() {
                   }
                 </p>
                 <p className="text-gray-600 mb-4">
-                  No applications • No wasted time • {SOCIAL_PROOF_STATS.CITIES_SERVED} cities served
+                  No applications • No wasted time • Network-powered matching
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   <Badge variant="outline">Prequalified connections</Badge>
                   <Badge variant="outline">Instant compatibility check</Badge>
                   <Badge variant="outline">Network-based matching</Badge>
-                  <Badge variant="outline">Growing daily</Badge>
+                  <Badge variant="outline">Quality over quantity</Badge>
                 </div>
               </div>
             </div>
