@@ -144,6 +144,82 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Role Selection - Choose Your Path */}
+          {!user && (
+            <div className="mb-16">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Choose Your Path</h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">Get targeted information and tools designed specifically for your needs</p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-6 max-w-4xl mx-auto">
+                <Link 
+                  href="/tenant"
+                  className="group flex-1 bg-white border-2 border-blue-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-xl transition-all duration-200"
+                  onMouseEnter={() => handleHover('tenantPath', true)}
+                  onMouseLeave={() => handleHover('tenantPath', false)}
+                  data-testid="button-tenant-path"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-lg transition-colors ${loadingStates.hover_tenantPath ? 'bg-blue-600' : 'bg-blue-100'}`}>
+                        <User className={`w-6 h-6 transition-colors ${loadingStates.hover_tenantPath ? 'text-white' : 'text-blue-600'}`} />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                          I'm Looking for an Apartment
+                        </h3>
+                        <p className="text-gray-600 mt-1">Save {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} per application with pre-verified profiles</p>
+                        <div className="mt-2">
+                          <Badge variant="outline" className="text-blue-600 border-blue-200">
+                            <Users className="w-3 h-3 mr-1" />
+                            {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <ArrowRight className={`w-6 h-6 text-gray-400 group-hover:text-blue-600 transition-all ${loadingStates.hover_tenantPath ? 'translate-x-1' : ''}`} />
+                  </div>
+                </Link>
+
+                <Link 
+                  href="/landlord"
+                  className="group flex-1 bg-white border-2 border-green-200 rounded-xl p-6 hover:border-green-400 hover:shadow-xl transition-all duration-200"
+                  onMouseEnter={() => handleHover('landlordPath', true)}
+                  onMouseLeave={() => handleHover('landlordPath', false)}
+                  data-testid="button-landlord-path"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-lg transition-colors ${loadingStates.hover_landlordPath ? 'bg-green-600' : 'bg-green-100'}`}>
+                        <Building2 className={`w-6 h-6 transition-colors ${loadingStates.hover_landlordPath ? 'text-white' : 'text-green-600'}`} />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-xl font-semibold text-gray-800 group-hover:text-green-600 transition-colors">
+                          I'm a Property Owner/Manager
+                        </h3>
+                        <p className="text-gray-600 mt-1">Save {SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} with pre-verified tenant profiles</p>
+                        <div className="mt-2">
+                          <Badge variant="outline" className="text-green-600 border-green-200">
+                            <Building2 className="w-3 h-3 mr-1" />
+                            {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} trusted landlords
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <ArrowRight className={`w-6 h-6 text-gray-400 group-hover:text-green-600 transition-all ${loadingStates.hover_landlordPath ? 'translate-x-1' : ''}`} />
+                  </div>
+                </Link>
+              </div>
+
+              <div className="text-center mt-6">
+                <p className="text-sm text-gray-500">
+                  Not sure? <Link href="/samples/rentcard" className="text-blue-600 hover:text-blue-800 underline">View a sample RentCard</Link> to see how it works
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* CTA Buttons with conditional rendering based on auth state */}
           <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
             {user ? (
