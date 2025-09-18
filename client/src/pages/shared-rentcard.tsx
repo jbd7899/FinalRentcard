@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,9 +42,60 @@ import type { RentCard } from '@shared/schema';
 interface SharedRentCardProps {}
 
 const SharedRentCard: React.FC<SharedRentCardProps> = () => {
-  const { token } = useParams() as { token: string };
+  const params = useParams();
+  const token = params?.token;
+  const [, setLocation] = useLocation();
   const { setLoading, loadingStates, addToast } = useUIStore();
   const [showInterestForm, setShowInterestForm] = useState(false);
+
+  const handleSignupAsLandlord = () => {
+    setLocation('/auth?mode=register&type=landlord');
+  };
+
+  // Guard against missing or invalid token
+  if (!token || typeof token !== 'string' || token.trim() === '') {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-6">
+              <div className="flex justify-center">
+                <AlertCircle className="w-16 h-16 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2" data-testid="text-invalid-token-title">
+                  Invalid Link
+                </h3>
+                <p className="text-gray-600" data-testid="text-invalid-token-description">
+                  This RentCard link is invalid. Please ask the tenant for a valid link.
+                </p>
+              </div>
+              
+              {/* Landlord signup encouragement even on invalid token */}
+              <div className="border-t pt-6 space-y-4">
+                <div className="text-center">
+                  <h4 className="font-semibold text-gray-900 mb-2">
+                    Are you a landlord?
+                  </h4>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Pre-screen qualified tenants instantly. Save time by qualifying prospects before property showings.
+                  </p>
+                  <Button 
+                    onClick={handleSignupAsLandlord}
+                    className="w-full"
+                    data-testid="button-signup-landlord-invalid-token"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    {MESSAGES.CTA.LANDLORD.PRIMARY}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Fetch shared RentCard data
   const {
@@ -113,10 +164,6 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
     } finally {
       setLoading('downloadPDF', false);
     }
-  };
-
-  const handleSignupAsLandlord = () => {
-    window.location.href = '/auth?mode=register&type=landlord';
   };
 
   const handleShowInterest = () => {
@@ -216,7 +263,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                     data-testid="button-signup-landlord-error"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
-                    Start Pre-Screening
+                    {MESSAGES.CTA.LANDLORD.PRIMARY}
                   </Button>
                 </div>
               </div>
@@ -254,7 +301,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
             data-testid="button-signup-landlord-banner"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Start Pre-Screening
+            {MESSAGES.CTA.LANDLORD.PRIMARY}
           </Button>
         </div>
       </div>
@@ -617,7 +664,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                       className="w-full bg-blue-600 hover:bg-blue-700"
                       data-testid="button-signup-landlord-sidebar"
                     >
-                      Start Pre-Screening
+                      {MESSAGES.CTA.LANDLORD.PRIMARY}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>

@@ -1,5 +1,5 @@
 import { Building2, ArrowRight, Mail, Lock, Phone, CheckCircle2, CreditCard, FileText, Shield, Users } from 'lucide-react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useForm } from 'react-hook-form';
@@ -22,7 +22,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   VALIDATION, 
   USER_ROLES, 
@@ -54,6 +54,14 @@ const AuthPage = () => {
   const { user, login, error, register } = useAuthStore();
   const { setLoading, loadingStates, addToast } = useUIStore();
   const [, setLocation] = useLocation();
+  const searchParams = new URLSearchParams(useSearch());
+  
+  // Parse URL parameters for conversion flow
+  const mode = searchParams.get('mode'); // 'register' sets active tab
+  const type = searchParams.get('type'); // 'landlord' preselects user type
+  
+  // State for active tab (defaults based on URL params)
+  const [activeTab, setActiveTab] = useState(mode === 'register' ? 'register' : 'login');
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -69,7 +77,7 @@ const AuthPage = () => {
       email: '',
       password: '',
       phone: '',
-      userType: USER_ROLES.TENANT,
+      userType: type === 'landlord' ? USER_ROLES.LANDLORD : USER_ROLES.TENANT,
     },
   });
 
@@ -156,7 +164,7 @@ const AuthPage = () => {
             </div>
             <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Welcome to RentCard</h1>
             
-            <Tabs defaultValue="login" className="w-full mt-8">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
               <TabsList className="grid w-full grid-cols-2 p-1 bg-gray-100 rounded-lg">
                 <TabsTrigger value="login" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">Login</TabsTrigger>
                 <TabsTrigger value="register" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm">Register</TabsTrigger>
