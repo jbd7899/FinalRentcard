@@ -7,14 +7,18 @@ import {
   insertTenantContactPreferencesSchema, insertCommunicationLogSchema, insertTenantBlockedContactsSchema, insertCommunicationTemplateSchema,
   insertShortlinkSchema, insertShortlinkClickSchema, insertRecipientContactSchema, insertTenantMessageTemplateSchema, insertContactSharingHistorySchema,
   // Import referral schemas
-  insertReferralSchema, insertReferralRewardSchema
+  insertReferralSchema, insertReferralRewardSchema,
+  // Import RentCard request and prospect list schemas
+  insertRentCardRequestSchema, insertProspectListSchema
 } from "@shared/schema";
 import { 
   properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode,
   TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick,
   RecipientContact, TenantMessageTemplate, ContactSharingHistory,
   // Import referral types
-  Referral, ReferralReward
+  Referral, ReferralReward,
+  // Import RentCard request and prospect list types
+  RentCardRequest, ProspectList
 } from "@shared/schema";
 import {
   insertRentcardViewSchema, insertViewSessionSchema, insertInterestAnalyticsSchema,
@@ -28,6 +32,7 @@ import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
 import { db } from "./db";
 import { sendReferenceVerificationEmail, verifyToken } from "./email";
+import { emailService, EmailType } from "./services/emailService";
 
 // Standardized error handler for consistent API responses
 function handleRouteError(error: unknown, res: any, operation: string): void {
@@ -120,6 +125,38 @@ async function assertPropertyOwnership(req: any, propertyId: number): Promise<vo
   const landlordProfile = await storage.getLandlordProfile(req.user.id);
   if (!landlordProfile || landlordProfile.id !== property.landlordId) {
     throw new Error("Forbidden: Access denied to this property");
+  }
+}
+
+async function assertRentCardRequestOwnership(req: any, requestId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const request = await storage.getRentCardRequestById(requestId);
+  if (!request) {
+    throw new Error("RentCard request not found");
+  }
+  
+  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  if (!landlordProfile || landlordProfile.id !== request.landlordId) {
+    throw new Error("Forbidden: Access denied to this RentCard request");
+  }
+}
+
+async function assertProspectListOwnership(req: any, listId: number): Promise<void> {
+  if (!req.user?.id) {
+    throw new Error("Unauthorized: No user session");
+  }
+  
+  const list = await storage.getProspectListById(listId);
+  if (!list) {
+    throw new Error("Prospect list not found");
+  }
+  
+  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  if (!landlordProfile || landlordProfile.id !== list.landlordId) {
+    throw new Error("Forbidden: Access denied to this prospect list");
   }
 }
 
@@ -4816,6 +4853,295 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       handleRouteError(error, res, 'create shortlink with referral');
+    }
+  });
+
+  // ============================================================================
+  // RENTCARD REQUESTS API ENDPOINTS
+  // ============================================================================
+
+  // POST /api/rentcard-requests/create - Create individual RentCard request
+  app.post("/api/rentcard-requests/create", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Verify landlord profile
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(403).json({ message: "Landlord profile required" });
+      }
+
+      // Validate request data
+      const validatedData = insertRentCardRequestSchema.parse(req.body);
+
+      // Create the request
+      const request = await storage.createRentCardRequest({
+        ...validatedData,
+        landlordId: landlordProfile.id,
+      });
+
+      // Send email to prospect
+      try {
+        const landlordUser = await storage.getUser(req.user.id);
+        const landlordName = landlordUser?.name || landlordProfile.companyName || 'Your Landlord';
+        
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const rentCardUrl = `${baseUrl}/rentcard/request/${request.requestToken}`;
+        
+        await emailService.sendEmail(
+          EmailType.RENTCARD_REQUEST,
+          validatedData.prospectEmail,
+          {
+            prospectName: validatedData.prospectName,
+            tenantName: landlordName, // Using landlord name as sender
+            propertyAddress: validatedData.propertyAddress || 'Available Property',
+            rentCardUrl,
+            contactInfo: validatedData.landlordContactInfo || landlordUser?.email || ''
+          },
+          {
+            subject: `RentCard Request from ${landlordName}`
+          }
+        );
+
+        // Update request as sent
+        await storage.updateRentCardRequestStatus(request.id, 'sent');
+      } catch (emailError) {
+        console.error('Error sending RentCard request email:', emailError);
+        // Don't fail the request creation if email fails
+      }
+
+      res.status(201).json({
+        success: true,
+        request: {
+          id: request.id,
+          requestToken: request.requestToken,
+          prospectName: request.prospectName,
+          prospectEmail: request.prospectEmail,
+          status: request.status,
+          sentAt: request.sentAt,
+          expiresAt: request.expiresAt,
+          createdAt: request.createdAt
+        }
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'create RentCard request');
+    }
+  });
+
+  // POST /api/rentcard-requests/bulk-create - Create bulk RentCard requests
+  app.post("/api/rentcard-requests/bulk-create", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Verify landlord profile
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(403).json({ message: "Landlord profile required" });
+      }
+
+      const { requests, propertyAddress, landlordContactInfo } = req.body;
+      
+      if (!Array.isArray(requests) || requests.length === 0) {
+        return res.status(400).json({ message: "Requests array is required and cannot be empty" });
+      }
+
+      const createdRequests = [];
+      const errors = [];
+
+      // Get landlord info for emails
+      const landlordUser = await storage.getUser(req.user.id);
+      const landlordName = landlordUser?.name || landlordProfile.companyName || 'Your Landlord';
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+      // Process each request
+      for (let i = 0; i < requests.length; i++) {
+        try {
+          const requestData = requests[i];
+          
+          // Validate individual request
+          const validatedData = insertRentCardRequestSchema.parse({
+            ...requestData,
+            propertyAddress: requestData.propertyAddress || propertyAddress,
+            landlordContactInfo: requestData.landlordContactInfo || landlordContactInfo,
+          });
+
+          // Create the request
+          const request = await storage.createRentCardRequest({
+            ...validatedData,
+            landlordId: landlordProfile.id,
+          });
+
+          // Send email
+          try {
+            const rentCardUrl = `${baseUrl}/rentcard/request/${request.requestToken}`;
+            
+            await emailService.sendEmail(
+              EmailType.RENTCARD_REQUEST,
+              validatedData.prospectEmail,
+              {
+                prospectName: validatedData.prospectName,
+                tenantName: landlordName,
+                propertyAddress: validatedData.propertyAddress || 'Available Property',
+                rentCardUrl,
+                contactInfo: validatedData.landlordContactInfo || landlordUser?.email || ''
+              },
+              {
+                subject: `RentCard Request from ${landlordName}`
+              }
+            );
+
+            await storage.updateRentCardRequestStatus(request.id, 'sent');
+          } catch (emailError) {
+            console.error(`Error sending email for request ${i}:`, emailError);
+          }
+
+          createdRequests.push({
+            id: request.id,
+            requestToken: request.requestToken,
+            prospectName: request.prospectName,
+            prospectEmail: request.prospectEmail,
+            status: request.status,
+            sentAt: request.sentAt,
+            createdAt: request.createdAt
+          });
+        } catch (requestError) {
+          errors.push({
+            index: i,
+            prospect: requests[i]?.prospectEmail || 'Unknown',
+            error: requestError instanceof Error ? requestError.message : 'Unknown error'
+          });
+        }
+      }
+
+      res.status(201).json({
+        success: true,
+        created: createdRequests.length,
+        requests: createdRequests,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'bulk create RentCard requests');
+    }
+  });
+
+  // GET /api/rentcard-requests/landlord/:landlordId - Get all requests for landlord
+  app.get("/api/rentcard-requests/landlord/:landlordId", requireAuth, async (req, res) => {
+    try {
+      const landlordId = parseInt(req.params.landlordId);
+      
+      // Verify ownership
+      await assertLandlordOwnership(req, landlordId);
+      
+      const status = req.query.status as string | undefined;
+      const requests = await storage.getRentCardRequests(landlordId, status);
+      
+      res.json({
+        success: true,
+        requests
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get landlord RentCard requests');
+    }
+  });
+
+  // PUT /api/rentcard-requests/:id/status - Update request status
+  app.put("/api/rentcard-requests/:id/status", requireAuth, async (req, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const { status, metadata } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ message: "Status is required" });
+      }
+
+      // Verify ownership
+      await assertRentCardRequestOwnership(req, requestId);
+      
+      const updatedRequest = await storage.updateRentCardRequestStatus(requestId, status, metadata);
+      
+      res.json({
+        success: true,
+        request: updatedRequest
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'update RentCard request status');
+    }
+  });
+
+  // ============================================================================
+  // PROSPECT LISTS API ENDPOINTS
+  // ============================================================================
+
+  // POST /api/prospect-lists/create - Create/manage prospect contact lists
+  app.post("/api/prospect-lists/create", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Verify landlord profile
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      if (!landlordProfile) {
+        return res.status(403).json({ message: "Landlord profile required" });
+      }
+
+      // Validate request data
+      const validatedData = insertProspectListSchema.parse(req.body);
+
+      // Create the prospect list
+      const list = await storage.createProspectList({
+        ...validatedData,
+        landlordId: landlordProfile.id,
+      });
+
+      res.status(201).json({
+        success: true,
+        list
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'create prospect list');
+    }
+  });
+
+  // GET /api/prospect-lists/landlord/:landlordId - Get landlord's prospect lists
+  app.get("/api/prospect-lists/landlord/:landlordId", requireAuth, async (req, res) => {
+    try {
+      const landlordId = parseInt(req.params.landlordId);
+      
+      // Verify ownership
+      await assertLandlordOwnership(req, landlordId);
+      
+      const lists = await storage.getProspectLists(landlordId);
+      
+      res.json({
+        success: true,
+        lists
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get landlord prospect lists');
+    }
+  });
+
+  // DELETE /api/prospect-lists/:id - Delete prospect list
+  app.delete("/api/prospect-lists/:id", requireAuth, async (req, res) => {
+    try {
+      const listId = parseInt(req.params.id);
+      
+      // Verify ownership
+      await assertProspectListOwnership(req, listId);
+      
+      await storage.deleteProspectList(listId);
+      
+      res.json({
+        success: true,
+        message: "Prospect list deleted successfully"
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'delete prospect list');
     }
   });
 

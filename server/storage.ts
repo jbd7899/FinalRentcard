@@ -5,14 +5,19 @@ import {
   // Import insert types for shortlinks
   InsertShortlink, InsertShortlinkClick,
   // Import referral types
-  Referral, ReferralReward, InsertReferral, InsertReferralReward
+  Referral, ReferralReward, InsertReferral, InsertReferralReward,
+  // Import RentCard request and prospect list types
+  RentCardRequest, InsertRentCardRequest, ProspectList, InsertProspectList,
+  insertRentCardRequestSchema, insertProspectListSchema
 } from "@shared/schema";
 import { 
   users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens, propertyQRCodes,
   tenantContactPreferences, communicationLogs, tenantBlockedContacts, communicationTemplates, shortlinks, shortlinkClicks,
   recipientContacts, tenantMessageTemplates, contactSharingHistory,
   // Import referral tables
-  referrals, referralRewards
+  referrals, referralRewards,
+  // Import RentCard request and prospect list tables
+  rentCardRequests, prospectLists
 } from "@shared/schema";
 import { db, sql } from "./db";
 import { eq, and, or, desc, asc, count, sum } from "drizzle-orm";
@@ -376,6 +381,24 @@ export interface IStorage {
   // Integration with existing systems
   createShareTokenWithReferral(tenantId: number, referralCode?: string, data?: { scope?: string; expiresAt?: Date }): Promise<ShareToken>;
   createShortlinkWithReferral(shortlink: InsertShortlink, referralCode?: string): Promise<Shortlink>;
+
+  // RentCard Request operations
+  getRentCardRequests(landlordId?: number, status?: string): Promise<RentCardRequest[]>;
+  getRentCardRequestById(id: number): Promise<RentCardRequest | undefined>;
+  getRentCardRequestByToken(token: string): Promise<RentCardRequest | undefined>;
+  createRentCardRequest(request: InsertRentCardRequest & { landlordId: number }): Promise<RentCardRequest>;
+  updateRentCardRequest(id: number, updates: Partial<RentCardRequest>): Promise<RentCardRequest>;
+  updateRentCardRequestStatus(id: number, status: string, metadata?: any): Promise<RentCardRequest>;
+  deleteRentCardRequest(id: number): Promise<void>;
+
+  // Prospect List operations
+  getProspectLists(landlordId: number): Promise<ProspectList[]>;
+  getProspectListById(id: number): Promise<ProspectList | undefined>;
+  createProspectList(list: InsertProspectList & { landlordId: number }): Promise<ProspectList>;
+  updateProspectList(id: number, updates: Partial<ProspectList>): Promise<ProspectList>;
+  deleteProspectList(id: number): Promise<void>;
+  addContactToProspectList(listId: number, contact: any): Promise<ProspectList>;
+  removeContactFromProspectList(listId: number, contactId: string): Promise<ProspectList>;
 
   sessionStore: session.Store;
 }
@@ -3011,6 +3034,168 @@ export class DatabaseStorage implements IStorage {
     }
     
     return newShortlink;
+  }
+
+  // RentCard Request operations
+  async getRentCardRequests(landlordId?: number, status?: string): Promise<RentCardRequest[]> {
+    let query = db.select().from(rentCardRequests);
+    
+    const conditions = [];
+    if (landlordId) conditions.push(eq(rentCardRequests.landlordId, landlordId));
+    if (status) conditions.push(eq(rentCardRequests.status, status));
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(rentCardRequests.createdAt));
+  }
+
+  async getRentCardRequestById(id: number): Promise<RentCardRequest | undefined> {
+    const [request] = await db.select().from(rentCardRequests).where(eq(rentCardRequests.id, id));
+    return request;
+  }
+
+  async getRentCardRequestByToken(token: string): Promise<RentCardRequest | undefined> {
+    const [request] = await db.select().from(rentCardRequests).where(eq(rentCardRequests.requestToken, token));
+    return request;
+  }
+
+  async createRentCardRequest(request: InsertRentCardRequest & { landlordId: number }): Promise<RentCardRequest> {
+    const { nanoid } = await import('nanoid');
+    const requestToken = nanoid(32);
+    
+    const [newRequest] = await db
+      .insert(rentCardRequests)
+      .values({
+        ...request,
+        requestToken,
+        sentAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    
+    return newRequest;
+  }
+
+  async updateRentCardRequest(id: number, updates: Partial<RentCardRequest>): Promise<RentCardRequest> {
+    const [updatedRequest] = await db
+      .update(rentCardRequests)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(rentCardRequests.id, id))
+      .returning();
+    
+    return updatedRequest;
+  }
+
+  async updateRentCardRequestStatus(id: number, status: string, metadata?: any): Promise<RentCardRequest> {
+    const updates: any = { status, updatedAt: new Date() };
+    
+    // Update appropriate timestamp based on status
+    if (status === 'viewed' && !metadata?.skipViewedAt) {
+      updates.viewedAt = new Date();
+    } else if (status === 'started' && !metadata?.skipStartedAt) {
+      updates.startedAt = new Date();
+    } else if (status === 'completed' && !metadata?.skipCompletedAt) {
+      updates.completedAt = new Date();
+    }
+    
+    if (metadata) {
+      updates.metadata = metadata;
+    }
+    
+    const [updatedRequest] = await db
+      .update(rentCardRequests)
+      .set(updates)
+      .where(eq(rentCardRequests.id, id))
+      .returning();
+    
+    return updatedRequest;
+  }
+
+  async deleteRentCardRequest(id: number): Promise<void> {
+    await db.delete(rentCardRequests).where(eq(rentCardRequests.id, id));
+  }
+
+  // Prospect List operations
+  async getProspectLists(landlordId: number): Promise<ProspectList[]> {
+    return await db
+      .select()
+      .from(prospectLists)
+      .where(eq(prospectLists.landlordId, landlordId))
+      .orderBy(desc(prospectLists.createdAt));
+  }
+
+  async getProspectListById(id: number): Promise<ProspectList | undefined> {
+    const [list] = await db.select().from(prospectLists).where(eq(prospectLists.id, id));
+    return list;
+  }
+
+  async createProspectList(list: InsertProspectList & { landlordId: number }): Promise<ProspectList> {
+    const contactCount = Array.isArray(list.contacts) ? list.contacts.length : 0;
+    
+    const [newList] = await db
+      .insert(prospectLists)
+      .values({
+        ...list,
+        totalContacts: contactCount,
+        activeContacts: contactCount,
+        convertedContacts: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    
+    return newList;
+  }
+
+  async updateProspectList(id: number, updates: Partial<ProspectList>): Promise<ProspectList> {
+    // Recalculate contact counts if contacts are being updated
+    if (updates.contacts && Array.isArray(updates.contacts)) {
+      const activeContacts = updates.contacts.filter(c => c.status === 'active').length;
+      const convertedContacts = updates.contacts.filter(c => c.status === 'converted').length;
+      
+      updates.totalContacts = updates.contacts.length;
+      updates.activeContacts = activeContacts;
+      updates.convertedContacts = convertedContacts;
+    }
+    
+    const [updatedList] = await db
+      .update(prospectLists)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(prospectLists.id, id))
+      .returning();
+    
+    return updatedList;
+  }
+
+  async deleteProspectList(id: number): Promise<void> {
+    await db.delete(prospectLists).where(eq(prospectLists.id, id));
+  }
+
+  async addContactToProspectList(listId: number, contact: any): Promise<ProspectList> {
+    const currentList = await this.getProspectListById(listId);
+    if (!currentList) {
+      throw new Error("Prospect list not found");
+    }
+    
+    const existingContacts = Array.isArray(currentList.contacts) ? currentList.contacts : [];
+    const updatedContacts = [...existingContacts, contact];
+    
+    return await this.updateProspectList(listId, { contacts: updatedContacts });
+  }
+
+  async removeContactFromProspectList(listId: number, contactId: string): Promise<ProspectList> {
+    const currentList = await this.getProspectListById(listId);
+    if (!currentList) {
+      throw new Error("Prospect list not found");
+    }
+    
+    const existingContacts = Array.isArray(currentList.contacts) ? currentList.contacts : [];
+    const updatedContacts = existingContacts.filter(contact => contact.id !== contactId);
+    
+    return await this.updateProspectList(listId, { contacts: updatedContacts });
   }
 }
 
