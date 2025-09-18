@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mail, Phone, Send } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
+import { SOCIAL_PROOF_STATS } from '@/constants';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,7 @@ const RequestModal: React.FC = () => {
     <Dialog open={showRequestModal} onOpenChange={() => closeModal()}>
       <DialogContent className="sm:max-w-md max-w-[90vw]">
         <DialogHeader>
-          <DialogTitle className="text-base sm:text-lg">Request RentCard</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg">Invite to Network</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3 sm:space-y-4">
@@ -62,14 +63,14 @@ const RequestModal: React.FC = () => {
             <Textarea
               rows={3}
               placeholder="Add a personal message..."
-              defaultValue="Hi! Please complete your RentCard profile to apply for my property."
+              defaultValue={`Hi! Join our trusted network of ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters. Complete your RentCard profile to apply for my property and connect with property managers nationwide.`}
               className="text-xs sm:text-sm mt-1"
             />
           </div>
 
           <Button className="w-full text-xs sm:text-sm h-8 sm:h-9">
             <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-            Send Request
+            Send Network Invitation
           </Button>
         </div>
       </DialogContent>

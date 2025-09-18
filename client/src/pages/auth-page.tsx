@@ -1,4 +1,4 @@
-import { Building2, ArrowRight, Mail, Lock, Phone, CheckCircle2, CreditCard, FileText, Shield, Users } from 'lucide-react';
+import { Building2, ArrowRight, Mail, Lock, Phone, CheckCircle2, CreditCard, FileText, Shield, Users, TrendingUp, Award, Clock, Star } from 'lucide-react';
 import { Link, useLocation, useSearch } from 'wouter';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Tabs,
   TabsContent,
@@ -27,7 +28,10 @@ import {
   VALIDATION, 
   USER_ROLES, 
   MESSAGES, 
-  ROUTES 
+  ROUTES,
+  SOCIAL_PROOF_STATS,
+  NETWORK_VALUE_PROPS,
+  NETWORK_NOTIFICATIONS
 } from '@/constants';
 import Navbar from '@/components/shared/navbar';
 
@@ -162,7 +166,20 @@ const AuthPage = () => {
             <div className="flex justify-center mb-6">
               <Building2 className="w-12 h-12 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Welcome to RentCard</h1>
+            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Join the Network</h1>
+            <div className="text-center mb-4">
+              <div className="flex flex-wrap justify-center gap-2 mb-2">
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  <Users className="w-3 h-3 mr-1" />
+                  {SOCIAL_PROOF_STATS.TOTAL_USERS} users
+                </Badge>
+                <Badge variant="outline" className="text-green-600 border-green-600">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  Growing {SOCIAL_PROOF_STATS.MONTHLY_GROWTH} monthly
+                </Badge>
+              </div>
+              <p className="text-sm text-gray-600">Join the fastest-growing rental community</p>
+            </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
               <TabsList className="grid w-full grid-cols-2 p-1 bg-gray-100 rounded-lg">
@@ -174,7 +191,13 @@ const AuthPage = () => {
                 <Card className="border-0 shadow-none">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl font-semibold text-gray-900">{MESSAGES.AUTH.TITLES.LOGIN}</CardTitle>
-                    <CardDescription>{MESSAGES.AUTH.CARD_DESCRIPTIONS.LOGIN}</CardDescription>
+                    <CardDescription className="space-y-2">
+                      <div>{MESSAGES.AUTH.CARD_DESCRIPTIONS.LOGIN}</div>
+                      <div className="flex items-center gap-2 text-sm text-blue-600">
+                        <Star className="w-4 h-4" />
+                        <span>Trusted by {SOCIAL_PROOF_STATS.TOTAL_USERS} rental professionals</span>
+                      </div>
+                    </CardDescription>
                   </CardHeader>
                   
                   <CardContent className="pt-4">
@@ -232,8 +255,28 @@ const AuthPage = () => {
               <TabsContent value="register">
                 <Card className="border-0 shadow-none">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xl font-semibold text-gray-900">{MESSAGES.AUTH.TITLES.REGISTER}</CardTitle>
-                    <CardDescription>{MESSAGES.AUTH.CARD_DESCRIPTIONS.REGISTER}</CardDescription>
+                    <CardTitle className="text-xl font-semibold text-gray-900">{NETWORK_VALUE_PROPS.TENANT.HERO}</CardTitle>
+                    <CardDescription className="space-y-3">
+                      <div>Create your verified profile and join the network</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-1 text-xs text-green-600">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>{SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME} avg approval</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-blue-600">
+                          <Shield className="w-3 h-3" />
+                          <span>{SOCIAL_PROOF_STATS.REFERENCES_VERIFIED} verified refs</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-purple-600">
+                          <Clock className="w-3 h-3" />
+                          <span>{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} faster screening</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-orange-600">
+                          <Award className="w-3 h-3" />
+                          <span>{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 user rating</span>
+                        </div>
+                      </div>
+                    </CardDescription>
                   </CardHeader>
                   
                   <CardContent className="pt-4">
@@ -284,18 +327,20 @@ const AuthPage = () => {
                           <Button
                             type="button"
                             variant={registerForm.watch('userType') === USER_ROLES.TENANT ? 'default' : 'outline'}
-                            className={`w-full rounded-md h-10 ${registerForm.watch('userType') === USER_ROLES.TENANT ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                            className={`w-full rounded-md h-10 flex flex-col py-2 h-auto ${registerForm.watch('userType') === USER_ROLES.TENANT ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                             onClick={() => registerForm.setValue('userType', USER_ROLES.TENANT)}
                           >
-                            Tenant
+                            <span className="font-medium">Tenant</span>
+                            <span className="text-xs opacity-80">Join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS}</span>
                           </Button>
                           <Button
                             type="button"
                             variant={registerForm.watch('userType') === USER_ROLES.LANDLORD ? 'default' : 'outline'}
-                            className={`w-full rounded-md h-10 ${registerForm.watch('userType') === USER_ROLES.LANDLORD ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                            className={`w-full rounded-md h-10 flex flex-col py-2 h-auto ${registerForm.watch('userType') === USER_ROLES.LANDLORD ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                             onClick={() => registerForm.setValue('userType', USER_ROLES.LANDLORD)}
                           >
-                            Landlord
+                            <span className="font-medium">Landlord</span>
+                            <span className="text-xs opacity-80">Join {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS}</span>
                           </Button>
                         </div>
                       </div>
@@ -315,15 +360,19 @@ const AuthPage = () => {
                           </span>
                         ) : (
                           <span className="flex items-center justify-center">
-                            Create Account
+                            Join the Network
                           </span>
                         )}
                       </Button>
                     </form>
                   </CardContent>
                   
-                  <CardFooter className="text-center text-xs text-gray-500 pt-2 pb-4">
+                  <CardFooter className="text-center text-xs text-gray-500 pt-2 pb-4 space-y-2">
                     <p>By registering, you agree to our Terms of Service and Privacy Policy</p>
+                    <div className="flex items-center justify-center gap-2 text-xs text-blue-600">
+                      <TrendingUp className="w-3 h-3" />
+                      <span>{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} people joined MyRentCard today</span>
+                    </div>
                   </CardFooter>
                 </Card>
               </TabsContent>
@@ -331,22 +380,82 @@ const AuthPage = () => {
           </div>
         </div>
         
-        {/* Right side - Blue panel with benefits */}
-        <div className="hidden md:block w-1/2 bg-blue-600">
+        {/* Right side - Network value panel */}
+        <div className="hidden md:block w-1/2 bg-gradient-to-br from-blue-600 to-blue-700">
           <div className="h-full flex flex-col justify-center p-12">
-            <h2 className="text-4xl font-bold text-white mb-12">Your Rental Journey Starts Here</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">Join the Network</h2>
+            <p className="text-blue-100 text-lg mb-8">Where {SOCIAL_PROOF_STATS.TOTAL_USERS} rental professionals connect</p>
             
-            <div className="space-y-8">
-              {benefits.map((benefit, index) => (
-                <div key={index} className="flex items-start">
-                  <div className="bg-white/10 rounded-full p-2 mr-4 flex-shrink-0">
-                    <CheckCircle2 className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-white text-lg">{benefit.title}</h3>
-                  </div>
+            {/* Network Stats */}
+            <div className="grid grid-cols-2 gap-4 mb-12">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{SOCIAL_PROOF_STATS.VERIFIED_RENTERS}</div>
+                <div className="text-sm text-blue-200">Verified Renters</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS}</div>
+                <div className="text-sm text-blue-200">Trusted Landlords</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{SOCIAL_PROOF_STATS.SUCCESSFUL_MATCHES}</div>
+                <div className="text-sm text-blue-200">Successful Matches</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white">{SOCIAL_PROOF_STATS.CITIES_SERVED}</div>
+                <div className="text-sm text-blue-200">Cities Served</div>
+              </div>
+            </div>
+
+            {/* Network Benefits */}
+            <div className="space-y-6">
+              <div className="flex items-start">
+                <div className="bg-white/20 rounded-full p-2 mr-4 flex-shrink-0">
+                  <Users className="w-5 h-5 text-white" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="font-medium text-white text-lg">Growing Network</h3>
+                  <p className="text-blue-100 text-sm">More connections mean better opportunities</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="bg-white/20 rounded-full p-2 mr-4 flex-shrink-0">
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-white text-lg">Instant Screening</h3>
+                  <p className="text-blue-100 text-sm">{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} faster than traditional methods</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="bg-white/20 rounded-full p-2 mr-4 flex-shrink-0">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-white text-lg">Verified Community</h3>
+                  <p className="text-blue-100 text-sm">{SOCIAL_PROOF_STATS.REFERENCES_VERIFIED} verified references</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="bg-white/20 rounded-full p-2 mr-4 flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-white text-lg">Network Growth</h3>
+                  <p className="text-blue-100 text-sm">Growing {SOCIAL_PROOF_STATS.MONTHLY_GROWTH} monthly</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Trust Signal */}
+            <div className="mt-8 p-4 bg-white/10 rounded-lg">
+              <div className="flex items-center justify-center gap-2 text-white mb-2">
+                <Star className="w-5 h-5 text-yellow-300" />
+                <span className="font-medium">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 User Rating</span>
+              </div>
+              <p className="text-blue-100 text-sm text-center">{SOCIAL_PROOF_STATS.RETURN_RATE} of users recommend us</p>
             </div>
           </div>
         </div>

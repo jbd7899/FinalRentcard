@@ -22,7 +22,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
-import { ROUTES } from '@/constants';
+import { ROUTES, SOCIAL_PROOF_STATS, NETWORK_NOTIFICATIONS } from '@/constants';
 
 interface OnboardingStep {
   id: string;
@@ -102,8 +102,8 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
         setTimeout(() => setShowCelebration(false), 3000);
         
         addToast({
-          title: 'Progress Updated! 🎉',
-          description: `Great job! ${completedSteps.length} step${completedSteps.length > 1 ? 's' : ''} completed.`,
+          title: 'Network Profile Growing! 🎉',
+          description: `Great job! ${completedSteps.length} step${completedSteps.length > 1 ? 's' : ''} completed. You're building trust in the network!`,
           type: 'success'
         });
       }
@@ -176,13 +176,13 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
   const getActionTextForStep = (stepKey: string): string => {
     switch (stepKey) {
       case 'complete_profile':
-        return 'Complete Profile';
+        return 'Join Network';
       case 'add_references':
-        return 'Add References';
+        return 'Build Trust';
       case 'preview_rentcard':
-        return 'Preview RentCard';
+        return 'View Profile';
       case 'share_first_link':
-        return 'Create Share Link';
+        return 'Share Network';
       default:
         return 'Get Started';
     }
@@ -251,12 +251,12 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
             )}
             <div>
               <CardTitle className="text-lg text-gray-800">
-                {progress.isCompleted ? '🎉 Onboarding Complete!' : 'Getting Started Checklist'}
+                {progress.isCompleted ? '🎉 Welcome to the Network!' : 'Join the Verified Community'}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-1">
                 {progress.isCompleted 
-                  ? 'You\'re all set! Your RentCard is ready to share with landlords.'
-                  : `Complete these steps to activate your rental profile (${completedCount}/${progress.totalSteps} done)`
+                  ? `You're now part of ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters! Your network profile is ready.`
+                  : `Build your verified network profile (${completedCount}/${progress.totalSteps} done) - Join ${SOCIAL_PROOF_STATS.TOTAL_USERS} trusted users`
                 }
               </p>
             </div>
@@ -310,11 +310,21 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
           {progress.isCompleted ? (
             <div className="text-center py-6">
               <Trophy className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Congratulations!</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Welcome to the Network!</h3>
               <p className="text-gray-600 mb-4">
-                Your RentCard is now complete and ready to share with landlords. 
-                You can now apply to properties with confidence!
+                You're now part of {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters! Your network profile 
+                helps landlords trust you faster and gets you approved {SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} quicker.
               </p>
+              <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <div className="font-semibold text-blue-600">{SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME}</div>
+                  <div className="text-gray-600">Average Approval</div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <div className="font-semibold text-green-600">{SOCIAL_PROOF_STATS.RETURN_RATE}</div>
+                  <div className="text-gray-600">User Satisfaction</div>
+                </div>
+              </div>
               <div className="flex gap-3 justify-center">
                 <Button
                   onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
@@ -410,9 +420,9 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                   <div className="flex items-center gap-3">
                     <Star className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h4 className="font-medium text-blue-800">Next Step</h4>
+                      <h4 className="font-medium text-blue-800">Build Network Trust</h4>
                       <p className="text-sm text-blue-700">
-                        Complete "{nextStep.stepTitle}" to continue your setup
+                        Complete "{nextStep.stepTitle}" to strengthen your network profile and join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters
                       </p>
                     </div>
                   </div>
