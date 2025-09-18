@@ -18,7 +18,7 @@ import LandlordAnalyticsDashboard from '@/components/landlord/AnalyticsDashboard
 
 // Import other components
 import RequestModal from '@/components/landlord/RequestModal';
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useUIStore } from '@/stores/uiStore';
 import LandlordLayout from '@/components/layouts/LandlordLayout';
 import { useToast } from "@/components/ui/use-toast";
@@ -36,20 +36,26 @@ const LandlordDashboard = () => {
   const { user, logout } = useAuthStore();
   const { modal, openModal, closeModal, loadingStates, setLoading } = useUIStore();
   const [location, setLocation] = useLocation();
+  const searchString = useSearch();
   const [showMockNotice, setShowMockNotice] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
-  // Check for tab query parameter
+  // Check for tab query parameter with proper error handling
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const tabParam = searchParams.get('tab') as TabType | null;
-    
-    if (tabParam && ['overview', 'properties', 'interests', 'analytics'].includes(tabParam)) {
-      setActiveTab(tabParam);
+    try {
+      const searchParams = new URLSearchParams(searchString || '');
+      const tabParam = searchParams.get('tab') as TabType | null;
+      
+      if (tabParam && ['overview', 'properties', 'interests', 'analytics'].includes(tabParam)) {
+        setActiveTab(tabParam);
+      }
+    } catch (error) {
+      console.warn('Error parsing search parameters:', error);
+      // Fallback to default tab if parsing fails
     }
-  }, [location]);
+  }, [searchString]);
 
   // Fetch the authenticated user's landlord profile
   const { data: landlordProfile, isLoading: isLandlordProfileLoading, error: landlordProfileError } = useQuery({
