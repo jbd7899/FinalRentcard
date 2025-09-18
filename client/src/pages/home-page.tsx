@@ -31,63 +31,63 @@ export default function HomePage() {
 
   const roleContent = {
     tenant: {
-      title: "Get Connected Faster",
-      subtitle: "Through Our Prequalification Network",
-      description: "Landlords can instantly see your qualifications. No wasted showings, no back-and-forth – your prequalified profile speaks first.",
+      title: "Connect with Individual Landlords",
+      subtitle: "Through Your Completed RentCard",
+      description: "Efficiently connect with individual landlords through your completed RentCard. Skip corporate bureaucracy and junk fees – individual landlords respond faster and make faster decisions.",
       benefits: [
         {
           icon: Users,
-          title: "Instant Connections",
-          desc: "Verified landlords can see your qualifications immediately – no waiting for responses or callbacks",
-          stat: "Pre-qualified matches only"
+          title: "Direct Individual Connections",
+          desc: "Connect directly with individual landlords who own 70-75% of US rentals – skip corporate property management",
+          stat: "Personal relationships"
         },
         {
           icon: Clock,
-          title: "Skip the Back-and-Forth",
-          desc: "Landlords know you're qualified before contact. No repetitive questions or document requests",
-          stat: "Eliminate email chains"
+          title: "Faster Decisions",
+          desc: "Individual landlords respond faster and make decisions quicker than corporate bureaucracy",
+          stat: "No corporate delays"
         },
         {
           icon: Shield,
-          title: "No Wasted Showings",
-          desc: "Only serious, compatible landlords reach out. Your time is protected through smart matching",
-          stat: "Quality connections"
+          title: "Skip Junk Fees",
+          desc: "Avoid corporate application fees and bureaucracy – individual landlords focus on your qualifications",
+          stat: "No hidden costs"
         }
       ],
       cta: {
-        primary: "Create Your Profile",
-        secondary: "View Sample Profile",
+        primary: "Connect with Individual Landlords",
+        secondary: "View Sample RentCard",
         primaryHref: "/auth?type=tenant&mode=register",
         secondaryHref: "/samples/rentcard"
       }
     },
     landlord: {
-      title: "Connect with Prequalified Tenants",
-      subtitle: "Instantly",
-      description: "Verified tenants ready for instant connection. No screening delays, no unqualified inquiries – only serious, prequalified candidates.",
+      title: "Individual Landlord Network",
+      subtitle: "Compete with Corporate Efficiency",
+      description: "Individual landlords own 70-75% of US rentals. Use smart pre-screening to compete with corporate efficiency – connect with tenants who value individual landlords.",
       benefits: [
         {
           icon: Users,
-          title: "Prequalified Inquiries Only",
-          desc: "Verified tenants with complete profiles and references – no incomplete applications",
-          stat: "Serious candidates only"
+          title: "Professional Efficiency",
+          desc: "Compete with corporate property management using professional screening tools and complete tenant profiles",
+          stat: "Corporate-level tools"
         },
         {
           icon: Clock,
-          title: "Skip the Screening Process",
-          desc: "Tenants arrive pre-verified with all documentation. Connect faster, fill properties quicker",
-          stat: "Save hours weekly"
+          title: "Keep Personal Touch",
+          desc: "Maintain individual landlord responsiveness while using efficient pre-screening – best of both worlds",
+          stat: "Personal + professional"
         },
         {
           icon: Shield,
-          title: "No Wasted Time",
-          desc: "Intelligent matching ensures compatibility before connection. Better matches, faster results",
-          stat: "Higher quality connections"
+          title: "Attract Better Tenants",
+          desc: "Tenants seeking individual landlords over corporate management find you through the network",
+          stat: "Quality tenant pool"
         }
       ],
       cta: {
-        primary: "Join Network",
-        secondary: "View Sample Screening",
+        primary: "Join Individual Landlord Network",
+        secondary: "View Screening Tools",
         primaryHref: "/auth?type=landlord&mode=register",
         secondaryHref: "/samples/screening-page"
       }
