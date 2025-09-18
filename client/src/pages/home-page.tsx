@@ -31,9 +31,9 @@ export default function HomePage() {
 
   const roleContent = {
     tenant: {
-      title: "Join the Network to Create Your Standardized RentCard",
-      subtitle: "Connect with Individual Landlords Who Own 70-75% of US Rentals", 
-      description: "Join the network to create your standardized RentCard once, then easily share your prequalification information with individual landlords. Skip corporate application fees and bureaucracy.",
+      title: "Create Your Standardized RentCard",
+      subtitle: "One-Click Applications to Individual Landlords", 
+      description: "Join the network. Create once, apply everywhere. Individual landlords own 75% of rentals.",
       benefits: [
         {
           icon: Users,
@@ -55,16 +55,16 @@ export default function HomePage() {
         }
       ],
       cta: {
-        primary: "Join Individual Landlord Network",
+        primary: "Create Your Free RentCard",
         secondary: "View Sample RentCard",
         primaryHref: "/auth?type=tenant&mode=register",
         secondaryHref: "/samples/rentcard"
       }
     },
     landlord: {
-      title: "Join the Network to Streamline Tenant Connections",
-      subtitle: "Maintain Your Individual Landlord Competitive Edge",
-      description: "Join the network to streamline how tenants connect with your properties while maintaining your competitive edge. Allow qualified tenants to submit interest with one click using standardized RentCards.",
+      title: "Streamline Tenant Connections",
+      subtitle: "Individual Landlord Network Tools",
+      description: "Join the network. One-click submissions, QR codes, cross-selling tools.",
       benefits: [
         {
           icon: Users,
@@ -86,7 +86,7 @@ export default function HomePage() {
         }
       ],
       cta: {
-        primary: "Join Individual Landlord Network",
+        primary: "Create Your Free Landlord Profile",
         secondary: "View Screening Tools", 
         primaryHref: "/auth?type=landlord&mode=register",
         secondaryHref: "/samples/screening-page"
