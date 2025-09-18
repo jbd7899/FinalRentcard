@@ -1,23 +1,23 @@
-# Verify Documents Feature
+# Individual Landlord Document Verification Feature
 
 ## Overview
 
-The "Verify Documents" feature allows landlords to review and verify documents uploaded by tenants. This verification process adds credibility to tenant profiles and helps landlords make informed decisions during the tenant screening process.
+The "Verify Documents" feature allows individual landlords to personally review and verify documents uploaded by tenants. This verification process adds credibility to tenant profiles and helps individual property owners make informed, personal decisions during the tenant screening process. Designed specifically for the 70-75% of rental properties owned by individual landlords, this feature enables the personal attention to detail that sets individual landlords apart from corporate property management.
 
 ## User Roles and Permissions
 
-### Landlords
-- View a list of tenants and their uploaded documents
-- Preview document contents
-- Verify documents (mark as legitimate)
-- Reject or delete invalid documents
-- Filter and search through tenant documents
+### Individual Landlords
+- View a list of tenants and their uploaded documents with personal oversight
+- Preview document contents with individual attention to detail
+- Verify documents (mark as legitimate) based on personal judgment
+- Reject or delete invalid documents with personal decision-making authority
+- Filter and search through tenant documents using individual criteria
 
 ### Tenants
 - Upload various document types
 - View verification status of their documents
 - Delete their own documents
-- See which landlord verified their documents
+- See which individual landlord personally verified their documents
 
 ## Feature Components
 
@@ -48,15 +48,15 @@ Displays a list of documents with:
 - Delete option (for tenant's own documents or landlord)
 - Verify option (landlord only)
 
-### 3. Document Verification (Landlord Side)
+### 3. Document Verification (Individual Landlord Side)
 
-Landlords can:
-- Select a tenant from a list
-- View all documents uploaded by the tenant
-- Preview document contents
-- Mark documents as verified
-- Add verification notes (optional)
-- Reject documents with reason
+Individual landlords can:
+- Select a tenant from a list for personal review
+- View all documents uploaded by the tenant with individual attention
+- Preview document contents with personal scrutiny
+- Mark documents as verified based on individual judgment
+- Add personal verification notes reflecting individual insights
+- Reject documents with personalized reasoning
 
 ## Technical Implementation
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Share2, Copy, Loader2, CheckCircle, Smartphone, Users, ChevronDown } from 'lucide-react';
-import { SOCIAL_PROOF_STATS } from '@/constants';
+import { SOCIAL_PROOF_STATS } from '@shared/network-messaging';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,7 +136,7 @@ export function OneClickShareButton({
       if (hasWebShare) {
         await navigator.share({
           title: title,
-          text: `Join ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters! Check out my trusted network profile:`,
+          text: `Join our individual landlord network! Individual landlords make ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}. Check out my trusted network profile:`,
           url: shareUrl,
         });
         return true;

@@ -245,14 +245,14 @@ The application uses Zustand for centralized UI state management. See the UI Sto
 - GET /api/tenant/rentcard/:id/share → Get shareable RentCard link
 - POST /api/tenant/rentcard/:id/pdf → Generate RentCard PDF
 
-### Landlord Routes
-- GET /api/landlord/dashboard → Get landlord dashboard data
-- GET /api/landlord/applications → List rental applications
-- PATCH /api/landlord/applications/:id/status → Update application status
-- GET /api/landlord/applications/stats → Get application statistics
-- POST /api/landlord/screening → Create screening page
-- GET /api/landlord/screening/:id → Get screening page
-- POST /api/landlord/reference-form → Submit reference form
+### Individual Landlord Routes
+- GET /api/landlord/dashboard → Get individual landlord dashboard data with personal insights
+- GET /api/landlord/applications → List rental applications for individual landlord review
+- PATCH /api/landlord/applications/:id/status → Update application status with individual decision-making
+- GET /api/landlord/applications/stats → Get application statistics for individual property owners
+- POST /api/landlord/screening → Create screening page for individual landlord criteria
+- GET /api/landlord/screening/:id → Get screening page with individual landlord preferences
+- POST /api/landlord/reference-form → Submit reference form with individual landlord insights
 - GET /api/properties → Get all properties
 - GET /api/properties/screening/:slug → Get property details
 
@@ -267,13 +267,13 @@ NEW → REVIEWING → APPROVED/REJECTED
     CANCELLED/ARCHIVED
 ```
 
-2. **Status Definitions**
-- NEW: Initial application submission
-- REVIEWING: Under landlord review
-- APPROVED: Application accepted
-- REJECTED: Application declined
-- CANCELLED: Application withdrawn
-- ARCHIVED: Application stored for record-keeping
+2. **Status Definitions** (Individual Landlord Context)
+- NEW: Initial application submission awaiting individual landlord review
+- REVIEWING: Under individual landlord personal review with personalized attention
+- APPROVED: Application accepted by individual landlord based on personal decision
+- REJECTED: Application declined by individual landlord with personal reasoning
+- CANCELLED: Application withdrawn from individual landlord consideration
+- ARCHIVED: Application stored for individual landlord record-keeping
 
 3. **Application Data Structure**
 ```typescript
