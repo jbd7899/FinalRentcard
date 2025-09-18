@@ -28,17 +28,15 @@ export const SOCIAL_PROOF_STATS = {
   PERSONAL_APPROACH: 'Direct property owner relationships',
 } as const;
 
-// Individual landlord-focused value propositions
+// Import official value propositions from source of truth
+import { DERIVED_MESSAGING } from './value-propositions';
+
+// Individual landlord-focused value propositions (derived from official source)
 export const NETWORK_VALUE_PROPS = {
   TENANT: {
-    HERO: 'Efficiently connect with individual landlords through your completed RentCard',
-    SECONDARY: 'Skip corporate bureaucracy and junk fees – individual landlords respond faster and make faster decisions',
-    BENEFITS: [
-      `Connect directly with individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}`,
-      'Skip corporate property management bureaucracy and application fees',
-      'Individual landlords respond 2-3x faster than corporate management',
-      'Build personal relationships with responsive individual property owners',
-    ],
+    HERO: DERIVED_MESSAGING.TENANT.HERO,
+    SECONDARY: DERIVED_MESSAGING.TENANT.SECONDARY,
+    BENEFITS: DERIVED_MESSAGING.TENANT.BENEFITS,
     SOCIAL_PROOF: [
       'Individual landlords make decisions in 1-2 days vs 5-10 days for corporate',
       'Skip junk fees and corporate bureaucracy with direct landlord connections',
@@ -47,14 +45,9 @@ export const NETWORK_VALUE_PROPS = {
     ],
   },
   LANDLORD: {
-    HERO: 'Individual landlords competing with corporate efficiency through professional tools',
-    SECONDARY: 'Professional screening tools without corporate overhead – maintain your personal touch while staying competitive',
-    BENEFITS: [
-      'Compete with corporate property management using professional pre-screening tools',
-      'Access tenants who specifically prefer individual landlords over corporate management',
-      'Maintain personal landlord-tenant relationships while using efficient screening',
-      'Professional tools without corporate fees, bureaucracy, or rigid policies',
-    ],
+    HERO: DERIVED_MESSAGING.LANDLORD.HERO,
+    SECONDARY: DERIVED_MESSAGING.LANDLORD.SECONDARY,
+    BENEFITS: DERIVED_MESSAGING.LANDLORD.BENEFITS,
     SOCIAL_PROOF: [
       'Individual landlords report staying competitive with corporate efficiency',
       'Attract tenants seeking personal relationships over corporate bureaucracy',

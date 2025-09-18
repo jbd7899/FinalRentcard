@@ -26,6 +26,22 @@ Preferred communication style: Simple, everyday language.
 - **Professional User Experience**: Implemented comprehensive Coming Soon component system, transforming incomplete features into professional-looking planned features instead of broken/hidden functionality
 - **End-to-End Validation**: Comprehensive testing confirms all core user flows (authentication, profile editing, onboarding, sharing) work correctly without errors
 
+## Value Propositions Source of Truth
+
+MyRentCard now uses a centralized value proposition system defined in `shared/value-propositions.ts` to ensure consistent messaging across all platform components. This source of truth contains the refined value propositions that emphasize:
+
+### Official Value Propositions
+- **Tenant**: "Join the network to create your standardized RentCard once, then easily share your prequalification information with individual landlords who own 70-75% of US rentals"
+- **Landlord**: "Join the network to streamline how tenants connect with your properties while maintaining your competitive edge as an individual landlord"
+
+### Key Messaging Elements
+- **Network positioning**: Platform for standardizing prequalification process
+- **Individual landlord focus**: 70-75% market share, personal relationships, faster decisions vs corporate
+- **Standardization benefits**: One-click submissions, QR code tools, cross-selling capabilities
+- **Professional efficiency**: Corporate-level tools while maintaining personal touch
+
+All components now derive messaging from this single source to maintain consistency and alignment with the refined value propositions focused on individual landlords rather than corporate property management.
+
 ## System Architecture
 
 ### Frontend Architecture
