@@ -68,20 +68,20 @@ const LandlordSidebar: React.FC<SidebarProps> = ({
     },
     { 
       icon: <Globe className="w-5 h-5" />, 
-      label: "Screening Pages", 
+      label: "Individual Landlord Tools", 
       route: ROUTES.LANDLORD.SCREENING, 
       active: isActive(ROUTES.LANDLORD.SCREENING)
     },
     { 
       icon: <Inbox className="w-5 h-5" />, 
-      label: "Pre-Screening Inbox", 
+      label: "Tenant Connections", 
       route: ROUTES.LANDLORD.INTERESTS, 
       active: isActive(ROUTES.LANDLORD.INTERESTS),
       comingSoon: true 
     },
     { 
       icon: <Send className="w-5 h-5" />, 
-      label: "RentCard Requests", 
+      label: "Individual Landlord Requests", 
       route: ROUTES.LANDLORD.RENTCARD_REQUESTS, 
       active: isActive(ROUTES.LANDLORD.RENTCARD_REQUESTS)
     }

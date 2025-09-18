@@ -22,7 +22,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
-import { ROUTES, SOCIAL_PROOF_STATS, NETWORK_NOTIFICATIONS } from '@/constants';
+import { ROUTES } from '@/constants';
+import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS, SOCIAL_PROOF_STATS, NETWORK_NOTIFICATIONS } from '@shared/network-messaging';
 
 interface OnboardingStep {
   id: string;
@@ -95,17 +96,27 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['onboarding-progress'] });
       
-      // Show celebration if progress was made
+      // Show appropriate message based on completion status
       const completedSteps = Object.keys(data.checkedSteps).filter(key => data.checkedSteps[key]);
       if (completedSteps.length > 0) {
-        setShowCelebration(true);
-        setTimeout(() => setShowCelebration(false), 3000);
-        
-        addToast({
-          title: 'Profile Setup Progressing! 🎉',
-          description: `Great job! ${completedSteps.length} step${completedSteps.length > 1 ? 's' : ''} completed. Each step eliminates future application delays.`,
-          type: 'success'
-        });
+        // Check if onboarding is now fully completed after this update
+        if (data.isCompleted) {
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 3000);
+          
+          addToast({
+            title: 'Individual Landlord Network Ready! 🎉',
+            description: 'Great job! Individual landlords can now make faster decisions about your application.',
+            type: 'success'
+          });
+        } else {
+          // Neutral progress message for partial completion
+          addToast({
+            title: 'Progress updated',
+            description: `${completedSteps.length} step${completedSteps.length > 1 ? 's' : ''} completed.`,
+            type: 'success'
+          });
+        }
       }
     }
   });
@@ -176,13 +187,13 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
   const getActionTextForStep = (stepKey: string): string => {
     switch (stepKey) {
       case 'complete_profile':
-        return 'Save Application Time';
+        return 'Connect with Individual Landlords';
       case 'add_references':
-        return 'Skip Coordination';
+        return 'Build Individual Landlord Trust';
       case 'preview_rentcard':
-        return 'Enable Fast Review';
+        return 'Enable Individual Landlord Review';
       case 'share_first_link':
-        return 'Share Complete Profile';
+        return 'Share with Property Owners';
       default:
         return 'Get Started';
     }
@@ -251,12 +262,12 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
             )}
             <div>
               <CardTitle className="text-lg text-gray-800">
-                {progress.isCompleted ? '🎉 Profile Complete!' : 'Complete Your Application Profile'}
+                {progress.isCompleted ? '🎉 Ready for Individual Landlords!' : 'Connect with Individual Landlords'}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-1">
                 {progress.isCompleted 
-                  ? `Your complete profile saves ${SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} per application and enables same-day landlord review.`
-                  : `Complete your profile to save ${SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} per application (${completedCount}/${progress.totalSteps} done)`
+                  ? `Individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} can now make ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}.`
+                  : `Complete your profile to connect with individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} (${completedCount}/${progress.totalSteps} done)`
                 }
               </p>
             </div>
@@ -310,19 +321,19 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
           {progress.isCompleted ? (
             <div className="text-center py-6">
               <Trophy className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Profile Complete!</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Individual Landlord Network Ready!</h3>
               <p className="text-gray-600 mb-4">
-                Your complete profile eliminates {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} of repetitive work per application. 
-                Landlords can now review your application in 15 minutes instead of waiting for missing documents.
+                You can now connect directly with individual landlords who own {INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}. 
+                Individual landlords respond {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME} than corporate management.
               </p>
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="font-semibold text-blue-600">{SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT}</div>
-                  <div className="text-gray-600">Average Approval</div>
+                  <div className="font-semibold text-blue-600">{SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}</div>
+                  <div className="text-gray-600">Decision Speed</div>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="font-semibold text-green-600">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5</div>
-                  <div className="text-gray-600">User Satisfaction</div>
+                  <div className="font-semibold text-green-600">{SOCIAL_PROOF_STATS.PERSONAL_RELATIONSHIPS}</div>
+                  <div className="text-gray-600">Direct Connection</div>
                 </div>
               </div>
               <div className="flex gap-3 justify-center">
@@ -420,9 +431,9 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                   <div className="flex items-center gap-3">
                     <Star className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h4 className="font-medium text-blue-800">Next Step: Save Application Time</h4>
+                      <h4 className="font-medium text-blue-800">Next Step: Connect with Individual Landlords</h4>
                       <p className="text-sm text-blue-700">
-                        Complete "{nextStep.stepTitle}" to eliminate repetitive tasks and enable same-day application review
+                        Complete "{nextStep.stepTitle}" to access the individual landlord network who make faster, personal decisions
                       </p>
                     </div>
                   </div>

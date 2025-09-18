@@ -15,6 +15,7 @@ import {
 import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { Link } from 'wouter';
 import { ROUTES } from '@/constants';
+import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS } from '@shared/network-messaging';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import StatsCard from '@/components/landlord/StatsCard';
@@ -88,7 +89,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
       <div className="mb-8">
         <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center">
           <ClipboardCheck className="w-5 h-5 mr-2 text-primary" />
-          Landlord Workflow
+          Individual Landlord Workflow
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
@@ -100,7 +101,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div>
                   <h3 className="font-medium text-sm sm:text-base text-blue-800">1. List Properties</h3>
                   <p className="text-xs sm:text-sm text-blue-700 mt-1">
-                    Add your properties and create screening pages
+                    Professional screening tools without corporate overhead
                   </p>
                   <Button 
                     variant="link" 
@@ -123,7 +124,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div>
                   <h3 className="font-medium text-sm sm:text-base text-green-800">2. Screen Tenants</h3>
                   <p className="text-xs sm:text-sm text-green-700 mt-1">
-                    Share your screening page or request RentCards
+                    Access tenants who specifically prefer individual landlords
                   </p>
                   <Button 
                     variant="link" 
@@ -146,7 +147,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div>
                   <h3 className="font-medium text-sm sm:text-base text-purple-800">3. Review Pre-Screenings</h3>
                   <p className="text-xs sm:text-sm text-purple-700 mt-1">
-                    Verify documents and select qualified prospects
+                    Maintain personal touch while using efficient screening
                   </p>
                   <Button 
                     variant="link" 
@@ -249,25 +250,25 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         <CardContent className="p-5 sm:p-6">
           <h2 className="text-base sm:text-lg font-semibold mb-4 sm:mb-5 flex items-center">
             <HelpCircle className="w-5 h-5 mr-2 text-primary" />
-            Landlord Tips & Best Practices
+            Individual Landlord Tips & Competitive Advantages
           </h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
             <div>
-              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Effective Screening</h3>
+              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Compete with Corporate Efficiency</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Set clear requirements and use RentCards to get verified tenant information. This reduces fraud and saves time.
+                Professional screening tools help you compete with corporate property management while maintaining your personal touch.
               </p>
             </div>
             <div>
-              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Document Verification</h3>
+              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Attract Individual-Landlord-Preferring Tenants</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Always verify income documents and identification. Our system helps automate this process for accuracy.
+                Tenants seek out individual landlords for faster decisions and personal relationships over corporate bureaucracy.
               </p>
             </div>
             <div className="sm:col-span-2 md:col-span-1">
-              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Fair Housing Compliance</h3>
+              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Professional Tools Without Corporate Overhead</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Apply the same screening criteria to all applicants to ensure fair housing compliance and avoid discrimination claims.
+                No corporate fees, bureaucracy, or rigid policies - just professional tools that help you stay competitive.
               </p>
             </div>
           </div>

@@ -26,6 +26,7 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus, APPLICATION_LABELS } from "@/constants";
+import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS, SOCIAL_PROOF_STATS } from '@shared/network-messaging';
 import { Link, useLocation } from "wouter";
 import TenantLayout from '@/components/layouts/TenantLayout';
 import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
@@ -116,9 +117,9 @@ const TenantDashboard = () => {
       <header className="mb-6 md:mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Welcome to your Dashboard</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Connect with Individual Landlords</h1>
             <p className="text-sm sm:text-base text-gray-500 mt-1">
-              Manage your rental profile, documents, and applications
+              Skip corporate bureaucracy – individual landlords who own {INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} respond faster
             </p>
           </div>
           
@@ -256,10 +257,10 @@ const TenantDashboard = () => {
                     <Share2 className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-medium text-gray-800 mb-1">Share Your RentCard</h3>
+                    <h3 className="text-base sm:text-lg font-medium text-gray-800 mb-1">Connect with Individual Landlords</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Share your verified rental profile with landlords and property managers. 
-                      Create secure links with custom expiration settings.
+                      Share your RentCard directly with individual property owners. Individual landlords 
+                      respond {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME} and make personal decisions.
                     </p>
                   </div>
                 </div>
@@ -429,28 +430,28 @@ const TenantDashboard = () => {
         <CardContent className="p-5 sm:p-6">
           <h2 className="text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2">
             <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-            <span>Tips for a Successful Application</span>
+            <span>Individual Landlord Connection Tips</span>
           </h2>
           
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
             <div>
-              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Complete Your RentCard</h3>
+              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Target Individual Landlords</h3>
               <p className="text-xs sm:text-sm text-gray-600">
-                A complete RentCard increases your chances of approval by landlords.
+                Individual landlords who own {INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} respond faster than corporate management.
               </p>
             </div>
             
             <div>
-              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Verify Your Documents</h3>
+              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Skip Corporate Bureaucracy</h3>
               <p className="text-xs sm:text-sm text-gray-600">
-                Upload and verify your income, employment, and identification documents.
+                Individual landlords make {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS} vs corporate delays.
               </p>
             </div>
             
             <div>
-              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Add Strong References</h3>
+              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Build Personal Relationships</h3>
               <p className="text-xs sm:text-sm text-gray-600">
-                Previous landlords and employers make the strongest references.
+                Individual landlords value direct communication and personal tenant connections.
               </p>
             </div>
           </div>
