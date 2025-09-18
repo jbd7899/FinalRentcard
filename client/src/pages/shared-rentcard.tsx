@@ -208,7 +208,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                     Are you a landlord?
                   </h4>
                   <p className="text-sm text-gray-600 mb-4">
-                    Join MyRentCard to access tenant profiles, manage applications, and streamline your rental process.
+                    Start pre-screening qualified tenants. Save time by qualifying prospects before property showings.
                   </p>
                   <Button 
                     onClick={handleSignupAsLandlord}
@@ -216,7 +216,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                     data-testid="button-signup-landlord-error"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
-                    Sign Up as Landlord
+                    Start Pre-Screening
                   </Button>
                 </div>
               </div>
@@ -241,9 +241,9 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5" />
+            <Shield className="w-5 h-5" />
             <span className="text-sm font-medium">
-              Viewing a tenant's MyRentCard profile
+              Pre-screen qualified tenants instantly
             </span>
           </div>
           <Button 
@@ -254,7 +254,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
             data-testid="button-signup-landlord-banner"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Sign Up as Landlord
+            Start Pre-Screening Tenants
           </Button>
         </div>
       </div>
@@ -530,7 +530,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
               {showInterestForm ? (
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold">Express Interest</h3>
+                    <h3 className="text-xl font-semibold">Schedule Qualification Call</h3>
                     <Button 
                       variant="outline" 
                       onClick={() => setShowInterestForm(false)}
@@ -544,8 +544,8 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                     onSuccess={() => {
                       setShowInterestForm(false);
                       addToast({
-                        title: 'Interest Submitted!',
-                        description: 'Your interest has been sent to the tenant.',
+                        title: 'Qualification Call Requested!',
+                        description: 'Your request has been sent to the tenant.',
                         type: 'success'
                       });
                     }}
@@ -556,9 +556,9 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                   <CardContent className="p-8 text-center">
                     <div className="max-w-md mx-auto space-y-6">
                       <div>
-                        <h3 className="text-xl font-semibold mb-3">Interested in this tenant?</h3>
+                        <h3 className="text-xl font-semibold mb-3">Schedule a Qualification Call?</h3>
                         <p className="text-gray-600">
-                          Express your interest and connect with this qualified tenant for your rental property.
+                          Connect with this pre-qualified tenant to schedule a property viewing or qualification call.
                         </p>
                       </div>
                       <Button 
@@ -567,8 +567,8 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                         size="lg"
                         data-testid="button-show-interest-form"
                       >
-                        <MessageSquare className="w-5 h-5 mr-2" />
-                        Express Interest
+                        <Phone className="w-5 h-5 mr-2" />
+                        Schedule Qualification Call
                       </Button>
                     </div>
                   </CardContent>
@@ -588,28 +588,28 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-blue-900 mb-2">
-                        Join MyRentCard as a Landlord
+                        Pre-screen Qualified Tenants
                       </h3>
                       <p className="text-blue-800 text-sm leading-relaxed">
-                        Get access to verified tenant profiles, streamlined application management, and powerful screening tools.
+                        Save time on unqualified leads. Qualify prospects before showings with verified tenant profiles.
                       </p>
                     </div>
                     <div className="space-y-2 text-left">
                       <div className="flex items-center gap-2 text-blue-800 text-sm">
                         <CheckCircle className="w-4 h-4 text-blue-600" />
-                        Access verified tenant profiles
+                        Pre-screen tenants instantly
                       </div>
                       <div className="flex items-center gap-2 text-blue-800 text-sm">
                         <CheckCircle className="w-4 h-4 text-blue-600" />
-                        Manage applications efficiently
+                        Qualify prospects before showings
                       </div>
                       <div className="flex items-center gap-2 text-blue-800 text-sm">
                         <CheckCircle className="w-4 h-4 text-blue-600" />
-                        Connect with quality tenants
+                        Save time on unqualified leads
                       </div>
                       <div className="flex items-center gap-2 text-blue-800 text-sm">
                         <CheckCircle className="w-4 h-4 text-blue-600" />
-                        Streamlined screening process
+                        Cross-sell to qualified tenants
                       </div>
                     </div>
                     <Button 
@@ -617,7 +617,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                       className="w-full bg-blue-600 hover:bg-blue-700"
                       data-testid="button-signup-landlord-sidebar"
                     >
-                      Sign Up Now
+                      Start Pre-Screening
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>

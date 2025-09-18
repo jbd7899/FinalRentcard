@@ -85,11 +85,11 @@ const GuestInterestForm = ({ onSubmit, isPending, propertyAddress }: GuestFormPr
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <User className="w-5 h-5 text-primary" />
-          Express Interest
+          <Phone className="w-5 h-5 text-primary" />
+          Schedule Qualification Call
         </CardTitle>
         <CardDescription>
-          Let us know you're interested! Fill out your contact information below.
+          Schedule a qualification call or property viewing. Fill out your contact information below.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -201,7 +201,7 @@ const GuestInterestForm = ({ onSubmit, isPending, propertyAddress }: GuestFormPr
                     <Textarea
                       {...field}
                       value={field.value || ""}
-                      placeholder="Tell us more about your interest or any questions you have..."
+                      placeholder="Tell us about your interest or preferred times for a qualification call..."
                       rows={3}
                       data-testid="textarea-guest-message"
                     />
@@ -213,7 +213,7 @@ const GuestInterestForm = ({ onSubmit, isPending, propertyAddress }: GuestFormPr
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
               <p className="text-sm text-blue-800">
-                <strong>Want a better experience?</strong> Create a MyRentCard account to pre-fill your information and track your applications.
+                <strong>Want a better experience?</strong> Create a MyRentCard account to pre-fill your information for faster qualification calls.
               </p>
             </div>
 
@@ -226,10 +226,10 @@ const GuestInterestForm = ({ onSubmit, isPending, propertyAddress }: GuestFormPr
               {isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Submitting Interest...
+                  Scheduling Call...
                 </>
               ) : (
-                "Submit Interest"
+                "Schedule Qualification Call"
               )}
             </Button>
           </form>
@@ -271,10 +271,10 @@ const TenantInterestForm = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CheckCircle className="w-5 h-5 text-primary" />
-          Quick Interest Submission
+          Quick Qualification Call
         </CardTitle>
         <CardDescription>
-          Your information is pre-filled from your MyRentCard profile.
+          Schedule a qualification call with your pre-filled MyRentCard profile.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -341,7 +341,7 @@ const TenantInterestForm = ({
                     <Textarea
                       {...field}
                       value={field.value || ""}
-                      placeholder="Tell us more about your interest or any questions you have..."
+                      placeholder="Tell us about your interest or preferred times for a qualification call..."
                       rows={3}
                       data-testid="textarea-tenant-message"
                     />
@@ -360,10 +360,10 @@ const TenantInterestForm = ({
               {isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Submitting Interest...
+                  Scheduling Call...
                 </>
               ) : (
-                "Submit Interest"
+                "Schedule Qualification Call"
               )}
             </Button>
           </form>
@@ -383,10 +383,10 @@ const SuccessMessage = ({ onClose }: { onClose: () => void }) => (
         </div>
         <div>
           <h3 className="text-lg font-semibold text-green-800" data-testid="text-success-title">
-            Interest Submitted Successfully!
+            Qualification Call Requested!
           </h3>
           <p className="text-gray-600 mt-2">
-            Your interest has been sent to the landlord. They will contact you using your preferred method.
+            Your request has been sent to the landlord. They will contact you to schedule a qualification call or property viewing.
           </p>
         </div>
         <Button onClick={onClose} variant="outline" data-testid="button-close-success">
@@ -445,8 +445,8 @@ export default function InterestSubmissionForm({
     onSuccess: () => {
       setIsSubmitted(true);
       toast({
-        title: "Interest Submitted",
-        description: "Your interest has been sent to the landlord successfully.",
+        title: "Qualification Call Requested",
+        description: "Your request has been sent to the landlord successfully.",
       });
       
       // Invalidate related queries
@@ -458,8 +458,8 @@ export default function InterestSubmissionForm({
     },
     onError: (error: Error) => {
       toast({
-        title: "Submission Failed",
-        description: error.message || "There was an error submitting your interest. Please try again.",
+        title: "Request Failed",
+        description: error.message || "There was an error submitting your qualification call request. Please try again.",
         variant: "destructive",
       });
     },
