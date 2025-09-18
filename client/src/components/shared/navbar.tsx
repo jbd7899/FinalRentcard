@@ -225,7 +225,7 @@ export default function Navbar() {
                 type="button"
                 onClick={() => setLocation(ROUTES.AUTH)}
               >
-                Join Network
+                Login
               </Button>
             </div>
           )}
