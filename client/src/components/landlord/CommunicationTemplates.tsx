@@ -34,11 +34,10 @@ import { useToast } from "@/hooks/use-toast";
 import type { CommunicationTemplate } from '@shared/schema';
 
 interface TemplateFormData {
-  name: string;
-  subject?: string;
-  body: string;
+  title: string;
+  content: string;
   category: string;
-  tags?: string[];
+  variables?: string[];
 }
 
 const CommunicationTemplates = () => {
@@ -48,11 +47,10 @@ const CommunicationTemplates = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<CommunicationTemplate | null>(null);
   const [formData, setFormData] = useState<TemplateFormData>({
-    name: '',
-    subject: '',
-    body: '',
+    title: '',
+    content: '',
     category: 'general',
-    tags: []
+    variables: []
   });
 
   // Fetch templates
@@ -61,7 +59,7 @@ const CommunicationTemplates = () => {
     queryFn: async () => {
       const response = await fetch('/api/landlord/communication-templates');
       if (!response.ok) throw new Error('Failed to fetch templates');
-      return response.json() as CommunicationTemplate[];
+      return (await response.json()) as CommunicationTemplate[];
     }
   });
 
@@ -149,19 +147,18 @@ const CommunicationTemplates = () => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      subject: '',
-      body: '',
+      title: '',
+      content: '',
       category: 'general',
-      tags: []
+      variables: []
     });
   };
 
   const handleCreateTemplate = () => {
-    if (!formData.name.trim() || !formData.body.trim()) {
+    if (!formData.title.trim() || !formData.content.trim()) {
       toast({
         title: "Error",
-        description: "Please provide a name and body for the template.",
+        description: "Please provide a title and content for the template.",
         variant: "destructive",
       });
       return;
@@ -170,10 +167,10 @@ const CommunicationTemplates = () => {
   };
 
   const handleUpdateTemplate = () => {
-    if (!editingTemplate || !formData.name.trim() || !formData.body.trim()) {
+    if (!editingTemplate || !formData.title.trim() || !formData.content.trim()) {
       toast({
         title: "Error",
-        description: "Please provide a name and body for the template.",
+        description: "Please provide a title and content for the template.",
         variant: "destructive",
       });
       return;
@@ -184,11 +181,10 @@ const CommunicationTemplates = () => {
   const handleEditTemplate = (template: CommunicationTemplate) => {
     setEditingTemplate(template);
     setFormData({
-      name: template.name,
-      subject: template.subject || '',
-      body: template.body,
+      title: template.title,
+      content: template.content,
       category: template.category || 'general',
-      tags: template.tags || []
+      variables: template.variables || []
     });
   };
 
@@ -199,13 +195,13 @@ const CommunicationTemplates = () => {
   };
 
   const categories = [
-    { value: 'general', label: 'General' },
-    { value: 'application_followup', label: 'Application Follow-up' },
-    { value: 'property_inquiry', label: 'Property Inquiry' },
-    { value: 'scheduling', label: 'Scheduling' },
-    { value: 'documentation', label: 'Documentation' },
-    { value: 'rejection', label: 'Application Rejection' },
-    { value: 'approval', label: 'Application Approval' }
+    { value: 'general', label: 'General Communication' },
+    { value: 'application_followup', label: 'Personal Application Follow-up' },
+    { value: 'property_inquiry', label: 'Property Inquiry Response' },
+    { value: 'scheduling', label: 'Personal Showing Scheduling' },
+    { value: 'documentation', label: 'Documentation Requests' },
+    { value: 'rejection', label: 'Respectful Application Decline' },
+    { value: 'approval', label: 'Welcome New Tenant' }
   ];
 
   const getCategoryColor = (category: string) => {
@@ -244,20 +240,20 @@ const CommunicationTemplates = () => {
               <DialogHeader>
                 <DialogTitle>Create Communication Template</DialogTitle>
                 <DialogDescription>
-                  Create a reusable template for tenant communications
+                  Create a personal communication template to help you connect with prospective tenants as an individual landlord
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="template-name">Template Name</Label>
+                    <Label htmlFor="template-title">Template Title</Label>
                     <Input
-                      data-testid="input-template-name"
-                      id="template-name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g., Initial Property Inquiry Response"
+                      data-testid="input-template-title"
+                      id="template-title"
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g., Personal Property Inquiry Response"
                     />
                   </div>
                   
@@ -281,24 +277,14 @@ const CommunicationTemplates = () => {
                   </div>
                 </div>
                 
-                <div>
-                  <Label htmlFor="template-subject">Subject (for emails)</Label>
-                  <Input
-                    data-testid="input-template-subject"
-                    id="template-subject"
-                    value={formData.subject}
-                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="e.g., Thank you for your interest in our property"
-                  />
-                </div>
                 
                 <div>
-                  <Label htmlFor="template-body">Message Body</Label>
+                  <Label htmlFor="template-content">Message Content</Label>
                   <Textarea
-                    data-testid="textarea-template-body"
-                    id="template-body"
-                    value={formData.body}
-                    onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
+                    data-testid="textarea-template-content"
+                    id="template-content"
+                    value={formData.content}
+                    onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                     placeholder="Template message content..."
                     rows={8}
                   />
@@ -348,7 +334,7 @@ const CommunicationTemplates = () => {
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-gray-600" />
-                    <span className="font-medium">{template.name}</span>
+                    <span className="font-medium">{template.title}</span>
                     <Badge 
                       variant="secondary" 
                       className={`text-xs ${getCategoryColor(template.category || 'general')}`}
@@ -378,14 +364,9 @@ const CommunicationTemplates = () => {
                   </div>
                 </div>
                 
-                {template.subject && (
-                  <div className="text-sm font-medium text-gray-700 mb-1">
-                    Subject: {template.subject}
-                  </div>
-                )}
                 
                 <div className="text-sm text-gray-600 line-clamp-2">
-                  {template.body}
+                  {template.content}
                 </div>
                 
                 {template.usageCount && (
@@ -399,8 +380,8 @@ const CommunicationTemplates = () => {
         ) : (
           <div className="text-center py-8 text-gray-500">
             <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-            <p>No templates created yet</p>
-            <p className="text-sm">Create your first template to get started</p>
+            <p>No communication templates yet</p>
+            <p className="text-sm">Create your first template to communicate professionally as an individual landlord</p>
           </div>
         )}
       </CardContent>
@@ -411,20 +392,20 @@ const CommunicationTemplates = () => {
           <DialogHeader>
             <DialogTitle>Edit Communication Template</DialogTitle>
             <DialogDescription>
-              Update your communication template
+              Update your personal communication template for tenant interactions
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="edit-template-name">Template Name</Label>
+                <Label htmlFor="edit-template-title">Template Title</Label>
                 <Input
-                  data-testid="input-edit-template-name"
-                  id="edit-template-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="e.g., Initial Property Inquiry Response"
+                  data-testid="input-edit-template-title"
+                  id="edit-template-title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="e.g., Personal Property Inquiry Response"
                 />
               </div>
               
@@ -448,24 +429,14 @@ const CommunicationTemplates = () => {
               </div>
             </div>
             
-            <div>
-              <Label htmlFor="edit-template-subject">Subject (for emails)</Label>
-              <Input
-                data-testid="input-edit-template-subject"
-                id="edit-template-subject"
-                value={formData.subject}
-                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                placeholder="e.g., Thank you for your interest in our property"
-              />
-            </div>
             
             <div>
-              <Label htmlFor="edit-template-body">Message Body</Label>
+              <Label htmlFor="edit-template-content">Message Content</Label>
               <Textarea
-                data-testid="textarea-edit-template-body"
-                id="edit-template-body"
-                value={formData.body}
-                onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
+                data-testid="textarea-edit-template-content"
+                id="edit-template-content"
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                 placeholder="Template message content..."
                 rows={8}
               />

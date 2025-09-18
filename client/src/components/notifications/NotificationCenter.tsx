@@ -98,6 +98,12 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
         return <Eye className="w-4 h-4 text-blue-500" />;
       case 'interest_submission':
         return <Heart className="w-4 h-4 text-red-500" />;
+      case 'landlord_response':
+        return <Bell className="w-4 h-4 text-green-500" />;
+      case 'personal_connection':
+        return <Heart className="w-4 h-4 text-purple-500" />;
+      case 'individual_landlord_message':
+        return <Bell className="w-4 h-4 text-blue-600" />;
       default:
         return <Bell className="w-4 h-4 text-gray-500" />;
     }
@@ -140,7 +146,7 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
       <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-hidden">
         <div className="flex items-center justify-between p-2">
           <DropdownMenuLabel className="font-semibold text-sm" data-testid="text-notifications-title">
-            Notifications
+            Landlord Network Updates
           </DropdownMenuLabel>
           <div className="flex items-center gap-2">
               {unreadCount > 0 && (
@@ -172,13 +178,13 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
         <div className="max-h-80 overflow-y-auto">
           {isLoading ? (
             <div className="p-4 text-center text-sm text-muted-foreground" data-testid="text-loading">
-              Loading notifications...
+              Loading your individual landlord network updates...
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground" data-testid="text-no-notifications">
               <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
               No notifications yet
-              <p className="text-xs mt-1">We'll notify you when someone views your RentCard!</p>
+              <p className="text-xs mt-1">We'll notify you when individual landlords view your RentCard!</p>
             </div>
           ) : (
             <div className="space-y-1">

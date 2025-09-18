@@ -1,6 +1,7 @@
 import sgMail from '@sendgrid/mail';
 import nodemailer from 'nodemailer';
 import { TenantReference } from '@shared/schema';
+import { INDIVIDUAL_LANDLORD_STATS, NETWORK_NOTIFICATIONS } from '@shared/network-messaging';
 
 // Email service configuration
 interface EmailConfig {
@@ -75,7 +76,7 @@ class EmailService {
       provider: process.env.SENDGRID_API_KEY ? 'sendgrid' : 'nodemailer',
       sendgridApiKey: process.env.SENDGRID_API_KEY,
       fromEmail: process.env.EMAIL_FROM || 'noreply@myrentcard.com',
-      fromName: process.env.EMAIL_FROM_NAME || 'MyRentCard Network'
+      fromName: process.env.EMAIL_FROM_NAME || 'MyRentCard Individual Landlord Network'
     };
   }
 
@@ -316,7 +317,7 @@ class EmailService {
         <div style="padding: 40px 30px;">
           <h2 style="color: #2d3748; margin: 0 0 20px 0;">Hello ${data.referenceName},</h2>
           <p style="color: #4a5568; line-height: 1.6; margin: 0 0 20px 0;">
-            <strong>${data.tenantName}</strong> has listed you as a reference on their MyRentCard profile. Your verification enables landlords to skip 1-2 days of reference coordination and review applications the same day.
+            <strong>${data.tenantName}</strong> has listed you as a reference on their MyRentCard profile. Your verification helps individual landlords make faster, more informed decisions about prospective tenants.
           </p>
           <p style="color: #4a5568; line-height: 1.6; margin: 0 0 30px 0;">
             Please take a moment to verify this reference by clicking the button below:
@@ -343,7 +344,7 @@ class EmailService {
     
     const text = `Hello ${data.referenceName},
 
-${data.tenantName} has listed you as a reference. Your verification helps landlords review applications in 15 minutes instead of 45 by providing complete information upfront.
+${data.tenantName} has listed you as a reference. Your verification helps individual landlords make quick, personal decisions with complete tenant information.
 
 Please verify this reference by visiting the following link:
 ${data.verificationUrl}
@@ -389,7 +390,7 @@ Thank you for your time!
         </div>
         <div style="background-color: #f7fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="color: #a0aec0; font-size: 12px; margin: 0;">
-            Sent via MyRentCard - Skip document chase emails, complete upfront verification
+            Sent via MyRentCard Individual Landlord Network - Direct tenant-landlord connections
           </p>
         </div>
       </div>
@@ -441,7 +442,7 @@ Contact Information: ${data.contactInfo}
         </div>
         <div style="background-color: #f7fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="color: #a0aec0; font-size: 12px; margin: 0;">
-            Thank you for enabling faster application processing!
+            Thank you for growing our individual landlord community!
           </p>
         </div>
       </div>
@@ -473,7 +474,7 @@ Keep sharing MyRentCard: ${data.referralLink}
         <div style="padding: 40px 30px;">
           <h2 style="color: #2d3748; margin: 0 0 20px 0;">Hello ${data.userName},</h2>
           <p style="color: #4a5568; line-height: 1.6; margin: 0 0 20px 0;">
-            Welcome to MyRentCard! Your complete profile eliminates ${data.userType === 'tenant' ? '60-90 minutes of repetitive application entry' : '5-8 follow-up emails per application'} and enables same-day reviews.
+            Welcome to the MyRentCard Individual Landlord Network! Your complete profile connects you directly with ${data.userType === 'tenant' ? `individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} and respond ${INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED}` : 'verified tenants seeking personal landlord relationships over corporate management'}.
           </p>
           ${data.referrerName && data.rewardAmount ? `
           <div style="background-color: #edf2f7; padding: 20px; border-radius: 8px; margin: 30px 0;">
@@ -501,7 +502,7 @@ Keep sharing MyRentCard: ${data.referralLink}
     
     const text = `Welcome to MyRentCard, ${data.userName}!
 
-Your verified profile saves ${data.userType === 'tenant' ? '60-90 minutes per application through one-time setup' : '3-6 hours weekly by eliminating document verification tasks'}.
+Your verified profile connects you with ${data.userType === 'tenant' ? `individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} and make personal decisions faster than corporate management` : 'quality tenants who prefer individual landlord relationships over corporate bureaucracy'}.
 
 ${data.referrerName && data.rewardAmount ? `Thanks to ${data.referrerName} for referring you! You've both earned ${data.rewardAmount}.` : ''}
 
