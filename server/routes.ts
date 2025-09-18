@@ -5,12 +5,16 @@ import { storage } from "./storage";
 import { 
   insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema, insertPropertyQRCodeSchema,
   insertTenantContactPreferencesSchema, insertCommunicationLogSchema, insertTenantBlockedContactsSchema, insertCommunicationTemplateSchema,
-  insertShortlinkSchema, insertShortlinkClickSchema, insertRecipientContactSchema, insertTenantMessageTemplateSchema, insertContactSharingHistorySchema
+  insertShortlinkSchema, insertShortlinkClickSchema, insertRecipientContactSchema, insertTenantMessageTemplateSchema, insertContactSharingHistorySchema,
+  // Import referral schemas
+  insertReferralSchema, insertReferralRewardSchema
 } from "@shared/schema";
 import { 
   properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode,
   TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick,
-  RecipientContact, TenantMessageTemplate, ContactSharingHistory
+  RecipientContact, TenantMessageTemplate, ContactSharingHistory,
+  // Import referral types
+  Referral, ReferralReward
 } from "@shared/schema";
 import {
   insertRentcardViewSchema, insertViewSessionSchema, insertInterestAnalyticsSchema,
@@ -1857,9 +1861,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creditScore: tenantProfile.creditScore,
         employmentInfo: tenantProfile.employmentInfo,
         rentalHistory: tenantProfile.rentalHistory || [],
-        references: tenantProfile.references || [],
+        references: [], // References are stored separately and can be fetched if needed
         documents: [], // Documents can be added later if needed
-        interests: tenantProfile.interests || []
+        interests: [] // Interests are stored separately and can be fetched if needed
       };
       
       res.json(rentCardData);
@@ -4490,6 +4494,328 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       handleRouteError(error, res, 'auto-check progress');
+    }
+  });
+
+  // ============================================================================
+  // REFERRAL API ENDPOINTS - PHASE 1 NETWORK EFFECTS
+  // ============================================================================
+
+  // 1. POST /api/referrals/create - Create referral relationship when user clicks referral link
+  app.post("/api/referrals/create", async (req, res) => {
+    try {
+      const validatedData = insertReferralSchema.parse(req.body);
+      
+      // Validate referral eligibility if referrer is provided
+      if (validatedData.referrerUserId && validatedData.refereeEmail) {
+        const eligibility = await storage.validateReferralEligibility(
+          validatedData.referrerUserId, 
+          validatedData.refereeEmail
+        );
+        
+        if (!eligibility.eligible) {
+          return res.status(400).json({ 
+            message: "Referral not eligible",
+            reason: eligibility.reason,
+            success: false
+          });
+        }
+      }
+
+      // Extract request metadata for attribution tracking
+      const metadata = extractRequestMetadata(req);
+      
+      const referral = await storage.createReferral({
+        ...validatedData,
+        metadata: {
+          ...validatedData.metadata,
+          deviceInfo: metadata.deviceInfo,
+          locationInfo: metadata.referrer ? { source: metadata.referrer } : undefined,
+          originalUrl: req.originalUrl,
+          customData: { createdVia: 'api', userAgent: metadata.userAgent }
+        }
+      });
+
+      // Track the referral click
+      await storage.trackReferralClick(referral.referralCode, metadata);
+
+      res.status(201).json({
+        success: true,
+        referral: {
+          id: referral.id,
+          referralCode: referral.referralCode,
+          status: referral.status,
+          expiresAt: referral.expiresAt
+        }
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'create referral');
+    }
+  });
+
+  // 2. POST /api/referrals/convert - Track conversion events (signup, first share, etc.)
+  app.post("/api/referrals/convert", async (req, res) => {
+    try {
+      const { referralCode, conversionEvent, refereeUserId, metadata } = req.body;
+      
+      if (!referralCode || !conversionEvent) {
+        return res.status(400).json({ 
+          message: "referralCode and conversionEvent are required",
+          success: false
+        });
+      }
+
+      // Validate conversion event
+      const validEvents = ['signup', 'first_rentcard', 'property_inquiry', 'application_submitted'];
+      if (!validEvents.includes(conversionEvent)) {
+        return res.status(400).json({ 
+          message: `Invalid conversion event. Must be one of: ${validEvents.join(', ')}`,
+          success: false
+        });
+      }
+
+      const referral = await storage.convertReferral(referralCode, conversionEvent, refereeUserId);
+      
+      // Get any rewards that were created
+      const rewards = await storage.getReferralRewards(referral.referrerUserId || 0);
+      const newRewards = rewards.filter(r => 
+        r.referralId === referral.id && 
+        r.triggerEvent === conversionEvent
+      );
+
+      res.json({
+        success: true,
+        referral: {
+          id: referral.id,
+          status: referral.status,
+          conversionEvent: referral.conversionEvent,
+          convertedAt: referral.convertedAt
+        },
+        rewardsCreated: newRewards.length,
+        rewards: newRewards.map(r => ({
+          id: r.id,
+          type: r.rewardType,
+          value: r.rewardValue,
+          description: r.rewardDescription,
+          recipientType: r.recipientType
+        }))
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'convert referral');
+    }
+  });
+
+  // 3. GET /api/referrals/stats/:userId - Get user's referral statistics and rewards
+  app.get("/api/referrals/stats/:userId", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Verify user can access these stats (own stats or admin)
+      if (req.user?.id !== userId) {
+        return res.status(403).json({ 
+          message: "Access denied: You can only view your own referral statistics",
+          success: false
+        });
+      }
+
+      const stats = await storage.getReferralStats(userId);
+      
+      // Get detailed referrals and rewards
+      const referrals = await storage.getReferralsByReferrer(userId);
+      const rewards = await storage.getReferralRewards(userId);
+      
+      // Get available (earned but not claimed) rewards
+      const availableRewards = rewards.filter(r => r.status === 'earned');
+      
+      res.json({
+        success: true,
+        stats,
+        summary: {
+          totalReferrals: stats.totalReferrals,
+          conversionRate: `${stats.conversionRate}%`,
+          totalEarned: `$${(stats.claimedRewards + stats.pendingRewards) / 100}`,
+          availableToRedeem: `$${stats.pendingRewards / 100}`,
+          availableRewardsCount: availableRewards.length
+        },
+        recentReferrals: referrals.slice(0, 10).map(r => ({
+          id: r.id,
+          referralCode: r.referralCode,
+          refereeEmail: r.refereeEmail,
+          status: r.status,
+          conversionEvent: r.conversionEvent,
+          createdAt: r.createdAt,
+          convertedAt: r.convertedAt
+        })),
+        availableRewards: availableRewards.map(r => ({
+          id: r.id,
+          type: r.rewardType,
+          value: r.rewardValue,
+          description: r.rewardDescription,
+          earnedAt: r.earnedAt,
+          expiresAt: r.expiresAt
+        }))
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get referral stats');
+    }
+  });
+
+  // 4. POST /api/referrals/claim-reward - Allow users to claim available rewards
+  app.post("/api/referrals/claim-reward", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { rewardId } = req.body;
+      
+      if (!rewardId) {
+        return res.status(400).json({ 
+          message: "rewardId is required",
+          success: false
+        });
+      }
+
+      const claimedReward = await storage.claimReward(parseInt(rewardId), req.user.id);
+      
+      res.json({
+        success: true,
+        message: "Reward claimed successfully",
+        reward: {
+          id: claimedReward.id,
+          type: claimedReward.rewardType,
+          value: claimedReward.rewardValue,
+          description: claimedReward.rewardDescription,
+          redeemedAt: claimedReward.redeemedAt,
+          redemptionDetails: claimedReward.redemptionDetails
+        }
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'claim reward');
+    }
+  });
+
+  // 5. GET /api/share-tokens/:token/with-referral - Enhanced token endpoint with referral attribution
+  app.get("/api/share-tokens/:token/with-referral", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const referralCode = req.query.ref as string;
+      
+      const shareToken = await storage.getShareToken(token);
+      if (!shareToken) {
+        return res.status(404).json({ message: "Share token not found" });
+      }
+
+      if (shareToken.revoked) {
+        return res.status(410).json({ message: "Share token has been revoked" });
+      }
+
+      if (shareToken.expiresAt && new Date() > new Date(shareToken.expiresAt)) {
+        return res.status(410).json({ message: "Share token has expired" });
+      }
+
+      // Track the view
+      await storage.trackTokenView(token);
+      
+      // If referral code is provided, create referral attribution
+      let referralAttribution = null;
+      if (referralCode) {
+        try {
+          const referral = await storage.getReferralByCode(referralCode);
+          if (referral && referral.status === 'pending') {
+            // Update referral with share token link
+            await storage.updateReferralStatus(referral.id, 'pending', undefined, {
+              ...referral.metadata,
+              shareTokenAccessed: token,
+              accessedAt: new Date().toISOString(),
+              accessSource: 'share_token_with_referral'
+            });
+            
+            referralAttribution = {
+              referralCode: referral.referralCode,
+              referrerName: referral.referrerName,
+              eligible: true
+            };
+          }
+        } catch (referralError) {
+          console.error('Error processing referral attribution:', referralError);
+          // Don't fail the request if referral processing fails
+        }
+      }
+
+      // Get tenant profile for rent card data
+      const tenantProfile = await storage.getTenantProfileById(shareToken.tenantId);
+      const user = tenantProfile ? await storage.getUser(tenantProfile.userId || 0) : null;
+      const rentCard = user ? await storage.getRentCard(user.id) : null;
+
+      res.json({
+        success: true,
+        shareToken: {
+          token: shareToken.token,
+          scope: shareToken.scope,
+          createdAt: shareToken.createdAt,
+          expiresAt: shareToken.expiresAt
+        },
+        tenantProfile,
+        rentCard,
+        referralAttribution,
+        metadata: {
+          viewCount: shareToken.viewCount + 1,
+          lastViewed: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'get share token with referral');
+    }
+  });
+
+  // 6. POST /api/shortlinks/with-referral - Enhanced shortlink creation with referral codes
+  app.post("/api/shortlinks/with-referral", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      const { referralCode, ...shortlinkData } = req.body;
+      const validatedData = insertShortlinkSchema.parse(shortlinkData);
+
+      // Create the shortlink with referral attribution
+      const shortlink = await storage.createShortlinkWithReferral(validatedData, referralCode);
+      
+      // If referral code was provided, get referral info
+      let referralInfo = null;
+      if (referralCode) {
+        try {
+          const referral = await storage.getReferralByCode(referralCode);
+          if (referral) {
+            referralInfo = {
+              referralCode: referral.referralCode,
+              referrerName: referral.referrerName,
+              attribution: 'shortlink_creation'
+            };
+          }
+        } catch (referralError) {
+          console.error('Error linking referral to shortlink:', referralError);
+          // Don't fail shortlink creation if referral linking fails
+        }
+      }
+
+      res.status(201).json({
+        success: true,
+        shortlink: {
+          id: shortlink.id,
+          slug: shortlink.slug,
+          targetUrl: shortlink.targetUrl,
+          shortUrl: `${req.protocol}://${req.get('host')}/r/${shortlink.slug}`,
+          resourceType: shortlink.resourceType,
+          isActive: shortlink.isActive,
+          expiresAt: shortlink.expiresAt,
+          createdAt: shortlink.createdAt
+        },
+        referralAttribution: referralInfo
+      });
+    } catch (error) {
+      handleRouteError(error, res, 'create shortlink with referral');
     }
   });
 
