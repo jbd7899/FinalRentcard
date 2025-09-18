@@ -49,7 +49,17 @@ const LandlordSidebar: React.FC<SidebarProps> = ({
     return location === path;
   };
 
-  const navigationItems = [
+  type NavigationItem = {
+    icon: React.ReactElement;
+    label: string;
+    active: boolean;
+    comingSoon?: boolean;
+  } & (
+    | { route: string; action?: never }
+    | { action: () => void; route?: never }
+  );
+
+  const navigationItems: NavigationItem[] = [
     { 
       icon: <Home className="w-5 h-5" />, 
       label: "Dashboard", 
@@ -71,9 +81,9 @@ const LandlordSidebar: React.FC<SidebarProps> = ({
     },
     { 
       icon: <Send className="w-5 h-5" />, 
-      label: "Request RentCard", 
-      action: () => openModal('requestRentCard'),
-      active: false
+      label: "RentCard Requests", 
+      route: ROUTES.LANDLORD.RENTCARD_REQUESTS, 
+      active: isActive(ROUTES.LANDLORD.RENTCARD_REQUESTS)
     }
   ];
 

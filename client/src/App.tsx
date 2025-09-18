@@ -28,6 +28,7 @@ import PropertyScreeningPage from "@/pages/landlord/screening-page";
 import ScreeningManagement from "@/pages/landlord/screening";
 import VerifyDocumentsPage from "@/pages/landlord/verify-documents";
 import ContactManagement from "@/pages/landlord/ContactManagement";
+import RentCardRequests from "@/pages/landlord/rentcard-requests";
 
 // Tenant Pages
 import TenantDashboard from "@/pages/tenant/dashboard";
@@ -58,6 +59,7 @@ function Router() {
       <ProtectedRoute path="/landlord/properties/:id/edit" component={AddProperty} />
       <ProtectedRoute path={ROUTES.LANDLORD.VERIFY_DOCUMENTS} component={VerifyDocumentsPage} />
       <ProtectedRoute path={ROUTES.LANDLORD.CONTACT_MANAGEMENT} component={ContactManagement} />
+      <ProtectedRoute path={ROUTES.LANDLORD.RENTCARD_REQUESTS} component={RentCardRequests} />
       <Route path="/landlord/screening/:slug" component={PropertyScreeningPage} />
       <ProtectedRoute path={ROUTES.LANDLORD.SCREENING} component={ScreeningManagement} />
       <Route path="/property/archived/:slug" component={ArchivedPropertyPage} />
