@@ -1154,6 +1154,12 @@ export type InsertTenantMessageTemplate = z.infer<typeof insertTenantMessageTemp
 export type ContactSharingHistory = typeof contactSharingHistory.$inferSelect;
 export type InsertContactSharingHistory = z.infer<typeof insertContactSharingHistorySchema>;
 
+// Referral types
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
+export type ReferralReward = typeof referralRewards.$inferSelect;
+export type InsertReferralReward = z.infer<typeof insertReferralRewardSchema>;
+
 export type StatsTimeframe = 'today' | '7days' | '30days';
 
 export interface StatsDataPoint {

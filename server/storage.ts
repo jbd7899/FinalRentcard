@@ -3,15 +3,19 @@ import {
   TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick,
   RecipientContact, TenantMessageTemplate, ContactSharingHistory,
   // Import insert types for shortlinks
-  InsertShortlink, InsertShortlinkClick
+  InsertShortlink, InsertShortlinkClick,
+  // Import referral types
+  Referral, ReferralReward, InsertReferral, InsertReferralReward
 } from "@shared/schema";
 import { 
   users, tenantProfiles, landlordProfiles, properties, interests, rentCards, shareTokens, propertyQRCodes,
   tenantContactPreferences, communicationLogs, tenantBlockedContacts, communicationTemplates, shortlinks, shortlinkClicks,
-  recipientContacts, tenantMessageTemplates, contactSharingHistory
+  recipientContacts, tenantMessageTemplates, contactSharingHistory,
+  // Import referral tables
+  referrals, referralRewards
 } from "@shared/schema";
 import { db, sql } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, desc, asc, count, sum } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -335,6 +339,43 @@ export interface IStorage {
   checkStepCompletion(userId: number, stepKey: string): Promise<boolean>;
   calculateOnboardingProgress(userId: number): Promise<{ percentage: number; completedSteps: number; totalSteps: number }>;
   initializeOnboarding(userId: number, userType: 'tenant' | 'landlord'): Promise<OnboardingProgress>;
+
+  // Referral operations - Phase 1 Network Effects
+  // Core referral management
+  createReferral(referral: Omit<InsertReferral, 'referralCode'>): Promise<Referral>;
+  getReferralByCode(referralCode: string): Promise<Referral | undefined>;
+  getReferralsByReferrer(referrerUserId: number, referrerEmail?: string): Promise<Referral[]>;
+  getReferralsByReferee(refereeUserId: number, refereeEmail?: string): Promise<Referral[]>;
+  updateReferralStatus(id: number, status: string, conversionEvent?: string, metadata?: any): Promise<Referral>;
+  convertReferral(referralCode: string, conversionEvent: string, refereeUserId?: number): Promise<Referral>;
+  
+  // Referral rewards management
+  createReferralReward(reward: InsertReferralReward): Promise<ReferralReward>;
+  getReferralRewards(recipientUserId: number, status?: string): Promise<ReferralReward[]>;
+  updateRewardStatus(id: number, status: string, redemptionDetails?: any): Promise<ReferralReward>;
+  claimReward(id: number, userId: number): Promise<ReferralReward>;
+  calculateEligibleRewards(referralId: number): Promise<{ referrerReward?: InsertReferralReward; refereeReward?: InsertReferralReward; }>;
+  
+  // Referral statistics and analytics
+  getReferralStats(userId: number): Promise<{
+    totalReferrals: number;
+    convertedReferrals: number;
+    pendingReferrals: number;
+    totalRewards: number;
+    claimedRewards: number;
+    pendingRewards: number;
+    conversionRate: number;
+    rewardsByType: { type: string; count: number; totalValue: number; }[];
+  }>;
+  
+  // Attribution and tracking
+  generateReferralCode(): Promise<string>;
+  trackReferralClick(referralCode: string, metadata?: any): Promise<void>;
+  validateReferralEligibility(referrerUserId: number, refereeEmail: string): Promise<{ eligible: boolean; reason?: string; }>;
+  
+  // Integration with existing systems
+  createShareTokenWithReferral(tenantId: number, referralCode?: string, data?: { scope?: string; expiresAt?: Date }): Promise<ShareToken>;
+  createShortlinkWithReferral(shortlink: InsertShortlink, referralCode?: string): Promise<Shortlink>;
 
   sessionStore: session.Store;
 }
@@ -1630,7 +1671,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...analytics,
         shareDate: new Date()
-      })
+      } as any)
       .returning();
     return newAnalytics;
   }
@@ -2057,11 +2098,7 @@ export class DatabaseStorage implements IStorage {
       .insert(shortlinks)
       .values({
         ...shortlink,
-        tenantId: shortlink.tenantId ?? null,
-        landlordId: shortlink.landlordId ?? null,
-        propertyId: shortlink.propertyId ?? null,
-        description: shortlink.description ?? null,
-        expiresAt: shortlink.expiresAt ?? null,
+        slug: await this.generateShortSlug(),
         clickCount: 0,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -2308,8 +2345,10 @@ export class DatabaseStorage implements IStorage {
           stepKey: step.stepKey,
           stepTitle: step.stepTitle,
           stepDescription: step.stepDescription,
-          requirementsMet: step.requirementsMet
-        });
+          requirementsMet: step.requirementsMet,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as any);
       }
     }
 
@@ -2526,6 +2565,452 @@ export class DatabaseStorage implements IStorage {
       .where(eq(contactSharingHistory.id, id))
       .returning();
     return updatedHistory;
+  }
+
+  // ============================================================================
+  // REFERRAL OPERATIONS - PHASE 1 NETWORK EFFECTS
+  // ============================================================================
+
+  // Core referral management
+  async createReferral(referral: Omit<InsertReferral, 'referralCode'>): Promise<Referral> {
+    const referralCode = await this.generateReferralCode();
+    const [newReferral] = await db.insert(referrals).values({
+      ...referral,
+      referralCode,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any).returning();
+    return newReferral;
+  }
+
+  async getReferralByCode(referralCode: string): Promise<Referral | undefined> {
+    const [referral] = await db.select().from(referrals).where(eq(referrals.referralCode, referralCode));
+    return referral;
+  }
+
+  async getReferralsByReferrer(referrerUserId: number, referrerEmail?: string): Promise<Referral[]> {
+    const conditions = [];
+    if (referrerUserId) {
+      conditions.push(eq(referrals.referrerUserId, referrerUserId));
+    }
+    if (referrerEmail) {
+      conditions.push(eq(referrals.referrerEmail, referrerEmail));
+    }
+    
+    return await db.select().from(referrals)
+      .where(conditions.length > 0 ? or(...conditions) : undefined)
+      .orderBy(desc(referrals.createdAt));
+  }
+
+  async getReferralsByReferee(refereeUserId: number, refereeEmail?: string): Promise<Referral[]> {
+    const conditions = [];
+    if (refereeUserId) {
+      conditions.push(eq(referrals.refereeUserId, refereeUserId));
+    }
+    if (refereeEmail) {
+      conditions.push(eq(referrals.refereeEmail, refereeEmail));
+    }
+    
+    return await db.select().from(referrals)
+      .where(conditions.length > 0 ? or(...conditions) : undefined)
+      .orderBy(desc(referrals.createdAt));
+  }
+
+  async updateReferralStatus(id: number, status: string, conversionEvent?: string, metadata?: any): Promise<Referral> {
+    const updateData: any = { status, updatedAt: new Date() };
+    
+    if (conversionEvent) {
+      updateData.conversionEvent = conversionEvent;
+      updateData.convertedAt = new Date();
+    }
+    
+    if (metadata) {
+      updateData.metadata = metadata;
+    }
+
+    const [updatedReferral] = await db
+      .update(referrals)
+      .set(updateData)
+      .where(eq(referrals.id, id))
+      .returning();
+    return updatedReferral;
+  }
+
+  async convertReferral(referralCode: string, conversionEvent: string, refereeUserId?: number): Promise<Referral> {
+    const referral = await this.getReferralByCode(referralCode);
+    if (!referral) {
+      throw new Error("Referral not found");
+    }
+
+    const updateData: any = {
+      status: 'converted',
+      conversionEvent,
+      convertedAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    if (refereeUserId) {
+      updateData.refereeUserId = refereeUserId;
+    }
+
+    const [updatedReferral] = await db
+      .update(referrals)
+      .set(updateData)
+      .where(eq(referrals.id, referral.id))
+      .returning();
+
+    // Automatically calculate and create eligible rewards
+    try {
+      const eligibleRewards = await this.calculateEligibleRewards(referral.id);
+      
+      if (eligibleRewards.referrerReward) {
+        await this.createReferralReward(eligibleRewards.referrerReward);
+      }
+      
+      if (eligibleRewards.refereeReward) {
+        await this.createReferralReward(eligibleRewards.refereeReward);
+      }
+    } catch (error) {
+      console.error('Error creating referral rewards:', error);
+      // Don't fail the conversion if reward creation fails
+    }
+
+    return updatedReferral;
+  }
+
+  // Referral rewards management
+  async createReferralReward(reward: InsertReferralReward): Promise<ReferralReward> {
+    const [newReward] = await db.insert(referralRewards).values({
+      ...reward,
+      earnedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any).returning();
+    return newReward;
+  }
+
+  async getReferralRewards(recipientUserId: number, status?: string): Promise<ReferralReward[]> {
+    const conditions = [eq(referralRewards.recipientUserId, recipientUserId)];
+    
+    if (status) {
+      conditions.push(eq(referralRewards.status, status));
+    }
+    
+    return await db.select().from(referralRewards)
+      .where(and(...conditions))
+      .orderBy(desc(referralRewards.createdAt));
+  }
+
+  async updateRewardStatus(id: number, status: string, redemptionDetails?: any): Promise<ReferralReward> {
+    const updateData: any = { status, updatedAt: new Date() };
+    
+    if (status === 'redeemed') {
+      updateData.redeemedAt = new Date();
+      if (redemptionDetails) {
+        updateData.redemptionDetails = redemptionDetails;
+      }
+    }
+
+    const [updatedReward] = await db
+      .update(referralRewards)
+      .set(updateData)
+      .where(eq(referralRewards.id, id))
+      .returning();
+    return updatedReward;
+  }
+
+  async claimReward(id: number, userId: number): Promise<ReferralReward> {
+    // Verify the reward belongs to the user
+    const [reward] = await db.select().from(referralRewards)
+      .where(and(eq(referralRewards.id, id), eq(referralRewards.recipientUserId, userId)));
+    
+    if (!reward) {
+      throw new Error("Reward not found or does not belong to user");
+    }
+    
+    if (reward.status !== 'earned') {
+      throw new Error("Reward is not available for claiming");
+    }
+    
+    if (reward.expiresAt && new Date() > new Date(reward.expiresAt)) {
+      throw new Error("Reward has expired");
+    }
+
+    return await this.updateRewardStatus(id, 'redeemed', {
+      claimedAt: new Date().toISOString(),
+      claimedBy: userId
+    });
+  }
+
+  async calculateEligibleRewards(referralId: number): Promise<{ referrerReward?: InsertReferralReward; refereeReward?: InsertReferralReward; }> {
+    const referral = await db.select().from(referrals).where(eq(referrals.id, referralId)).then(rows => rows[0]);
+    
+    if (!referral) {
+      throw new Error("Referral not found");
+    }
+
+    const result: { referrerReward?: InsertReferralReward; refereeReward?: InsertReferralReward; } = {};
+
+    // Define reward values based on conversion event and user types
+    const rewardConfig = {
+      signup: { referrer: 500, referee: 500 }, // $5.00 in cents
+      first_rentcard: { referrer: 1000, referee: 1000 }, // $10.00 in cents
+      property_inquiry: { referrer: 250, referee: 250 }, // $2.50 in cents
+      application_submitted: { referrer: 2000, referee: 1500 } // $20.00 and $15.00 in cents
+    };
+
+    const rewards = rewardConfig[referral.conversionEvent as keyof typeof rewardConfig];
+    if (!rewards) {
+      return result; // No rewards for this conversion event
+    }
+
+    // Create referrer reward if eligible
+    if (referral.referrerRewardEligible && referral.referrerUserId) {
+      result.referrerReward = {
+        referralId: referral.id,
+        recipientUserId: referral.referrerUserId,
+        recipientType: 'referrer',
+        recipientEmail: referral.referrerEmail || '',
+        rewardType: 'credit',
+        rewardValue: rewards.referrer,
+        rewardCurrency: 'USD',
+        rewardDescription: `$${(rewards.referrer / 100).toFixed(2)} credit for successful referral`,
+        triggerEvent: (referral.conversionEvent as 'signup' | 'property_inquiry' | 'first_rentcard' | 'application') || 'signup',
+        status: 'earned',
+        minimumRequirement: { type: 'none' }
+      };
+    }
+
+    // Create referee reward if eligible
+    if (referral.refereeRewardEligible && referral.refereeUserId) {
+      result.refereeReward = {
+        referralId: referral.id,
+        recipientUserId: referral.refereeUserId,
+        recipientType: 'referee',
+        recipientEmail: referral.refereeEmail,
+        rewardType: 'credit',
+        rewardValue: rewards.referee,
+        rewardCurrency: 'USD',
+        rewardDescription: `$${(rewards.referee / 100).toFixed(2)} credit for joining through referral`,
+        triggerEvent: (referral.conversionEvent as 'signup' | 'property_inquiry' | 'first_rentcard' | 'application') || 'signup',
+        status: 'earned',
+        minimumRequirement: { type: 'none' }
+      };
+    }
+
+    return result;
+  }
+
+  // Referral statistics and analytics
+  async getReferralStats(userId: number): Promise<{
+    totalReferrals: number;
+    convertedReferrals: number;
+    pendingReferrals: number;
+    totalRewards: number;
+    claimedRewards: number;
+    pendingRewards: number;
+    conversionRate: number;
+    rewardsByType: { type: string; count: number; totalValue: number; }[];
+  }> {
+    // Get referral statistics
+    const referralStats = await db
+      .select({
+        totalReferrals: count(),
+        convertedReferrals: sum(sql`CASE WHEN status = 'converted' THEN 1 ELSE 0 END`),
+        pendingReferrals: sum(sql`CASE WHEN status = 'pending' THEN 1 ELSE 0 END`)
+      })
+      .from(referrals)
+      .where(eq(referrals.referrerUserId, userId));
+
+    const stats = referralStats[0] || { totalReferrals: 0, convertedReferrals: 0, pendingReferrals: 0 };
+
+    // Get reward statistics
+    const rewardStats = await db
+      .select({
+        totalRewards: count(),
+        totalValue: sum(referralRewards.rewardValue),
+        claimedCount: sum(sql`CASE WHEN status = 'redeemed' THEN 1 ELSE 0 END`),
+        claimedValue: sum(sql`CASE WHEN status = 'redeemed' THEN reward_value ELSE 0 END`),
+        pendingCount: sum(sql`CASE WHEN status = 'earned' THEN 1 ELSE 0 END`),
+        pendingValue: sum(sql`CASE WHEN status = 'earned' THEN reward_value ELSE 0 END`)
+      })
+      .from(referralRewards)
+      .where(eq(referralRewards.recipientUserId, userId));
+
+    const rewards = rewardStats[0] || { 
+      totalRewards: 0, totalValue: 0, claimedCount: 0, claimedValue: 0, pendingCount: 0, pendingValue: 0 
+    };
+
+    // Get rewards by type
+    const rewardsByType = await db
+      .select({
+        type: referralRewards.rewardType,
+        count: count(),
+        totalValue: sum(referralRewards.rewardValue)
+      })
+      .from(referralRewards)
+      .where(eq(referralRewards.recipientUserId, userId))
+      .groupBy(referralRewards.rewardType);
+
+    const conversionRate = stats.totalReferrals > 0 
+      ? (Number(stats.convertedReferrals) / Number(stats.totalReferrals)) * 100 
+      : 0;
+
+    return {
+      totalReferrals: Number(stats.totalReferrals),
+      convertedReferrals: Number(stats.convertedReferrals),
+      pendingReferrals: Number(stats.pendingReferrals),
+      totalRewards: Number(rewards.totalRewards),
+      claimedRewards: Number(rewards.claimedValue) || 0,
+      pendingRewards: Number(rewards.pendingValue) || 0,
+      conversionRate: Math.round(conversionRate * 100) / 100,
+      rewardsByType: rewardsByType.map(r => ({
+        type: r.type,
+        count: Number(r.count),
+        totalValue: Number(r.totalValue) || 0
+      }))
+    };
+  }
+
+  // Attribution and tracking
+  async generateShortSlug(): Promise<string> {
+    // Generate a unique 6-character short slug for URLs
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let slug: string;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    do {
+      slug = '';
+      for (let i = 0; i < 6; i++) {
+        slug += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      attempts++;
+      
+      // Check if slug already exists
+      const existing = await this.getShortlinkBySlug(slug);
+      if (!existing) {
+        return slug;
+      }
+    } while (attempts < maxAttempts);
+
+    // Fallback: add timestamp suffix to ensure uniqueness
+    const timestamp = Date.now().toString(36);
+    return slug.substring(0, 4) + timestamp.substring(-2);
+  }
+
+  async generateReferralCode(): Promise<string> {
+    // Generate a unique 8-character referral code
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code: string;
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    do {
+      code = '';
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      attempts++;
+      
+      // Check if code already exists
+      const existing = await this.getReferralByCode(code);
+      if (!existing) {
+        return code;
+      }
+    } while (attempts < maxAttempts);
+
+    // Fallback: add timestamp suffix to ensure uniqueness
+    const timestamp = Date.now().toString(36).toUpperCase();
+    return code.substring(0, 6) + timestamp.substring(-2);
+  }
+
+  async trackReferralClick(referralCode: string, metadata?: any): Promise<void> {
+    // Update referral metadata with click tracking
+    const referral = await this.getReferralByCode(referralCode);
+    if (referral) {
+      const currentMetadata = (referral.metadata as any) || {};
+      const updatedMetadata = {
+        ...currentMetadata,
+        clickCount: (currentMetadata.clickCount || 0) + 1,
+        lastClickedAt: new Date().toISOString(),
+        clickMetadata: metadata
+      };
+
+      await db
+        .update(referrals)
+        .set({ metadata: updatedMetadata, updatedAt: new Date() })
+        .where(eq(referrals.id, referral.id));
+    }
+  }
+
+  async validateReferralEligibility(referrerUserId: number, refereeEmail: string): Promise<{ eligible: boolean; reason?: string; }> {
+    // Check if referrer exists
+    const referrer = await this.getUser(referrerUserId);
+    if (!referrer) {
+      return { eligible: false, reason: "Referrer not found" };
+    }
+
+    // Check if referee email is the same as referrer (self-referral)
+    if (referrer.email === refereeEmail) {
+      return { eligible: false, reason: "Self-referrals are not allowed" };
+    }
+
+    // Check if this person has already been referred by this user
+    const existingReferral = await db.select().from(referrals)
+      .where(and(
+        eq(referrals.referrerUserId, referrerUserId),
+        eq(referrals.refereeEmail, refereeEmail)
+      ));
+
+    if (existingReferral.length > 0) {
+      return { eligible: false, reason: "This person has already been referred by you" };
+    }
+
+    // Check if referee is already a user (optional business logic)
+    const existingUser = await this.getUserByEmail(refereeEmail);
+    if (existingUser) {
+      return { eligible: false, reason: "This person is already a registered user" };
+    }
+
+    return { eligible: true };
+  }
+
+  // Integration with existing systems
+  async createShareTokenWithReferral(tenantId: number, referralCode?: string, data?: { scope?: string; expiresAt?: Date }): Promise<ShareToken> {
+    // Create the share token first
+    const shareToken = await this.createShareToken(tenantId, data || {});
+    
+    // If a referral code is provided, link it
+    if (referralCode) {
+      const referral = await this.getReferralByCode(referralCode);
+      if (referral) {
+        await db
+          .update(referrals)
+          .set({ shareTokenId: shareToken.id, updatedAt: new Date() })
+          .where(eq(referrals.id, referral.id));
+      }
+    }
+    
+    return shareToken;
+  }
+
+  async createShortlinkWithReferral(shortlink: InsertShortlink, referralCode?: string): Promise<Shortlink> {
+    // Create the shortlink first
+    const newShortlink = await this.createShortlink(shortlink);
+    
+    // If a referral code is provided, link it
+    if (referralCode) {
+      const referral = await this.getReferralByCode(referralCode);
+      if (referral) {
+        await db
+          .update(referrals)
+          .set({ shortlinkId: newShortlink.id, updatedAt: new Date() })
+          .where(eq(referrals.id, referral.id));
+      }
+    }
+    
+    return newShortlink;
   }
 }
 
