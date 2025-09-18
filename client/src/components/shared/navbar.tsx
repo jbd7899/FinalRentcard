@@ -48,16 +48,6 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-semibold text-blue-600">MyRentCard</span>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs px-2 py-0 h-5 text-green-600 border-green-600">
-                  <Users className="w-3 h-3 mr-1" />
-                  {SOCIAL_PROOF_STATS.TOTAL_USERS}
-                </Badge>
-                <Badge variant="outline" className="text-xs px-2 py-0 h-5 text-blue-600 border-blue-600">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {SOCIAL_PROOF_STATS.NEW_USERS_DAILY} daily
-                </Badge>
-              </div>
             </div>
           </div>
         </Link>
@@ -229,12 +219,6 @@ export default function Navbar() {
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 text-xs text-gray-600">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span>{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} joined today</span>
-                </div>
-              </div>
               <Button 
                 className="px-6 cursor-pointer"
                 variant="default"
