@@ -7,7 +7,8 @@ import Navbar from '@/components/shared/navbar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SOCIAL_PROOF_STATS, NETWORK_VALUE_PROPS, SUCCESS_STORIES, NETWORK_CTA, INDIVIDUAL_LANDLORD_STATS } from '@/constants';
+import { SUCCESS_STORIES, NETWORK_CTA } from '@/constants/network-messaging';
+import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS } from '@shared/network-messaging';
 
 export default function HomePage() {
   const { user } = useAuthStore();

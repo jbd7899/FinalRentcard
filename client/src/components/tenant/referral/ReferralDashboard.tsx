@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/authStore";
-import { SOCIAL_PROOF_STATS, VIRAL_MESSAGING } from "@/constants";
+import { SOCIAL_PROOF_STATS, VIRAL_MESSAGING } from "@shared/network-messaging";
 
 // Import our referral components
 import { ReferralStatsCard } from "./ReferralStatsCard";

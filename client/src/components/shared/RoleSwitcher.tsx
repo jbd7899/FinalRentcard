@@ -3,7 +3,8 @@ import { useLocation } from 'wouter';
 import { Building2, User, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { USER_ROLES, INDIVIDUAL_LANDLORD_STATS } from '@/constants';
+import { USER_ROLES } from '@/constants';
+import { INDIVIDUAL_LANDLORD_STATS } from '@shared/network-messaging';
 
 interface RoleSwitcherProps extends React.HTMLAttributes<HTMLDivElement> {
   currentRole: 'tenant' | 'landlord';

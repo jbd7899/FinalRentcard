@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMessageTemplatesStore, TenantMessageTemplate } from '@/stores/messageTemplatesStore';
-import { SOCIAL_PROOF_STATS } from '@/constants';
+import { INDIVIDUAL_LANDLORD_STATS, NETWORK_MESSAGE_TEMPLATES } from '@shared/network-messaging';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -75,25 +75,25 @@ const TEMPLATE_CATEGORIES = [
     value: 'initial_inquiry', 
     label: 'Initial Inquiry', 
     icon: MessageCircle, 
-    description: 'First contact with landlords or agents about properties' 
+    description: 'First contact with individual landlords about their properties' 
   },
   { 
     value: 'follow_up', 
     label: 'Follow-up', 
     icon: Mail, 
-    description: 'Following up after property viewings or initial contact' 
+    description: 'Following up with individual landlords after viewings or initial contact' 
   },
   { 
     value: 'application', 
     label: 'Application', 
     icon: FileText, 
-    description: 'When submitting rental applications with your RentCard' 
+    description: 'When submitting rental applications to individual landlords' 
   },
   { 
     value: 'custom', 
     label: 'Custom', 
     icon: Star, 
-    description: 'Your own custom templates for specific needs' 
+    description: 'Your own custom templates for connecting with individual landlords' 
   },
 ];
 
@@ -110,29 +110,31 @@ const DEFAULT_TEMPLATES = {
     subject: 'Rental Inquiry - {property_address}',
     body: `Hello {contact_name},
 
-I hope this message finds you well. I'm part of the verified MyRentCard network of ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} trusted renters and am interested in your property at {property_address}.
+I hope this message finds you well. I'm specifically interested in connecting with individual landlords like you for your property at {property_address}.
 
-As a verified network member, I've prepared a comprehensive RentCard with all my rental information, references, and documentation. Property managers in our network save ${SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} using these verified profiles. You can view mine here: {rentcard_link}
+As someone who values personal landlord relationships over corporate management, I appreciate that individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} offer ${INDIVIDUAL_LANDLORD_STATS.PERSONAL_APPROACH} and ${INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED}.
 
-Joining our trusted network means faster screening through pre-verified documents and connecting with verified renters nationwide. Property managers report reducing document review from ${SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION}. I'd appreciate the opportunity to discuss this property further.
+I've prepared a comprehensive RentCard with all my rental information, references, and documentation. You can view my complete profile here: {rentcard_link}
+
+I specifically seek out individual landlords because you provide ${INDIVIDUAL_LANDLORD_STATS.NO_JUNK_FEES} and make personal decisions rather than going through corporate bureaucracy. I'd appreciate the opportunity to discuss this property further.
 
 Thank you for your time and consideration.
 
 Best regards,
 {tenant_name}
-Verified MyRentCard Network Member`
+Seeking Individual Landlord Relationships`
   },
   follow_up: {
     subject: 'Following up on {property_address}',
     body: `Hi {contact_name},
 
-I wanted to follow up on our recent discussion about the rental property at {property_address}. I remain very interested in this property and wanted to ensure you had access to my complete rental profile.
+I wanted to follow up on our recent discussion about the rental property at {property_address}. I remain very interested in this property and appreciate your direct, personal approach as an individual landlord.
 
 Here's my RentCard with all my information: {rentcard_link}
 
-This includes my employment details, rental history, references, and all necessary documentation. Please let me know if you need any additional information or if we can move forward with the next steps.
+This includes my employment details, rental history, references, and all necessary documentation. I specifically chose to work with individual landlords like you because you respond faster and make personal decisions without corporate bureaucracy.
 
-I'm available to discuss this at your convenience.
+I'm available to discuss this at your convenience and appreciate the personal touch you bring to landlording.
 
 Best regards,
 {tenant_name}`

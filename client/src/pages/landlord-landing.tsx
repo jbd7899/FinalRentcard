@@ -6,12 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Navbar from '@/components/shared/navbar';
 import RoleSwitcher, { RoleCrossLink } from '@/components/shared/RoleSwitcher';
 import { 
-  SOCIAL_PROOF_STATS, 
-  NETWORK_VALUE_PROPS, 
   SUCCESS_STORIES, 
   NETWORK_CTA,
-  TRUST_SIGNALS 
-} from '@/constants';
+  TRUST_SIGNALS,
+  SOCIAL_PROOF_STATS,
+  INDIVIDUAL_LANDLORD_STATS
+} from '@/constants/network-messaging';
+import { 
+  NETWORK_VALUE_PROPS
+} from '@shared/network-messaging';
 
 export default function LandlordLanding() {
   const searchParams = new URLSearchParams(useSearch());
@@ -49,29 +52,29 @@ export default function LandlordLanding() {
     {
       icon: Clock,
       title: 'Reduce Review Time',
-      description: `Complete documentation reduces application review from ${SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION} per applicant`,
-      badge: SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION,
+      description: `Complete documentation provides ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME} through efficient screening`,
+      badge: SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME,
       color: 'blue' as keyof typeof colorClasses
     },
     {
       icon: Users,
       title: 'Skip Reference Verification',
-      description: `Eliminate ${SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED} of reference checking with pre-verified tenant references`,
-      badge: SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED + ' eliminated',
+      description: `Pre-verified tenant references enable ${SOCIAL_PROOF_STATS.FASTER_SCREENING}`,
+      badge: SOCIAL_PROOF_STATS.FASTER_SCREENING,
       color: 'green' as keyof typeof colorClasses
     },
     {
       icon: Shield,
       title: 'Eliminate Follow-up Emails',
-      description: `Standardized tenant profiles eliminate ${SOCIAL_PROOF_STATS.EMAIL_REDUCTION_PER_APPLICATION} per application`,
-      badge: SOCIAL_PROOF_STATS.EMAIL_REDUCTION_PER_APPLICATION + ' eliminated',
+      description: `Standardized tenant profiles enable ${SOCIAL_PROOF_STATS.PERSONAL_RELATIONSHIPS}`,
+      badge: 'Direct Communication',
       color: 'purple' as keyof typeof colorClasses
     },
     {
       icon: TrendingUp,
       title: 'Skip Phone Interviews',
-      description: `Pre-answered screening questions eliminate ${SOCIAL_PROOF_STATS.PHONE_INTERVIEW_TIME_SAVED} per applicant`,
-      badge: SOCIAL_PROOF_STATS.PHONE_INTERVIEW_TIME_SAVED + ' saved',
+      description: `Pre-answered screening questions enable ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}`,
+      badge: SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS,
       color: 'orange' as keyof typeof colorClasses
     }
   ];
@@ -105,7 +108,7 @@ export default function LandlordLanding() {
           <div className="mb-6">
             <Badge variant="outline" className="text-green-600 border-green-600 mb-4">
               <TrendingUp className="w-3 h-3 mr-1" />
-              {SOCIAL_PROOF_STATS.PROPERTIES_LISTED} properties on the platform
+              {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORDS_JOINING}
             </Badge>
           </div>
           
@@ -125,7 +128,7 @@ export default function LandlordLanding() {
               For Landlords
             </span>
             <div className="flex items-center justify-center gap-2 mt-4">
-              <span className="text-3xl text-gray-800">Join {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS}</span>
+              <span className="text-3xl text-gray-800">Join {SOCIAL_PROOF_STATS.NETWORK_QUALITY}</span>
               <div className="flex items-center gap-1">
                 <Star className="w-6 h-6 text-yellow-400 fill-current" />
                 <span className="text-2xl text-gray-600">Trusted Landlords</span>
@@ -135,26 +138,26 @@ export default function LandlordLanding() {
           
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             {NETWORK_VALUE_PROPS.LANDLORD.HERO}. Complete upfront documentation 
-            reduces application processing from {SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT}.
+            enables {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}.
           </p>
 
           {/* Key Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY}</div>
-              <div className="text-sm text-gray-600">Hours Saved Weekly</div>
+              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME}</div>
+              <div className="text-sm text-gray-600">Response Speed</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION}</div>
-              <div className="text-sm text-gray-600">Application Review Time</div>
+              <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED}</div>
+              <div className="text-sm text-gray-600">Application Processing Time</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">{SOCIAL_PROOF_STATS.EMAIL_REDUCTION_PER_APPLICATION}</div>
-              <div className="text-sm text-gray-600">Emails Eliminated</div>
+              <div className="text-3xl font-bold text-purple-600">Direct Communication</div>
+              <div className="text-sm text-gray-600">Individual Landlord Connection</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">{SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED}</div>
-              <div className="text-sm text-gray-600">Reference Check Time Saved</div>
+              <div className="text-3xl font-bold text-orange-600">{INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}</div>
+              <div className="text-sm text-gray-600">Market Share</div>
             </div>
           </div>
 
@@ -208,7 +211,7 @@ export default function LandlordLanding() {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">How MyRentCard Saves You Time</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Specific workflow improvements eliminate repetitive screening tasks and reduce processing time by {SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} weekly.
+              Specific workflow improvements eliminate repetitive screening tasks through individual landlord efficiency tools.
             </p>
           </div>
           
@@ -290,7 +293,7 @@ export default function LandlordLanding() {
 
         {/* Final CTA */}
         <div className="text-center bg-green-600 text-white p-12 rounded-xl">
-          <h2 className="text-3xl font-bold mb-4">Ready to Save {SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} Per Week?</h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to Get {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME}?</h2>
           <p className="text-xl text-green-100 mb-8">
             Skip reference verification, eliminate follow-up emails, and review applications in 15 minutes instead of 45.
           </p>

@@ -6,12 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Navbar from '@/components/shared/navbar';
 import RoleSwitcher, { RoleCrossLink } from '@/components/shared/RoleSwitcher';
 import { 
-  SOCIAL_PROOF_STATS, 
-  NETWORK_VALUE_PROPS, 
   SUCCESS_STORIES, 
   NETWORK_CTA,
-  TRUST_SIGNALS 
-} from '@/constants';
+  TRUST_SIGNALS,
+  SOCIAL_PROOF_STATS,
+  INDIVIDUAL_LANDLORD_STATS
+} from '@/constants/network-messaging';
+import { 
+  NETWORK_VALUE_PROPS
+} from '@shared/network-messaging';
 
 export default function TenantLanding() {
   const searchParams = new URLSearchParams(useSearch());
@@ -70,8 +73,8 @@ export default function TenantLanding() {
     {
       icon: CheckCircle,
       title: 'Faster Profile Completion',
-      description: `Standardized format reduces application completion from ${SOCIAL_PROOF_STATS.PROFILE_COMPLETION_IMPROVEMENT}`,
-      badge: SOCIAL_PROOF_STATS.PROFILE_COMPLETION_IMPROVEMENT,
+      description: `Standardized format with ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME} from individual landlords`,
+      badge: SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME,
       color: 'orange' as keyof typeof colorClasses
     }
   ];
@@ -105,7 +108,7 @@ export default function TenantLanding() {
           <div className="mb-6">
             <Badge variant="outline" className="text-blue-600 border-blue-600 mb-4">
               <TrendingUp className="w-3 h-3 mr-1" />
-              {SOCIAL_PROOF_STATS.NEW_USERS_DAILY} new users joined today
+              {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORDS_JOINING}
             </Badge>
           </div>
           
@@ -125,7 +128,7 @@ export default function TenantLanding() {
               For Tenants
             </span>
             <div className="flex items-center justify-center gap-2 mt-4">
-              <span className="text-3xl text-gray-800">Join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS}</span>
+              <span className="text-3xl text-gray-800">Join {SOCIAL_PROOF_STATS.NETWORK_QUALITY}</span>
               <div className="flex items-center gap-1">
                 <Star className="w-6 h-6 text-yellow-400 fill-current" />
                 <span className="text-2xl text-gray-600">Verified Renters</span>
@@ -145,12 +148,12 @@ export default function TenantLanding() {
               <div className="text-sm text-gray-600">Saved Per Application</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.PROFILE_COMPLETION_IMPROVEMENT}</div>
-              <div className="text-sm text-gray-600">Profile Setup Time</div>
+              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}</div>
+              <div className="text-sm text-gray-600">Response Time</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">{SOCIAL_PROOF_STATS.CITIES_SERVED}</div>
-              <div className="text-sm text-gray-600">Cities Available</div>
+              <div className="text-3xl font-bold text-purple-600">{INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}</div>
+              <div className="text-sm text-gray-600">Individual Landlord Market</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-orange-600">5-8</div>

@@ -28,11 +28,15 @@ import {
   VALIDATION, 
   USER_ROLES, 
   MESSAGES, 
-  ROUTES,
-  NETWORK_VALUE_PROPS,
-  NETWORK_NOTIFICATIONS,
-  INDIVIDUAL_LANDLORD_STATS
+  ROUTES
 } from '@/constants';
+import {
+  NETWORK_VALUE_PROPS,
+  INDIVIDUAL_LANDLORD_STATS
+} from '@shared/network-messaging';
+import {
+  NETWORK_NOTIFICATIONS
+} from '@/constants/network-messaging';
 import Navbar from '@/components/shared/navbar';
 
 const loginSchema = z.object({

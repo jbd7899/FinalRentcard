@@ -4,7 +4,6 @@ export * from './config';
 export * from './env';
 export * from './common';
 export * from './validation';
-export * from './network-messaging';
 
 // Example usage in components:
 /*
