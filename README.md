@@ -1,11 +1,11 @@
 # MyRentCard
 
-MyRentCard simplifies the rental application process by allowing tenants to create a reusable rental profile ("RentCard") that can be instantly shared with potential landlords. Track property views, pre-screen qualified tenants, and streamline the tenant qualification process.
+MyRentCard simplifies the rental application process by allowing tenants to create a reusable rental profile ("RentCard") that can be instantly shared with individual property owners. Built specifically for the 70-75% of rental properties owned by individual landlords, MyRentCard enables personal decision-making and direct relationships while streamlining the tenant qualification process.
 
 ## Features
 
 - Create and manage reusable rental profiles
-- Instant profile sharing with potential landlords
+- Instant profile sharing with individual property owners who make personal decisions
 - Property view tracking and analytics
 - Secure document storage and verification
   - Upload various document types (ID, payslips, references, etc.)
@@ -14,7 +14,7 @@ MyRentCard simplifies the rental application process by allowing tenants to crea
   - Secure document preview and storage
 - Real-time application status updates
 - Automated reference checks
-- Messaging system between tenants and landlords
+- Direct messaging system enabling personal communication between tenants and individual property owners
 - Comprehensive property listings with images and amenities
 - Roommate/co-applicant support for group applications
 - Notification system for important updates
@@ -146,15 +146,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Database Structure
 
-MyRentCard uses PostgreSQL with Drizzle ORM for database management. The database schema includes:
+MyRentCard uses PostgreSQL with Drizzle ORM for database management. Designed specifically for individual property owners who represent 70-75% of the rental market, the database schema includes:
 
 ### Core Tables
 - **users**: Authentication and basic user information
 - **tenant_profiles**: Detailed tenant information
-- **landlord_profiles**: Landlord business information
+- **landlord_profiles**: Individual property owner business information
 - **properties**: Property listings with details
 - **applications**: Tenant applications for properties
-- **screening_pages**: Custom screening pages for landlords
+- **screening_pages**: Custom screening pages for individual property owners
 - **rent_cards**: Comprehensive tenant rental profiles
 
 ### Enhanced Features

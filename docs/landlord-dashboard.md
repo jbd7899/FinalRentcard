@@ -1,8 +1,8 @@
-# Landlord Dashboard Documentation
+# Individual Landlord Dashboard Documentation
 
 ## Overview
 
-The Landlord Dashboard is a central management interface for property owners to monitor and manage their rental properties, tenant applications, and screening processes. The dashboard follows a modular architecture with a tab-based interface that separates different functional areas into distinct components.
+The Individual Landlord Dashboard is a central management interface designed specifically for individual property owners who represent 70-75% of the rental market. This personalized dashboard enables individual landlords to monitor and manage their rental properties, tenant applications, and screening processes with the personal attention that sets them apart from corporate property management. The dashboard follows a modular architecture with a tab-based interface that separates different functional areas into distinct components.
 
 ## Architecture
 
@@ -68,12 +68,12 @@ The main container component that:
 
 ### OverviewTab
 
-Displays a high-level overview of the landlord's rental business:
-- Workflow guidance for landlords
-- Key statistics (views, submissions, active properties)
-- Quick action buttons
-- Landlord tips and best practices
-- General screening page information
+Displays a high-level overview of the individual landlord's rental business:
+- Workflow guidance tailored for individual property owners
+- Key statistics (views, submissions, active properties) with personal insights
+- Quick action buttons designed for individual decision-making
+- Individual landlord tips and best practices for personal property management
+- General screening page information customized for individual landlords
 
 **Props**:
 ```typescript
@@ -90,11 +90,11 @@ interface OverviewTabProps {
 
 ### PropertiesTab
 
-Manages all properties owned by the landlord:
-- Lists active properties with their details
-- Shows archived properties separately
-- Provides actions for each property (view, edit, archive/unarchive)
-- Displays screening page statistics for each property
+Manages all properties owned by the individual landlord:
+- Lists active properties with their details and personal notes
+- Shows archived properties separately for individual record-keeping
+- Provides actions for each property (view, edit, archive/unarchive) with personal control
+- Displays screening page statistics for each property with individual insights
 
 **Props**:
 ```typescript
@@ -109,10 +109,10 @@ interface PropertiesTabProps {
 
 ### ApplicationsTab
 
-Displays tenant applications and documents requiring verification:
-- Recent applications section
-- Documents needing verification section
-- Empty states with calls-to-action
+Displays tenant applications and documents requiring individual landlord verification:
+- Recent applications section with personal review capabilities
+- Documents needing individual landlord verification with personal attention to detail
+- Empty states with calls-to-action tailored for individual property owners
 
 **Props**:
 ```typescript

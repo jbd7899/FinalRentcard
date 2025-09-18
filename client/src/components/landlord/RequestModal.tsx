@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mail, Phone, Send } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
-import { SOCIAL_PROOF_STATS } from '@/constants';
+import { SOCIAL_PROOF_STATS } from '@shared/network-messaging';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,7 +63,7 @@ const RequestModal: React.FC = () => {
             <Textarea
               rows={3}
               placeholder="Add a personal message..."
-              defaultValue={`Hi! Join our trusted network of ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters. Complete your RentCard profile to apply for my property and connect with property managers nationwide.`}
+              defaultValue={`Hi! Join our trusted network of individual landlords and quality tenants. Complete your RentCard profile to apply for my property and connect with individual property owners who make ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}.`}
               className="text-xs sm:text-sm mt-1"
             />
           </div>
