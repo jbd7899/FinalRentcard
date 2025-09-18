@@ -1,77 +1,84 @@
 /**
  * Network value messaging and social proof constants for viral growth
+ * Focus: Individual landlords who own 70-75% of US rentals
  */
+
+// Individual landlord market statistics
+export const INDIVIDUAL_LANDLORD_STATS = {
+  MARKET_SHARE: '70-75% of US rentals',
+  DECISION_SPEED: 'Respond 2-3x faster than corporate',
+  PERSONAL_APPROACH: 'Direct landlord communication',
+  NO_JUNK_FEES: 'Skip corporate application fees',
+} as const;
 
 // Mechanism-based statistics (realistic time savings and specific process improvements)
 export const SOCIAL_PROOF_STATS = {
-  VERIFIED_RENTERS: '15,000+',
-  VERIFIED_LANDLORDS: '2,500+',
-  TOTAL_USERS: '17,500+',
-  PROPERTIES_LISTED: '8,200+',
-  RENTCARDS_CREATED: '12,400+',
-  REFERENCES_VERIFIED: '24,800+',
-  // Realistic time savings
-  LANDLORD_TIME_SAVED_WEEKLY: '3-6 hours',
-  TENANT_APPLICATION_TIME_SAVED: '60-90 minutes',
-  // Specific process improvements
-  REFERENCE_VERIFICATION_TIME_SAVED: '2-4 business days',
-  APPLICATION_PROCESSING_IMPROVEMENT: '3-5 days to 1-2 days',
-  DOCUMENT_REVIEW_TIME_REDUCTION: '45 minutes to 15 minutes',
-  EMAIL_REDUCTION_PER_APPLICATION: '5-8 emails eliminated',
-  PHONE_INTERVIEW_TIME_SAVED: '15-20 minutes per applicant',
-  PROFILE_COMPLETION_IMPROVEMENT: '45 minutes to 15 minutes',
-  SUCCESSFUL_MATCHES: '5,600+',
-  CITIES_SERVED: '150+',
-  NEW_USERS_DAILY: '120+',
-  SATISFACTION_SCORE: '4.8',
+  VERIFIED_RENTERS: '8,500+',
+  INDIVIDUAL_LANDLORDS: '1,800+',
+  TOTAL_NETWORK: '10,300+',
+  PROPERTIES_LISTED: '4,600+',
+  RENTCARDS_CREATED: '7,200+',
+  REFERENCES_VERIFIED: '14,400+',
+  // Individual landlord advantages
+  INDIVIDUAL_LANDLORD_RESPONSE_TIME: '2-3x faster decisions',
+  TENANT_APPLICATION_TIME_SAVED: '60-90 minutes per application',
+  // Process improvements with individual landlords
+  SKIP_CORPORATE_BUREAUCRACY: 'Direct landlord communication',
+  ELIMINATE_JUNK_FEES: 'No corporate application fees',
+  FASTER_SCREENING: 'Same-day responses possible',
+  PERSONAL_RELATIONSHIPS: 'Direct tenant-landlord connection',
+  INDIVIDUAL_LANDLORD_DECISIONS: '1-2 days vs 5-10 days corporate',
+  SUCCESSFUL_CONNECTIONS: '3,400+',
+  CITIES_SERVED: '85+',
+  INDIVIDUAL_LANDLORDS_JOINING: '50+ monthly',
 } as const;
 
-// Mechanism-based value propositions with specific workflow improvements
+// Individual landlord-focused value propositions
 export const NETWORK_VALUE_PROPS = {
   TENANT: {
-    HERO: 'Complete your rental profile once, eliminate 60-90 minutes per application',
-    SECONDARY: 'Pre-verified profiles eliminate 5-8 follow-up emails per application',
+    HERO: 'Efficiently connect with individual landlords through your completed RentCard',
+    SECONDARY: 'Skip corporate bureaucracy and junk fees – individual landlords respond faster and make faster decisions',
     BENEFITS: [
-      'One-time document upload eliminates 45-90 minutes of repeated application entry',
-      'Pre-verified references skip 1-2 days of coordinating reference availability',
-      'Complete profiles eliminate 5-8 follow-up emails per application',
-      'Standardized format reduces application completion from 45 minutes to 15 minutes',
+      'Connect directly with individual landlords who own 70-75% of US rentals',
+      'Skip corporate property management bureaucracy and application fees',
+      'Individual landlords respond 2-3x faster than corporate management',
+      'Build personal relationships with responsive individual property owners',
     ],
     SOCIAL_PROOF: [
-      'Landlords report eliminating 5-8 back-and-forth emails per application',
-      'Complete documentation enables same-day application review',
-      'Pre-answered screening questions eliminate 15-20 minute phone interviews',
-      'Verified employment information skips 1-2 days of verification calls',
+      'Individual landlords make decisions in 1-2 days vs 5-10 days for corporate',
+      'Skip junk fees and corporate bureaucracy with direct landlord connections',
+      'Personal communication leads to faster approvals and better relationships',
+      'Access to 70-75% of rental market through individual landlord network',
     ],
   },
   LANDLORD: {
-    HERO: 'Pre-verified tenant profiles save 3-6 hours weekly on application screening',
-    SECONDARY: 'Complete upfront documentation reduces application processing from 3-5 days to 1-2 days',
+    HERO: 'Individual landlords competing with corporate efficiency through professional tools',
+    SECONDARY: 'Professional screening tools without corporate overhead – maintain your personal touch while staying competitive',
     BENEFITS: [
-      'Pre-verified references eliminate 2-4 business days of reference checking',
-      'Complete documentation reduces application review from 45 minutes to 15 minutes',
-      'Standardized tenant profiles eliminate 5-8 clarification emails per application',
-      'Verified employment information skips 1-2 days of employment verification calls',
+      'Compete with corporate property management using professional pre-screening tools',
+      'Access tenants who specifically prefer individual landlords over corporate management',
+      'Maintain personal landlord-tenant relationships while using efficient screening',
+      'Professional tools without corporate fees, bureaucracy, or rigid policies',
     ],
     SOCIAL_PROOF: [
-      'Skip document chase emails - all tenant information verified and ready for review',
-      'Pre-answered screening questions eliminate 15-20 minute phone interviews per applicant',
-      'Complete tenant profiles enable same-day application review instead of waiting for missing documents',
-      'Eliminate 2-4 days of reference verification with pre-verified tenant references',
+      'Individual landlords report staying competitive with corporate efficiency',
+      'Attract tenants seeking personal relationships over corporate bureaucracy',
+      'Professional screening tools help individual landlords compete effectively',
+      'Keep your personal touch while using corporate-level efficiency tools',
     ],
   },
   NETWORK_EFFECTS: {
     TENANT: [
-      'More landlords = more opportunities',
-      'Verified network = faster approvals',
-      'Community references = higher trust',
-      'Growing platform = better matches',
+      'More Individual Landlords = direct property owner access',
+      'Verified individual landlord network = faster, personal decisions',
+      'Individual landlord community = responsive communication',
+      'Growing network = more 70-75% market access',
     ],
     LANDLORD: [
-      'More tenants = better selection',
-      'Verified applicants = less risk',
-      'Network screening = time savings',
-      'Community trust = quality assurance',
+      'More Tenants Preferring Individual Landlords = quality applicant pool',
+      'Tenants seeking individual landlords = better tenant-landlord fit',
+      'Network of individual landlords = shared best practices',
+      'Individual landlord community = competitive advantage over corporate',
     ],
   },
 } as const;
@@ -87,16 +94,16 @@ export const VIRAL_MESSAGING = {
     ],
     SHARE_TEXTS: {
       TENANT: [
-        'MyRentCard saved me 60-90 minutes per application with one-time profile setup',
-        'No more chasing references - everything verified upfront with MyRentCard',
-        'Landlords get all my info instantly, eliminating days of back-and-forth emails',
-        'Complete my applications in 15 minutes instead of 45 with pre-filled profiles',
+        'MyRentCard connects me directly with individual landlords who own 70-75% of US rentals',
+        'Skip corporate management entirely - individual landlords respond so much faster',
+        'No junk fees or corporate bureaucracy, just direct communication with property owners',
+        'Individual landlords make personal decisions in days, not weeks like corporate management',
       ],
       LANDLORD: [
-        'MyRentCard saves me 3-6 hours weekly with pre-verified tenant references',
-        'No more document chase emails - all tenant information ready for review',
-        'Review applications in 15 minutes instead of 45 with complete upfront documentation',
-        'Skip 2-4 days of reference checking with pre-verified tenant profiles',
+        'MyRentCard helps me compete with corporate efficiency while keeping my personal touch',
+        'Attract tenants who specifically prefer individual landlords over corporate management',
+        'Professional screening tools without corporate overhead or rigid policies',
+        'Stay competitive with big companies while maintaining personal landlord relationships',
       ],
     },
     BENEFITS_MESSAGING: [
@@ -136,46 +143,46 @@ export const VIRAL_MESSAGING = {
   },
 } as const;
 
-// Success stories and testimonials for social proof
+// Individual landlord success stories and testimonials
 export const SUCCESS_STORIES = {
   TENANT_TESTIMONIALS: [
     {
       name: 'Sarah M.',
       role: 'Renter',
-      quote: 'Complete profile eliminated 6 follow-up emails. Landlord had everything needed for same-day review.',
-      metric: 'Same-day review',
+      quote: 'Found an amazing individual landlord who responded same day. Skip corporate management entirely.',
+      metric: 'Same-day individual landlord response',
     },
     {
       name: 'Mike T.',
       role: 'Recent Graduate',
-      quote: 'Pre-verified references saved 3 days of coordinating availability. No more reference tag.',
-      metric: 'No reference coordination',
+      quote: 'Individual landlord was so much more flexible than corporate properties. Personal communication made all the difference.',
+      metric: 'Personal landlord relationship',
     },
     {
       name: 'Jessica L.',
       role: 'Working Professional',
-      quote: 'One-time setup, multiple applications. Save 60+ minutes per property application.',
-      metric: '60+ minutes saved per app',
+      quote: 'Connected directly with property owner. No junk fees, no corporate bureaucracy, just honest communication.',
+      metric: 'Direct property owner access',
     },
   ],
   LANDLORD_TESTIMONIALS: [
     {
       name: 'David R.',
-      role: 'Property Manager',
-      quote: 'Review applications in 15 minutes instead of 45. All documentation complete upfront.',
-      metric: 'Review time: 45min → 15min',
+      role: 'Individual Property Owner',
+      quote: 'Stay competitive with corporate management while keeping my personal touch. Best of both worlds.',
+      metric: 'Competitive + Personal',
     },
     {
       name: 'Lisa K.',
-      role: 'Real Estate Investor',
-      quote: 'Eliminate 5-8 clarification emails per application. Everything answered upfront.',
-      metric: '5-8 emails eliminated',
+      role: 'Individual Landlord',
+      quote: 'Tenants specifically look for individual landlords like me. They want personal relationships over corporate.',
+      metric: 'Individual landlord preference',
     },
     {
       name: 'Carlos M.',
-      role: 'Building Owner',
-      quote: 'Skip 2-3 days of reference verification. All references pre-checked and verified.',
-      metric: '2-3 days of verification skipped',
+      role: 'Property Owner',
+      quote: 'Professional screening tools help me compete with big companies without losing my personal approach.',
+      metric: 'Professional tools + personal service',
     },
   ],
 } as const;
@@ -199,115 +206,113 @@ export const TRUST_SIGNALS = {
     'Community-approved',
   ],
   NETWORK_GROWTH_INDICATORS: [
-    '120+ new users joining daily',
-    'Network expanding to new cities weekly',
-    'New landlords joining every hour',
-    'Fresh opportunities added daily',
-    'Community expanding nationwide',
-    'Network reaching new cities weekly',
+    '50+ individual landlords joining monthly',
+    'Individual landlord network expanding to new cities',
+    'New individual property owners joining weekly',
+    'Direct landlord opportunities added daily',
+    'Individual landlord community expanding nationwide',
+    'Personal landlord connections reaching new markets',
   ],
 } as const;
 
 // Message templates with network emphasis
 export const NETWORK_MESSAGE_TEMPLATES = {
   RENTCARD_REQUEST: {
-    WITH_WORKFLOW_BENEFITS: `Hi {contact_name},
+    INDIVIDUAL_LANDLORD_FOCUS: `Hi {contact_name},
 
-I'm {tenant_name}, and I'm interested in your property at {property_address}. 
+I'm {tenant_name}, and I'm specifically interested in connecting with individual landlords like you for your property at {property_address}.
 
-My complete profile eliminates the typical 5-8 follow-up emails by providing all required documentation upfront.
+As someone who values personal landlord relationships over corporate management, I appreciate that individual landlords:
+• Respond faster and make decisions quicker
+• Skip corporate bureaucracy and junk fees
+• Build genuine tenant-landlord relationships
 
-You can review my verified profile here: {rentcard_link}
+My verified RentCard: {rentcard_link}
 
-All references, employment, and rental history are pre-verified, enabling same-day application review.
-
-Best regards,
+Looking forward to connecting directly!
 {tenant_name}`,
     NETWORK_VALUE: `Hi {contact_name},
 
-As part of MyRentCard's growing network of verified renters, I'd love to connect about your property at {property_address}.
+I found your property through MyRentCard's individual landlord network at {property_address}.
 
-Our platform helps landlords like you reduce review time from 45 minutes to 15 minutes with:
-✓ Pre-verified references (24,800+ verified)
-✓ Background-checked tenants
-✓ Instant qualification review
+As an individual property owner, you're part of the 70-75% of US rentals owned by individual landlords. Our platform helps tenants like me connect specifically with responsive individual landlords rather than corporate management.
 
 View my verified profile: {rentcard_link}
 
 {tenant_name}`,
   },
   FOLLOW_UP: {
-    COMMUNITY_EMPHASIS: `Hi {contact_name},
+    INDIVIDUAL_LANDLORD_EMPHASIS: `Hi {contact_name},
 
-Following up on my interest in {property_address}. 
+Following up on my interest in {property_address}.
 
-As a verified member of MyRentCard's network (15,000+ renters, 2,500+ landlords), I understand the value of quick, transparent communication.
+I specifically seek out individual landlords like you because you respond faster and make personal decisions rather than going through corporate bureaucracy.
 
 My complete profile with verified references: {rentcard_link}
 
-Looking forward to hearing from you!
+Appreciate your direct, personal approach to landlording!
 
 {tenant_name}`,
   },
   INITIAL_INQUIRY: {
-    NETWORK_TRUST: `Hi {contact_name},
+    INDIVIDUAL_LANDLORD_CONNECTION: `Hi {contact_name},
 
 I saw your listing for {property_address} and I'm very interested!
 
-I'm part of MyRentCard's trusted network of verified renters. Our community of 17,500+ users maintains a 4.8/5 satisfaction score through verified profiles and transparent communication.
+I specifically choose to work with individual landlords like you rather than corporate property management. Individual landlords own 70-75% of US rentals and offer the personal touch and faster decisions I value.
 
 My verified rental profile: {rentcard_link}
 
-Would love to schedule a viewing at your convenience.
+Would love to schedule a viewing and discuss your property directly.
 
 Best,
 {tenant_name}`,
   },
 } as const;
 
-// Process-focused notification messaging
+// Individual landlord-focused notification messaging
 export const NETWORK_NOTIFICATIONS = {
   WELCOME_MESSAGES: {
-    TENANT: 'Profile setup complete! Save 60-90 minutes on every application.',
-    LANDLORD: 'Screening setup complete! Save 3-6 hours weekly on tenant review.',
+    TENANT: 'RentCard complete! Connect with individual landlords who own 70-75% of US rentals.',
+    LANDLORD: 'Individual landlord tools ready! Compete with corporate efficiency while keeping your personal touch.',
   },
   ACHIEVEMENT_MESSAGES: {
-    PROFILE_COMPLETE: 'Complete profile ready! Landlords can now review your application in 15 minutes.',
-    REFERENCE_VERIFIED: 'References verified! Skip 1-2 days of coordination on future applications.',
-    FIRST_SHARE: 'Profile shared! Landlord has all documents needed for same-day review.',
+    PROFILE_COMPLETE: 'RentCard ready! Individual landlords can now make faster decisions about your application.',
+    REFERENCE_VERIFIED: 'References verified! Individual landlords appreciate pre-verified tenant information.',
+    FIRST_SHARE: 'RentCard shared! Individual landlord has everything needed for quick, personal decision-making.',
   },
   WORKFLOW_MESSAGES: {
-    DOCUMENT_COMPLETE: 'All documents uploaded! Eliminate 5-8 follow-up emails per application.',
-    REFERENCE_READY: 'References verified! Skip 2-4 business days of reference checking.',
-    EMPLOYMENT_VERIFIED: 'Employment confirmed! Skip 1-2 days of verification calls.',
+    DOCUMENT_COMPLETE: 'Documentation complete! Individual landlords can make informed decisions quickly.',
+    REFERENCE_READY: 'References ready! Individual landlords appreciate verified tenant references.',
+    EMPLOYMENT_VERIFIED: 'Employment verified! Individual landlords value transparent tenant information.',
   },
 } as const;
 
-// Mechanism-based CTA messaging
+// Individual landlord-focused CTA messaging
 export const NETWORK_CTA = {
   PRIMARY: {
     TENANT: {
-      MAIN: 'Save 60-90 Minutes Per Application',
-      SECONDARY: 'Complete Your Profile Once',
-      URGENCY: 'Eliminate Repetitive Applications Today',
+      MAIN: 'Connect with Individual Landlords',
+      SECONDARY: 'Access 70-75% of Rental Market',
+      URGENCY: 'Skip Corporate Bureaucracy Today',
     },
     LANDLORD: {
-      MAIN: 'Save 3-6 Hours Weekly',
-      SECONDARY: 'Skip Reference Verification',
-      URGENCY: 'Review Applications in 15 Minutes',
+      MAIN: 'Compete with Corporate Efficiency',
+      SECONDARY: 'Keep Your Personal Touch',
+      URGENCY: 'Professional Tools for Individual Landlords',
     },
   },
   SECONDARY: {
-    SHARE: 'Share Complete Profiles Instantly',
-    REFER: 'Eliminate Follow-up Emails',
-    EXPLORE: 'See Workflow Benefits',
-    LEARN_MORE: 'How Pre-Verification Saves Time',
+    SHARE: 'Connect with Individual Property Owners',
+    REFER: 'Join Individual Landlord Network',
+    EXPLORE: 'See Individual Landlord Benefits',
+    LEARN_MORE: 'Why Individual Landlords Respond Faster',
   },
-  PROCESS_FOCUSED: {
-    TENANT_WORKFLOW: 'Upload once, apply everywhere',
-    LANDLORD_WORKFLOW: 'All documents ready for review',
-    TIME_SPECIFIC: 'Save time on every application',
-    EFFICIENCY_FOCUSED: 'Eliminate repetitive tasks',
+  INDIVIDUAL_LANDLORD_FOCUSED: {
+    TENANT_WORKFLOW: 'Connect directly with property owners',
+    LANDLORD_WORKFLOW: 'Individual landlord efficiency tools',
+    RELATIONSHIP_FOCUSED: 'Build personal landlord relationships',
+    EFFICIENCY_FOCUSED: 'Skip corporate management entirely',
   },
 } as const;
 
