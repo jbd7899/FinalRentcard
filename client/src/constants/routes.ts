@@ -37,6 +37,7 @@ export const ROUTES = {
     APPLICATIONS: '/landlord/applications',
     VERIFY_DOCUMENTS: '/landlord/verify-documents',
     CONTACT_MANAGEMENT: '/landlord/contact-management',
+    RENTCARD_REQUESTS: '/landlord/rentcard-requests',
   },
 
   // Property routes
