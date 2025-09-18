@@ -11,6 +11,10 @@ export const ROUTES = {
   // Home
   HOME: '/',
   
+  // Landing pages
+  TENANT_LANDING: '/tenant',
+  LANDLORD_LANDING: '/landlord',
+  
   // Tenant routes
   TENANT: {
     DASHBOARD: '/tenant/dashboard',
