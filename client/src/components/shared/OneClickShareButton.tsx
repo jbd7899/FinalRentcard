@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Share2, Copy, Loader2, CheckCircle, Smartphone, Users, ChevronDown } from 'lucide-react';
+import { SOCIAL_PROOF_STATS } from '@/constants';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,7 +136,7 @@ export function OneClickShareButton({
       if (hasWebShare) {
         await navigator.share({
           title: title,
-          text: 'Check out my rental application profile',
+          text: `Join ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters! Check out my trusted network profile:`,
           url: shareUrl,
         });
         return true;
@@ -204,8 +205,8 @@ export function OneClickShareButton({
         const shareSuccess = await nativeShare(shareUrl, 'My RentCard Profile');
         if (shareSuccess) {
           addToast({
-            title: 'Shared Successfully!',
-            description: 'Your RentCard has been shared',
+            title: 'Network Profile Shared!',
+            description: 'Your trusted network profile has been shared - helping grow our community!',
             type: 'success'
           });
           return;
@@ -218,8 +219,8 @@ export function OneClickShareButton({
       
       if (copySuccess) {
         addToast({
-          title: 'Link Copied!',
-          description: 'Share link copied to clipboard',
+          title: 'Network Link Copied!',
+          description: 'Your trusted network profile link copied to clipboard - ready to share!',
           type: 'success'
         });
       } else {

@@ -75,7 +75,7 @@ class EmailService {
       provider: process.env.SENDGRID_API_KEY ? 'sendgrid' : 'nodemailer',
       sendgridApiKey: process.env.SENDGRID_API_KEY,
       fromEmail: process.env.EMAIL_FROM || 'noreply@myrentcard.com',
-      fromName: process.env.EMAIL_FROM_NAME || 'MyRentCard'
+      fromName: process.env.EMAIL_FROM_NAME || 'MyRentCard Network'
     };
   }
 

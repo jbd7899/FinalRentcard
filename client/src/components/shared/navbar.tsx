@@ -1,6 +1,7 @@
 import { useAuthStore } from "@/stores/authStore";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +16,12 @@ import {
   FileText,
   CheckSquare,
   UserCheck,
+  Users,
+  TrendingUp,
+  Sparkles
 } from "lucide-react";
 import { ComingSoonBadge } from "@/components/ui/coming-soon";
-import { ROUTES } from "@/constants/routes";
+import { ROUTES, SOCIAL_PROOF_STATS } from "@/constants";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 
 export default function Navbar() {
@@ -28,9 +32,24 @@ export default function Navbar() {
     <nav className="border-b">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/">
-          <div className="flex items-center gap-2 cursor-pointer">
-            <Building2 className="w-8 h-8 text-blue-600" />
-            <span className="text-xl font-semibold text-blue-600">MyRentCard</span>
+          <div className="flex items-center gap-3 cursor-pointer">
+            <div className="relative">
+              <Building2 className="w-8 h-8 text-blue-600" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xl font-semibold text-blue-600">MyRentCard</span>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs px-2 py-0 h-5 text-green-600 border-green-600">
+                  <Users className="w-3 h-3 mr-1" />
+                  {SOCIAL_PROOF_STATS.TOTAL_USERS}
+                </Badge>
+                <Badge variant="outline" className="text-xs px-2 py-0 h-5 text-blue-600 border-blue-600">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  +{SOCIAL_PROOF_STATS.MONTHLY_GROWTH}
+                </Badge>
+              </div>
+            </div>
           </div>
         </Link>
 
@@ -43,12 +62,13 @@ export default function Navbar() {
                   <Link href="/landlord/dashboard">
                     <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
                       <Building2 className="w-4 h-4" />
-                      Dashboard
+                      Network Hub
                     </span>
                   </Link>
                   <Link href="/landlord/applications">
-                    <span className="text-muted-foreground hover:text-foreground">
-                      Applications
+                    <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      Verified Applicants
                     </span>
                   </Link>
                   <Link href="/landlord/verify-documents">
@@ -64,12 +84,13 @@ export default function Navbar() {
                   <Link href="/tenant/dashboard">
                     <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
                       <Home className="w-4 h-4" />
-                      Dashboard
+                      Network Hub
                     </span>
                   </Link>
                   <Link href="/tenant/rentcard">
-                    <span className="text-muted-foreground hover:text-foreground">
-                      My RentCard
+                    <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+                      <Sparkles className="w-4 h-4" />
+                      My Network Profile
                     </span>
                   </Link>
                   <Link href="/tenant/documents">
@@ -123,14 +144,22 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button 
-              className="px-6 cursor-pointer"
-              variant="default"
-              type="button"
-              onClick={() => setLocation(ROUTES.AUTH)}
-            >
-              Login
-            </Button>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 text-xs text-gray-600">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span>{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} joined today</span>
+                </div>
+              </div>
+              <Button 
+                className="px-6 cursor-pointer"
+                variant="default"
+                type="button"
+                onClick={() => setLocation(ROUTES.AUTH)}
+              >
+                Join Network
+              </Button>
+            </div>
           )}
         </div>
       </div>

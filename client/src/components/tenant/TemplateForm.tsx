@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMessageTemplatesStore, TenantMessageTemplate } from '@/stores/messageTemplatesStore';
+import { SOCIAL_PROOF_STATS } from '@/constants';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -109,16 +110,17 @@ const DEFAULT_TEMPLATES = {
     subject: 'Rental Inquiry - {property_address}',
     body: `Hello {contact_name},
 
-I hope this message finds you well. I'm interested in learning more about the rental property at {property_address} and would like to share my rental profile with you.
+I hope this message finds you well. I'm part of the verified MyRentCard network of ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} trusted renters and am interested in your property at {property_address}.
 
-I've prepared a comprehensive RentCard that includes all my rental information, references, and documentation. You can view it here: {rentcard_link}
+As a verified network member, I've prepared a comprehensive RentCard with all my rental information, references, and documentation. Property managers in our network save ${SOCIAL_PROOF_STATS.TIME_SAVED_HOURS} hours per week using these verified profiles. You can view mine here: {rentcard_link}
 
-I'm actively looking for a rental and would appreciate the opportunity to discuss this property further. Please let me know if you have any questions or if you'd like to schedule a viewing.
+Joining our trusted network means faster screening (75% time reduction) and connecting with verified renters nationwide. I'd appreciate the opportunity to discuss this property further.
 
 Thank you for your time and consideration.
 
 Best regards,
-{tenant_name}`
+{tenant_name}
+Verified MyRentCard Network Member`
   },
   follow_up: {
     subject: 'Following up on {property_address}',

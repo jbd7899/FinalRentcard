@@ -1,9 +1,11 @@
-import { Building2, Clock, Shield, CheckCircle, ArrowRight, Users, Zap, ArrowUpRight, CreditCard } from 'lucide-react';
+import { Building2, Clock, Shield, CheckCircle, ArrowRight, Users, Zap, ArrowUpRight, CreditCard, TrendingUp, Star, Award, Target, User } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import Navbar from '@/components/shared/navbar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { SOCIAL_PROOF_STATS, NETWORK_VALUE_PROPS, SUCCESS_STORIES, NETWORK_CTA } from '@/constants';
 import React from 'react';
 
 export default function HomePage() {
@@ -79,15 +81,29 @@ export default function HomePage() {
             </span>
           </div>
 
-          {/* Enhanced Badge */}
-          <div className="inline-block bg-blue-100 text-blue-600 px-6 py-3 rounded-full mb-8 shadow-md hover:shadow-lg transition-shadow">
-            <span className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">No credit card required</span>
-            </span>
+          {/* Network Growth Badge */}
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            <div className="inline-block bg-blue-100 text-blue-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <Users className="w-4 h-4" />
+                <span>{SOCIAL_PROOF_STATS.TOTAL_USERS} trusted users</span>
+              </span>
+            </div>
+            <div className="inline-block bg-green-100 text-green-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <TrendingUp className="w-4 h-4" />
+                <span>Growing {SOCIAL_PROOF_STATS.MONTHLY_GROWTH} monthly</span>
+              </span>
+            </div>
+            <div className="inline-block bg-purple-100 text-purple-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <CheckCircle className="w-4 h-4" />
+                <span>No credit card required</span>
+              </span>
+            </div>
           </div>
 
-          {/* Hero Section with MyRentCard branding */}
+          {/* Hero Section with Network Value */}
           <div className="relative">
             <h1 className="text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-600 to-blue-400 text-transparent bg-clip-text">
@@ -95,18 +111,38 @@ export default function HomePage() {
               </span>
               <div className="absolute -right-4 top-0 text-yellow-400 text-xl">✨</div>
               <span className="block text-3xl mt-4 text-gray-800">
-                One Form. Rent Anywhere.
+                Join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} Verified Renters
               </span>
               <span className="block text-2xl mt-2 text-blue-600">
-                100% Free to Use
+                The Network That Gets You Approved Faster
               </span>
             </h1>
           </div>
 
-          <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Fill out your rental profile once and instantly apply to multiple properties.
-            No account needed to start.
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+            Join the fastest-growing rental network where {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} renters connect with {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} landlords. 
+            Get approved in {SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME} instead of weeks.
           </p>
+          
+          {/* Network Value Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.VERIFIED_RENTERS}</div>
+              <div className="text-sm text-gray-600">Verified Renters</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.TIME_SAVED_HOURS}h</div>
+              <div className="text-sm text-gray-600">Hours Saved Weekly</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-600">{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION}</div>
+              <div className="text-sm text-gray-600">Faster Screening</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-orange-600">{SOCIAL_PROOF_STATS.CITIES_SERVED}</div>
+              <div className="text-sm text-gray-600">Cities Served</div>
+            </div>
+          </div>
 
           {/* CTA Buttons with conditional rendering based on auth state */}
           <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
@@ -140,7 +176,7 @@ export default function HomePage() {
                     <Skeleton className="w-32 h-6" />
                   ) : (
                     <>
-                      Create Free RentCard
+                      {NETWORK_CTA.PRIMARY.TENANT.MAIN}
                       <ArrowRight className={`w-5 h-5 transition-transform ${loadingStates.hover_createRentCard ? 'translate-x-1' : ''}`} />
                     </>
                   )}
@@ -156,7 +192,7 @@ export default function HomePage() {
                     <Skeleton className="w-32 h-6" />
                   ) : (
                     <>
-                      Request Tenant Info
+                      {NETWORK_CTA.PRIMARY.LANDLORD.SECONDARY}
                       <ArrowRight className={`w-5 h-5 transition-transform ${loadingStates.hover_requestScreening ? 'translate-x-1' : ''}`} />
                     </>
                   )}
@@ -187,12 +223,27 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Enhanced Benefits Section */}
+          {/* Network Benefits Section */}
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             {[
-              { icon: Clock, title: "Save Hours", desc: "Fill out one form and use it everywhere. No more repetitive applications." },
-              { icon: Shield, title: "Secure & Private", desc: "You control what information to share with each landlord." },
-              { icon: Users, title: "Pre-Qualify Fast", desc: "Get instant responses from properties that match your criteria." }
+              { 
+                icon: Users, 
+                title: "Growing Network", 
+                desc: "Join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} renters and {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} landlords in our trusted community.",
+                stat: "+{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} new users daily"
+              },
+              { 
+                icon: Clock, 
+                title: "Network Speed", 
+                desc: "Get approved in {SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME} vs weeks. The network makes screening instant.",
+                stat: "{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} faster screening"
+              },
+              { 
+                icon: Shield, 
+                title: "Community Trust", 
+                desc: "{SOCIAL_PROOF_STATS.REFERENCES_VERIFIED} verified references build the trust that gets you approved.",
+                stat: "{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 user satisfaction"
+              }
             ].map((benefit, index) => (
               <div 
                 key={index}
@@ -205,45 +256,92 @@ export default function HomePage() {
                   <benefit.icon className="w-8 h-8 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{benefit.title}</h3>
-                <p className="text-gray-600">{benefit.desc}</p>
+                <p className="text-gray-600 mb-4">{benefit.desc.replace(/{[^}]+}/g, (match) => {
+                  const key = match.slice(1, -1) as keyof typeof SOCIAL_PROOF_STATS;
+                  return SOCIAL_PROOF_STATS[key] || match;
+                })}</p>
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {benefit.stat.replace(/{[^}]+}/g, (match) => {
+                    const key = match.slice(1, -1) as keyof typeof SOCIAL_PROOF_STATS;
+                    return SOCIAL_PROOF_STATS[key] || match;
+                  })}
+                </Badge>
               </div>
             ))}
           </div>
 
-          {/* Dynamic Social Proof Section */}
+          {/* Enhanced Social Proof with Real Success Stories */}
           <div className="bg-white p-12 rounded-xl shadow-lg relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-blue-50 to-transparent opacity-50"></div>
 
             <div className="relative">
               <div className="flex items-center justify-center gap-4 mb-8">
                 <div className="h-1 w-16 bg-blue-200 rounded"></div>
-                <p className="text-xl font-semibold text-blue-800">Trusted by Thousands</p>
+                <p className="text-2xl font-semibold text-blue-800">Trusted by {SOCIAL_PROOF_STATS.TOTAL_USERS} Users</p>
                 <div className="h-1 w-16 bg-blue-200 rounded"></div>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                {[
-                  "Got approved in 2 days!",
-                  "Saved hours of paperwork",
-                  "Best rental tool ever"
-                ].map((review, index) => (
+              <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
+                {SUCCESS_STORIES.TENANT_TESTIMONIALS.map((story, index) => (
                   <div 
                     key={index}
                     className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-all"
-                    onMouseEnter={() => handleHover(`review${index}`, true)}
-                    onMouseLeave={() => handleHover(`review${index}`, false)}
+                    onMouseEnter={() => handleHover(`story${index}`, true)}
+                    onMouseLeave={() => handleHover(`story${index}`, false)}
                   >
-                    <div className="text-yellow-400 mb-3 flex gap-1">
-                      {"★★★★★"}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-yellow-400 flex gap-1">
+                        {"★★★★★"}
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        <Award className="w-3 h-3 mr-1" />
+                        {story.metric}
+                      </Badge>
                     </div>
-                    <p className="text-gray-700 font-medium">"{review}"</p>
+                    <p className="text-gray-700 font-medium mb-3">"{story.quote}"</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="font-medium">{story.name}</div>
+                        <div className="text-xs">{story.role}</div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-12 text-center">
-                <p className="text-lg font-semibold mb-2">Core features are completely free</p>
-                <p className="text-gray-600">Optional premium features available for power users</p>
+              {/* Network Growth Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">{SOCIAL_PROOF_STATS.SUCCESSFUL_MATCHES}</div>
+                  <div className="text-sm text-gray-600">Successful Matches</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600 mb-2">{SOCIAL_PROOF_STATS.RETURN_RATE}</div>
+                  <div className="text-sm text-gray-600">User Return Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-600 mb-2">{SOCIAL_PROOF_STATS.PROPERTIES_LISTED}</div>
+                  <div className="text-sm text-gray-600">Properties Listed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-orange-600 mb-2">{SOCIAL_PROOF_STATS.NEW_USERS_DAILY}</div>
+                  <div className="text-sm text-gray-600">New Users Daily</div>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <p className="text-lg font-semibold mb-2">Join the network that's changing rentals</p>
+                <p className="text-gray-600 mb-4">Free to join • {SOCIAL_PROOF_STATS.MONTHLY_GROWTH} monthly growth • {SOCIAL_PROOF_STATS.CITIES_SERVED} cities served</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Badge variant="outline">Network-verified references</Badge>
+                  <Badge variant="outline">Community-trusted profiles</Badge>
+                  <Badge variant="outline">Instant pre-screening</Badge>
+                  <Badge variant="outline">Growing daily</Badge>
+                </div>
               </div>
             </div>
           </div>

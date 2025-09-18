@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/authStore";
+import { SOCIAL_PROOF_STATS, VIRAL_MESSAGING } from "@/constants";
 
 // Import our referral components
 import { ReferralStatsCard } from "./ReferralStatsCard";
@@ -194,8 +195,8 @@ export function ReferralDashboard({ userId, className }: ReferralDashboardProps)
     },
     onSuccess: (data) => {
       toast({
-        title: "Reward Claimed!",
-        description: data.message || 'Reward claimed successfully!',
+        title: "Network Reward Claimed!",
+        description: data.message || 'Thank you for growing our community! Reward claimed successfully.',
       });
       
       // Invalidate and refetch data
@@ -301,10 +302,10 @@ export function ReferralDashboard({ userId, className }: ReferralDashboardProps)
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-blue-600" />
-            Referral Dashboard
+            Network Growth Hub
           </h1>
           <p className="text-gray-600">
-            Invite friends, earn rewards, and track your referral success
+            Help grow our community of {SOCIAL_PROOF_STATS.TOTAL_USERS} users - invite friends, earn rewards, and build the network together
           </p>
         </div>
         
@@ -325,7 +326,7 @@ export function ReferralDashboard({ userId, className }: ReferralDashboardProps)
               <div className="flex items-center gap-2 text-sm">
                 <Award className="w-4 h-4 text-blue-600" />
                 <span className="font-medium text-blue-700">
-                  Next reward at {statsData.totalReferrals + 1} referrals
+                  Help us reach 20,000+ users! Next reward at {statsData.totalReferrals + 1} referrals
                 </span>
               </div>
             </Card>
@@ -342,8 +343,8 @@ export function ReferralDashboard({ userId, className }: ReferralDashboardProps)
                 <Share2 className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <div className="font-medium">Share Link</div>
-                <div className="text-sm text-gray-500">Invite friends</div>
+                <div className="font-medium">Grow Network</div>
+                <div className="text-sm text-gray-500">Invite to community</div>
               </div>
             </div>
           </Card>
@@ -354,8 +355,8 @@ export function ReferralDashboard({ userId, className }: ReferralDashboardProps)
                 <Gift className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <div className="font-medium">Claim Rewards</div>
-                <div className="text-sm text-gray-500">{rewards.filter(r => r.status === 'earned').length} available</div>
+                <div className="font-medium">Network Rewards</div>
+                <div className="text-sm text-gray-500">{rewards.filter(r => r.status === 'earned').length} earned</div>
               </div>
             </div>
           </Card>
