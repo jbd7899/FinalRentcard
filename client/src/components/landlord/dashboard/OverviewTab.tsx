@@ -144,16 +144,16 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                   <CheckSquare className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm sm:text-base text-purple-800">3. Review Applications</h3>
+                  <h3 className="font-medium text-sm sm:text-base text-purple-800">3. Review Pre-Screenings</h3>
                   <p className="text-xs sm:text-sm text-purple-700 mt-1">
-                    Verify documents and select qualified tenants
+                    Verify documents and select qualified prospects
                   </p>
                   <Button 
                     variant="link" 
                     className="text-xs sm:text-sm text-purple-600 p-0 h-auto mt-2"
                     onClick={() => setLocation(ROUTES.LANDLORD.APPLICATIONS)}
                   >
-                    View applications →
+                    View pre-screenings →
                   </Button>
                 </div>
               </div>
@@ -227,7 +227,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
             onClick={() => setLocation(ROUTES.LANDLORD.APPLICATIONS)}
           >
             <Users className="h-5 w-5 text-amber-500" />
-            View Applications
+            View Pre-Screenings
           </Button>
           
           <Button 

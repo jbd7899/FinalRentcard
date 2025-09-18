@@ -208,7 +208,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                     Are you a landlord?
                   </h4>
                   <p className="text-sm text-gray-600 mb-4">
-                    Start pre-screening qualified tenants. Save time by qualifying prospects before property showings.
+                    Pre-screen qualified tenants instantly. Save time by qualifying prospects before property showings.
                   </p>
                   <Button 
                     onClick={handleSignupAsLandlord}
@@ -254,7 +254,7 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
             data-testid="button-signup-landlord-banner"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Start Pre-Screening Tenants
+            Start Pre-Screening
           </Button>
         </div>
       </div>

@@ -136,23 +136,12 @@ const AuthPage = () => {
     return null; // Prevents flash of content during redirect
   }
 
-  const benefits = [
-    { 
-      title: "Find your perfect rental home", 
-      description: "Browse listings that match your criteria",
-      icon: <FileText className="w-5 h-5 text-blue-500" />
-    },
-    { 
-      title: "Connect with quality tenants", 
-      description: "Find reliable renters for your properties",
-      icon: <Users className="w-5 h-5 text-blue-500" /> 
-    },
-    { 
-      title: "Streamline your rental process", 
-      description: "Manage applications and payments in one place",
-      icon: <Shield className="w-5 h-5 text-blue-500" /> 
-    },
-  ];
+  const benefits = MESSAGES.AUTH.BENEFITS.map((benefit, index) => ({
+    ...benefit,
+    icon: index === 0 ? <FileText className="w-5 h-5 text-blue-500" /> :
+          index === 1 ? <Users className="w-5 h-5 text-blue-500" /> :
+          <Shield className="w-5 h-5 text-blue-500" />
+  }));
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -176,8 +165,8 @@ const AuthPage = () => {
               <TabsContent value="login">
                 <Card className="border-0 shadow-none">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xl font-semibold text-gray-900">Login to your account</CardTitle>
-                    <CardDescription>Enter your credentials to access your RentCard account</CardDescription>
+                    <CardTitle className="text-xl font-semibold text-gray-900">{MESSAGES.AUTH.TITLES.LOGIN}</CardTitle>
+                    <CardDescription>{MESSAGES.AUTH.CARD_DESCRIPTIONS.LOGIN}</CardDescription>
                   </CardHeader>
                   
                   <CardContent className="pt-4">
@@ -235,8 +224,8 @@ const AuthPage = () => {
               <TabsContent value="register">
                 <Card className="border-0 shadow-none">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xl font-semibold text-gray-900">Create Your RentCard</CardTitle>
-                    <CardDescription>One profile for all your rental applications</CardDescription>
+                    <CardTitle className="text-xl font-semibold text-gray-900">{MESSAGES.AUTH.TITLES.REGISTER}</CardTitle>
+                    <CardDescription>{MESSAGES.AUTH.CARD_DESCRIPTIONS.REGISTER}</CardDescription>
                   </CardHeader>
                   
                   <CardContent className="pt-4">
