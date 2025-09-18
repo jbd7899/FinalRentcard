@@ -123,8 +123,8 @@ export const MESSAGES = {
         DESCRIPTION: 'You have successfully logged in',
       },
       REGISTER_SUCCESS: {
-        TITLE: 'Welcome to MyRentCard!',
-        DESCRIPTION: 'Your account has been created successfully',
+        TITLE: 'Welcome to the Individual Landlord Network!',
+        DESCRIPTION: 'Your account is ready to connect with responsive individual landlords',
       },
       LOGOUT_SUCCESS: {
         TITLE: 'Goodbye!',

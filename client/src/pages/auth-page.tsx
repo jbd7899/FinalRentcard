@@ -29,9 +29,9 @@ import {
   USER_ROLES, 
   MESSAGES, 
   ROUTES,
-  SOCIAL_PROOF_STATS,
   NETWORK_VALUE_PROPS,
-  NETWORK_NOTIFICATIONS
+  NETWORK_NOTIFICATIONS,
+  INDIVIDUAL_LANDLORD_STATS
 } from '@/constants';
 import Navbar from '@/components/shared/navbar';
 
@@ -84,6 +84,9 @@ const AuthPage = () => {
       userType: type === 'landlord' ? USER_ROLES.LANDLORD : USER_ROLES.TENANT,
     },
   });
+
+  // Get current userType from form for conditional messaging
+  const currentUserType = registerForm.watch('userType');
 
   useEffect(() => {
     if (user) {
@@ -166,19 +169,19 @@ const AuthPage = () => {
             <div className="flex justify-center mb-6">
               <Building2 className="w-12 h-12 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Save Time on Every Application</h1>
+            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Connect with Individual Landlords</h1>
             <div className="text-center mb-4">
               <div className="flex flex-wrap justify-center gap-2 mb-2">
                 <Badge variant="outline" className="text-blue-600 border-blue-600">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} saved per application
+                  <Building2 className="w-3 h-3 mr-1" />
+                  {INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}
                 </Badge>
                 <Badge variant="outline" className="text-green-600 border-green-600">
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Same-day application review
+                  <Clock className="w-3 h-3 mr-1" />
+                  {INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-600">Complete profiles eliminate follow-up emails and phone calls</p>
+              <p className="text-sm text-gray-600">{INDIVIDUAL_LANDLORD_STATS.PERSONAL_APPROACH} - {INDIVIDUAL_LANDLORD_STATS.NO_JUNK_FEES}</p>
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
@@ -192,10 +195,10 @@ const AuthPage = () => {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xl font-semibold text-gray-900">{MESSAGES.AUTH.TITLES.LOGIN}</CardTitle>
                     <CardDescription className="space-y-2">
-                      <div>{MESSAGES.AUTH.CARD_DESCRIPTIONS.LOGIN}</div>
+                      <div>Access your profile to connect with individual landlords</div>
                       <div className="flex items-center gap-2 text-sm text-blue-600">
-                        <Clock className="w-4 h-4" />
-                        <span>Skip {SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED} of reference verification</span>
+                        <Building2 className="w-4 h-4" />
+                        <span>Skip corporate bureaucracy - individual landlords respond faster</span>
                       </div>
                     </CardDescription>
                   </CardHeader>
@@ -255,26 +258,57 @@ const AuthPage = () => {
               <TabsContent value="register">
                 <Card className="border-0 shadow-none">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xl font-semibold text-gray-900">{NETWORK_VALUE_PROPS.TENANT.HERO}</CardTitle>
+                    <CardTitle className="text-xl font-semibold text-gray-900">
+                      {currentUserType === USER_ROLES.LANDLORD 
+                        ? NETWORK_VALUE_PROPS.LANDLORD.HERO 
+                        : NETWORK_VALUE_PROPS.TENANT.HERO}
+                    </CardTitle>
                     <CardDescription className="space-y-3">
-                      <div>Create your verified profile and join the network</div>
+                      <div>
+                        {currentUserType === USER_ROLES.LANDLORD 
+                          ? NETWORK_VALUE_PROPS.LANDLORD.SECONDARY 
+                          : NETWORK_VALUE_PROPS.TENANT.SECONDARY}
+                      </div>
                       <div className="grid grid-cols-2 gap-2">
-                        <div className="flex items-center gap-1 text-xs text-green-600">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>{SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT} processing</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-blue-600">
-                          <Shield className="w-3 h-3" />
-                          <span>{SOCIAL_PROOF_STATS.REFERENCES_VERIFIED} verified refs</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-purple-600">
-                          <Clock className="w-3 h-3" />
-                          <span>{SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-orange-600">
-                          <Award className="w-3 h-3" />
-                          <span>{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 user rating</span>
-                        </div>
+                        {currentUserType === USER_ROLES.LANDLORD ? (
+                          <>
+                            <div className="flex items-center gap-1 text-xs text-green-600">
+                              <TrendingUp className="w-3 h-3" />
+                              <span>Competitive efficiency</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-blue-600">
+                              <Users className="w-3 h-3" />
+                              <span>Personal touch</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-purple-600">
+                              <Shield className="w-3 h-3" />
+                              <span>Professional tools</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-orange-600">
+                              <Award className="w-3 h-3" />
+                              <span>No corporate overhead</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-1 text-xs text-green-600">
+                              <Building2 className="w-3 h-3" />
+                              <span>{INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-blue-600">
+                              <Clock className="w-3 h-3" />
+                              <span>{INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-purple-600">
+                              <Shield className="w-3 h-3" />
+                              <span>Personal relationships</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-orange-600">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>No junk fees</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </CardDescription>
                   </CardHeader>
@@ -331,7 +365,7 @@ const AuthPage = () => {
                             onClick={() => registerForm.setValue('userType', USER_ROLES.TENANT)}
                           >
                             <span className="font-medium">Tenant</span>
-                            <span className="text-xs opacity-80">Join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS}</span>
+                            <span className="text-xs opacity-80">Connect with individual landlords</span>
                           </Button>
                           <Button
                             type="button"
@@ -339,8 +373,8 @@ const AuthPage = () => {
                             className={`w-full rounded-md h-10 flex flex-col py-2 h-auto ${registerForm.watch('userType') === USER_ROLES.LANDLORD ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                             onClick={() => registerForm.setValue('userType', USER_ROLES.LANDLORD)}
                           >
-                            <span className="font-medium">Landlord</span>
-                            <span className="text-xs opacity-80">Join {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS}</span>
+                            <span className="font-medium">Individual Landlord</span>
+                            <span className="text-xs opacity-80">Compete with corporate efficiency</span>
                           </Button>
                         </div>
                       </div>
@@ -358,9 +392,13 @@ const AuthPage = () => {
                             </svg>
                             Creating account...
                           </span>
+                        ) : currentUserType === USER_ROLES.TENANT ? (
+                          <span className="flex items-center justify-center">
+                            Connect with Individual Landlords
+                          </span>
                         ) : (
                           <span className="flex items-center justify-center">
-                            Join the Network
+                            Join Individual Landlord Network
                           </span>
                         )}
                       </Button>
@@ -371,7 +409,7 @@ const AuthPage = () => {
                     <p>By registering, you agree to our Terms of Service and Privacy Policy</p>
                     <div className="flex items-center justify-center gap-2 text-xs text-blue-600">
                       <TrendingUp className="w-3 h-3" />
-                      <span>{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} people joined MyRentCard today</span>
+                      <span>Join the individual landlord network growing daily</span>
                     </div>
                   </CardFooter>
                 </Card>
@@ -384,25 +422,25 @@ const AuthPage = () => {
         <div className="hidden md:block w-1/2 bg-gradient-to-br from-blue-600 to-blue-700">
           <div className="h-full flex flex-col justify-center p-12">
             <h2 className="text-4xl font-bold text-white mb-4">Join the Network</h2>
-            <p className="text-blue-100 text-lg mb-8">Where {SOCIAL_PROOF_STATS.TOTAL_USERS} rental professionals connect</p>
+            <p className="text-blue-100 text-lg mb-8">Where individual landlords and tenants connect directly</p>
             
             {/* Network Stats */}
             <div className="grid grid-cols-2 gap-4 mb-12">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">{SOCIAL_PROOF_STATS.VERIFIED_RENTERS}</div>
-                <div className="text-sm text-blue-200">Verified Renters</div>
+                <div className="text-3xl font-bold text-white">{INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED}</div>
+                <div className="text-sm text-blue-200">Response Speed</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">{SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS}</div>
-                <div className="text-sm text-blue-200">Trusted Landlords</div>
+                <div className="text-3xl font-bold text-white">{INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}</div>
+                <div className="text-sm text-blue-200">Market Share</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">{SOCIAL_PROOF_STATS.SUCCESSFUL_MATCHES}</div>
-                <div className="text-sm text-blue-200">Successful Matches</div>
+                <div className="text-3xl font-bold text-white">{INDIVIDUAL_LANDLORD_STATS.PERSONAL_APPROACH}</div>
+                <div className="text-sm text-blue-200">Communication</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white">{SOCIAL_PROOF_STATS.CITIES_SERVED}</div>
-                <div className="text-sm text-blue-200">Cities Served</div>
+                <div className="text-3xl font-bold text-white">{INDIVIDUAL_LANDLORD_STATS.NO_JUNK_FEES}</div>
+                <div className="text-sm text-blue-200">No Fees</div>
               </div>
             </div>
 
@@ -424,7 +462,7 @@ const AuthPage = () => {
                 </div>
                 <div>
                   <h3 className="font-medium text-white text-lg">Instant Screening</h3>
-                  <p className="text-blue-100 text-sm">{SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION}</p>
+                  <p className="text-blue-100 text-sm">Quick document review</p>
                 </div>
               </div>
               
@@ -434,7 +472,7 @@ const AuthPage = () => {
                 </div>
                 <div>
                   <h3 className="font-medium text-white text-lg">Verified Community</h3>
-                  <p className="text-blue-100 text-sm">{SOCIAL_PROOF_STATS.REFERENCES_VERIFIED} verified references</p>
+                  <p className="text-blue-100 text-sm">Pre-verified references</p>
                 </div>
               </div>
               
@@ -444,7 +482,7 @@ const AuthPage = () => {
                 </div>
                 <div>
                   <h3 className="font-medium text-white text-lg">Network Growth</h3>
-                  <p className="text-blue-100 text-sm">{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} joining daily</p>
+                  <p className="text-blue-100 text-sm">Growing individual landlord network</p>
                 </div>
               </div>
             </div>
@@ -453,9 +491,9 @@ const AuthPage = () => {
             <div className="mt-8 p-4 bg-white/10 rounded-lg">
               <div className="flex items-center justify-center gap-2 text-white mb-2">
                 <Star className="w-5 h-5 text-yellow-300" />
-                <span className="font-medium">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 User Rating</span>
+                <span className="font-medium">High User Satisfaction</span>
               </div>
-              <p className="text-blue-100 text-sm text-center">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 rating</p>
+              <p className="text-blue-100 text-sm text-center">Individual landlord focused</p>
             </div>
           </div>
         </div>
