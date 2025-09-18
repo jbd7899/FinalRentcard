@@ -340,8 +340,9 @@ export const contactSharingHistory = pgTable("contact_sharing_history", {
 });
 
 // Add relations for shareTokens
-export const shareTokenRelations = relations(shareTokens, ({ one }) => ({
+export const shareTokenRelations = relations(shareTokens, ({ one, many }) => ({
   tenant: one(tenantProfiles, { fields: [shareTokens.tenantId], references: [tenantProfiles.id] }),
+  referrals: many(referrals),
 }));
 
 export const tenantProfileRelations = relations(tenantProfiles, ({ many, one }) => ({
@@ -405,6 +406,8 @@ export const landlordProfileRelations = relations(landlordProfiles, ({ many }) =
   communicationLogs: many(communicationLogs),
   communicationTemplates: many(communicationTemplates),
   blockedByTenants: many(tenantBlockedContacts),
+  prospectLists: many(prospectLists),
+  rentCardRequests: many(rentCardRequests),
 }));
 
 // Add relations for propertyQRCodes
@@ -425,12 +428,406 @@ export const shortlinkRelations = relations(shortlinks, ({ one, many }) => ({
   landlord: one(landlordProfiles, { fields: [shortlinks.landlordId], references: [landlordProfiles.id] }),
   property: one(properties, { fields: [shortlinks.propertyId], references: [properties.id] }),
   clicks: many(shortlinkClicks),
+  referrals: many(referrals),
 }));
 
 export const shortlinkClickRelations = relations(shortlinkClicks, ({ one }) => ({
   shortlink: one(shortlinks, { fields: [shortlinkClicks.shortlinkId], references: [shortlinks.id] }),
   user: one(users, { fields: [shortlinkClicks.userId], references: [users.id] }),
 }));
+
+// ============================================================================
+// PHASE 1 NETWORK EFFECTS TABLES
+// ============================================================================
+
+// Referrals table - Track referral relationships, rewards, and attribution
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referralCode: text("referral_code").unique().notNull(), // Unique code for tracking
+  
+  // Referrer information - who is making the referral
+  referrerUserId: integer("referrer_user_id").references(() => users.id), // If referrer is registered user
+  referrerEmail: text("referrer_email"), // For non-registered referrers
+  referrerName: text("referrer_name"), // Name of referrer
+  referrerType: text("referrer_type").notNull(), // 'tenant', 'landlord', 'prospect'
+  
+  // Referee information - who is being referred
+  refereeUserId: integer("referee_user_id").references(() => users.id), // If referee becomes registered user
+  refereeEmail: text("referee_email").notNull(), // Email of referee
+  refereeName: text("referee_name"), // Name of referee
+  refereeType: text("referee_type").notNull(), // 'tenant', 'landlord', 'prospect'
+  
+  // Attribution and tracking
+  referralSource: text("referral_source").notNull(), // 'direct_link', 'email', 'sms', 'social', 'qr_code'
+  shareTokenId: integer("share_token_id").references(() => shareTokens.id), // Link to shared token if applicable
+  shortlinkId: integer("shortlink_id").references(() => shortlinks.id), // Link to shortlink if used
+  campaignId: text("campaign_id"), // For campaign tracking
+  utmSource: text("utm_source"), // UTM tracking parameters
+  utmMedium: text("utm_medium"),
+  utmCampaign: text("utm_campaign"),
+  
+  // Status and conversion tracking
+  status: text("status").notNull().default('pending'), // 'pending', 'converted', 'rewarded', 'expired', 'cancelled'
+  conversionEvent: text("conversion_event"), // 'signup', 'rentcard_created', 'property_inquiry', 'application_submitted'
+  convertedAt: timestamp("converted_at"), // When the referral converted
+  
+  // Reward eligibility
+  referrerRewardEligible: boolean("referrer_reward_eligible").notNull().default(true),
+  refereeRewardEligible: boolean("referee_reward_eligible").notNull().default(true),
+  
+  // Metadata
+  metadata: json("metadata").$type<{
+    originalUrl?: string; // The original URL that was shared
+    deviceInfo?: {
+      type: 'desktop' | 'mobile' | 'tablet';
+      os?: string;
+      browser?: string;
+    };
+    locationInfo?: {
+      country?: string;
+      region?: string;
+      city?: string;
+    };
+    customData?: Record<string, any>; // For extensibility
+  }>(),
+  
+  // Timestamps
+  expiresAt: timestamp("expires_at"), // When the referral expires
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// RentCard Requests table - Track landlord requests for RentCards from prospects
+export const rentCardRequests = pgTable("rent_card_requests", {
+  id: serial("id").primaryKey(),
+  requestToken: text("request_token").unique().notNull(), // Unique token for the request
+  
+  // Landlord making the request
+  landlordId: integer("landlord_id").references(() => landlordProfiles.id).notNull(),
+  prospectListId: integer("prospect_list_id").references(() => prospectLists.id), // Optional link to prospect list
+  
+  // Prospect information
+  prospectEmail: text("prospect_email").notNull(),
+  prospectName: text("prospect_name").notNull(),
+  prospectPhone: text("prospect_phone"),
+  
+  // Request details
+  propertyId: integer("property_id").references(() => properties.id), // Optional specific property
+  customMessage: text("custom_message"), // Personalized message from landlord
+  templateUsed: text("template_used"), // Template identifier if used
+  
+  // Tracking and status
+  status: text("status").notNull().default('sent'), // 'sent', 'viewed', 'started', 'completed', 'expired', 'declined'
+  requestMethod: text("request_method").notNull(), // 'email', 'sms', 'direct_link'
+  
+  // Engagement tracking
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+  viewedAt: timestamp("viewed_at"), // When prospect first viewed the request
+  startedAt: timestamp("started_at"), // When prospect started creating RentCard
+  completedAt: timestamp("completed_at"), // When RentCard was completed
+  
+  // Follow-up tracking
+  reminderCount: integer("reminder_count").notNull().default(0),
+  lastReminderAt: timestamp("last_reminder_at"),
+  nextReminderAt: timestamp("next_reminder_at"),
+  
+  // Completion details
+  rentCardId: integer("rent_card_id").references(() => rentCards.id), // Link to completed RentCard
+  completionNotes: text("completion_notes"), // Notes from prospect upon completion
+  
+  // Metadata
+  metadata: json("metadata").$type<{
+    emailDeliveryStatus?: 'delivered' | 'bounced' | 'failed';
+    smsDeliveryStatus?: 'delivered' | 'failed' | 'pending';
+    deviceInfo?: {
+      type: 'desktop' | 'mobile' | 'tablet';
+      os?: string;
+      browser?: string;
+    };
+    referralCode?: string; // If this request came from a referral
+  }>(),
+  
+  // Expiration
+  expiresAt: timestamp("expires_at").notNull(), // When the request expires
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Prospect Lists table - Allow landlords to manage prospect contact lists
+export const prospectLists = pgTable("prospect_lists", {
+  id: serial("id").primaryKey(),
+  landlordId: integer("landlord_id").references(() => landlordProfiles.id).notNull(),
+  
+  // List details
+  listName: text("list_name").notNull(),
+  description: text("description"),
+  category: text("category").notNull().default('general'), // 'general', 'property_specific', 'referrals', 'follow_up'
+  
+  // List settings
+  isActive: boolean("is_active").notNull().default(true),
+  isDefault: boolean("is_default").notNull().default(false), // Default list for new prospects
+  allowDuplicates: boolean("allow_duplicates").notNull().default(false),
+  
+  // Contact information structure
+  contacts: json("contacts").$type<{
+    id: string; // Unique ID within the list
+    name: string;
+    email: string;
+    phone?: string;
+    company?: string;
+    propertyOfInterest?: string; // Property address they're interested in
+    source: string; // How they were added: 'manual', 'import', 'referral', 'inquiry'
+    status: 'active' | 'contacted' | 'responded' | 'converted' | 'unsubscribed';
+    tags: string[]; // Custom tags for categorization
+    notes: string; // Additional notes
+    addedAt: string; // ISO timestamp
+    lastContactedAt?: string; // ISO timestamp
+    contactCount: number; // How many times contacted
+    customFields?: Record<string, any>; // For extensibility
+  }[]>().notNull().default([]),
+  
+  // List statistics
+  totalContacts: integer("total_contacts").notNull().default(0),
+  activeContacts: integer("active_contacts").notNull().default(0),
+  convertedContacts: integer("converted_contacts").notNull().default(0),
+  
+  // Import/export tracking
+  lastImportAt: timestamp("last_import_at"),
+  lastExportAt: timestamp("last_export_at"),
+  importSource: text("import_source"), // 'csv', 'excel', 'google_contacts', 'manual'
+  
+  // Metadata
+  metadata: json("metadata").$type<{
+    importHistory?: {
+      date: string;
+      source: string;
+      contactsAdded: number;
+      contactsUpdated: number;
+    }[];
+    exportHistory?: {
+      date: string;
+      format: string;
+      contactsExported: number;
+    }[];
+    automationSettings?: {
+      autoFollowUp: boolean;
+      followUpInterval: number; // days
+      maxFollowUps: number;
+    };
+  }>(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Referral Rewards table - Track earned rewards/credits for referrals
+export const referralRewards = pgTable("referral_rewards", {
+  id: serial("id").primaryKey(),
+  referralId: integer("referral_id").references(() => referrals.id).notNull(),
+  
+  // Recipient information
+  recipientUserId: integer("recipient_user_id").references(() => users.id), // User receiving the reward
+  recipientType: text("recipient_type").notNull(), // 'referrer', 'referee'
+  recipientEmail: text("recipient_email").notNull(), // For tracking even if not registered
+  
+  // Reward details
+  rewardType: text("reward_type").notNull(), // 'credit', 'discount', 'cash', 'points', 'premium_feature'
+  rewardValue: integer("reward_value").notNull(), // Value in cents for monetary rewards, or points
+  rewardCurrency: text("reward_currency").default('USD'), // Currency for monetary rewards
+  rewardDescription: text("reward_description").notNull(), // Human-readable description
+  
+  // Reward conditions
+  triggerEvent: text("trigger_event").notNull(), // 'signup', 'first_rentcard', 'property_inquiry', 'application'
+  minimumRequirement: json("minimum_requirement").$type<{
+    type: string; // 'none', 'time_limit', 'action_count', 'value_threshold'
+    value?: number;
+    description?: string;
+  }>(),
+  
+  // Status tracking
+  status: text("status").notNull().default('earned'), // 'earned', 'pending', 'redeemed', 'expired', 'cancelled'
+  earnedAt: timestamp("earned_at").defaultNow().notNull(),
+  redeemedAt: timestamp("redeemed_at"),
+  expiresAt: timestamp("expires_at"), // When reward expires if not redeemed
+  
+  // Redemption details
+  redemptionMethod: text("redemption_method"), // 'account_credit', 'discount_code', 'cash_payout', 'automatic'
+  redemptionDetails: json("redemption_details").$type<{
+    transactionId?: string;
+    discountCode?: string;
+    payoutMethod?: string;
+    payoutDetails?: Record<string, any>;
+    appliedToOrderId?: string;
+    appliedAt?: string;
+  }>(),
+  
+  // Campaign and tracking
+  campaignId: text("campaign_id"), // For reward campaign tracking
+  rewardTier: text("reward_tier"), // 'bronze', 'silver', 'gold' or other tiers
+  
+  // Metadata
+  metadata: json("metadata").$type<{
+    originalReferralCode?: string;
+    promotionCode?: string;
+    bonusMultiplier?: number; // For special promotions
+    customData?: Record<string, any>;
+  }>(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ============================================================================
+// NETWORK EFFECTS RELATIONS
+// ============================================================================
+
+// Referrals relations
+export const referralRelations = relations(referrals, ({ one, many }) => ({
+  referrerUser: one(users, { fields: [referrals.referrerUserId], references: [users.id] }),
+  refereeUser: one(users, { fields: [referrals.refereeUserId], references: [users.id] }),
+  shareToken: one(shareTokens, { fields: [referrals.shareTokenId], references: [shareTokens.id] }),
+  shortlink: one(shortlinks, { fields: [referrals.shortlinkId], references: [shortlinks.id] }),
+  rewards: many(referralRewards),
+}));
+
+// RentCard Requests relations
+export const rentCardRequestRelations = relations(rentCardRequests, ({ one }) => ({
+  landlord: one(landlordProfiles, { fields: [rentCardRequests.landlordId], references: [landlordProfiles.id] }),
+  prospectList: one(prospectLists, { fields: [rentCardRequests.prospectListId], references: [prospectLists.id] }),
+  property: one(properties, { fields: [rentCardRequests.propertyId], references: [properties.id] }),
+  completedRentCard: one(rentCards, { fields: [rentCardRequests.rentCardId], references: [rentCards.id] }),
+}));
+
+// Prospect Lists relations
+export const prospectListRelations = relations(prospectLists, ({ one, many }) => ({
+  landlord: one(landlordProfiles, { fields: [prospectLists.landlordId], references: [landlordProfiles.id] }),
+  rentCardRequests: many(rentCardRequests),
+}));
+
+// Referral Rewards relations
+export const referralRewardRelations = relations(referralRewards, ({ one }) => ({
+  referral: one(referrals, { fields: [referralRewards.referralId], references: [referrals.id] }),
+  recipientUser: one(users, { fields: [referralRewards.recipientUserId], references: [users.id] }),
+}));
+
+// ============================================================================
+// NETWORK EFFECTS INSERT SCHEMAS
+// ============================================================================
+
+// Referrals insert schema
+export const insertReferralSchema = createInsertSchema(referrals)
+  .omit({
+    id: true,
+    referralCode: true, // Generated by server
+    convertedAt: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    referrerType: z.enum(['tenant', 'landlord', 'prospect']),
+    refereeType: z.enum(['tenant', 'landlord', 'prospect']),
+    refereeEmail: z.string().email("Invalid referee email address"),
+    referralSource: z.enum(['direct_link', 'email', 'sms', 'social', 'qr_code']),
+    status: z.enum(['pending', 'converted', 'rewarded', 'expired', 'cancelled']).default('pending'),
+    conversionEvent: z.enum(['signup', 'rentcard_created', 'property_inquiry', 'application_submitted']).optional(),
+    expiresAt: z.preprocess((val) => {
+      if (typeof val === 'string') {
+        return new Date(val);
+      }
+      return val;
+    }, z.date().optional()),
+  });
+
+// RentCard Requests insert schema
+export const insertRentCardRequestSchema = createInsertSchema(rentCardRequests)
+  .omit({
+    id: true,
+    requestToken: true, // Generated by server
+    landlordId: true, // Set by server based on authenticated user
+    sentAt: true,
+    viewedAt: true,
+    startedAt: true,
+    completedAt: true,
+    createdAt: true,
+    updatedAt: true,
+    reminderCount: true,
+    lastReminderAt: true,
+  })
+  .extend({
+    prospectEmail: z.string().email("Invalid prospect email address"),
+    prospectName: z.string().min(1, "Prospect name is required"),
+    prospectPhone: z.string().optional(),
+    requestMethod: z.enum(['email', 'sms', 'direct_link']),
+    status: z.enum(['sent', 'viewed', 'started', 'completed', 'expired', 'declined']).default('sent'),
+    expiresAt: z.preprocess((val) => {
+      if (typeof val === 'string') {
+        return new Date(val);
+      }
+      return val;
+    }, z.date()),
+  });
+
+// Prospect Lists insert schema
+export const insertProspectListSchema = createInsertSchema(prospectLists)
+  .omit({
+    id: true,
+    landlordId: true, // Set by server based on authenticated user
+    totalContacts: true,
+    activeContacts: true,
+    convertedContacts: true,
+    lastImportAt: true,
+    lastExportAt: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    listName: z.string().min(1, "List name is required"),
+    description: z.string().optional(),
+    category: z.enum(['general', 'property_specific', 'referrals', 'follow_up']).default('general'),
+    contacts: z.array(z.object({
+      id: z.string(),
+      name: z.string().min(1, "Contact name is required"),
+      email: z.string().email("Invalid email address"),
+      phone: z.string().optional(),
+      company: z.string().optional(),
+      propertyOfInterest: z.string().optional(),
+      source: z.string(),
+      status: z.enum(['active', 'contacted', 'responded', 'converted', 'unsubscribed']),
+      tags: z.array(z.string()),
+      notes: z.string(),
+      addedAt: z.string(),
+      lastContactedAt: z.string().optional(),
+      contactCount: z.number(),
+      customFields: z.record(z.any()).optional(),
+    })).default([]),
+    importSource: z.enum(['csv', 'excel', 'google_contacts', 'manual']).optional(),
+  });
+
+// Referral Rewards insert schema
+export const insertReferralRewardSchema = createInsertSchema(referralRewards)
+  .omit({
+    id: true,
+    earnedAt: true,
+    redeemedAt: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    recipientType: z.enum(['referrer', 'referee']),
+    recipientEmail: z.string().email("Invalid recipient email address"),
+    rewardType: z.enum(['credit', 'discount', 'cash', 'points', 'premium_feature']),
+    rewardValue: z.number().min(0, "Reward value must be positive"),
+    rewardDescription: z.string().min(1, "Reward description is required"),
+    triggerEvent: z.enum(['signup', 'first_rentcard', 'property_inquiry', 'application']),
+    status: z.enum(['earned', 'pending', 'redeemed', 'expired', 'cancelled']).default('earned'),
+    redemptionMethod: z.enum(['account_credit', 'discount_code', 'cash_payout', 'automatic']).optional(),
+    expiresAt: z.preprocess((val) => {
+      if (typeof val === 'string') {
+        return new Date(val);
+      }
+      return val;
+    }, z.date().optional()),
+  });
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
