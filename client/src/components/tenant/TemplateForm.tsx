@@ -112,9 +112,9 @@ const DEFAULT_TEMPLATES = {
 
 I hope this message finds you well. I'm part of the verified MyRentCard network of ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} trusted renters and am interested in your property at {property_address}.
 
-As a verified network member, I've prepared a comprehensive RentCard with all my rental information, references, and documentation. Property managers in our network save ${SOCIAL_PROOF_STATS.TIME_SAVED_HOURS} hours per week using these verified profiles. You can view mine here: {rentcard_link}
+As a verified network member, I've prepared a comprehensive RentCard with all my rental information, references, and documentation. Property managers in our network save ${SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} using these verified profiles. You can view mine here: {rentcard_link}
 
-Joining our trusted network means faster screening (75% time reduction) and connecting with verified renters nationwide. I'd appreciate the opportunity to discuss this property further.
+Joining our trusted network means faster screening through pre-verified documents and connecting with verified renters nationwide. Property managers report reducing document review from ${SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION}. I'd appreciate the opportunity to discuss this property further.
 
 Thank you for your time and consideration.
 

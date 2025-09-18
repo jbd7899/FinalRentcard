@@ -92,7 +92,7 @@ export default function HomePage() {
             <div className="inline-block bg-green-100 text-green-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
               <span className="flex items-center gap-2 text-sm font-medium">
                 <TrendingUp className="w-4 h-4" />
-                <span>Growing {SOCIAL_PROOF_STATS.MONTHLY_GROWTH} monthly</span>
+                <span>{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} joining daily</span>
               </span>
             </div>
             <div className="inline-block bg-purple-100 text-purple-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
@@ -111,17 +111,17 @@ export default function HomePage() {
               </span>
               <div className="absolute -right-4 top-0 text-yellow-400 text-xl">✨</div>
               <span className="block text-3xl mt-4 text-gray-800">
-                Join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} Verified Renters
+                Save {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} Per Application
               </span>
               <span className="block text-2xl mt-2 text-blue-600">
-                The Network That Gets You Approved Faster
+                Complete Profiles Enable Same-Day Review
               </span>
             </h1>
           </div>
 
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Join the fastest-growing rental network where {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} renters connect with {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} landlords. 
-            Get approved in {SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME} instead of weeks.
+            One-time profile setup eliminates {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} of repetitive work per application. 
+            Complete documentation enables same-day landlord review instead of weeks of back-and-forth.
           </p>
           
           {/* Network Value Stats */}
@@ -131,12 +131,12 @@ export default function HomePage() {
               <div className="text-sm text-gray-600">Verified Renters</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.TIME_SAVED_HOURS}h</div>
-              <div className="text-sm text-gray-600">Hours Saved Weekly</div>
+              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY}</div>
+              <div className="text-sm text-gray-600">Landlord Time Saved Weekly</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION}</div>
-              <div className="text-sm text-gray-600">Faster Screening</div>
+              <div className="text-3xl font-bold text-purple-600">{SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED}</div>
+              <div className="text-sm text-gray-600">Reference Verification Skipped</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-orange-600">{SOCIAL_PROOF_STATS.CITIES_SERVED}</div>
@@ -228,21 +228,21 @@ export default function HomePage() {
             {[
               { 
                 icon: Users, 
-                title: "Growing Network", 
-                desc: "Join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} renters and {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} landlords in our trusted community.",
-                stat: "+{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} new users daily"
+                title: "Complete Documentation", 
+                desc: "All tenant information verified upfront eliminates {SOCIAL_PROOF_STATS.EMAIL_REDUCTION_PER_APPLICATION} per application.",
+                stat: "{SOCIAL_PROOF_STATS.EMAIL_REDUCTION_PER_APPLICATION} eliminated"
               },
               { 
                 icon: Clock, 
-                title: "Network Speed", 
-                desc: "Get approved in {SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME} vs weeks. The network makes screening instant.",
-                stat: "{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} faster screening"
+                title: "Faster Processing", 
+                desc: "Reduce application processing from {SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT} through complete upfront documentation.",
+                stat: "{SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT}"
               },
               { 
                 icon: Shield, 
-                title: "Community Trust", 
-                desc: "{SOCIAL_PROOF_STATS.REFERENCES_VERIFIED} verified references build the trust that gets you approved.",
-                stat: "{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 user satisfaction"
+                title: "Pre-Verified References", 
+                desc: "Skip {SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED} of reference checking with pre-verified tenant profiles.",
+                stat: "{SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED} saved"
               }
             ].map((benefit, index) => (
               <div 
@@ -278,7 +278,7 @@ export default function HomePage() {
             <div className="relative">
               <div className="flex items-center justify-center gap-4 mb-8">
                 <div className="h-1 w-16 bg-blue-200 rounded"></div>
-                <p className="text-2xl font-semibold text-blue-800">Trusted by {SOCIAL_PROOF_STATS.TOTAL_USERS} Users</p>
+                <p className="text-2xl font-semibold text-blue-800">Workflow Improvements That Save Real Time</p>
                 <div className="h-1 w-16 bg-blue-200 rounded"></div>
               </div>
 
@@ -320,8 +320,8 @@ export default function HomePage() {
                   <div className="text-sm text-gray-600">Successful Matches</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600 mb-2">{SOCIAL_PROOF_STATS.RETURN_RATE}</div>
-                  <div className="text-sm text-gray-600">User Return Rate</div>
+                  <div className="text-3xl font-bold text-green-600 mb-2">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5</div>
+                  <div className="text-sm text-gray-600">User Rating</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-purple-600 mb-2">{SOCIAL_PROOF_STATS.PROPERTIES_LISTED}</div>
@@ -334,13 +334,13 @@ export default function HomePage() {
               </div>
 
               <div className="text-center">
-                <p className="text-lg font-semibold mb-2">Join the network that's changing rentals</p>
-                <p className="text-gray-600 mb-4">Free to join • {SOCIAL_PROOF_STATS.MONTHLY_GROWTH} monthly growth • {SOCIAL_PROOF_STATS.CITIES_SERVED} cities served</p>
+                <p className="text-lg font-semibold mb-2">Eliminate repetitive tasks, save real time</p>
+                <p className="text-gray-600 mb-4">Free to join • {SOCIAL_PROOF_STATS.CITIES_SERVED} cities served • Realistic time savings</p>
                 <div className="flex flex-wrap justify-center gap-2">
-                  <Badge variant="outline">Network-verified references</Badge>
-                  <Badge variant="outline">Community-trusted profiles</Badge>
-                  <Badge variant="outline">Instant pre-screening</Badge>
-                  <Badge variant="outline">Growing daily</Badge>
+                  <Badge variant="outline">Pre-verified references</Badge>
+                  <Badge variant="outline">Complete documentation upfront</Badge>
+                  <Badge variant="outline">Same-day application review</Badge>
+                  <Badge variant="outline">Eliminate follow-up emails</Badge>
                 </div>
               </div>
             </div>

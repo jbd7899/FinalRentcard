@@ -253,8 +253,8 @@ export default function RoleSwitcher({
           </div>
           <div className="text-xs text-gray-500 mt-1">
             {currentRole === 'tenant' 
-              ? `Get approved in ${SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME}` 
-              : `Save ${SOCIAL_PROOF_STATS.TIME_SAVED_HOURS}h per week`
+              ? `Get approved in ${SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT}` 
+              : `Save ${SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} per week`
             }
           </div>
         </div>

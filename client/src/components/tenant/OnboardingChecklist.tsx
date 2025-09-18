@@ -102,8 +102,8 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
         setTimeout(() => setShowCelebration(false), 3000);
         
         addToast({
-          title: 'Network Profile Growing! 🎉',
-          description: `Great job! ${completedSteps.length} step${completedSteps.length > 1 ? 's' : ''} completed. You're building trust in the network!`,
+          title: 'Profile Setup Progressing! 🎉',
+          description: `Great job! ${completedSteps.length} step${completedSteps.length > 1 ? 's' : ''} completed. Each step eliminates future application delays.`,
           type: 'success'
         });
       }
@@ -176,13 +176,13 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
   const getActionTextForStep = (stepKey: string): string => {
     switch (stepKey) {
       case 'complete_profile':
-        return 'Join Network';
+        return 'Save Application Time';
       case 'add_references':
-        return 'Build Trust';
+        return 'Skip Coordination';
       case 'preview_rentcard':
-        return 'View Profile';
+        return 'Enable Fast Review';
       case 'share_first_link':
-        return 'Share Network';
+        return 'Share Complete Profile';
       default:
         return 'Get Started';
     }
@@ -251,12 +251,12 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
             )}
             <div>
               <CardTitle className="text-lg text-gray-800">
-                {progress.isCompleted ? '🎉 Welcome to the Network!' : 'Join the Verified Community'}
+                {progress.isCompleted ? '🎉 Profile Complete!' : 'Complete Your Application Profile'}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-1">
                 {progress.isCompleted 
-                  ? `You're now part of ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters! Your network profile is ready.`
-                  : `Build your verified network profile (${completedCount}/${progress.totalSteps} done) - Join ${SOCIAL_PROOF_STATS.TOTAL_USERS} trusted users`
+                  ? `Your complete profile saves ${SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} per application and enables same-day landlord review.`
+                  : `Complete your profile to save ${SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} per application (${completedCount}/${progress.totalSteps} done)`
                 }
               </p>
             </div>
@@ -310,18 +310,18 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
           {progress.isCompleted ? (
             <div className="text-center py-6">
               <Trophy className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Welcome to the Network!</h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Profile Complete!</h3>
               <p className="text-gray-600 mb-4">
-                You're now part of {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters! Your network profile 
-                helps landlords trust you faster and gets you approved {SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} quicker.
+                Your complete profile eliminates {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} of repetitive work per application. 
+                Landlords can now review your application in 15 minutes instead of waiting for missing documents.
               </p>
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="font-semibold text-blue-600">{SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME}</div>
+                  <div className="font-semibold text-blue-600">{SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT}</div>
                   <div className="text-gray-600">Average Approval</div>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="font-semibold text-green-600">{SOCIAL_PROOF_STATS.RETURN_RATE}</div>
+                  <div className="font-semibold text-green-600">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5</div>
                   <div className="text-gray-600">User Satisfaction</div>
                 </div>
               </div>
@@ -420,9 +420,9 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
                   <div className="flex items-center gap-3">
                     <Star className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h4 className="font-medium text-blue-800">Build Network Trust</h4>
+                      <h4 className="font-medium text-blue-800">Next Step: Save Application Time</h4>
                       <p className="text-sm text-blue-700">
-                        Complete "{nextStep.stepTitle}" to strengthen your network profile and join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} verified renters
+                        Complete "{nextStep.stepTitle}" to eliminate repetitive tasks and enable same-day application review
                       </p>
                     </div>
                   </div>

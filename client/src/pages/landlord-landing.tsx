@@ -48,30 +48,30 @@ export default function LandlordLanding() {
   const landlordBenefits = [
     {
       icon: Clock,
-      title: 'Save Time',
-      description: `Join ${SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} landlords saving ${SOCIAL_PROOF_STATS.TIME_SAVED_HOURS}h weekly on screening`,
-      badge: SOCIAL_PROOF_STATS.TIME_SAVED_HOURS + 'h saved weekly',
+      title: 'Reduce Review Time',
+      description: `Complete documentation reduces application review from ${SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION} per applicant`,
+      badge: SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION,
       color: 'blue' as keyof typeof colorClasses
     },
     {
       icon: Users,
-      title: 'Pre-Screened Tenants',
-      description: 'Access a growing pool of verified renters with background-checked credentials',
-      badge: SOCIAL_PROOF_STATS.VERIFIED_RENTERS,
+      title: 'Skip Reference Verification',
+      description: `Eliminate ${SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED} of reference checking with pre-verified tenant references`,
+      badge: SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED + ' eliminated',
       color: 'green' as keyof typeof colorClasses
     },
     {
       icon: Shield,
-      title: 'Verified References',
-      description: `${SOCIAL_PROOF_STATS.REFERENCES_VERIFIED} references verified by our community`,
-      badge: SOCIAL_PROOF_STATS.REFERENCES_VERIFIED,
+      title: 'Eliminate Follow-up Emails',
+      description: `Standardized tenant profiles eliminate ${SOCIAL_PROOF_STATS.EMAIL_REDUCTION_PER_APPLICATION} per application`,
+      badge: SOCIAL_PROOF_STATS.EMAIL_REDUCTION_PER_APPLICATION + ' eliminated',
       color: 'purple' as keyof typeof colorClasses
     },
     {
       icon: TrendingUp,
-      title: 'Fill Units Faster',
-      description: `Reduce screening time by ${SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} and fill units faster`,
-      badge: SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION + ' faster',
+      title: 'Skip Phone Interviews',
+      description: `Pre-answered screening questions eliminate ${SOCIAL_PROOF_STATS.PHONE_INTERVIEW_TIME_SAVED} per applicant`,
+      badge: SOCIAL_PROOF_STATS.PHONE_INTERVIEW_TIME_SAVED + ' saved',
       color: 'orange' as keyof typeof colorClasses
     }
   ];
@@ -134,27 +134,27 @@ export default function LandlordLanding() {
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            {NETWORK_VALUE_PROPS.LANDLORD.HERO}. Screen pre-verified tenants and 
-            reduce your screening time by {SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION}.
+            {NETWORK_VALUE_PROPS.LANDLORD.HERO}. Complete upfront documentation 
+            reduces application processing from {SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT}.
           </p>
 
           {/* Key Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.TIME_SAVED_HOURS}h</div>
+              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY}</div>
               <div className="text-sm text-gray-600">Hours Saved Weekly</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION}</div>
-              <div className="text-sm text-gray-600">Faster Screening</div>
+              <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION}</div>
+              <div className="text-sm text-gray-600">Application Review Time</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">{SOCIAL_PROOF_STATS.SUCCESSFUL_MATCHES}</div>
-              <div className="text-sm text-gray-600">Successful Matches</div>
+              <div className="text-3xl font-bold text-purple-600">{SOCIAL_PROOF_STATS.EMAIL_REDUCTION_PER_APPLICATION}</div>
+              <div className="text-sm text-gray-600">Emails Eliminated</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5</div>
-              <div className="text-sm text-gray-600">Landlord Rating</div>
+              <div className="text-3xl font-bold text-orange-600">{SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED}</div>
+              <div className="text-sm text-gray-600">Reference Check Time Saved</div>
             </div>
           </div>
 
@@ -206,9 +206,9 @@ export default function LandlordLanding() {
         {/* Network Value Proposition */}
         <div className="bg-white p-8 rounded-xl shadow-lg mb-12">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Why Landlords Choose MyRentCard</h2>
+            <h2 className="text-3xl font-bold mb-4">How MyRentCard Saves You Time</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Access a growing network of pre-screened tenants with verified credentials and references.
+              Specific workflow improvements eliminate repetitive screening tasks and reduce processing time by {SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} weekly.
             </p>
           </div>
           
@@ -290,9 +290,9 @@ export default function LandlordLanding() {
 
         {/* Final CTA */}
         <div className="text-center bg-green-600 text-white p-12 rounded-xl">
-          <h2 className="text-3xl font-bold mb-4">Ready to Join {SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} Landlords?</h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to Save {SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} Per Week?</h2>
           <p className="text-xl text-green-100 mb-8">
-            Start screening pre-verified tenants and save {SOCIAL_PROOF_STATS.TIME_SAVED_HOURS}h per week today.
+            Skip reference verification, eliminate follow-up emails, and review applications in 15 minutes instead of 45.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4">

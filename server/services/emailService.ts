@@ -316,7 +316,7 @@ class EmailService {
         <div style="padding: 40px 30px;">
           <h2 style="color: #2d3748; margin: 0 0 20px 0;">Hello ${data.referenceName},</h2>
           <p style="color: #4a5568; line-height: 1.6; margin: 0 0 20px 0;">
-            <strong>${data.tenantName}</strong> has listed you as a reference on their MyRentCard profile. Your verification helps build trust in our rental community.
+            <strong>${data.tenantName}</strong> has listed you as a reference on their MyRentCard profile. Your verification enables landlords to skip 1-2 days of reference coordination and review applications the same day.
           </p>
           <p style="color: #4a5568; line-height: 1.6; margin: 0 0 30px 0;">
             Please take a moment to verify this reference by clicking the button below:
@@ -343,7 +343,7 @@ class EmailService {
     
     const text = `Hello ${data.referenceName},
 
-${data.tenantName} has listed you as a reference on their MyRentCard profile.
+${data.tenantName} has listed you as a reference. Your verification helps landlords review applications in 15 minutes instead of 45 by providing complete information upfront.
 
 Please verify this reference by visiting the following link:
 ${data.verificationUrl}
@@ -389,7 +389,7 @@ Thank you for your time!
         </div>
         <div style="background-color: #f7fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="color: #a0aec0; font-size: 12px; margin: 0;">
-            Sent via MyRentCard - Simplifying the rental process
+            Sent via MyRentCard - Skip document chase emails, complete upfront verification
           </p>
         </div>
       </div>
@@ -441,7 +441,7 @@ Contact Information: ${data.contactInfo}
         </div>
         <div style="background-color: #f7fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="color: #a0aec0; font-size: 12px; margin: 0;">
-            Thank you for helping grow the MyRentCard community!
+            Thank you for enabling faster application processing!
           </p>
         </div>
       </div>
@@ -468,12 +468,12 @@ Keep sharing MyRentCard: ${data.referralLink}
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
           <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 300;">Welcome to MyRentCard!</h1>
-          <p style="color: #ffffff; margin: 10px 0 0 0; opacity: 0.9;">Your rental journey starts here</p>
+          <p style="color: #ffffff; margin: 10px 0 0 0; opacity: 0.9;">Save time on every application</p>
         </div>
         <div style="padding: 40px 30px;">
           <h2 style="color: #2d3748; margin: 0 0 20px 0;">Hello ${data.userName},</h2>
           <p style="color: #4a5568; line-height: 1.6; margin: 0 0 20px 0;">
-            Welcome to MyRentCard! We're excited to have you join our community and simplify your ${data.userType === 'tenant' ? 'apartment hunting' : 'property management'} experience.
+            Welcome to MyRentCard! Your complete profile eliminates ${data.userType === 'tenant' ? '60-90 minutes of repetitive application entry' : '5-8 follow-up emails per application'} and enables same-day reviews.
           </p>
           ${data.referrerName && data.rewardAmount ? `
           <div style="background-color: #edf2f7; padding: 20px; border-radius: 8px; margin: 30px 0;">
@@ -501,7 +501,7 @@ Keep sharing MyRentCard: ${data.referralLink}
     
     const text = `Welcome to MyRentCard, ${data.userName}!
 
-We're excited to have you join our community and simplify your ${data.userType === 'tenant' ? 'apartment hunting' : 'property management'} experience.
+Your verified profile saves ${data.userType === 'tenant' ? '60-90 minutes per application through one-time setup' : '3-6 hours weekly by eliminating document verification tasks'}.
 
 ${data.referrerName && data.rewardAmount ? `Thanks to ${data.referrerName} for referring you! You've both earned ${data.rewardAmount}.` : ''}
 

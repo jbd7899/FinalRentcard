@@ -404,7 +404,7 @@ const GeneralScreeningPage = () => {
                     </Button>
                   </div>
                   <p className="text-sm text-gray-500 mt-3 text-center">
-                    Quick check • 100% free • No credit check required
+                    Quick check • Completely free • No credit check required
                   </p>
                 </div>
               </div>

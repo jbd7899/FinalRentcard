@@ -166,19 +166,19 @@ const AuthPage = () => {
             <div className="flex justify-center mb-6">
               <Building2 className="w-12 h-12 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Join the Network</h1>
+            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Save Time on Every Application</h1>
             <div className="text-center mb-4">
               <div className="flex flex-wrap justify-center gap-2 mb-2">
                 <Badge variant="outline" className="text-blue-600 border-blue-600">
-                  <Users className="w-3 h-3 mr-1" />
-                  {SOCIAL_PROOF_STATS.TOTAL_USERS} users
+                  <Clock className="w-3 h-3 mr-1" />
+                  {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} saved per application
                 </Badge>
                 <Badge variant="outline" className="text-green-600 border-green-600">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  Growing {SOCIAL_PROOF_STATS.MONTHLY_GROWTH} monthly
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  Same-day application review
                 </Badge>
               </div>
-              <p className="text-sm text-gray-600">Join the fastest-growing rental community</p>
+              <p className="text-sm text-gray-600">Complete profiles eliminate follow-up emails and phone calls</p>
             </div>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
@@ -194,8 +194,8 @@ const AuthPage = () => {
                     <CardDescription className="space-y-2">
                       <div>{MESSAGES.AUTH.CARD_DESCRIPTIONS.LOGIN}</div>
                       <div className="flex items-center gap-2 text-sm text-blue-600">
-                        <Star className="w-4 h-4" />
-                        <span>Trusted by {SOCIAL_PROOF_STATS.TOTAL_USERS} rental professionals</span>
+                        <Clock className="w-4 h-4" />
+                        <span>Skip {SOCIAL_PROOF_STATS.REFERENCE_VERIFICATION_TIME_SAVED} of reference verification</span>
                       </div>
                     </CardDescription>
                   </CardHeader>
@@ -261,7 +261,7 @@ const AuthPage = () => {
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex items-center gap-1 text-xs text-green-600">
                           <CheckCircle2 className="w-3 h-3" />
-                          <span>{SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME} avg approval</span>
+                          <span>{SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT} processing</span>
                         </div>
                         <div className="flex items-center gap-1 text-xs text-blue-600">
                           <Shield className="w-3 h-3" />
@@ -269,7 +269,7 @@ const AuthPage = () => {
                         </div>
                         <div className="flex items-center gap-1 text-xs text-purple-600">
                           <Clock className="w-3 h-3" />
-                          <span>{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} faster screening</span>
+                          <span>{SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION}</span>
                         </div>
                         <div className="flex items-center gap-1 text-xs text-orange-600">
                           <Award className="w-3 h-3" />
@@ -424,7 +424,7 @@ const AuthPage = () => {
                 </div>
                 <div>
                   <h3 className="font-medium text-white text-lg">Instant Screening</h3>
-                  <p className="text-blue-100 text-sm">{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} faster than traditional methods</p>
+                  <p className="text-blue-100 text-sm">{SOCIAL_PROOF_STATS.DOCUMENT_REVIEW_TIME_REDUCTION}</p>
                 </div>
               </div>
               
@@ -444,7 +444,7 @@ const AuthPage = () => {
                 </div>
                 <div>
                   <h3 className="font-medium text-white text-lg">Network Growth</h3>
-                  <p className="text-blue-100 text-sm">Growing {SOCIAL_PROOF_STATS.MONTHLY_GROWTH} monthly</p>
+                  <p className="text-blue-100 text-sm">{SOCIAL_PROOF_STATS.NEW_USERS_DAILY} joining daily</p>
                 </div>
               </div>
             </div>
@@ -455,7 +455,7 @@ const AuthPage = () => {
                 <Star className="w-5 h-5 text-yellow-300" />
                 <span className="font-medium">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 User Rating</span>
               </div>
-              <p className="text-blue-100 text-sm text-center">{SOCIAL_PROOF_STATS.RETURN_RATE} of users recommend us</p>
+              <p className="text-blue-100 text-sm text-center">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5 rating</p>
             </div>
           </div>
         </div>

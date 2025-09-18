@@ -55,7 +55,7 @@ export default function Navbar() {
                 </Badge>
                 <Badge variant="outline" className="text-xs px-2 py-0 h-5 text-blue-600 border-blue-600">
                   <TrendingUp className="w-3 h-3 mr-1" />
-                  +{SOCIAL_PROOF_STATS.MONTHLY_GROWTH}
+                  {SOCIAL_PROOF_STATS.NEW_USERS_DAILY} daily
                 </Badge>
               </div>
             </div>
