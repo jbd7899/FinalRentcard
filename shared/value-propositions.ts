@@ -62,8 +62,9 @@ export const OFFICIAL_VALUE_PROPOSITIONS = {
 // Derived messaging components based on official value propositions
 export const DERIVED_MESSAGING = {
   TENANT: {
-    HERO: "Join the Network to Create Your Standardized RentCard",
-    SECONDARY: "Connect with individual landlords who own 70-75% of US rentals through standardized prequalification",
+    HERO: "Create Your Standardized RentCard",
+    SECONDARY: "One-Click Applications to Individual Landlords",
+    DESCRIPTION: "Join the network. Create once, apply everywhere. Individual landlords own 75% of rentals.",
     BENEFITS: [
       "Join the network to create your standardized RentCard once",
       "Easily share prequalification information with individual landlords",
@@ -71,12 +72,13 @@ export const DERIVED_MESSAGING = {
       "Individual landlords respond 2-3x faster than corporate management",
       "Build personal relationships that help you find the right rental"
     ],
-    CALL_TO_ACTION: "Join Individual Landlord Network"
+    CALL_TO_ACTION: "Create Your Free RentCard"
   },
   
   LANDLORD: {
-    HERO: "Join the Network to Streamline Tenant Connections",
-    SECONDARY: "Maintain your competitive edge as an individual landlord with professional tools",
+    HERO: "Streamline Tenant Connections",
+    SECONDARY: "Individual Landlord Network Tools",
+    DESCRIPTION: "Join the network. One-click submissions, QR codes, cross-selling tools.",
     BENEFITS: [
       "Allow qualified tenants to submit interest with one click",
       "Review standardized RentCard prequalification before showings",
@@ -84,7 +86,7 @@ export const DERIVED_MESSAGING = {
       "Stay competitive with corporate efficiency while keeping personal touch",
       "Generate QR code marketing tools with one click"
     ],
-    CALL_TO_ACTION: "Join Individual Landlord Network"
+    CALL_TO_ACTION: "Create Your Free Landlord Profile"
   }
 } as const;
 
