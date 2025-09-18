@@ -1,6 +1,6 @@
 # MyRentCard
 
-MyRentCard simplifies the rental application process by allowing tenants to create a reusable rental profile ("RentCard") that can be instantly shared with potential landlords. Track property views, manage applications, and streamline the rental process.
+MyRentCard simplifies the rental application process by allowing tenants to create a reusable rental profile ("RentCard") that can be instantly shared with potential landlords. Track property views, pre-screen qualified tenants, and streamline the tenant qualification process.
 
 ## Features
 

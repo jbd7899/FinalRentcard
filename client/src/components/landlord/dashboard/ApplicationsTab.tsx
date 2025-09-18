@@ -29,7 +29,7 @@ const InterestsTab: React.FC<InterestsTabProps> = ({
         <div className="flex items-center gap-2">
           <h2 className="text-base sm:text-lg font-semibold flex items-center">
             <Inbox className="w-5 h-5 mr-2 text-primary" />
-            Recent Interests
+            Recent Pre-Screenings
           </h2>
           <ComingSoonBadge type="feature" size="sm" title="Beta" />
         </div>
@@ -38,14 +38,14 @@ const InterestsTab: React.FC<InterestsTabProps> = ({
           className="text-xs sm:text-sm h-9 sm:h-10"
         >
           <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
-          View All Interests
+          View All Pre-Screenings
         </Button>
       </div>
 
       <ComingSoonCard
         type="feature"
-        title="Interest Tracking"
-        description="Real-time interest tracking and automated lead management coming soon. This will help you manage all tenant inquiries in one place."
+        title="Pre-Screening Tracking"
+        description="Real-time pre-screening tracking and automated prospect management coming soon. This will help you manage all tenant inquiries in one place."
         estimatedDate="Q2 2025"
       >
         <Button 
@@ -68,7 +68,7 @@ const InterestsTab: React.FC<InterestsTabProps> = ({
         <ComingSoonCard
           type="feature"
           title="Automated Document Verification"
-          description="AI-powered document verification and automated tenant screening coming soon. This will streamline your verification process significantly."
+          description="AI-powered document verification and automated tenant pre-screening coming soon. This will streamline your verification process significantly."
           estimatedDate="Q2 2025"
         >
           <Button 

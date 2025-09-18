@@ -64,7 +64,7 @@ const LandlordSidebar: React.FC<SidebarProps> = ({
     },
     { 
       icon: <Inbox className="w-5 h-5" />, 
-      label: "Interest Inbox", 
+      label: "Pre-Screening Inbox", 
       route: ROUTES.LANDLORD.INTERESTS, 
       active: isActive(ROUTES.LANDLORD.INTERESTS),
       comingSoon: true 

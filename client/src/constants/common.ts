@@ -84,6 +84,30 @@ export const MESSAGES = {
     [APPLICATION_STATUS.CONTACTED]: 'Successfully Contacted',
     [APPLICATION_STATUS.ARCHIVED]: 'Archived',
   },
+  AUTH: {
+    CARD_DESCRIPTIONS: {
+      LOGIN: 'Enter your credentials to access your RentCard account',
+      REGISTER: 'One profile landlords can pre-screen instantly',
+    },
+    TITLES: {
+      LOGIN: 'Login to your account',
+      REGISTER: 'Create Your RentCard',
+    },
+    BENEFITS: [
+      {
+        title: 'Create your verified profile',
+        description: 'Build a RentCard that landlords can pre-screen instantly',
+      },
+      {
+        title: 'Pre-screen qualified tenants',
+        description: 'Save time by qualifying prospects before showings',
+      },
+      {
+        title: 'Streamline tenant qualification',
+        description: 'Automate your pre-screening workflow efficiently',
+      },
+    ],
+  },
   TOAST: {
     AUTH: {
       LOGIN_ERROR: {
@@ -129,17 +153,32 @@ export const MESSAGES = {
     },
     APPLICATION: {
       STATUS_UPDATED: {
-        TITLE: 'Interest Updated',
-        DESCRIPTION: 'Interest status has been updated successfully',
+        TITLE: 'Pre-Screening Updated',
+        DESCRIPTION: 'Pre-screening status has been updated successfully',
       },
       ARCHIVED: {
-        TITLE: 'Interest Archived',
-        DESCRIPTION: 'Interest has been archived successfully',
+        TITLE: 'Pre-Screening Archived',
+        DESCRIPTION: 'Pre-screening has been archived successfully',
       },
       CONTACTED: {
-        TITLE: 'Tenant Contacted',
-        DESCRIPTION: 'Tenant has been successfully contacted',
+        TITLE: 'Prospect Contacted',
+        DESCRIPTION: 'Prospect has been successfully contacted',
       },
+    },
+  },
+  CTA: {
+    LANDLORD: {
+      PRIMARY: 'Start Pre-Screening',
+      SECONDARY: 'Request RentCard',
+      BENEFITS: {
+        PRE_SCREENING: 'Pre-screen qualified tenants instantly',
+        TIME_SAVING: 'Save time by qualifying prospects before property showings',
+        STREAMLINED: 'Streamline your tenant qualification workflow',
+      },
+    },
+    TENANT: {
+      PRIMARY: 'Create RentCard',
+      SECONDARY: 'Submit Interest',
     },
   },
 } as const;
