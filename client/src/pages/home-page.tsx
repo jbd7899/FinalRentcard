@@ -7,7 +7,7 @@ import Navbar from '@/components/shared/navbar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SOCIAL_PROOF_STATS, NETWORK_VALUE_PROPS, SUCCESS_STORIES, NETWORK_CTA } from '@/constants';
+import { SOCIAL_PROOF_STATS, NETWORK_VALUE_PROPS, SUCCESS_STORIES, NETWORK_CTA, INDIVIDUAL_LANDLORD_STATS } from '@/constants';
 
 export default function HomePage() {
   const { user } = useAuthStore();
@@ -32,30 +32,30 @@ export default function HomePage() {
   const roleContent = {
     tenant: {
       title: "Connect with Individual Landlords",
-      subtitle: "Through Your Completed RentCard",
-      description: "Efficiently connect with individual landlords through your completed RentCard. Skip corporate bureaucracy and junk fees – individual landlords respond faster and make faster decisions.",
+      subtitle: "Through Your Completed RentCard", 
+      description: NETWORK_VALUE_PROPS.TENANT.HERO,
       benefits: [
         {
           icon: Users,
-          title: "Direct Individual Connections",
-          desc: "Connect directly with individual landlords who own 70-75% of US rentals – skip corporate property management",
+          title: "Direct Individual Connections", 
+          desc: NETWORK_VALUE_PROPS.TENANT.BENEFITS[0],
           stat: "Personal relationships"
         },
         {
           icon: Clock,
           title: "Faster Decisions",
-          desc: "Individual landlords respond faster and make decisions quicker than corporate bureaucracy",
+          desc: NETWORK_VALUE_PROPS.TENANT.BENEFITS[2],
           stat: "No corporate delays"
         },
         {
           icon: Shield,
           title: "Skip Junk Fees",
-          desc: "Avoid corporate application fees and bureaucracy – individual landlords focus on your qualifications",
+          desc: NETWORK_VALUE_PROPS.TENANT.BENEFITS[1], 
           stat: "No hidden costs"
         }
       ],
       cta: {
-        primary: "Connect with Individual Landlords",
+        primary: NETWORK_CTA.PRIMARY.TENANT.MAIN,
         secondary: "View Sample RentCard",
         primaryHref: "/auth?type=tenant&mode=register",
         secondaryHref: "/samples/rentcard"
@@ -64,29 +64,29 @@ export default function HomePage() {
     landlord: {
       title: "Individual Landlord Network",
       subtitle: "Compete with Corporate Efficiency",
-      description: "Individual landlords own 70-75% of US rentals. Use smart pre-screening to compete with corporate efficiency – connect with tenants who value individual landlords.",
+      description: NETWORK_VALUE_PROPS.LANDLORD.HERO,
       benefits: [
         {
           icon: Users,
           title: "Professional Efficiency",
-          desc: "Compete with corporate property management using professional screening tools and complete tenant profiles",
+          desc: NETWORK_VALUE_PROPS.LANDLORD.BENEFITS[0],
           stat: "Corporate-level tools"
         },
         {
           icon: Clock,
           title: "Keep Personal Touch",
-          desc: "Maintain individual landlord responsiveness while using efficient pre-screening – best of both worlds",
+          desc: NETWORK_VALUE_PROPS.LANDLORD.BENEFITS[2],
           stat: "Personal + professional"
         },
         {
           icon: Shield,
           title: "Attract Better Tenants",
-          desc: "Tenants seeking individual landlords over corporate management find you through the network",
+          desc: NETWORK_VALUE_PROPS.LANDLORD.BENEFITS[1],
           stat: "Quality tenant pool"
         }
       ],
       cta: {
-        primary: "Join Individual Landlord Network",
+        primary: NETWORK_CTA.PRIMARY.LANDLORD.MAIN,
         secondary: "View Screening Tools",
         primaryHref: "/auth?type=landlord&mode=register",
         secondaryHref: "/samples/screening-page"
@@ -279,12 +279,12 @@ export default function HomePage() {
                   <div className={`text-4xl font-bold mb-4 transition-colors duration-300 ${
                     selectedRole === 'tenant' ? 'text-blue-600' : 'text-green-600'
                   }`}>
-                    {selectedRole === 'tenant' ? 'More Landlords' : 'More Tenants'}
+                    {selectedRole === 'tenant' ? 'More Individual Landlords' : 'More Tenants Preferring Individual Landlords'}
                   </div>
                   <p className="text-gray-600">
                     {selectedRole === 'tenant' 
-                      ? 'Joining means more property options and faster connections for you'
-                      : 'Joining means a larger pool of qualified candidates to choose from'
+                      ? 'Joining means more individual property owner options and faster personal connections'
+                      : 'Joining means access to tenants who specifically prefer individual landlords'
                     }
                   </p>
                 </div>

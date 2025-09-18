@@ -23,7 +23,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { ComingSoonBadge } from "@/components/ui/coming-soon";
-import { ROUTES, SOCIAL_PROOF_STATS } from "@/constants";
+import { ROUTES } from "@/constants";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import RoleSwitcher from "@/components/shared/RoleSwitcher";
 
@@ -62,7 +62,7 @@ export default function Navbar() {
             {isOnLandingPage ? (
               <div className="flex items-center gap-2">
                 <span className="text-gray-700 font-medium">
-                  {currentLandingRole === 'tenant' ? 'For Tenants' : 'For Landlords'}
+                  {currentLandingRole === 'tenant' ? 'For Tenants' : 'For Individual Landlords'}
                 </span>
                 <Badge variant="outline" className={`text-xs ${
                   currentLandingRole === 'tenant' 

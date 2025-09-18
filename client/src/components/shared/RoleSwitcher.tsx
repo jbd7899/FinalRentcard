@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { Building2, User, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { USER_ROLES, SOCIAL_PROOF_STATS } from '@/constants';
+import { USER_ROLES, INDIVIDUAL_LANDLORD_STATS } from '@/constants';
 
 interface RoleSwitcherProps extends React.HTMLAttributes<HTMLDivElement> {
   currentRole: 'tenant' | 'landlord';
@@ -75,9 +75,9 @@ export default function RoleSwitcher({
       label: 'For Tenants',
       shortLabel: 'Tenants',
       icon: User,
-      description: 'Find apartments faster',
-      stat: SOCIAL_PROOF_STATS.VERIFIED_RENTERS,
-      statLabel: 'verified renters',
+      description: 'Connect with individual landlords',
+      stat: INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE,
+      statLabel: 'rental market',
       color: 'blue',
       bgColor: currentRole === 'tenant' ? 'bg-blue-600' : 'bg-gray-100',
       textColor: currentRole === 'tenant' ? 'text-white' : 'text-gray-600',
@@ -85,12 +85,12 @@ export default function RoleSwitcher({
     },
     {
       id: 'landlord' as const,
-      label: 'For Landlords',
+      label: 'For Individual Landlords',
       shortLabel: 'Landlords',
       icon: Building2,
-      description: 'Screen tenants faster',
-      stat: SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS,
-      statLabel: 'trusted landlords',
+      description: 'Compete with corporate efficiency',
+      stat: INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED,
+      statLabel: 'faster decisions',
       color: 'green',
       bgColor: currentRole === 'landlord' ? 'bg-green-600' : 'bg-gray-100',
       textColor: currentRole === 'landlord' ? 'text-white' : 'text-gray-600',
@@ -195,11 +195,11 @@ export default function RoleSwitcher({
         <div className="flex items-center gap-4 text-sm text-gray-600">
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4 text-blue-600" />
-            <span>{SOCIAL_PROOF_STATS.VERIFIED_RENTERS} renters</span>
+            <span>Individual landlord network</span>
           </div>
           <div className="flex items-center gap-1">
             <Building2 className="w-4 h-4 text-green-600" />
-            <span>{SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} landlords</span>
+            <span>{INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}</span>
           </div>
         </div>
       )}
@@ -249,12 +249,12 @@ export default function RoleSwitcher({
       {showStats && (
         <div className="text-center">
           <div className="text-sm text-gray-600">
-            Join {currentRole === 'tenant' ? SOCIAL_PROOF_STATS.VERIFIED_RENTERS : SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} {currentRole === 'tenant' ? 'renters' : 'landlords'}
+            {currentRole === 'tenant' ? 'Connect with individual landlords' : 'Join individual landlord network'}
           </div>
           <div className="text-xs text-gray-500 mt-1">
             {currentRole === 'tenant' 
-              ? `Get approved in ${SOCIAL_PROOF_STATS.APPLICATION_PROCESSING_IMPROVEMENT}` 
-              : `Save ${SOCIAL_PROOF_STATS.LANDLORD_TIME_SAVED_WEEKLY} per week`
+              ? `${INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED} decisions` 
+              : `${INDIVIDUAL_LANDLORD_STATS.PERSONAL_APPROACH}`
             }
           </div>
         </div>
@@ -274,20 +274,20 @@ export function RoleCrossLink({ currentRole, className = "" }: RoleCrossLinkProp
   
   const crossLinkData = {
     tenant: {
-      message: "Are you a landlord looking to screen tenants?",
-      cta: "View landlord tools",
+      message: "Are you an individual landlord looking to screen tenants?",
+      cta: "View individual landlord tools",
       targetPath: "/landlord",
       icon: Building2,
-      stat: SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS,
-      benefit: "Save 40+ hours per week"
+      stat: INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED,
+      benefit: "Compete with corporate efficiency"
     },
     landlord: {
       message: "Are you a renter looking for an apartment?", 
       cta: "View tenant tools",
       targetPath: "/tenant",
       icon: User,
-      stat: SOCIAL_PROOF_STATS.VERIFIED_RENTERS,
-      benefit: "Get approved faster"
+      stat: INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE,
+      benefit: "Skip corporate bureaucracy"
     }
   };
 
@@ -307,7 +307,7 @@ export function RoleCrossLink({ currentRole, className = "" }: RoleCrossLinkProp
             <p className="text-sm text-gray-700 font-medium">{crossLink.message}</p>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant="outline" className="text-xs">
-                {crossLink.stat} users
+                {crossLink.stat}
               </Badge>
               <span className="text-xs text-blue-600">{crossLink.benefit}</span>
             </div>

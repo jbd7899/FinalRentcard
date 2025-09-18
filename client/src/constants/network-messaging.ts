@@ -13,13 +13,7 @@ export const INDIVIDUAL_LANDLORD_STATS = {
 
 // Mechanism-based statistics (realistic time savings and specific process improvements)
 export const SOCIAL_PROOF_STATS = {
-  VERIFIED_RENTERS: '8,500+',
-  INDIVIDUAL_LANDLORDS: '1,800+',
-  TOTAL_NETWORK: '10,300+',
-  PROPERTIES_LISTED: '4,600+',
-  RENTCARDS_CREATED: '7,200+',
-  REFERENCES_VERIFIED: '14,400+',
-  // Individual landlord advantages
+  // Individual landlord advantages - focus on mechanism, not inflated numbers
   INDIVIDUAL_LANDLORD_RESPONSE_TIME: '2-3x faster decisions',
   TENANT_APPLICATION_TIME_SAVED: '60-90 minutes per application',
   // Process improvements with individual landlords
@@ -28,9 +22,10 @@ export const SOCIAL_PROOF_STATS = {
   FASTER_SCREENING: 'Same-day responses possible',
   PERSONAL_RELATIONSHIPS: 'Direct tenant-landlord connection',
   INDIVIDUAL_LANDLORD_DECISIONS: '1-2 days vs 5-10 days corporate',
-  SUCCESSFUL_CONNECTIONS: '3,400+',
-  CITIES_SERVED: '85+',
-  INDIVIDUAL_LANDLORDS_JOINING: '50+ monthly',
+  // Quality-focused growth indicators (realistic rates)
+  INDIVIDUAL_LANDLORDS_JOINING: 'Growing individual landlord network',
+  NETWORK_QUALITY: 'Verified individual landlord connections',
+  PERSONAL_APPROACH: 'Direct property owner relationships',
 } as const;
 
 // Individual landlord-focused value propositions
@@ -39,7 +34,7 @@ export const NETWORK_VALUE_PROPS = {
     HERO: 'Efficiently connect with individual landlords through your completed RentCard',
     SECONDARY: 'Skip corporate bureaucracy and junk fees – individual landlords respond faster and make faster decisions',
     BENEFITS: [
-      'Connect directly with individual landlords who own 70-75% of US rentals',
+      `Connect directly with individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}`,
       'Skip corporate property management bureaucracy and application fees',
       'Individual landlords respond 2-3x faster than corporate management',
       'Build personal relationships with responsive individual property owners',
@@ -48,7 +43,7 @@ export const NETWORK_VALUE_PROPS = {
       'Individual landlords make decisions in 1-2 days vs 5-10 days for corporate',
       'Skip junk fees and corporate bureaucracy with direct landlord connections',
       'Personal communication leads to faster approvals and better relationships',
-      'Access to 70-75% of rental market through individual landlord network',
+      `Access to ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} rental market through individual landlord network`,
     ],
   },
   LANDLORD: {
@@ -72,7 +67,7 @@ export const NETWORK_VALUE_PROPS = {
       'More Individual Landlords = direct property owner access',
       'Verified individual landlord network = faster, personal decisions',
       'Individual landlord community = responsive communication',
-      'Growing network = more 70-75% market access',
+      `Growing network = more ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} market access`,
     ],
     LANDLORD: [
       'More Tenants Preferring Individual Landlords = quality applicant pool',
@@ -87,14 +82,14 @@ export const NETWORK_VALUE_PROPS = {
 export const VIRAL_MESSAGING = {
   REFERRAL: {
     HEADLINES: [
-      'Help grow the trusted rental network',
+      'Help grow the trusted individual landlord network',
       'Share MyRentCard with your network',
-      'Invite friends to join 17,500+ users',
+      'Connect friends with individual landlords',
       'Grow our community, earn rewards together',
     ],
     SHARE_TEXTS: {
       TENANT: [
-        'MyRentCard connects me directly with individual landlords who own 70-75% of US rentals',
+        `MyRentCard connects me directly with individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}`,
         'Skip corporate management entirely - individual landlords respond so much faster',
         'No junk fees or corporate bureaucracy, just direct communication with property owners',
         'Individual landlords make personal decisions in days, not weeks like corporate management',
@@ -121,24 +116,24 @@ export const VIRAL_MESSAGING = {
       'Every verification builds community trust',
     ],
     SOCIAL_PROOF_STEPS: [
-      'Join 15,000+ who completed their profile',
-      'Be part of 24,800+ verified references',
-      'Join our 4.8/5 satisfaction score community',
-      'Help us reach 18,000+ trusted members',
+      'Complete your profile to connect with individual landlords',
+      'Build verified references for individual landlord connections',
+      'Join our community focused on individual landlord relationships',
+      'Help build the individual landlord network',
     ],
   },
   EMAIL_SUBJECTS: {
     NETWORK_GROWTH: [
-      'Join the fastest-growing rental network',
-      'Be part of 17,500+ verified users',
+      'Join the individual landlord network',
+      'Connect with verified individual landlords',
       'Your friends are joining MyRentCard',
-      'The rental network everyone is talking about',
+      'The individual landlord network everyone is talking about',
     ],
     SOCIAL_PROOF: [
-      '15,000+ renters can\'t be wrong',
-      'Why 2,500+ landlords choose MyRentCard',
-      'Join 15,000+ satisfied MyRentCard users',
-      'Review time: 45 minutes to 15 minutes - see why landlords switch',
+      'Individual landlords respond 2-3x faster',
+      'Why individual landlords choose MyRentCard',
+      'Join satisfied individual landlord network members',
+      'Review time: 45 minutes to 15 minutes - see why individual landlords switch',
     ],
   },
 } as const;
@@ -235,7 +230,7 @@ Looking forward to connecting directly!
 
 I found your property through MyRentCard's individual landlord network at {property_address}.
 
-As an individual property owner, you're part of the 70-75% of US rentals owned by individual landlords. Our platform helps tenants like me connect specifically with responsive individual landlords rather than corporate management.
+As an individual property owner, you're part of the ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} owned by individual landlords. Our platform helps tenants like me connect specifically with responsive individual landlords rather than corporate management.
 
 View my verified profile: {rentcard_link}
 
@@ -259,7 +254,7 @@ Appreciate your direct, personal approach to landlording!
 
 I saw your listing for {property_address} and I'm very interested!
 
-I specifically choose to work with individual landlords like you rather than corporate property management. Individual landlords own 70-75% of US rentals and offer the personal touch and faster decisions I value.
+I specifically choose to work with individual landlords like you rather than corporate property management. Individual landlords own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} and offer the personal touch and faster decisions I value.
 
 My verified rental profile: {rentcard_link}
 
@@ -273,7 +268,7 @@ Best,
 // Individual landlord-focused notification messaging
 export const NETWORK_NOTIFICATIONS = {
   WELCOME_MESSAGES: {
-    TENANT: 'RentCard complete! Connect with individual landlords who own 70-75% of US rentals.',
+    TENANT: `RentCard complete! Connect with individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}.`,
     LANDLORD: 'Individual landlord tools ready! Compete with corporate efficiency while keeping your personal touch.',
   },
   ACHIEVEMENT_MESSAGES: {
@@ -293,7 +288,7 @@ export const NETWORK_CTA = {
   PRIMARY: {
     TENANT: {
       MAIN: 'Connect with Individual Landlords',
-      SECONDARY: 'Access 70-75% of Rental Market',
+      SECONDARY: `Access ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} Rental Market`,
       URGENCY: 'Skip Corporate Bureaucracy Today',
     },
     LANDLORD: {

@@ -305,7 +305,7 @@ export function ReferralDashboard({ userId, className }: ReferralDashboardProps)
             Network Growth Hub
           </h1>
           <p className="text-gray-600">
-            Help grow our community of {SOCIAL_PROOF_STATS.TOTAL_USERS} users - invite friends, earn rewards, and build the network together
+            Help grow our individual landlord network - invite friends, earn rewards, and build connections together
           </p>
         </div>
         
@@ -326,7 +326,7 @@ export function ReferralDashboard({ userId, className }: ReferralDashboardProps)
               <div className="flex items-center gap-2 text-sm">
                 <Award className="w-4 h-4 text-blue-600" />
                 <span className="font-medium text-blue-700">
-                  Help us reach 20,000+ users! Next reward at {statsData.totalReferrals + 1} referrals
+                  Help grow the individual landlord network! Next reward at {statsData.totalReferrals + 1} referrals
                 </span>
               </div>
             </Card>
