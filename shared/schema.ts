@@ -1160,6 +1160,14 @@ export type InsertReferral = z.infer<typeof insertReferralSchema>;
 export type ReferralReward = typeof referralRewards.$inferSelect;
 export type InsertReferralReward = z.infer<typeof insertReferralRewardSchema>;
 
+// RentCard Request types
+export type RentCardRequest = typeof rentCardRequests.$inferSelect;
+export type InsertRentCardRequest = z.infer<typeof insertRentCardRequestSchema>;
+
+// Prospect List types
+export type ProspectList = typeof prospectLists.$inferSelect;
+export type InsertProspectList = z.infer<typeof insertProspectListSchema>;
+
 export type StatsTimeframe = 'today' | '7days' | '30days';
 
 export interface StatsDataPoint {
