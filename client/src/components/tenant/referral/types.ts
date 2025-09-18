@@ -202,7 +202,7 @@ export interface CreateReferralLinkResponse {
 }
 
 // Utility types for display
-export type ReferralStatusVariant = 'default' | 'secondary' | 'destructive' | 'outline';
+export type ReferralStatusVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success';
 
 export interface StatusDisplayConfig {
   [key: string]: {
