@@ -18,15 +18,24 @@ import {
   UserCheck,
   Users,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  ArrowRight,
+  ChevronRight
 } from "lucide-react";
 import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { ROUTES, SOCIAL_PROOF_STATS } from "@/constants";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
+import RoleSwitcher from "@/components/shared/RoleSwitcher";
 
 export default function Navbar() {
   const { user, logout } = useAuthStore();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  
+  // Detect role context from current page
+  const isOnLandingPage = location === '/tenant' || location === '/landlord';
+  const currentLandingRole = location === '/tenant' ? 'tenant' : location === '/landlord' ? 'landlord' : null;
+  const isOnTenantPages = location.startsWith('/tenant');
+  const isOnLandlordPages = location.startsWith('/landlord');
 
   return (
     <nav className="border-b">
@@ -53,7 +62,82 @@ export default function Navbar() {
           </div>
         </Link>
 
+        {/* Role Context / Breadcrumbs */}
+        {(isOnLandingPage || isOnTenantPages || isOnLandlordPages) && (
+          <div className="flex items-center gap-2 text-sm">
+            <Link href="/" className="text-gray-500 hover:text-gray-700">
+              Home
+            </Link>
+            <ChevronRight className="w-3 h-3 text-gray-400" />
+            {isOnLandingPage ? (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-700 font-medium">
+                  {currentLandingRole === 'tenant' ? 'For Tenants' : 'For Landlords'}
+                </span>
+                <Badge variant="outline" className={`text-xs ${
+                  currentLandingRole === 'tenant' 
+                    ? 'text-blue-600 border-blue-600' 
+                    : 'text-green-600 border-green-600'
+                }`}>
+                  Landing Page
+                </Badge>
+              </div>
+            ) : isOnTenantPages && !location.includes('/dashboard') ? (
+              <div className="flex items-center gap-2">
+                <span className="text-blue-600 font-medium flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  Tenant Tools
+                </span>
+                {location !== '/tenant/dashboard' && (
+                  <>
+                    <ChevronRight className="w-3 h-3 text-gray-400" />
+                    <span className="text-gray-700">
+                      {location.includes('/rentcard') ? 'RentCard' :
+                       location.includes('/documents') ? 'Documents' :
+                       location.includes('/references') ? 'References' :
+                       location.includes('/applications') ? 'Applications' :
+                       'Dashboard'}
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : isOnLandlordPages && !location.includes('/dashboard') ? (
+              <div className="flex items-center gap-2">
+                <span className="text-green-600 font-medium flex items-center gap-1">
+                  <Building2 className="w-3 h-3" />
+                  Landlord Tools
+                </span>
+                {location !== '/landlord/dashboard' && (
+                  <>
+                    <ChevronRight className="w-3 h-3 text-gray-400" />
+                    <span className="text-gray-700">
+                      {location.includes('/applications') ? 'Applications' :
+                       location.includes('/screening') ? 'Screening' :
+                       location.includes('/properties') ? 'Properties' :
+                       location.includes('/verify-documents') ? 'Verify Documents' :
+                       'Dashboard'}
+                    </span>
+                  </>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <div className="flex items-center space-x-4">
+          {/* Role Switcher for Landing Pages */}
+          {isOnLandingPage && !user && (
+            <div className="hidden md:block">
+              <RoleSwitcher 
+                currentRole={currentLandingRole!} 
+                size="sm" 
+                variant="compact"
+                showStats={false}
+                data-testid="navbar-role-switcher"
+              />
+            </div>
+          )}
+
           {/* Navigation Links */}
           {user && (
             <div className="flex items-center gap-6 mr-4">

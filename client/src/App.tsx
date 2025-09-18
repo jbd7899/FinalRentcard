@@ -20,6 +20,10 @@ import { StoreProvider } from "@/providers/StoreProvider";
 import SampleRentCard from "@/pages/samples/rentcard";
 import SampleScreeningPage from "@/pages/samples/screening-page";
 
+// Landing Pages
+import TenantLanding from "@/pages/tenant-landing";
+import LandlordLanding from "@/pages/landlord-landing";
+
 // Landlord Pages
 import LandlordDashboard from "@/pages/landlord/dashboard";
 import LandlordApplications from "@/pages/landlord/applications";
@@ -49,6 +53,11 @@ function Router() {
     <Switch>
       <Route path={ROUTES.HOME} component={HomePage} />
       <Route path={ROUTES.AUTH} component={AuthPage} />
+      
+      {/* Role-based Landing Pages */}
+      <Route path="/tenant" component={TenantLanding} />
+      <Route path="/landlord" component={LandlordLanding} />
+      
       <Route path="/create-screening" component={ScreeningPage} />
       <Route path="/debug-auth" component={DebugAuthPage} />
 
