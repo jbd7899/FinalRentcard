@@ -57,7 +57,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
     { icon: <FileText className="w-5 h-5" />, label: "Documents", route: ROUTES.TENANT.DOCUMENTS, active: activeRoute === ROUTES.TENANT.DOCUMENTS },
     { icon: <UserCheck className="w-5 h-5" />, label: "References", route: ROUTES.TENANT.REFERENCES, active: activeRoute === ROUTES.TENANT.REFERENCES },
     { icon: <Users className="w-5 h-5" />, label: "Referrals", route: ROUTES.TENANT.REFERRALS, active: activeRoute === ROUTES.TENANT.REFERRALS },
-    { icon: <Inbox className="w-5 h-5" />, label: "Interests", route: ROUTES.TENANT.INTERESTS, active: activeRoute === ROUTES.TENANT.INTERESTS }
+    { icon: <Inbox className="w-5 h-5" />, label: "Individual Landlord Connections", route: ROUTES.TENANT.INTERESTS, active: activeRoute === ROUTES.TENANT.INTERESTS }
   ];
 
   return (

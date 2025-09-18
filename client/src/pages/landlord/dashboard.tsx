@@ -9,6 +9,7 @@ import {
   ROUTES, 
   API_ENDPOINTS, 
 } from '@/constants';
+import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS } from '@shared/network-messaging';
 
 // Import tab components
 import OverviewTab from '@/components/landlord/dashboard/OverviewTab';
@@ -162,9 +163,9 @@ const LandlordDashboard = () => {
   return (
     <LandlordLayout>
       <header className="mb-6 md:mb-8">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Landlord Dashboard</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Individual Landlord Dashboard</h1>
         <p className="text-sm sm:text-base text-gray-500 mt-1 md:mt-2">
-          Your rental management command center
+          Professional tools to compete with corporate efficiency while maintaining your personal touch
         </p>
       </header>
 

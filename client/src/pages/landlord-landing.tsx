@@ -10,9 +10,7 @@ import {
   NETWORK_CTA,
   TRUST_SIGNALS,
   SOCIAL_PROOF_STATS,
-  INDIVIDUAL_LANDLORD_STATS
-} from '@/constants/network-messaging';
-import { 
+  INDIVIDUAL_LANDLORD_STATS,
   NETWORK_VALUE_PROPS
 } from '@shared/network-messaging';
 
