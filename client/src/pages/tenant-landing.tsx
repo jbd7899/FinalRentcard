@@ -48,30 +48,30 @@ export default function TenantLanding() {
   const tenantBenefits = [
     {
       icon: Clock,
-      title: 'Get Approved Faster',
-      description: `Join ${SOCIAL_PROOF_STATS.VERIFIED_RENTERS} renters who get approved in ${SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME} instead of weeks`,
-      badge: SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME,
+      title: 'Save Time Per Application',
+      description: `One-time profile setup eliminates ${SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} of repetitive document entry per application`,
+      badge: SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED + ' saved',
       color: 'blue' as keyof typeof colorClasses
     },
     {
       icon: Shield,
-      title: 'Verified Profile',
-      description: 'Build a trusted profile with verified references that landlords recognize',
-      badge: SOCIAL_PROOF_STATS.REFERENCES_VERIFIED,
+      title: 'Skip Reference Coordination',
+      description: 'Pre-verified references eliminate 1-2 days of coordinating reference availability with previous landlords',
+      badge: '1-2 days eliminated',
       color: 'green' as keyof typeof colorClasses
     },
     {
       icon: Users,
-      title: 'Growing Network',
-      description: `Connect with ${SOCIAL_PROOF_STATS.VERIFIED_LANDLORDS} landlords in ${SOCIAL_PROOF_STATS.CITIES_SERVED} cities`,
-      badge: SOCIAL_PROOF_STATS.MONTHLY_GROWTH + ' growth',
+      title: 'Eliminate Follow-up Emails',
+      description: 'Complete profiles eliminate 5-8 follow-up emails per application through upfront documentation',
+      badge: '5-8 emails eliminated',
       color: 'purple' as keyof typeof colorClasses
     },
     {
       icon: CheckCircle,
-      title: 'Stand Out',
-      description: 'Pre-verified credentials help you stand out from other applicants',
-      badge: SOCIAL_PROOF_STATS.SATISFACTION_SCORE + '/5 rating',
+      title: 'Faster Profile Completion',
+      description: `Standardized format reduces application completion from ${SOCIAL_PROOF_STATS.PROFILE_COMPLETION_IMPROVEMENT}`,
+      badge: SOCIAL_PROOF_STATS.PROFILE_COMPLETION_IMPROVEMENT,
       color: 'orange' as keyof typeof colorClasses
     }
   ];
@@ -134,27 +134,27 @@ export default function TenantLanding() {
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-            {NETWORK_VALUE_PROPS.TENANT.HERO}. Build your verified profile once, 
-            get approved {SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION} faster.
+            {NETWORK_VALUE_PROPS.TENANT.HERO}. Pre-verified profiles eliminate 
+            5-8 follow-up emails per application and enable same-day application review.
           </p>
 
           {/* Key Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.AVERAGE_APPROVAL_TIME}</div>
-              <div className="text-sm text-gray-600">Average Approval</div>
+              <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED}</div>
+              <div className="text-sm text-gray-600">Saved Per Application</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.SCREENING_TIME_REDUCTION}</div>
-              <div className="text-sm text-gray-600">Faster Process</div>
+              <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.PROFILE_COMPLETION_IMPROVEMENT}</div>
+              <div className="text-sm text-gray-600">Profile Setup Time</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600">{SOCIAL_PROOF_STATS.CITIES_SERVED}</div>
               <div className="text-sm text-gray-600">Cities Available</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">{SOCIAL_PROOF_STATS.SATISFACTION_SCORE}/5</div>
-              <div className="text-sm text-gray-600">User Rating</div>
+              <div className="text-3xl font-bold text-orange-600">5-8</div>
+              <div className="text-sm text-gray-600">Emails Eliminated</div>
             </div>
           </div>
 
@@ -206,9 +206,9 @@ export default function TenantLanding() {
         {/* Network Value Proposition */}
         <div className="bg-white p-8 rounded-xl shadow-lg mb-12">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Why Renters Choose MyRentCard</h2>
+            <h2 className="text-3xl font-bold mb-4">How MyRentCard Saves You Time</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Join a growing network where verification builds trust and trust gets you approved faster.
+              Specific workflow improvements eliminate repetitive tasks and reduce application time by 60-90 minutes per property.
             </p>
           </div>
           
@@ -275,9 +275,9 @@ export default function TenantLanding() {
 
         {/* Final CTA */}
         <div className="text-center bg-blue-600 text-white p-12 rounded-xl">
-          <h2 className="text-3xl font-bold mb-4">Ready to Join {SOCIAL_PROOF_STATS.VERIFIED_RENTERS} Renters?</h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to Save {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} Per Application?</h2>
           <p className="text-xl text-blue-100 mb-8">
-            Create your verified profile and start getting approved faster today.
+            Complete your profile once, eliminate repetitive applications forever.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4">
