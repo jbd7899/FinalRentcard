@@ -73,6 +73,8 @@ interface EnhancedShareModalProps {
   resourceId?: string;
   title?: string;
   description?: string;
+  enableReferralTracking?: boolean;
+  referralCampaign?: string;
 }
 
 const shareTokenSettingsSchema = z.object({
@@ -88,7 +90,9 @@ export function EnhancedShareModal({
   resourceType = 'rentcard',
   resourceId,
   title = 'Share Your RentCard',
-  description = 'Share your rental profile with landlords and property managers'
+  description = 'Share your rental profile with landlords and property managers',
+  enableReferralTracking = false,
+  referralCampaign = 'rentcard_share'
 }: EnhancedShareModalProps) {
   const { addToast } = useUIStore();
   const queryClient = useQueryClient();
@@ -237,7 +241,7 @@ export function EnhancedShareModal({
       return generateShortlinkUrl(activeShortlinks[existingKey].slug, channel);
     }
 
-    // Create new shortlink
+    // Create new shortlink with referral tracking
     const shortlinkRequest = createRentcardShortlinkRequest(
       activeToken.token,
       channel,
@@ -247,6 +251,17 @@ export function EnhancedShareModal({
         expiresAt: activeToken.expiresAt ? new Date(activeToken.expiresAt) : undefined,
       }
     );
+
+    // Add referral campaign tracking if enabled
+    if (enableReferralTracking) {
+      shortlinkRequest.title = `${shortlinkRequest.title} - ${referralCampaign}`;
+      // Add UTM parameters for referral tracking
+      const urlWithUTM = new URL(shortlinkRequest.targetUrl);
+      urlWithUTM.searchParams.set('utm_source', 'referral');
+      urlWithUTM.searchParams.set('utm_medium', channel);
+      urlWithUTM.searchParams.set('utm_campaign', referralCampaign);
+      shortlinkRequest.targetUrl = urlWithUTM.toString();
+    }
 
     const shortlink = await createShortlinkMutation.mutateAsync(shortlinkRequest);
     

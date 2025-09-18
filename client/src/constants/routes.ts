@@ -22,6 +22,7 @@ export const ROUTES = {
     CONTACT_PREFERENCES: '/tenant/contact-preferences',
     CONTACTS: '/tenant/contacts',
     MESSAGE_TEMPLATES: '/tenant/message-templates',
+    REFERRALS: '/tenant/referrals',
   },
   
   // Landlord routes

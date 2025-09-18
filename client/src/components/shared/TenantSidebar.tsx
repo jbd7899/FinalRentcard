@@ -9,7 +9,8 @@ import {
   Home,
   UserCheck,
   User,
-  Building2
+  Building2,
+  Users
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -55,6 +56,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
     { icon: <Star className="w-5 h-5" />, label: "My RentCard", route: ROUTES.TENANT.RENTCARD, active: activeRoute === ROUTES.TENANT.RENTCARD },
     { icon: <FileText className="w-5 h-5" />, label: "Documents", route: ROUTES.TENANT.DOCUMENTS, active: activeRoute === ROUTES.TENANT.DOCUMENTS },
     { icon: <UserCheck className="w-5 h-5" />, label: "References", route: ROUTES.TENANT.REFERENCES, active: activeRoute === ROUTES.TENANT.REFERENCES },
+    { icon: <Users className="w-5 h-5" />, label: "Referrals", route: ROUTES.TENANT.REFERRALS, active: activeRoute === ROUTES.TENANT.REFERRALS },
     { icon: <Inbox className="w-5 h-5" />, label: "Interests", route: ROUTES.TENANT.INTERESTS, active: activeRoute === ROUTES.TENANT.INTERESTS }
   ];
 
