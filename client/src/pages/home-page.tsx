@@ -63,7 +63,7 @@ export default function HomePage() {
           {/* Role Selection Cards */}
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Tenant Card */}
-            <Link href="/tenant">
+            <Link href="/tenant" data-testid="card-tenant">
               <div className="group bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-blue-200 cursor-pointer">
                 <div className="bg-blue-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                   <User className="w-8 h-8 text-blue-600" />
@@ -73,7 +73,10 @@ export default function HomePage() {
                   Create your RentCard once and share with private landlords instantly. 
                   Skip application fees and get personal responses.
                 </p>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white group-hover:scale-105 transition-transform">
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white group-hover:scale-105 transition-transform"
+                  data-testid="button-get-started-tenant"
+                >
                   Get Started as Tenant
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
@@ -81,7 +84,7 @@ export default function HomePage() {
             </Link>
 
             {/* Landlord Card */}
-            <Link href="/landlord">
+            <Link href="/landlord" data-testid="card-landlord">
               <div className="group bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-green-200 cursor-pointer">
                 <div className="bg-green-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                   <Building2 className="w-8 h-8 text-green-600" />
@@ -91,7 +94,10 @@ export default function HomePage() {
                   Get qualified tenant interest with one-click submissions. 
                   Generate QR codes and compete with corporate efficiency.
                 </p>
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white group-hover:scale-105 transition-transform">
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white group-hover:scale-105 transition-transform"
+                  data-testid="button-get-started-landlord"
+                >
                   Get Started as Landlord
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
