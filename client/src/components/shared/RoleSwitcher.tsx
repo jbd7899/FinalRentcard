@@ -4,7 +4,7 @@ import { Building2, User, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { USER_ROLES } from '@/constants';
-import { INDIVIDUAL_LANDLORD_STATS } from '@shared/network-messaging';
+import { PRIVATE_LANDLORD_STATS } from '@shared/network-messaging';
 
 interface RoleSwitcherProps extends React.HTMLAttributes<HTMLDivElement> {
   currentRole: 'tenant' | 'landlord';
@@ -77,7 +77,7 @@ export default function RoleSwitcher({
       shortLabel: 'Tenants',
       icon: User,
       description: 'Connect with individual landlords',
-      stat: INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE,
+      stat: PRIVATE_LANDLORD_STATS.MARKET_SHARE,
       statLabel: 'rental market',
       color: 'blue',
       bgColor: currentRole === 'tenant' ? 'bg-blue-600' : 'bg-gray-100',
@@ -90,7 +90,7 @@ export default function RoleSwitcher({
       shortLabel: 'Landlords',
       icon: Building2,
       description: 'Compete with corporate efficiency',
-      stat: INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED,
+      stat: PRIVATE_LANDLORD_STATS.DECISION_SPEED,
       statLabel: 'faster decisions',
       color: 'green',
       bgColor: currentRole === 'landlord' ? 'bg-green-600' : 'bg-gray-100',
@@ -200,7 +200,7 @@ export default function RoleSwitcher({
           </div>
           <div className="flex items-center gap-1">
             <Building2 className="w-4 h-4 text-green-600" />
-            <span>{INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}</span>
+            <span>{PRIVATE_LANDLORD_STATS.MARKET_SHARE}</span>
           </div>
         </div>
       )}
@@ -254,8 +254,8 @@ export default function RoleSwitcher({
           </div>
           <div className="text-xs text-gray-500 mt-1">
             {currentRole === 'tenant' 
-              ? `${INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED} decisions` 
-              : `${INDIVIDUAL_LANDLORD_STATS.PERSONAL_APPROACH}`
+              ? `${PRIVATE_LANDLORD_STATS.DECISION_SPEED} decisions` 
+              : `${PRIVATE_LANDLORD_STATS.PERSONAL_APPROACH}`
             }
           </div>
         </div>
@@ -279,7 +279,7 @@ export function RoleCrossLink({ currentRole, className = "" }: RoleCrossLinkProp
       cta: "View individual landlord tools",
       targetPath: "/landlord",
       icon: Building2,
-      stat: INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED,
+      stat: PRIVATE_LANDLORD_STATS.DECISION_SPEED,
       benefit: "Compete with corporate efficiency"
     },
     landlord: {
@@ -287,7 +287,7 @@ export function RoleCrossLink({ currentRole, className = "" }: RoleCrossLinkProp
       cta: "View tenant tools",
       targetPath: "/tenant",
       icon: User,
-      stat: INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE,
+      stat: PRIVATE_LANDLORD_STATS.MARKET_SHARE,
       benefit: "Skip corporate bureaucracy"
     }
   };

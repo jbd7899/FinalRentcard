@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMessageTemplatesStore, TenantMessageTemplate } from '@/stores/messageTemplatesStore';
-import { INDIVIDUAL_LANDLORD_STATS, NETWORK_MESSAGE_TEMPLATES } from '@shared/network-messaging';
+import { PRIVATE_LANDLORD_STATS, NETWORK_MESSAGE_TEMPLATES } from '@shared/network-messaging';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -112,11 +112,11 @@ const DEFAULT_TEMPLATES = {
 
 I hope this message finds you well. I'm specifically interested in connecting with individual landlords like you for your property at {property_address}.
 
-As someone who values personal landlord relationships over corporate management, I appreciate that individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} offer ${INDIVIDUAL_LANDLORD_STATS.PERSONAL_APPROACH} and ${INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED}.
+As someone who values personal landlord relationships over corporate management, I appreciate that private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} offer ${PRIVATE_LANDLORD_STATS.PERSONAL_APPROACH} and ${PRIVATE_LANDLORD_STATS.DECISION_SPEED}.
 
 I've prepared a comprehensive RentCard with all my rental information, references, and documentation. You can view my complete profile here: {rentcard_link}
 
-I specifically seek out individual landlords because you provide ${INDIVIDUAL_LANDLORD_STATS.NO_JUNK_FEES} and make personal decisions rather than going through corporate bureaucracy. I'd appreciate the opportunity to discuss this property further.
+I specifically seek out private landlords because you provide ${PRIVATE_LANDLORD_STATS.NO_JUNK_FEES} and make personal decisions rather than going through corporate bureaucracy. I'd appreciate the opportunity to discuss this property further.
 
 Thank you for your time and consideration.
 

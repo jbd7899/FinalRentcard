@@ -9,7 +9,7 @@ import {
   ROUTES, 
   API_ENDPOINTS, 
 } from '@/constants';
-import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS } from '@shared/network-messaging';
+import { NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS } from '@shared/network-messaging';
 
 // Import tab components
 import OverviewTab from '@/components/landlord/dashboard/OverviewTab';

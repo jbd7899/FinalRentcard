@@ -23,7 +23,7 @@ import { useUIStore } from '@/stores/uiStore';
 import { apiRequest } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
 import { ROUTES } from '@/constants';
-import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS, SOCIAL_PROOF_STATS, NETWORK_NOTIFICATIONS } from '@shared/network-messaging';
+import { NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS, SOCIAL_PROOF_STATS, NETWORK_NOTIFICATIONS } from '@shared/network-messaging';
 
 interface OnboardingStep {
   id: string;
@@ -266,8 +266,8 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
               </CardTitle>
               <p className="text-sm text-gray-600 mt-1">
                 {progress.isCompleted 
-                  ? `Individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} can now make ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}.`
-                  : `Complete your profile to connect with individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} (${completedCount}/${progress.totalSteps} done)`
+                  ? `Private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} can now make ${SOCIAL_PROOF_STATS.PRIVATE_LANDLORD_DECISIONS}.`
+                  : `Complete your profile to connect with private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} (${completedCount}/${progress.totalSteps} done)`
                 }
               </p>
             </div>
@@ -323,7 +323,7 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
               <Trophy className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-800 mb-2">Individual Landlord Network Ready!</h3>
               <p className="text-gray-600 mb-4">
-                You can now connect directly with individual landlords who own {INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}. 
+                You can now connect directly with private landlords who own {PRIVATE_LANDLORD_STATS.MARKET_SHARE}. 
                 Individual landlords respond {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME} than corporate management.
               </p>
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
