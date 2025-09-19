@@ -178,7 +178,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
             {user ? (
               <Link 
-                href={user.userType === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard'}
+                href={user && 'userType' in user && user.userType === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard'}
                 className="group bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all"
                 onClick={handleDashboardClick}
                 data-testid="button-dashboard"
