@@ -1,4 +1,4 @@
-import { Building2, ArrowRight, Mail, Lock, Phone, CheckCircle2, CreditCard, FileText, Shield, Users, TrendingUp, Award, Clock, Star } from 'lucide-react';
+import { Building2, ArrowRight, Mail, Lock, Phone } from 'lucide-react';
 import { Link, useLocation, useSearch } from 'wouter';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -153,12 +153,6 @@ const AuthPage = () => {
     return null; // Prevents flash of content during redirect
   }
 
-  const benefits = MESSAGES.AUTH.BENEFITS.map((benefit, index) => ({
-    ...benefit,
-    icon: index === 0 ? <FileText className="w-5 h-5 text-blue-500" /> :
-          index === 1 ? <Users className="w-5 h-5 text-blue-500" /> :
-          <Shield className="w-5 h-5 text-blue-500" />
-  }));
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -171,20 +165,8 @@ const AuthPage = () => {
             <div className="flex justify-center mb-6">
               <Building2 className="w-12 h-12 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Join the Private Landlord Network</h1>
-            <div className="text-center mb-4">
-              <div className="flex flex-wrap justify-center gap-2 mb-2">
-                <Badge variant="outline" className="text-blue-600 border-blue-600">
-                  <Building2 className="w-3 h-3 mr-1" />
-                  {PRIVATE_LANDLORD_STATS.MARKET_SHARE}
-                </Badge>
-                <Badge variant="outline" className="text-green-600 border-green-600">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {PRIVATE_LANDLORD_STATS.DECISION_SPEED}
-                </Badge>
-              </div>
-              <p className="text-sm text-gray-600">Standardized prequalification process - Skip corporate bureaucracy</p>
-            </div>
+            <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Join MyRentCard</h1>
+            <p className="text-center text-gray-600 mb-8">Connect with landlords and streamline your rental applications</p>
             
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-8">
               <TabsList className="grid w-full grid-cols-2 p-1 bg-gray-100 rounded-lg">
@@ -195,13 +177,9 @@ const AuthPage = () => {
               <TabsContent value="login">
                 <Card className="border-0 shadow-none">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xl font-semibold text-gray-900">{MESSAGES.AUTH.TITLES.LOGIN}</CardTitle>
-                    <CardDescription className="space-y-2">
-                      <div>Access your standardized RentCard to share with private landlords</div>
-                      <div className="flex items-center gap-2 text-sm text-blue-600">
-                        <Building2 className="w-4 h-4" />
-                        <span>Join the network - create once, share easily</span>
-                      </div>
+                    <CardTitle className="text-xl font-semibold text-gray-900">Welcome Back</CardTitle>
+                    <CardDescription>
+                      Sign in to access your RentCard and applications
                     </CardDescription>
                   </CardHeader>
                   
@@ -260,58 +238,11 @@ const AuthPage = () => {
               <TabsContent value="register">
                 <Card className="border-0 shadow-none">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-xl font-semibold text-gray-900">
+                    <CardTitle className="text-xl font-semibold text-gray-900">Create Your Account</CardTitle>
+                    <CardDescription>
                       {currentUserType === USER_ROLES.LANDLORD 
-                        ? NETWORK_VALUE_PROPS.LANDLORD.HERO 
-                        : NETWORK_VALUE_PROPS.TENANT.HERO}
-                    </CardTitle>
-                    <CardDescription className="space-y-3">
-                      <div>
-                        {currentUserType === USER_ROLES.LANDLORD 
-                          ? NETWORK_VALUE_PROPS.LANDLORD.SECONDARY 
-                          : NETWORK_VALUE_PROPS.TENANT.SECONDARY}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {currentUserType === USER_ROLES.LANDLORD ? (
-                          <>
-                            <div className="flex items-center gap-1 text-xs text-green-600">
-                              <TrendingUp className="w-3 h-3" />
-                              <span>Competitive efficiency</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-blue-600">
-                              <Users className="w-3 h-3" />
-                              <span>Personal touch</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-purple-600">
-                              <Shield className="w-3 h-3" />
-                              <span>Professional tools</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-orange-600">
-                              <Award className="w-3 h-3" />
-                              <span>No corporate overhead</span>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-center gap-1 text-xs text-green-600">
-                              <Building2 className="w-3 h-3" />
-                              <span>{PRIVATE_LANDLORD_STATS.MARKET_SHARE}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-blue-600">
-                              <Clock className="w-3 h-3" />
-                              <span>{PRIVATE_LANDLORD_STATS.DECISION_SPEED}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-purple-600">
-                              <Shield className="w-3 h-3" />
-                              <span>Personal relationships</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-orange-600">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>No junk fees</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                        ? "Manage your properties and tenant applications" 
+                        : "Create your digital rental profile"}
                     </CardDescription>
                   </CardHeader>
                   
@@ -363,20 +294,18 @@ const AuthPage = () => {
                           <Button
                             type="button"
                             variant={registerForm.watch('userType') === USER_ROLES.TENANT ? 'default' : 'outline'}
-                            className={`w-full rounded-md h-10 flex flex-col py-2 h-auto ${registerForm.watch('userType') === USER_ROLES.TENANT ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                            className={`w-full rounded-md h-10 ${registerForm.watch('userType') === USER_ROLES.TENANT ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                             onClick={() => registerForm.setValue('userType', USER_ROLES.TENANT)}
                           >
-                            <span className="font-medium">Tenant</span>
-                            <span className="text-xs opacity-80">Connect with private landlords</span>
+                            Tenant
                           </Button>
                           <Button
                             type="button"
                             variant={registerForm.watch('userType') === USER_ROLES.LANDLORD ? 'default' : 'outline'}
-                            className={`w-full rounded-md h-10 flex flex-col py-2 h-auto ${registerForm.watch('userType') === USER_ROLES.LANDLORD ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                            className={`w-full rounded-md h-10 ${registerForm.watch('userType') === USER_ROLES.LANDLORD ? 'bg-blue-600 hover:bg-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                             onClick={() => registerForm.setValue('userType', USER_ROLES.LANDLORD)}
                           >
-                            <span className="font-medium">Private Landlord</span>
-                            <span className="text-xs opacity-80">Compete with corporate efficiency</span>
+                            Landlord
                           </Button>
                         </div>
                       </div>
@@ -394,25 +323,17 @@ const AuthPage = () => {
                             </svg>
                             Creating account...
                           </span>
-                        ) : currentUserType === USER_ROLES.TENANT ? (
-                          <span className="flex items-center justify-center">
-                            Connect with Private Landlords
-                          </span>
                         ) : (
                           <span className="flex items-center justify-center">
-                            Join Private Landlord Network
+                            Create Account
                           </span>
                         )}
                       </Button>
                     </form>
                   </CardContent>
                   
-                  <CardFooter className="text-center text-xs text-gray-500 pt-2 pb-4 space-y-2">
+                  <CardFooter className="text-center text-xs text-gray-500 pt-2 pb-4">
                     <p>By registering, you agree to our Terms of Service and Privacy Policy</p>
-                    <div className="flex items-center justify-center gap-2 text-xs text-blue-600">
-                      <TrendingUp className="w-3 h-3" />
-                      <span>Join the private landlord network growing daily</span>
-                    </div>
                   </CardFooter>
                 </Card>
               </TabsContent>
@@ -420,83 +341,15 @@ const AuthPage = () => {
           </div>
         </div>
         
-        {/* Right side - Network value panel */}
+        {/* Right side - Simple hero panel */}
         <div className="hidden md:block w-1/2 bg-gradient-to-br from-blue-600 to-blue-700">
-          <div className="h-full flex flex-col justify-center p-12">
-            <h2 className="text-4xl font-bold text-white mb-4">Join the Network</h2>
-            <p className="text-blue-100 text-lg mb-8">Where private landlords and tenants connect directly</p>
-            
-            {/* Network Stats */}
-            <div className="grid grid-cols-2 gap-4 mb-12">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">{PRIVATE_LANDLORD_STATS.DECISION_SPEED}</div>
-                <div className="text-sm text-blue-200">Response Speed</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">{PRIVATE_LANDLORD_STATS.MARKET_SHARE}</div>
-                <div className="text-sm text-blue-200">Market Share</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">{PRIVATE_LANDLORD_STATS.PERSONAL_APPROACH}</div>
-                <div className="text-sm text-blue-200">Communication</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">{PRIVATE_LANDLORD_STATS.NO_JUNK_FEES}</div>
-                <div className="text-sm text-blue-200">No Fees</div>
-              </div>
-            </div>
-
-            {/* Network Benefits */}
-            <div className="space-y-6">
-              <div className="flex items-start">
-                <div className="bg-white/20 rounded-full p-2 mr-4 flex-shrink-0">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white text-lg">Growing Network</h3>
-                  <p className="text-blue-100 text-sm">More connections mean better opportunities</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <div className="bg-white/20 rounded-full p-2 mr-4 flex-shrink-0">
-                  <Clock className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white text-lg">Instant Screening</h3>
-                  <p className="text-blue-100 text-sm">Quick document review</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <div className="bg-white/20 rounded-full p-2 mr-4 flex-shrink-0">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white text-lg">Verified Community</h3>
-                  <p className="text-blue-100 text-sm">Pre-verified references</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <div className="bg-white/20 rounded-full p-2 mr-4 flex-shrink-0">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-white text-lg">Network Growth</h3>
-                  <p className="text-blue-100 text-sm">Growing private landlord network</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Trust Signal */}
-            <div className="mt-8 p-4 bg-white/10 rounded-lg">
-              <div className="flex items-center justify-center gap-2 text-white mb-2">
-                <Star className="w-5 h-5 text-yellow-300" />
-                <span className="font-medium">High User Satisfaction</span>
-              </div>
-              <p className="text-blue-100 text-sm text-center">Private landlord focused</p>
-            </div>
+          <div className="h-full flex flex-col justify-center p-12 text-center">
+            <Building2 className="w-16 h-16 text-white mx-auto mb-6" />
+            <h2 className="text-4xl font-bold text-white mb-4">Streamline Your Rental Process</h2>
+            <p className="text-blue-100 text-lg leading-relaxed">
+              Create your digital rental profile once and share it with landlords instantly. 
+              Simple, secure, and efficient.
+            </p>
           </div>
         </div>
       </div>
