@@ -117,51 +117,35 @@ const TenantDashboard = () => {
       <header className="mb-6 md:mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Connect with Individual Landlords</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-sm sm:text-base text-gray-500 mt-1">
-              Skip corporate bureaucracy – private landlords who own {PRIVATE_LANDLORD_STATS.MARKET_SHARE} respond faster
+              Manage your rental profile and applications
             </p>
           </div>
           
-          {/* Tab Navigation and Share Button */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center">
-            <div className="flex gap-2">
-              <Button 
-                variant={activeTab === 'dashboard' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setActiveTab('dashboard')}
-                data-testid="tab-dashboard"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-              <Button 
-                variant={activeTab === 'analytics' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setActiveTab('analytics')}
-                data-testid="tab-analytics"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Analytics
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <OneClickShareButton 
-                variant="default" 
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                showText={true}
-              />
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShareModalOpen(true)}
-                data-testid="button-advanced-share"
-                className="text-xs"
-              >
-                More Options
-              </Button>
-            </div>
+          <div className="flex gap-2">
+            <Button 
+              variant={activeTab === 'dashboard' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setActiveTab('dashboard')}
+              data-testid="tab-dashboard"
+            >
+              Overview
+            </Button>
+            <Button 
+              variant={activeTab === 'analytics' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => setActiveTab('analytics')}
+              data-testid="tab-analytics"
+            >
+              Analytics
+            </Button>
+            <OneClickShareButton 
+              variant="default" 
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              showText={false}
+            />
           </div>
         </div>
       </header>
@@ -169,24 +153,23 @@ const TenantDashboard = () => {
       {/* Conditional Content Based on Active Tab */}
       {activeTab === 'dashboard' ? (
         <>
-        {/* Onboarding Checklist - Prominent placement for new users */}
-        {!onboardingDismissed && (
+        {/* Onboarding Checklist */}
+        {!onboardingDismissed && !onboardingCollapsed && (
           <OnboardingChecklist 
             onDismiss={() => setOnboardingDismissed(true)}
-            collapsed={onboardingCollapsed}
+            collapsed={true}
             onToggleCollapse={() => setOnboardingCollapsed(!onboardingCollapsed)}
           />
         )}
         
         {/* Quick Actions */}
-        <section className="mb-8 md:mb-10">
-        <h2 className="text-base sm:text-lg font-medium mb-4 md:mb-5">Quick Actions</h2>
+        <section className="mb-8">
+        <h2 className="text-lg font-medium mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
           <Card className="hover:shadow-md transition-shadow">
             <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
               <Star className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mb-1 sm:mb-2" />
               <h3 className="font-medium text-sm sm:text-base">View RentCard</h3>
-              <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Check your rental profile</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -202,7 +185,6 @@ const TenantDashboard = () => {
             <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
               <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 mb-1 sm:mb-2" />
               <h3 className="font-medium text-sm sm:text-base">Upload Document</h3>
-              <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Add new verification</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -218,7 +200,6 @@ const TenantDashboard = () => {
             <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
               <UserCheck className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500 mb-1 sm:mb-2" />
               <h3 className="font-medium text-sm sm:text-base">References</h3>
-              <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">Manage your references</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -234,7 +215,6 @@ const TenantDashboard = () => {
             <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
               <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 mb-1 sm:mb-2" />
               <h3 className="font-medium text-sm sm:text-base">Applications</h3>
-              <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 hidden sm:block">View your applications</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -247,41 +227,6 @@ const TenantDashboard = () => {
           </Card>
         </div>
 
-        {/* Share RentCard Section */}
-        <div className="mt-8 md:mt-10">
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Share2 className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-base sm:text-lg font-medium text-gray-800 mb-1">Connect with Individual Landlords</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      Share your RentCard directly with individual property owners. Individual landlords 
-                      respond {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME} and make personal decisions.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <OneClickShareButton 
-                    variant="default"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-                    showText={true}
-                  />
-                  <Button 
-                    variant="outline"
-                    onClick={() => setShareModalOpen(true)}
-                    data-testid="button-share-rentcard-advanced"
-                  >
-                    Settings
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </section>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 md:gap-8">
@@ -425,38 +370,6 @@ const TenantDashboard = () => {
         </section>
       </div>
       
-      {/* Tips Section */}
-      <Card className="mt-8 md:mt-10 bg-blue-50">
-        <CardContent className="p-5 sm:p-6">
-          <h2 className="text-base sm:text-lg font-medium mb-3 sm:mb-4 flex items-center gap-2">
-            <Share2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-            <span>Individual Landlord Connection Tips</span>
-          </h2>
-          
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-            <div>
-              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Target Individual Landlords</h3>
-              <p className="text-xs sm:text-sm text-gray-600">
-                Private landlords who own {PRIVATE_LANDLORD_STATS.MARKET_SHARE} respond faster than corporate management.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Skip Corporate Bureaucracy</h3>
-              <p className="text-xs sm:text-sm text-gray-600">
-                Individual landlords make {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS} vs corporate delays.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Build Personal Relationships</h3>
-              <p className="text-xs sm:text-sm text-gray-600">
-                Individual landlords value direct communication and personal tenant connections.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
       
       {/* Enhanced Share Modal */}
       <EnhancedShareModal
