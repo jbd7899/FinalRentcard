@@ -325,6 +325,17 @@ export default function HomePage() {
             </span>
           </div>
         </div>
+
+        {/* Simple Footer */}
+        <footer className="mt-20 pt-8 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-6 text-sm text-gray-500">
+            <Link href="/about" className="hover:text-gray-700 transition-colors" data-testid="footer-about-link">
+              About MyRentCard
+            </Link>
+            <span className="hidden sm:block">•</span>
+            <span>© 2025 MyRentCard. Making rental connections better.</span>
+          </div>
+        </footer>
       </main>
     </div>
   );

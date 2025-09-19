@@ -47,6 +47,7 @@ import TenantReferralsPage from "@/pages/tenant/referrals";
 
 // Shared/Public Pages
 import SharedRentCard from "@/pages/shared-rentcard";
+import AboutPage from "@/pages/about-page";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -57,6 +58,8 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path={ROUTES.HOME} component={HomePage} />
       
+      {/* About page - always accessible */}
+      <Route path="/about" component={AboutPage} />
       
       {/* Role-based Landing Pages */}
       <Route path="/tenant" component={TenantLanding} />
