@@ -11,6 +11,18 @@ interface User {
   lastName?: string;
   profileImageUrl?: string;
   userType?: 'tenant' | 'landlord';
+  phone?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  profiles?: {
+    tenant: any;
+    landlord: any;
+  };
+  requiresSetup?: boolean;
+  availableRoles?: {
+    tenant: boolean;
+    landlord: boolean;
+  };
 }
 
 interface AuthState {

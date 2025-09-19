@@ -54,17 +54,12 @@ function Router() {
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <>
-          <Route path="/" component={AuthPage} />
-          <Route path={ROUTES.AUTH} component={AuthPage} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={HomePage} />
-          <Route path={ROUTES.HOME} component={HomePage} />
-        </>
-      )}
+      {/* Home page - always accessible */}
+      <Route path="/" component={HomePage} />
+      <Route path={ROUTES.HOME} component={HomePage} />
+      
+      {/* Auth page */}
+      <Route path={ROUTES.AUTH} component={AuthPage} />
       
       {/* Role-based Landing Pages */}
       <Route path="/tenant" component={TenantLanding} />
