@@ -38,7 +38,7 @@ export default function HomePage() {
       description: "Create once. Apply anywhere—even off‑platform.",
       primaryCTA: DERIVED_MESSAGING.TENANT.CALL_TO_ACTION,
       secondaryCTA: "View Sample RentCard",
-      primaryLink: "/auth?type=tenant&mode=register",
+      primaryLink: "/api/login",
       secondaryLink: "/samples/rentcard",
       benefits: [
         {
@@ -68,7 +68,7 @@ export default function HomePage() {
       description: "Compete with corporate efficiency. Keep your personal touch.",
       primaryCTA: DERIVED_MESSAGING.LANDLORD.CALL_TO_ACTION,
       secondaryCTA: "View Screening Tools",
-      primaryLink: "/auth?type=landlord&mode=register",
+      primaryLink: "/api/login",
       secondaryLink: "/samples/screening-page",
       benefits: [
         {
@@ -179,8 +179,11 @@ export default function HomePage() {
 
           {/* CTA Buttons Section */}
           <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
-            <Link
-              href={content.primaryLink}
+            <button
+              onClick={() => {
+                localStorage.setItem("selectedRole", selectedRole);
+                window.location.href = "/api/login";
+              }}
               className={`group px-8 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all text-white ${
                 isLandlordSelected
                   ? 'bg-green-600 hover:bg-green-700'
@@ -190,7 +193,7 @@ export default function HomePage() {
             >
               {content.primaryCTA}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </button>
             <Link
               href={content.secondaryLink}
               className={`group border-2 px-8 py-4 rounded-xl font-medium flex items-center justify-center gap-3 transition-all ${
