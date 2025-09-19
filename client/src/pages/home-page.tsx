@@ -1,322 +1,113 @@
-import { Building2, Clock, Shield, CheckCircle, ArrowRight, Users, Zap, ArrowUpRight, CreditCard, TrendingUp, Star, Award, Target, User } from 'lucide-react';
+import { Building2, User, ArrowRight, CheckCircle } from 'lucide-react';
 import { Link } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
-import { useUIStore } from '@/stores/uiStore';
-import { useState } from 'react';
 import Navbar from '@/components/shared/navbar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SUCCESS_STORIES, NETWORK_CTA, NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS } from '@shared/network-messaging';
 
 export default function HomePage() {
   const { user } = useAuth();
-  const { loadingStates, setLoading, addToast } = useUIStore();
-  const [selectedRole, setSelectedRole] = useState<'tenant' | 'landlord'>('tenant');
 
-  const handleDashboardClick = () => {
-    setLoading('dashboard', true);
-    addToast({
-      title: "Welcome back!",
-      description: "Redirecting to your dashboard...",
-      type: "info",
-      duration: 3000
-    });
-    setTimeout(() => setLoading('dashboard', false), 1000);
-  };
+  // If user is authenticated, redirect to their dashboard
+  if (user) {
+    const dashboardPath = user && 'userType' in user && user.userType === 'landlord' 
+      ? '/landlord/dashboard' 
+      : '/tenant/dashboard';
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
+        <div className="relative z-10">
+          <Navbar />
+        </div>
+        
+        <main className="relative z-1 max-w-4xl mx-auto px-4 py-16 text-center">
+          <h1 className="text-4xl font-bold mb-6">Welcome back!</h1>
+          <Link 
+            href={dashboardPath}
+            className="group bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 shadow-lg hover:shadow-xl inline-flex items-center gap-3 transition-all"
+          >
+            Go to Dashboard
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </main>
+      </div>
+    );
+  }
 
-  const handleHover = (key: string, isHovered: boolean) => {
-    setLoading(`hover_${key}`, isHovered);
-  };
-
-  const roleContent = {
-    tenant: {
-      title: "Create your RentCard. Share with Private Landlords.",
-      subtitle: "Private landlords own up to 75% of rentals.", 
-      description: "Create once. Apply anywhere—even off‑platform.",
-      benefits: [
-        {
-          icon: Users,
-          title: "Standardized Network Access", 
-          desc: "Join the network to create your standardized RentCard once",
-          stat: "One profile, many landlords"
-        },
-        {
-          icon: Clock,
-          title: "2-3x Faster Responses",
-          desc: "Private landlords respond faster and build personal relationships",
-          stat: "Personal connections"
-        },
-        {
-          icon: Shield,
-          title: "Skip Corporate Bureaucracy",
-          desc: "Skip corporate application fees and rigid policies", 
-          stat: "Direct communication"
-        }
-      ],
-      cta: {
-        primary: "Create Your Free RentCard",
-        secondary: "View Sample RentCard",
-        primaryHref: "/auth?type=tenant&mode=register",
-        secondaryHref: "/samples/rentcard"
-      }
-    },
-    landlord: {
-      title: "Get qualified tenants for your Private Rentals.",
-      subtitle: "Free QR codes • One‑click interest.",
-      description: "Accept interest without a RentCard. Cross‑sell your other units.",
-      benefits: [
-        {
-          icon: Users,
-          title: "One-Click Tenant Submissions",
-          desc: "Allow qualified tenants to submit interest with standardized RentCards",
-          stat: "Streamlined connections"
-        },
-        {
-          icon: Clock,
-          title: "Review Before Showings",
-          desc: "Review prequalification details before showings and cross-sell properties",
-          stat: "Efficient screening"
-        },
-        {
-          icon: Shield,
-          title: "QR Code Marketing Tools",
-          desc: "Generate marketing flyers with scannable QR codes with one click",
-          stat: "Professional marketing"
-        }
-      ],
-      cta: {
-        primary: "Create Your Free Landlord Profile",
-        secondary: "View Screening Tools", 
-        primaryHref: "/auth?type=landlord&mode=register",
-        secondaryHref: "/samples/screening-page"
-      }
-    }
-  };
-
-  const currentContent = roleContent[selectedRole];
-
+  // For unauthenticated users, show role selection
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
-      <div className="absolute inset-0 bg-[url('/api/placeholder/20/20')] opacity-5 z-0"></div>
-
       <div className="relative z-10">
         <Navbar />
       </div>
 
-      <main className="relative z-1 max-w-7xl mx-auto px-4 py-16">
-        {/* Role Toggle */}
-        {!user && (
-          <div className="flex justify-center mb-12">
-            <div className="bg-white rounded-xl p-2 shadow-lg border">
-              <div className="flex">
-                <Button
-                  variant={selectedRole === 'tenant' ? 'default' : 'ghost'}
-                  onClick={() => setSelectedRole('tenant')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
-                    selectedRole === 'tenant' 
-                      ? 'bg-blue-600 text-white shadow-md' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  data-testid="toggle-tenant"
-                >
-                  <User className="w-4 h-4" />
-                  I'm Looking for a Place
-                </Button>
-                <Button
-                  variant={selectedRole === 'landlord' ? 'default' : 'ghost'}
-                  onClick={() => setSelectedRole('landlord')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
-                    selectedRole === 'landlord' 
-                      ? 'bg-green-600 text-white shadow-md' 
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  data-testid="toggle-landlord"
-                >
-                  <Building2 className="w-4 h-4" />
-                  I Own/Manage Properties
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="text-center mb-16 relative">
-          {/* Value Badge */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <div className="inline-block bg-purple-100 text-purple-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">
+      <main className="relative z-1 max-w-4xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="inline-block bg-purple-100 text-purple-600 px-4 py-2 rounded-full shadow-md mb-6">
               <span className="flex items-center gap-2 text-sm font-medium">
                 <CheckCircle className="w-4 h-4" />
-                <span>Prequalification network</span>
+                <span>Prequalification Network for Private Landlords</span>
               </span>
             </div>
-          </div>
-
-          {/* Hero Section with Dynamic Content */}
-          <div className="relative">
-            <h1 className="text-6xl font-bold mb-6">
+            <h1 className="text-6xl font-bold mb-4">
               <span className="bg-gradient-to-r from-blue-600 to-blue-400 text-transparent bg-clip-text">
                 MyRentCard
               </span>
-              <div className="absolute -right-4 top-0 text-yellow-400 text-xl">✨</div>
-              <span className={`block text-3xl mt-4 text-gray-800 transition-all duration-300`}>
-                {currentContent.title}
-              </span>
-              <span className={`block text-2xl mt-2 transition-all duration-300 ${
-                selectedRole === 'tenant' ? 'text-blue-600' : 'text-green-600'
-              }`}>
-                {currentContent.subtitle}
-              </span>
             </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Connect tenants and private landlords who own 75% of rentals in America
+            </p>
           </div>
 
-          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed transition-all duration-300">
-            {currentContent.description}
-          </p>
+          {/* Role Selection Cards */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Tenant Card */}
+            <Link href="/tenant">
+              <div className="group bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-blue-200 cursor-pointer">
+                <div className="bg-blue-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <User className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-800">I'm Looking for a Place</h3>
+                <p className="text-gray-600 mb-6">
+                  Create your RentCard once and share with private landlords instantly. 
+                  Skip application fees and get personal responses.
+                </p>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white group-hover:scale-105 transition-transform">
+                  Get Started as Tenant
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            </Link>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
-            {user ? (
-              <Link 
-                href={user && 'userType' in user && user.userType === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard'}
-                className="group bg-blue-600 text-white px-8 py-4 rounded-xl font-medium hover:bg-blue-700 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all"
-                onClick={handleDashboardClick}
-                data-testid="button-dashboard"
-              >
-                View Dashboard
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            ) : (
-              <>
-                <Link 
-                  href={currentContent.cta.primaryHref}
-                  className={`group px-8 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all text-white ${
-                    selectedRole === 'tenant' 
-                      ? 'bg-blue-600 hover:bg-blue-700' 
-                      : 'bg-green-600 hover:bg-green-700'
-                  }`}
-                  data-testid="button-primary-cta"
-                >
-                  {currentContent.cta.primary}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link 
-                  href={currentContent.cta.secondaryHref}
-                  className={`group border-2 px-8 py-4 rounded-xl font-medium flex items-center justify-center gap-3 transition-all ${
-                    selectedRole === 'tenant'
-                      ? 'border-blue-600 text-blue-600 hover:bg-blue-50'
-                      : 'border-green-600 text-green-600 hover:bg-green-50'
-                  }`}
-                  data-testid="button-secondary-cta"
-                >
-                  {currentContent.cta.secondary}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </>
-            )}
+            {/* Landlord Card */}
+            <Link href="/landlord">
+              <div className="group bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-green-200 cursor-pointer">
+                <div className="bg-green-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <Building2 className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-800">I Own/Manage Properties</h3>
+                <p className="text-gray-600 mb-6">
+                  Get qualified tenant interest with one-click submissions. 
+                  Generate QR codes and compete with corporate efficiency.
+                </p>
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white group-hover:scale-105 transition-transform">
+                  Get Started as Landlord
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            </Link>
           </div>
 
-          {/* Network Benefits Section */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {currentContent.benefits.map((benefit, index) => (
-              <div 
-                key={index}
-                className="relative bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all overflow-hidden"
-                onMouseEnter={() => handleHover(`benefit${index}`, true)}
-                onMouseLeave={() => handleHover(`benefit${index}`, false)}
-              >
-                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r transition-all duration-300 ${
-                  selectedRole === 'tenant' ? 'from-blue-400 to-blue-600' : 'from-green-400 to-green-600'
-                }`}></div>
-                <div className={`p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 transition-all duration-300 ${
-                  selectedRole === 'tenant' 
-                    ? 'bg-blue-100' 
-                    : 'bg-green-100'
-                } ${loadingStates[`hover_benefit${index}`] ? 'scale-110' : ''}`}>
-                  <benefit.icon className={`w-8 h-8 transition-colors duration-300 ${
-                    selectedRole === 'tenant' ? 'text-blue-600' : 'text-green-600'
-                  }`} />
-                </div>
-                <h3 className="text-xl font-semibold mb-3">{benefit.title}</h3>
-                <p className="text-gray-600 mb-4">{benefit.desc}</p>
-                <Badge variant="outline" className={`transition-colors duration-300 ${
-                  selectedRole === 'tenant' 
-                    ? 'text-blue-600 border-blue-600' 
-                    : 'text-green-600 border-green-600'
-                }`}>
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {benefit.stat}
-                </Badge>
-              </div>
-            ))}
-          </div>
-
-          {/* Network Effects Section */}
-          <div className="bg-white p-12 rounded-xl shadow-lg relative overflow-hidden">
-            <div className={`absolute top-0 left-0 w-full h-full opacity-50 transition-all duration-300 ${
-              selectedRole === 'tenant' 
-                ? 'bg-gradient-to-b from-blue-50 to-transparent' 
-                : 'bg-gradient-to-b from-green-50 to-transparent'
-            }`}></div>
-
-            <div className="relative">
-              <div className="flex items-center justify-center gap-4 mb-8">
-                <div className={`h-1 w-16 rounded transition-colors duration-300 ${
-                  selectedRole === 'tenant' ? 'bg-blue-200' : 'bg-green-200'
-                }`}></div>
-                <p className={`text-2xl font-semibold transition-colors duration-300 ${
-                  selectedRole === 'tenant' ? 'text-blue-800' : 'text-green-800'
-                }`}>
-                  The Network Gets Stronger with Every Connection
-                </p>
-                <div className={`h-1 w-16 rounded transition-colors duration-300 ${
-                  selectedRole === 'tenant' ? 'bg-blue-200' : 'bg-green-200'
-                }`}></div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-8">
-                <div className="text-center">
-                  <div className={`text-4xl font-bold mb-4 transition-colors duration-300 ${
-                    selectedRole === 'tenant' ? 'text-blue-600' : 'text-green-600'
-                  }`}>
-                    {selectedRole === 'tenant' ? 'More Private Landlords' : 'More Tenants Preferring Private Landlords'}
-                  </div>
-                  <p className="text-gray-600">
-                    {selectedRole === 'tenant' 
-                      ? 'Joining means more individual property owner options and faster personal connections'
-                      : 'Joining means access to tenants who specifically prefer private landlords'
-                    }
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className={`text-4xl font-bold mb-4 transition-colors duration-300 ${
-                    selectedRole === 'tenant' ? 'text-blue-600' : 'text-green-600'
-                  }`}>
-                    Better Matching
-                  </div>
-                  <p className="text-gray-600">
-                    More data points create smarter connections and higher success rates for everyone
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <p className="text-lg font-semibold mb-2">
-                  {selectedRole === 'tenant' 
-                    ? 'Connect with verified landlords instantly'
-                    : 'Access prequalified tenants immediately'
-                  }
-                </p>
-                <p className="text-gray-600 mb-4">
-                  No applications • No wasted time • Network-powered matching
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  <Badge variant="outline">Prequalified connections</Badge>
-                  <Badge variant="outline">Instant compatibility check</Badge>
-                  <Badge variant="outline">Network-based matching</Badge>
-                  <Badge variant="outline">Quality over quantity</Badge>
-                </div>
-              </div>
+          {/* Bottom CTA */}
+          <div className="mt-12 text-center">
+            <p className="text-gray-600 mb-4">
+              Join the network that's standardizing prequalification for private rentals
+            </p>
+            <div className="flex justify-center gap-4 text-sm text-gray-500">
+              <span>✓ No application fees</span>
+              <span>✓ Personal relationships</span>
+              <span>✓ 2-3x faster decisions</span>
             </div>
           </div>
         </div>
