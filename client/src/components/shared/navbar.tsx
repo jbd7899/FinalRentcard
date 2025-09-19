@@ -20,7 +20,8 @@ import {
   TrendingUp,
   Sparkles,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  ChevronDown
 } from "lucide-react";
 import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { ROUTES } from "@/constants";
@@ -191,7 +192,7 @@ export default function Navbar() {
 
           {/* Notification Bell for Tenants */}
           {user && user.userType === 'tenant' && (
-            <NotificationCenter userId={user.id} />
+            <NotificationCenter userId={parseInt(user.id)} />
           )}
 
           {/* User Menu or Login Button */}
@@ -213,7 +214,7 @@ export default function Navbar() {
                   className="gap-2 text-red-600 cursor-pointer"
                   onClick={() => {
                     handleLogout();
-                    setLocation(ROUTES.AUTH);
+                    setLocation("/");
                   }}
                 >
                   <LogOut className="h-4 w-4" />
@@ -222,16 +223,43 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex items-center gap-3">
-              <Button 
-                className="px-6 cursor-pointer"
-                variant="default"
-                type="button"
-                onClick={() => setLocation(ROUTES.AUTH)}
-              >
-                Login
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  className="px-6 cursor-pointer flex items-center gap-2"
+                  variant="default"
+                  type="button"
+                  data-testid="button-login-dropdown"
+                >
+                  Login
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem
+                  className="gap-2 cursor-pointer text-blue-600"
+                  onClick={() => {
+                    localStorage.setItem("selectedRole", "tenant");
+                    window.location.href = "/api/login";
+                  }}
+                  data-testid="button-login-tenant"
+                >
+                  <User className="h-4 w-4" />
+                  <span>🏠 Login as Tenant</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2 cursor-pointer text-green-600"
+                  onClick={() => {
+                    localStorage.setItem("selectedRole", "landlord");
+                    window.location.href = "/api/login";
+                  }}
+                  data-testid="button-login-landlord"
+                >
+                  <Building2 className="h-4 w-4" />
+                  <span>🏢 Login as Landlord</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
