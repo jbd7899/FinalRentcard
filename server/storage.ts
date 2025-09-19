@@ -1,5 +1,5 @@
 import { 
-  User, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken, PropertyQRCode,
+  User, UpsertUser, TenantProfile, LandlordProfile, Property, Interest, RentCard, ShareToken, PropertyQRCode,
   TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick,
   RecipientContact, TenantMessageTemplate, ContactSharingHistory,
   // Import insert types for shortlinks
@@ -48,20 +48,21 @@ import {
 const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
-  // User operations
-  getUser(id: number): Promise<User | undefined>;
+  // User operations - (IMPORTANT) these user operations are mandatory for Replit Auth.
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: Omit<User, "id" | "createdAt">): Promise<User>;
-  updateUser(id: number, user: Partial<User>): Promise<User>;
+  updateUser(id: string, user: Partial<User>): Promise<User>;
 
   // Tenant profile operations
-  getTenantProfile(userId: number): Promise<TenantProfile | undefined>;
+  getTenantProfile(userId: string): Promise<TenantProfile | undefined>;
   getTenantProfileById(id: number): Promise<TenantProfile | undefined>;
   createTenantProfile(profile: Omit<TenantProfile, "id">): Promise<TenantProfile>;
   updateTenantProfile(id: number, profile: Partial<TenantProfile>): Promise<TenantProfile>;
 
   // Landlord profile operations
-  getLandlordProfile(userId: number): Promise<LandlordProfile | undefined>;
+  getLandlordProfile(userId: string): Promise<LandlordProfile | undefined>;
   getLandlordProfileById(id: number): Promise<LandlordProfile | undefined>;
   createLandlordProfile(profile: Omit<LandlordProfile, "id">): Promise<LandlordProfile>;
   updateLandlordProfile(id: number, profile: Partial<LandlordProfile>): Promise<LandlordProfile>;
@@ -81,7 +82,7 @@ export interface IStorage {
   markInterestAsViewed(id: number): Promise<Interest>;
 
   // Rent card operations
-  getRentCard(userId: number): Promise<RentCard | undefined>;
+  getRentCard(userId: string): Promise<RentCard | undefined>;
 
   // Share token operations
   createShareToken(tenantId: number, data: { scope?: string; expiresAt?: Date }): Promise<ShareToken>;
@@ -413,8 +414,24 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getUser(id: number): Promise<User | undefined> {
+  // (IMPORTANT) these user operations are mandatory for Replit Auth.
+  async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
     return user;
   }
 
@@ -428,7 +445,7 @@ export class DatabaseStorage implements IStorage {
     return newUser;
   }
 
-  async updateUser(id: number, user: Partial<User>): Promise<User> {
+  async updateUser(id: string, user: Partial<User>): Promise<User> {
     const [updatedUser] = await db
       .update(users)
       .set(user)
@@ -437,7 +454,7 @@ export class DatabaseStorage implements IStorage {
     return updatedUser;
   }
 
-  async getTenantProfile(userId: number): Promise<TenantProfile | undefined> {
+  async getTenantProfile(userId: string): Promise<TenantProfile | undefined> {
     const [profile] = await db.select().from(tenantProfiles).where(eq(tenantProfiles.userId, userId));
     return profile;
   }
@@ -461,7 +478,7 @@ export class DatabaseStorage implements IStorage {
     return updatedProfile;
   }
 
-  async getLandlordProfile(userId: number): Promise<LandlordProfile | undefined> {
+  async getLandlordProfile(userId: string): Promise<LandlordProfile | undefined> {
     const [profile] = await db.select().from(landlordProfiles).where(eq(landlordProfiles.userId, userId));
     return profile;
   }
@@ -568,7 +585,7 @@ export class DatabaseStorage implements IStorage {
     return updatedInterest;
   }
 
-  async getRentCard(userId: number): Promise<RentCard | undefined> {
+  async getRentCard(userId: string): Promise<RentCard | undefined> {
     const [rentCard] = await db
       .select()
       .from(rentCards)

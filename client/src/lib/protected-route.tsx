@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import { Route, useLocation } from 'wouter';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 import { ROUTES } from '@/constants';
 
 interface ProtectedRouteProps {
@@ -10,12 +12,27 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ component: Component, path }: ProtectedRouteProps) {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { toast } = useToast();
 
   return (
     <Route
       path={path}
       component={() => {
+        // Redirect to login if not authenticated
+        useEffect(() => {
+          if (!isLoading && !isAuthenticated) {
+            toast({
+              title: "Unauthorized",
+              description: "You are logged out. Logging in again...",
+              variant: "destructive",
+            });
+            setTimeout(() => {
+              window.location.href = "/api/login";
+            }, 500);
+          }
+        }, [isAuthenticated, isLoading]);
+
         if (isLoading) {
           return (
             <div className="min-h-screen flex items-center justify-center">
@@ -25,7 +42,6 @@ export function ProtectedRoute({ component: Component, path }: ProtectedRoutePro
         }
 
         if (!isAuthenticated) {
-          setLocation(ROUTES.AUTH);
           return null;
         }
 

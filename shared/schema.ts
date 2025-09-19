@@ -1,24 +1,41 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
+import { sql } from 'drizzle-orm';
 
 // Import all schema enhancements
 import * as schemaEnhancements from "./schema-enhancements";
 
-// Base user table for authentication
+// Session storage table for Replit Auth
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: json("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table for Replit Auth
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  userType: text("user_type").notNull(), // 'tenant' or 'landlord'
-  phone: text("phone").notNull(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  userType: text("user_type"), // 'tenant' or 'landlord' - custom field for MyRentCard
+  phone: text("phone"), // Custom field for MyRentCard
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const tenantProfiles = pgTable("tenant_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id").references(() => users.id),
   moveInDate: timestamp("move_in_date"),
   maxRent: integer("max_rent"),
   employmentInfo: json("employment_info").$type<{
@@ -40,7 +57,7 @@ export const tenantProfiles = pgTable("tenant_profiles", {
 
 export const landlordProfiles = pgTable("landlord_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id").references(() => users.id),
   companyName: text("company_name"),
   screeningCriteria: json("screening_criteria").$type<{
     minCreditScore: number;
@@ -112,7 +129,7 @@ export const screeningPages = pgTable("screening_pages", {
 
 export const rentCards = pgTable("rent_cards", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: varchar("user_id").references(() => users.id),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull(),
@@ -199,7 +216,7 @@ export const shortlinkClicks = pgTable("shortlink_clicks", {
     timezone?: string;
   }>(),
   sessionId: text("session_id"), // To group related actions
-  userId: integer("user_id").references(() => users.id), // If user is authenticated
+  userId: varchar("user_id").references(() => users.id), // If user is authenticated
 });
 
 // Contact preferences for tenants
@@ -446,13 +463,13 @@ export const referrals = pgTable("referrals", {
   referralCode: text("referral_code").unique().notNull(), // Unique code for tracking
   
   // Referrer information - who is making the referral
-  referrerUserId: integer("referrer_user_id").references(() => users.id), // If referrer is registered user
+  referrerUserId: varchar("referrer_user_id").references(() => users.id), // If referrer is registered user
   referrerEmail: text("referrer_email"), // For non-registered referrers
   referrerName: text("referrer_name"), // Name of referrer
   referrerType: text("referrer_type").notNull(), // 'tenant', 'landlord', 'prospect'
   
   // Referee information - who is being referred
-  refereeUserId: integer("referee_user_id").references(() => users.id), // If referee becomes registered user
+  refereeUserId: varchar("referee_user_id").references(() => users.id), // If referee becomes registered user
   refereeEmail: text("referee_email").notNull(), // Email of referee
   refereeName: text("referee_name"), // Name of referee
   refereeType: text("referee_type").notNull(), // 'tenant', 'landlord', 'prospect'
@@ -626,7 +643,7 @@ export const referralRewards = pgTable("referral_rewards", {
   referralId: integer("referral_id").references(() => referrals.id).notNull(),
   
   // Recipient information
-  recipientUserId: integer("recipient_user_id").references(() => users.id), // User receiving the reward
+  recipientUserId: varchar("recipient_user_id").references(() => users.id), // User receiving the reward
   recipientType: text("recipient_type").notNull(), // 'referrer', 'referee'
   recipientEmail: text("recipient_email").notNull(), // For tracking even if not registered
   
@@ -1121,6 +1138,7 @@ export const insertContactSharingHistorySchema = createInsertSchema(contactShari
 export * from "./schema-enhancements";
 
 export type User = typeof users.$inferSelect;
+export type UpsertUser = typeof users.$inferInsert;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type TenantProfile = typeof tenantProfiles.$inferSelect;
 export type LandlordProfile = typeof landlordProfiles.$inferSelect;

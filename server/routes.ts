@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth, requireAuth } from "./auth";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
 import { 
   insertPropertySchema, insertInterestSchema, clientInterestSchema, insertShareTokenSchema, insertPropertyQRCodeSchema,
@@ -59,29 +59,29 @@ function handleRouteError(error: unknown, res: any, operation: string): void {
 
 // Authorization helper functions
 async function assertTenantOwnership(req: any, tenantId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
   if (!tenantProfile || tenantProfile.id !== tenantId) {
     throw new Error("Forbidden: Access denied to this tenant resource");
   }
 }
 
 async function assertLandlordOwnership(req: any, landlordId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
   if (!landlordProfile || landlordProfile.id !== landlordId) {
     throw new Error("Forbidden: Access denied to this landlord resource");
   }
 }
 
 async function assertReferenceOwnership(req: any, referenceId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -90,14 +90,14 @@ async function assertReferenceOwnership(req: any, referenceId: number): Promise<
     throw new Error("Reference not found");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
   if (!tenantProfile || !reference.tenantId || tenantProfile.id !== reference.tenantId) {
     throw new Error("Forbidden: Access denied to this reference");
   }
 }
 
 async function assertDocumentOwnership(req: any, documentId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -106,14 +106,14 @@ async function assertDocumentOwnership(req: any, documentId: number): Promise<vo
     throw new Error("Document not found");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
   if (!tenantProfile || !document.tenantId || tenantProfile.id !== document.tenantId) {
     throw new Error("Forbidden: Access denied to this document");
   }
 }
 
 async function assertPropertyOwnership(req: any, propertyId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -122,14 +122,14 @@ async function assertPropertyOwnership(req: any, propertyId: number): Promise<vo
     throw new Error("Property not found");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
   if (!landlordProfile || landlordProfile.id !== property.landlordId) {
     throw new Error("Forbidden: Access denied to this property");
   }
 }
 
 async function assertRentCardRequestOwnership(req: any, requestId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -138,14 +138,14 @@ async function assertRentCardRequestOwnership(req: any, requestId: number): Prom
     throw new Error("RentCard request not found");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
   if (!landlordProfile || landlordProfile.id !== request.landlordId) {
     throw new Error("Forbidden: Access denied to this RentCard request");
   }
 }
 
 async function assertProspectListOwnership(req: any, listId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -154,14 +154,14 @@ async function assertProspectListOwnership(req: any, listId: number): Promise<vo
     throw new Error("Prospect list not found");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
   if (!landlordProfile || landlordProfile.id !== list.landlordId) {
     throw new Error("Forbidden: Access denied to this prospect list");
   }
 }
 
 async function assertShareTokenOwnership(req: any, tokenId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -170,18 +170,18 @@ async function assertShareTokenOwnership(req: any, tokenId: number): Promise<voi
     throw new Error("Share token not found");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
   if (!tenantProfile || tenantProfile.id !== shareToken.tenantId) {
     throw new Error("Forbidden: Access denied to this share token");
   }
 }
 
 async function assertLandlordTenantAssociation(req: any, tenantId: number): Promise<void> {
-  if (!req.user?.id) {
+  if (!req.user?.claims?.sub) {
     throw new Error("Unauthorized: No user session");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
   if (!landlordProfile) {
     throw new Error("Landlord profile not found");
   }
@@ -261,9 +261,44 @@ function generateShortSlug(length: number = 6): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  setupAuth(app);
+  // Auth middleware
+  await setupAuth(app);
 
-  // Note: requireAuth middleware imported from auth.ts handles both session and JWT authentication
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check for existing profiles to determine setup status
+      const tenantProfile = await storage.getTenantProfile(userId);
+      const landlordProfile = await storage.getLandlordProfile(userId);
+      
+      const response = {
+        ...user,
+        profiles: {
+          tenant: tenantProfile,
+          landlord: landlordProfile
+        },
+        requiresSetup: !user.userType || (!tenantProfile && !landlordProfile),
+        availableRoles: {
+          tenant: !tenantProfile,
+          landlord: !landlordProfile
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Note: isAuthenticated middleware imported from replitAuth.ts handles Replit Auth sessions
 
   // Shortlink routes - added early for redirect performance
   
@@ -350,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create shortlink endpoint
-  app.post("/api/shortlinks", requireAuth, async (req, res) => {
+  app.post("/api/shortlinks", isAuthenticated, async (req, res) => {
     try {
       const validationResult = insertShortlinkSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -394,12 +429,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let landlordId: number | undefined;
       
       if (req.user?.userType === 'tenant') {
-        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
         if (tenantProfile) {
           tenantId = tenantProfile.id;
         }
       } else if (req.user?.userType === 'landlord') {
-        const landlordProfile = await storage.getLandlordProfile(req.user.id);
+        const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
         if (landlordProfile) {
           landlordId = landlordProfile.id;
         }
@@ -427,17 +462,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's shortlinks
-  app.get("/api/shortlinks", requireAuth, async (req, res) => {
+  app.get("/api/shortlinks", isAuthenticated, async (req, res) => {
     try {
       let shortlinks: Shortlink[] = [];
       
       if (req.user?.userType === 'tenant') {
-        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
         if (tenantProfile) {
           shortlinks = await storage.getShortlinks(tenantProfile.id);
         }
       } else if (req.user?.userType === 'landlord') {
-        const landlordProfile = await storage.getLandlordProfile(req.user.id);
+        const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
         if (landlordProfile) {
           shortlinks = await storage.getShortlinks(undefined, landlordProfile.id);
         }
@@ -450,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get shortlink analytics
-  app.get("/api/shortlinks/:id/analytics", requireAuth, async (req, res) => {
+  app.get("/api/shortlinks/:id/analytics", isAuthenticated, async (req, res) => {
     try {
       const shortlinkId = parseInt(req.params.id);
       if (isNaN(shortlinkId)) {
@@ -496,7 +531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Profile routes
-  app.get("/api/profile/tenant/:userId", requireAuth, async (req, res) => {
+  app.get("/api/profile/tenant/:userId", isAuthenticated, async (req, res) => {
     try {
       const requestedUserId = parseInt(req.params.userId);
       
@@ -514,22 +549,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add endpoint for current user's tenant profile
-  app.get("/api/tenant/profile", requireAuth, async (req, res) => {
+  app.get("/api/tenant/profile", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         console.error('Unauthorized access to tenant profile: No user ID in request');
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log(`Fetching tenant profile for user ID: ${req.user.id}`);
-      const profile = await storage.getTenantProfile(req.user.id);
+      console.log(`Fetching tenant profile for user ID: ${req.user.claims.sub}`);
+      const profile = await storage.getTenantProfile(req.user.claims.sub);
       
       if (!profile) {
-        console.log(`No tenant profile found for user ID: ${req.user.id}`);
+        console.log(`No tenant profile found for user ID: ${req.user.claims.sub}`);
         return res.status(404).json({ message: "Profile not found" });
       }
       
-      console.log(`Successfully retrieved tenant profile for user ID: ${req.user.id}`);
+      console.log(`Successfully retrieved tenant profile for user ID: ${req.user.claims.sub}`);
       res.json(profile);
     } catch (error) {
       handleRouteError(error, res, '/api/tenant/profile endpoint');
@@ -537,7 +572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add endpoint for specific tenant profile (with authorization check)
-  app.get("/api/tenant/profile/:tenantId", requireAuth, async (req, res) => {
+  app.get("/api/tenant/profile/:tenantId", isAuthenticated, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
       
@@ -554,8 +589,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error("Unexpected: User session lost after ownership verification");
       }
       
-      console.log(`Fetching tenant profile for user ID: ${req.user.id} (verified tenant ID: ${tenantId})`);
-      const profile = await storage.getTenantProfile(req.user.id);
+      console.log(`Fetching tenant profile for user ID: ${req.user.claims.sub} (verified tenant ID: ${tenantId})`);
+      const profile = await storage.getTenantProfile(req.user.claims.sub);
       
       if (!profile) {
         console.log(`No tenant profile found for tenant ID: ${tenantId}`);
@@ -579,36 +614,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add endpoint for current user's landlord profile
-  app.get("/api/landlord/profile", requireAuth, async (req, res) => {
+  app.get("/api/landlord/profile", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         console.error('Unauthorized access to landlord profile: No user ID in request');
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log(`Fetching landlord profile for user ID: ${req.user.id}`);
-      const profile = await storage.getLandlordProfile(req.user.id);
+      console.log(`Fetching landlord profile for user ID: ${req.user.claims.sub}`);
+      const profile = await storage.getLandlordProfile(req.user.claims.sub);
       
       if (!profile) {
-        console.log(`No landlord profile found for user ID: ${req.user.id}`);
+        console.log(`No landlord profile found for user ID: ${req.user.claims.sub}`);
         return res.status(404).json({ message: "Profile not found" });
       }
       
-      console.log(`Successfully retrieved landlord profile for user ID: ${req.user.id}`);
+      console.log(`Successfully retrieved landlord profile for user ID: ${req.user.claims.sub}`);
       res.json(profile);
     } catch (error) {
       handleRouteError(error, res, '/api/landlord/profile endpoint');
     }
   });
 
-  app.post("/api/profile/tenant", requireAuth, async (req, res) => {
+  app.post("/api/profile/tenant", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
       // Ensure the profile is created for the authenticated user
-      const profileData = { ...req.body, userId: req.user.id };
+      const profileData = { ...req.body, userId: req.user.claims.sub };
       const profile = await storage.createTenantProfile(profileData);
       res.status(201).json(profile);
     } catch (error) {
@@ -616,7 +651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/profile/landlord/:userId", requireAuth, async (req, res) => {
+  app.get("/api/profile/landlord/:userId", isAuthenticated, async (req, res) => {
     try {
       const requestedUserId = parseInt(req.params.userId);
       
@@ -633,14 +668,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/profile/landlord", requireAuth, async (req, res) => {
+  app.post("/api/profile/landlord", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
       // Ensure the profile is created for the authenticated user
-      const profileData = { ...req.body, userId: req.user.id };
+      const profileData = { ...req.body, userId: req.user.claims.sub };
       const profile = await storage.createLandlordProfile(profileData);
       res.status(201).json(profile);
     } catch (error) {
@@ -649,16 +684,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PUT endpoint for updating tenant profile
-  app.put("/api/tenant/profile", requireAuth, async (req, res) => {
+  app.put("/api/tenant/profile", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log(`Updating tenant profile for user ID: ${req.user.id}`);
+      console.log(`Updating tenant profile for user ID: ${req.user.claims.sub}`);
       
       // Get the user's tenant profile to get the profile ID
-      const existingProfile = await storage.getTenantProfile(req.user.id);
+      const existingProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!existingProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -674,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update the profile
       const updatedProfile = await storage.updateTenantProfile(existingProfile.id, profileData);
       
-      console.log(`Successfully updated tenant profile for user ID: ${req.user.id}`);
+      console.log(`Successfully updated tenant profile for user ID: ${req.user.claims.sub}`);
       res.json(updatedProfile);
     } catch (error) {
       handleRouteError(error, res, '/api/tenant/profile PUT endpoint');
@@ -682,24 +717,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST endpoint for creating tenant RentCard
-  app.post("/api/tenant/rentcard", requireAuth, async (req, res) => {
+  app.post("/api/tenant/rentcard", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log(`Creating RentCard for user ID: ${req.user.id}`);
+      console.log(`Creating RentCard for user ID: ${req.user.claims.sub}`);
       
       // Validate the request body against the RentCard schema
       const validatedData = {
         ...req.body,
-        userId: req.user.id
+        userId: req.user.claims.sub
       };
       
       // Create the RentCard
       const rentCard = await storage.createRentCard(validatedData);
       
-      console.log(`Successfully created RentCard for user ID: ${req.user.id}`);
+      console.log(`Successfully created RentCard for user ID: ${req.user.claims.sub}`);
       res.status(201).json(rentCard);
     } catch (error) {
       handleRouteError(error, res, '/api/tenant/rentcard POST endpoint');
@@ -767,14 +802,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/landlord/properties", requireAuth, async (req, res) => {
+  app.post("/api/landlord/properties", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
       // Get the landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(400).json({ message: "Landlord profile not found" });
       }
@@ -813,7 +848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/properties/:propertyId/images", requireAuth, propertyImageUpload.single('image'), async (req, res) => {
+  app.post("/api/properties/:propertyId/images", isAuthenticated, propertyImageUpload.single('image'), async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -850,7 +885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/properties/images/:imageId/primary", requireAuth, async (req, res) => {
+  app.put("/api/properties/images/:imageId/primary", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -884,7 +919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/properties/images/:imageId", requireAuth, async (req, res) => {
+  app.delete("/api/properties/images/:imageId", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -935,7 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/properties/:propertyId/amenities", requireAuth, async (req, res) => {
+  app.post("/api/properties/:propertyId/amenities", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -966,7 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/properties/amenities/:amenityId", requireAuth, async (req, res) => {
+  app.delete("/api/properties/amenities/:amenityId", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1004,7 +1039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Property QR Code routes
-  app.get("/api/properties/:propertyId/qrcodes", requireAuth, async (req, res) => {
+  app.get("/api/properties/:propertyId/qrcodes", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1028,7 +1063,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/properties/:propertyId/qrcodes", requireAuth, async (req, res) => {
+  app.post("/api/properties/:propertyId/qrcodes", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1072,7 +1107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/properties/qrcodes/:qrCodeId", requireAuth, async (req, res) => {
+  app.get("/api/properties/qrcodes/:qrCodeId", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1103,7 +1138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/properties/qrcodes/:qrCodeId", requireAuth, async (req, res) => {
+  app.put("/api/properties/qrcodes/:qrCodeId", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1135,7 +1170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/properties/qrcodes/:qrCodeId", requireAuth, async (req, res) => {
+  app.delete("/api/properties/qrcodes/:qrCodeId", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1256,7 +1291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Application routes
-  app.get("/api/applications", requireAuth, async (req, res) => {
+  app.get("/api/applications", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1265,8 +1300,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { propertyId } = req.query;
       
       // Get applications based on user type
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       
       let applications;
       
@@ -1305,14 +1340,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/applications", requireAuth, async (req, res) => {
+  app.post("/api/applications", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
       // Get the tenant profile
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(400).json({ message: "Tenant profile not found" });
       }
@@ -1342,7 +1377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get tenant contact info from user and tenant profile
-      const user = await storage.getUser(req.user.id);
+      const user = await storage.getUser(req.user.claims.sub);
       if (!user) {
         return res.status(400).json({ message: "User not found" });
       }
@@ -1389,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let tenantId = null;
       if (req.user?.id) {
         // User is authenticated - get their tenant profile
-        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
         if (tenantProfile) {
           tenantId = tenantProfile.id;
         }
@@ -1493,7 +1528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Interest routes
   
   // GET /api/interests - List interests with filtering
-  app.get("/api/interests", requireAuth, async (req, res) => {
+  app.get("/api/interests", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1502,8 +1537,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { propertyId, status } = req.query;
       
       // Get user profile to determine access permissions
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       
       if (!landlordProfile && !tenantProfile) {
         return res.status(403).json({ message: "User profile not found" });
@@ -1578,7 +1613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/interests/:id - Get specific interest details
-  app.get("/api/interests/:id", requireAuth, async (req, res) => {
+  app.get("/api/interests/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1598,8 +1633,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check authorization
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       
       let hasAccess = false;
       if (landlordProfile && interest.landlordId === landlordProfile.id) {
@@ -1642,7 +1677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/interests/:id/contact", requireAuth, async (req, res) => {
+  app.post("/api/interests/:id/contact", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1654,7 +1689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify landlord ownership via interest -> landlord relationship
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Only landlords can manage interests" });
       }
@@ -1666,7 +1701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/interests/:id/archive", requireAuth, async (req, res) => {
+  app.post("/api/interests/:id/archive", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1678,7 +1713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify landlord ownership via interest -> landlord relationship
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Only landlords can manage interests" });
       }
@@ -1691,13 +1726,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // RentCard routes
-  app.get("/api/tenant/rentcard", requireAuth, async (req, res) => {
+  app.get("/api/tenant/rentcard", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const rentCard = await storage.getRentCard(req.user.id);
+      const rentCard = await storage.getRentCard(req.user.claims.sub);
       if (!rentCard) {
         return res.status(404).json({ message: "RentCard not found" });
       }
@@ -1711,13 +1746,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Share Token routes
-  app.post("/api/share-tokens", requireAuth, async (req, res) => {
+  app.post("/api/share-tokens", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -1737,13 +1772,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/share-tokens", requireAuth, async (req, res) => {
+  app.get("/api/share-tokens", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -1755,7 +1790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/share-tokens/:id/revoke", requireAuth, async (req, res) => {
+  app.patch("/api/share-tokens/:id/revoke", isAuthenticated, async (req, res) => {
     try {
       const tokenId = parseInt(req.params.id);
       if (isNaN(tokenId)) {
@@ -1909,7 +1944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/applications/:id/status", requireAuth, async (req, res) => {
+  app.patch("/api/applications/:id/status", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1926,7 +1961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Only landlords who own the property can update application status
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Only landlords can update application status" });
       }
@@ -2039,7 +2074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Document management routes
-  app.get("/api/documents/:tenantId", requireAuth, async (req, res) => {
+  app.get("/api/documents/:tenantId", isAuthenticated, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
       
@@ -2059,7 +2094,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/documents/upload", requireAuth, documentUpload.single("document"), async (req, res) => {
+  app.post("/api/documents/upload", isAuthenticated, documentUpload.single("document"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -2076,7 +2111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the authenticated user's tenant profile
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(400).json({ message: "Tenant profile not found" });
       }
@@ -2094,7 +2129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/documents/:id", requireAuth, async (req, res) => {
+  app.delete("/api/documents/:id", isAuthenticated, async (req, res) => {
     try {
       const documentId = parseInt(req.params.id);
       
@@ -2126,7 +2161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/documents/:id/verify", requireAuth, async (req, res) => {
+  app.put("/api/documents/:id/verify", isAuthenticated, async (req, res) => {
     try {
       const documentId = parseInt(req.params.id);
       
@@ -2135,7 +2170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify the user is a landlord (only landlords should verify documents)
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Only landlords can verify documents" });
       }
@@ -2154,7 +2189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tenant References routes
-  app.get("/api/tenant/references/:tenantId", requireAuth, async (req, res) => {
+  app.get("/api/tenant/references/:tenantId", isAuthenticated, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
       
@@ -2174,7 +2209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/tenant/references/detail/:id", requireAuth, async (req, res) => {
+  app.get("/api/tenant/references/detail/:id", isAuthenticated, async (req, res) => {
     try {
       const referenceId = parseInt(req.params.id);
       
@@ -2199,14 +2234,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/references", requireAuth, async (req, res) => {
+  app.post("/api/tenant/references", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
       // Get the authenticated user's tenant profile
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(400).json({ message: "Tenant profile not found" });
       }
@@ -2221,7 +2256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/tenant/references/:id", requireAuth, async (req, res) => {
+  app.put("/api/tenant/references/:id", isAuthenticated, async (req, res) => {
     try {
       const referenceId = parseInt(req.params.id);
       
@@ -2241,7 +2276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/tenant/references/:id", requireAuth, async (req, res) => {
+  app.delete("/api/tenant/references/:id", isAuthenticated, async (req, res) => {
     try {
       const referenceId = parseInt(req.params.id);
       
@@ -2261,7 +2296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/references/:id/send-verification", requireAuth, async (req, res) => {
+  app.post("/api/tenant/references/:id/send-verification", isAuthenticated, async (req, res) => {
     try {
       const referenceId = parseInt(req.params.id);
       
@@ -2343,13 +2378,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========================
 
   // Recipient Contacts CRUD Operations
-  app.get("/api/tenant/contacts", requireAuth, async (req, res) => {
+  app.get("/api/tenant/contacts", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2367,7 +2402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/tenant/contacts/:id", requireAuth, async (req, res) => {
+  app.get("/api/tenant/contacts/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2381,7 +2416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2392,13 +2427,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/contacts", requireAuth, async (req, res) => {
+  app.post("/api/tenant/contacts", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2427,7 +2462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/tenant/contacts/:id", requireAuth, async (req, res) => {
+  app.put("/api/tenant/contacts/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2441,7 +2476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2453,7 +2488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/tenant/contacts/:id", requireAuth, async (req, res) => {
+  app.delete("/api/tenant/contacts/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2467,7 +2502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2480,13 +2515,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tenant Message Templates CRUD Operations
-  app.get("/api/tenant/message-templates", requireAuth, async (req, res) => {
+  app.get("/api/tenant/message-templates", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2499,7 +2534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/tenant/message-templates/:id", requireAuth, async (req, res) => {
+  app.get("/api/tenant/message-templates/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2513,7 +2548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile || template.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2524,13 +2559,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/message-templates", requireAuth, async (req, res) => {
+  app.post("/api/tenant/message-templates", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2555,7 +2590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/tenant/message-templates/:id", requireAuth, async (req, res) => {
+  app.put("/api/tenant/message-templates/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2569,7 +2604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile || template.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2581,7 +2616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/tenant/message-templates/:id", requireAuth, async (req, res) => {
+  app.delete("/api/tenant/message-templates/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2595,7 +2630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile || template.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2608,13 +2643,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Contact Sharing History Operations
-  app.get("/api/tenant/sharing-history", requireAuth, async (req, res) => {
+  app.get("/api/tenant/sharing-history", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2631,13 +2666,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/sharing-history", requireAuth, async (req, res) => {
+  app.post("/api/tenant/sharing-history", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2668,7 +2703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/sharing-history/:id/mark-response", requireAuth, async (req, res) => {
+  app.post("/api/tenant/sharing-history/:id/mark-response", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2678,7 +2713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { notes } = req.body;
 
       // Verify ownership by checking if the sharing history belongs to the tenant
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2702,7 +2737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========================
 
   // Get user notifications with pagination and filtering
-  app.get("/api/tenant/notifications", requireAuth, async (req, res) => {
+  app.get("/api/tenant/notifications", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2717,7 +2752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: type as string
       };
 
-      const notifications = await storage.getUserNotifications(req.user.id, options);
+      const notifications = await storage.getUserNotifications(req.user.claims.sub, options);
       res.json(notifications);
     } catch (error) {
       handleRouteError(error, res, 'get user notifications');
@@ -2725,14 +2760,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get notification count/badge count
-  app.get("/api/tenant/notifications/count", requireAuth, async (req, res) => {
+  app.get("/api/tenant/notifications/count", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
       const { unreadOnly } = req.query;
-      const count = await storage.getUserNotificationCount(req.user.id, unreadOnly === 'true');
+      const count = await storage.getUserNotificationCount(req.user.claims.sub, unreadOnly === 'true');
       
       res.json({ count });
     } catch (error) {
@@ -2741,7 +2776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark notification as read
-  app.post("/api/tenant/notifications/:id/read", requireAuth, async (req, res) => {
+  app.post("/api/tenant/notifications/:id/read", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2750,7 +2785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notificationId = parseInt(req.params.id);
       
       // Verify ownership by getting the notification first
-      const notifications = await storage.getUserNotifications(req.user.id);
+      const notifications = await storage.getUserNotifications(req.user.claims.sub);
       const notification = notifications.find(n => n.id === notificationId);
       
       if (!notification) {
@@ -2765,7 +2800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark notification as clicked
-  app.post("/api/tenant/notifications/:id/click", requireAuth, async (req, res) => {
+  app.post("/api/tenant/notifications/:id/click", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2774,7 +2809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notificationId = parseInt(req.params.id);
       
       // Verify ownership
-      const notifications = await storage.getUserNotifications(req.user.id);
+      const notifications = await storage.getUserNotifications(req.user.claims.sub);
       const notification = notifications.find(n => n.id === notificationId);
       
       if (!notification) {
@@ -2789,13 +2824,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark all notifications as read
-  app.post("/api/tenant/notifications/read-all", requireAuth, async (req, res) => {
+  app.post("/api/tenant/notifications/read-all", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      await storage.markAllNotificationsAsRead(req.user.id);
+      await storage.markAllNotificationsAsRead(req.user.claims.sub);
       res.json({ message: "All notifications marked as read" });
     } catch (error) {
       handleRouteError(error, res, 'mark all notifications as read');
@@ -2803,18 +2838,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get notification preferences
-  app.get("/api/tenant/notification-preferences", requireAuth, async (req, res) => {
+  app.get("/api/tenant/notification-preferences", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      let preferences = await storage.getUserNotificationPreferences(req.user.id);
+      let preferences = await storage.getUserNotificationPreferences(req.user.claims.sub);
       
       // Create default preferences if none exist
       if (!preferences) {
         preferences = await storage.createUserNotificationPreferences({
-          userId: req.user.id,
+          userId: req.user.claims.sub,
           rentcardViewsEnabled: true,
           rentcardViewsEmail: false,
           rentcardViewsFrequency: 'instant',
@@ -2843,7 +2878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update notification preferences
-  app.put("/api/tenant/notification-preferences", requireAuth, async (req, res) => {
+  app.put("/api/tenant/notification-preferences", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2858,12 +2893,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if preferences exist, create if not
-      let preferences = await storage.getUserNotificationPreferences(req.user.id);
+      let preferences = await storage.getUserNotificationPreferences(req.user.claims.sub);
       
       if (!preferences) {
         preferences = await storage.createUserNotificationPreferences({
           ...validationResult.data,
-          userId: req.user.id,
+          userId: req.user.claims.sub,
           quietHoursStart: validationResult.data.quietHoursStart ?? null,
           quietHoursEnd: validationResult.data.quietHoursEnd ?? null,
           rentcardViewsEnabled: validationResult.data.rentcardViewsEnabled ?? true,
@@ -2884,7 +2919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           groupSimilarNotifications: validationResult.data.groupSimilarNotifications ?? true
         });
       } else {
-        preferences = await storage.updateUserNotificationPreferences(req.user.id, validationResult.data);
+        preferences = await storage.updateUserNotificationPreferences(req.user.claims.sub, validationResult.data);
       }
       
       res.json(preferences);
@@ -2894,14 +2929,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get notification statistics and analytics
-  app.get("/api/tenant/notification-stats", requireAuth, async (req, res) => {
+  app.get("/api/tenant/notification-stats", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
       const { timeframe } = req.query;
-      const stats = await storage.getUserNotificationStats(req.user.id, timeframe as string);
+      const stats = await storage.getUserNotificationStats(req.user.claims.sub, timeframe as string);
       
       res.json(stats);
     } catch (error) {
@@ -2910,7 +2945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete old notifications (cleanup endpoint)
-  app.delete("/api/tenant/notifications/cleanup", requireAuth, async (req, res) => {
+  app.delete("/api/tenant/notifications/cleanup", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2920,7 +2955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const days = olderThanDays ? parseInt(olderThanDays as string) : 30;
       const olderThanDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-      await storage.deleteUserNotifications(req.user.id, olderThanDate);
+      await storage.deleteUserNotifications(req.user.claims.sub, olderThanDate);
       res.json({ message: `Deleted notifications older than ${days} days` });
     } catch (error) {
       handleRouteError(error, res, 'cleanup old notifications');
@@ -2989,7 +3024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Landlord view of tenant references
-  app.get("/api/landlord/tenant/:tenantId/references", requireAuth, async (req, res) => {
+  app.get("/api/landlord/tenant/:tenantId/references", isAuthenticated, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
       const references = await storage.getTenantReferences(tenantId);
@@ -3178,7 +3213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add endpoint to update a property
-  app.patch("/api/properties/:id", requireAuth, async (req, res) => {
+  app.patch("/api/properties/:id", isAuthenticated, async (req, res) => {
     try {
       const propertyId = parseInt(req.params.id);
       
@@ -3194,7 +3229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile || property.landlordId !== landlordProfile.id) {
         return res.status(403).json({ message: "You can only update your own properties" });
       }
@@ -3212,13 +3247,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== CONTACT PREFERENCE API ENDPOINTS =====
 
   // Contact preferences routes
-  app.get("/api/tenant/contact-preferences", requireAuth, async (req, res) => {
+  app.get("/api/tenant/contact-preferences", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'tenant') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3230,13 +3265,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/contact-preferences", requireAuth, async (req, res) => {
+  app.post("/api/tenant/contact-preferences", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'tenant') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3269,13 +3304,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/tenant/contact-preferences", requireAuth, async (req, res) => {
+  app.put("/api/tenant/contact-preferences", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'tenant') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3292,7 +3327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Communication logs routes
-  app.get("/api/communication-logs", requireAuth, async (req, res) => {
+  app.get("/api/communication-logs", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(403).json({ message: "Access denied" });
@@ -3302,7 +3337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let logs;
       if (req.user.userType === 'landlord') {
-        const landlordProfile = await storage.getLandlordProfile(req.user.id);
+        const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
         if (!landlordProfile) {
           return res.status(404).json({ message: "Landlord profile not found" });
         }
@@ -3323,7 +3358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         logs = await storage.getCommunicationLogs(landlordProfile.id, tenantIdNum, propertyIdNum);
       } else if (req.user.userType === 'tenant') {
-        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
         if (!tenantProfile) {
           return res.status(404).json({ message: "Tenant profile not found" });
         }
@@ -3338,13 +3373,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/communication-logs", requireAuth, async (req, res) => {
+  app.post("/api/communication-logs", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Only landlords can create communication logs" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3443,7 +3478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/communication-logs/thread/:threadId", requireAuth, async (req, res) => {
+  app.get("/api/communication-logs/thread/:threadId", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(403).json({ message: "Access denied" });
@@ -3455,10 +3490,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify user has access to this thread
       const userCanAccess = logs.some(log => {
         if (req.user?.userType === 'landlord') {
-          const landlordProfile = storage.getLandlordProfile(req.user.id);
+          const landlordProfile = storage.getLandlordProfile(req.user.claims.sub);
           return landlordProfile.then(profile => profile?.id === log.landlordId);
         } else if (req.user?.userType === 'tenant') {
-          const tenantProfile = storage.getTenantProfile(req.user.id);
+          const tenantProfile = storage.getTenantProfile(req.user.claims.sub);
           return tenantProfile.then(profile => profile?.id === log.tenantId);
         }
         return false;
@@ -3474,7 +3509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/communication-logs/:id/status", requireAuth, async (req, res) => {
+  app.patch("/api/communication-logs/:id/status", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Only landlords can update communication log status" });
@@ -3495,13 +3530,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Blocked contacts routes
-  app.get("/api/tenant/blocked-contacts", requireAuth, async (req, res) => {
+  app.get("/api/tenant/blocked-contacts", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'tenant') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3513,13 +3548,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/blocked-contacts", requireAuth, async (req, res) => {
+  app.post("/api/tenant/blocked-contacts", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'tenant') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3543,14 +3578,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/tenant/blocked-contacts/:id", requireAuth, async (req, res) => {
+  app.delete("/api/tenant/blocked-contacts/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'tenant') {
         return res.status(403).json({ message: "Access denied" });
       }
 
       const contactId = parseInt(req.params.id);
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3570,13 +3605,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tenant/check-blocked", requireAuth, async (req, res) => {
+  app.post("/api/tenant/check-blocked", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'tenant') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3591,13 +3626,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Communication templates routes
-  app.get("/api/landlord/communication-templates", requireAuth, async (req, res) => {
+  app.get("/api/landlord/communication-templates", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3614,13 +3649,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/landlord/communication-templates", requireAuth, async (req, res) => {
+  app.post("/api/landlord/communication-templates", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3640,14 +3675,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/landlord/communication-templates/:id", requireAuth, async (req, res) => {
+  app.put("/api/landlord/communication-templates/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Access denied" });
       }
 
       const templateId = parseInt(req.params.id);
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3668,14 +3703,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/landlord/communication-templates/:id", requireAuth, async (req, res) => {
+  app.delete("/api/landlord/communication-templates/:id", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Access denied" });
       }
 
       const templateId = parseInt(req.params.id);
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3694,13 +3729,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Landlord endpoint to get tenant contact preferences summary
-  app.get("/api/landlord/tenant/:tenantId/contact-preferences", requireAuth, async (req, res) => {
+  app.get("/api/landlord/tenant/:tenantId/contact-preferences", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3748,13 +3783,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Helper endpoint for landlords to check if they can contact a tenant
-  app.post("/api/landlord/can-contact-tenant", requireAuth, async (req, res) => {
+  app.post("/api/landlord/can-contact-tenant", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3990,7 +4025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reporting Endpoints
 
   // Get tenant view analytics
-  app.get("/api/analytics/tenant/:tenantId/views", requireAuth, async (req, res) => {
+  app.get("/api/analytics/tenant/:tenantId/views", isAuthenticated, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
       if (isNaN(tenantId)) {
@@ -4021,7 +4056,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get tenant sharing performance
-  app.get("/api/analytics/tenant/:tenantId/sharing", requireAuth, async (req, res) => {
+  app.get("/api/analytics/tenant/:tenantId/sharing", isAuthenticated, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.tenantId);
       if (isNaN(tenantId)) {
@@ -4050,7 +4085,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get landlord conversion analytics
-  app.get("/api/analytics/landlord/:landlordId/conversions", requireAuth, async (req, res) => {
+  app.get("/api/analytics/landlord/:landlordId/conversions", isAuthenticated, async (req, res) => {
     try {
       const landlordId = parseInt(req.params.landlordId);
       if (isNaN(landlordId)) {
@@ -4079,7 +4114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get property QR code statistics
-  app.get("/api/analytics/property/:propertyId/qr-stats", requireAuth, async (req, res) => {
+  app.get("/api/analytics/property/:propertyId/qr-stats", isAuthenticated, async (req, res) => {
     try {
       const propertyId = parseInt(req.params.propertyId);
       if (isNaN(propertyId)) {
@@ -4107,13 +4142,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // General analytics dashboard endpoint for landlords
-  app.get("/api/analytics/landlord/dashboard", requireAuth, async (req, res) => {
+  app.get("/api/analytics/landlord/dashboard", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'landlord') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -4157,13 +4192,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // General analytics dashboard endpoint for tenants
-  app.get("/api/analytics/tenant/dashboard", requireAuth, async (req, res) => {
+  app.get("/api/analytics/tenant/dashboard", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id || req.user.userType !== 'tenant') {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -4200,7 +4235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get landlord properties analytics
-  app.get("/api/analytics/landlord/:landlordId/properties", requireAuth, async (req, res) => {
+  app.get("/api/analytics/landlord/:landlordId/properties", isAuthenticated, async (req, res) => {
     try {
       const landlordId = parseInt(req.params.landlordId);
       if (isNaN(landlordId)) {
@@ -4250,7 +4285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get landlord interests analytics
-  app.get("/api/analytics/landlord/:landlordId/interests", requireAuth, async (req, res) => {
+  app.get("/api/analytics/landlord/:landlordId/interests", isAuthenticated, async (req, res) => {
     try {
       const landlordId = parseInt(req.params.landlordId);
       if (isNaN(landlordId)) {
@@ -4303,21 +4338,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== ONBOARDING ROUTES =====
   
   // Get user's onboarding progress
-  app.get("/api/onboarding/progress", requireAuth, async (req, res) => {
+  app.get("/api/onboarding/progress", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
-      let progress = await storage.getOnboardingProgress(req.user.id);
+      let progress = await storage.getOnboardingProgress(req.user.claims.sub);
 
       // Initialize onboarding if not exists
       if (!progress) {
-        progress = await storage.initializeOnboarding(req.user.id, req.user.userType as 'tenant' | 'landlord');
+        progress = await storage.initializeOnboarding(req.user.claims.sub, req.user.userType as 'tenant' | 'landlord');
       }
 
       const steps = await storage.getOnboardingSteps(progress.id);
-      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.claims.sub);
 
       res.json({
         progress: {
@@ -4336,14 +4371,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update onboarding progress
-  app.put("/api/onboarding/progress", requireAuth, async (req, res) => {
+  app.put("/api/onboarding/progress", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
       const validatedData = insertOnboardingProgressSchema.parse(req.body);
-      const updatedProgress = await storage.updateOnboardingProgress(req.user.id, validatedData);
+      const updatedProgress = await storage.updateOnboardingProgress(req.user.claims.sub, validatedData);
 
       res.json(updatedProgress);
     } catch (error) {
@@ -4352,7 +4387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mark an onboarding step as completed (with validation)
-  app.post("/api/onboarding/steps/:stepKey/complete", requireAuth, async (req, res) => {
+  app.post("/api/onboarding/steps/:stepKey/complete", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
@@ -4363,8 +4398,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // SECURITY: Validate prerequisites before marking complete
       // This prevents manual completion without meeting requirements
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
-      const rentCard = await storage.getRentCard(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const rentCard = await storage.getRentCard(req.user.claims.sub);
       let canComplete = false;
       let validationError = "";
 
@@ -4420,15 +4455,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      await storage.markStepCompleted(req.user.id, stepKey, {
+      await storage.markStepCompleted(req.user.claims.sub, stepKey, {
         ...metadata,
         manuallyCompleted: true,
         validatedAt: new Date().toISOString()
       });
 
       // Get updated progress
-      const progress = await storage.getOnboardingProgress(req.user.id);
-      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
+      const progress = await storage.getOnboardingProgress(req.user.claims.sub);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.claims.sub);
 
       res.json({
         success: true,
@@ -4444,14 +4479,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Check specific step completion
-  app.get("/api/onboarding/steps/:stepKey/status", requireAuth, async (req, res) => {
+  app.get("/api/onboarding/steps/:stepKey/status", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
       const { stepKey } = req.params;
-      const isCompleted = await storage.checkStepCompletion(req.user.id, stepKey);
+      const isCompleted = await storage.checkStepCompletion(req.user.claims.sub, stepKey);
 
       res.json({ stepKey, isCompleted });
     } catch (error) {
@@ -4460,7 +4495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-check and update step completion based on current data
-  app.post("/api/onboarding/auto-check", requireAuth, async (req, res) => {
+  app.post("/api/onboarding/auto-check", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
@@ -4469,8 +4504,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const results: { [key: string]: boolean } = {};
 
       // Check profile completion
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
-      const rentCard = await storage.getRentCard(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const rentCard = await storage.getRentCard(req.user.claims.sub);
       
       const profileCompleted = !!(
         tenantProfile?.employmentInfo && 
@@ -4479,7 +4514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (profileCompleted) {
-        await storage.markStepCompleted(req.user.id, 'complete_profile', {
+        await storage.markStepCompleted(req.user.claims.sub, 'complete_profile', {
           checkedAt: new Date().toISOString(),
           autoDetected: true
         });
@@ -4492,7 +4527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const referencesCompleted = references.length >= 2;
         
         if (referencesCompleted) {
-          await storage.markStepCompleted(req.user.id, 'add_references', {
+          await storage.markStepCompleted(req.user.claims.sub, 'add_references', {
             referenceCount: references.length,
             checkedAt: new Date().toISOString(),
             autoDetected: true
@@ -4507,7 +4542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const hasShared = shareTokens.length > 0;
         
         if (hasShared) {
-          await storage.markStepCompleted(req.user.id, 'share_first_link', {
+          await storage.markStepCompleted(req.user.claims.sub, 'share_first_link', {
             firstShareAt: shareTokens[0]?.createdAt,
             checkedAt: new Date().toISOString(),
             autoDetected: true
@@ -4517,8 +4552,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get updated progress
-      const progress = await storage.getOnboardingProgress(req.user.id);
-      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
+      const progress = await storage.getOnboardingProgress(req.user.claims.sub);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.claims.sub);
 
       res.json({
         success: true,
@@ -4643,7 +4678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // 3. GET /api/referrals/stats/:userId - Get user's referral statistics and rewards
-  app.get("/api/referrals/stats/:userId", requireAuth, async (req, res) => {
+  app.get("/api/referrals/stats/:userId", isAuthenticated, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       
@@ -4698,7 +4733,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // 4. POST /api/referrals/claim-reward - Allow users to claim available rewards
-  app.post("/api/referrals/claim-reward", requireAuth, async (req, res) => {
+  app.post("/api/referrals/claim-reward", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
@@ -4713,7 +4748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const claimedReward = await storage.claimReward(parseInt(rewardId), req.user.id);
+      const claimedReward = await storage.claimReward(parseInt(rewardId), req.user.claims.sub);
       
       res.json({
         success: true,
@@ -4782,7 +4817,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get tenant profile for rent card data
       const tenantProfile = await storage.getTenantProfileById(shareToken.tenantId);
-      const user = tenantProfile ? await storage.getUser(tenantProfile.userId || 0) : null;
+      const user = tenantProfile ? await storage.getUser(tenantProfile.userId || "") : null;
       const rentCard = user ? await storage.getRentCard(user.id) : null;
 
       res.json({
@@ -4807,7 +4842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // 6. POST /api/shortlinks/with-referral - Enhanced shortlink creation with referral codes
-  app.post("/api/shortlinks/with-referral", requireAuth, async (req, res) => {
+  app.post("/api/shortlinks/with-referral", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
@@ -4861,14 +4896,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================================================
 
   // POST /api/rentcard-requests/create - Create individual RentCard request
-  app.post("/api/rentcard-requests/create", requireAuth, async (req, res) => {
+  app.post("/api/rentcard-requests/create", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
       // Verify landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Landlord profile required" });
       }
@@ -4884,7 +4919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email to prospect
       try {
-        const landlordUser = await storage.getUser(req.user.id);
+        const landlordUser = await storage.getUser(req.user.claims.sub);
         const landlordName = landlordUser?.name || landlordProfile.companyName || 'Your Landlord';
         
         const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -4931,14 +4966,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/rentcard-requests/bulk-create - Create bulk RentCard requests
-  app.post("/api/rentcard-requests/bulk-create", requireAuth, async (req, res) => {
+  app.post("/api/rentcard-requests/bulk-create", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
       // Verify landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Landlord profile required" });
       }
@@ -4953,7 +4988,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const errors = [];
 
       // Get landlord info for emails
-      const landlordUser = await storage.getUser(req.user.id);
+      const landlordUser = await storage.getUser(req.user.claims.sub);
       const landlordName = landlordUser?.name || landlordProfile.companyName || 'Your Landlord';
       const baseUrl = `${req.protocol}://${req.get('host')}`;
 
@@ -5029,7 +5064,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/rentcard-requests/landlord/:landlordId - Get all requests for landlord
-  app.get("/api/rentcard-requests/landlord/:landlordId", requireAuth, async (req, res) => {
+  app.get("/api/rentcard-requests/landlord/:landlordId", isAuthenticated, async (req, res) => {
     try {
       const landlordId = parseInt(req.params.landlordId);
       
@@ -5049,7 +5084,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PUT /api/rentcard-requests/:id/status - Update request status
-  app.put("/api/rentcard-requests/:id/status", requireAuth, async (req, res) => {
+  app.put("/api/rentcard-requests/:id/status", isAuthenticated, async (req, res) => {
     try {
       const requestId = parseInt(req.params.id);
       const { status, metadata } = req.body;
@@ -5077,14 +5112,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================================================
 
   // POST /api/prospect-lists/create - Create/manage prospect contact lists
-  app.post("/api/prospect-lists/create", requireAuth, async (req, res) => {
+  app.post("/api/prospect-lists/create", isAuthenticated, async (req, res) => {
     try {
       if (!req.user?.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
 
       // Verify landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Landlord profile required" });
       }
@@ -5108,7 +5143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // GET /api/prospect-lists/landlord/:landlordId - Get landlord's prospect lists
-  app.get("/api/prospect-lists/landlord/:landlordId", requireAuth, async (req, res) => {
+  app.get("/api/prospect-lists/landlord/:landlordId", isAuthenticated, async (req, res) => {
     try {
       const landlordId = parseInt(req.params.landlordId);
       
@@ -5127,7 +5162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DELETE /api/prospect-lists/:id - Delete prospect list
-  app.delete("/api/prospect-lists/:id", requireAuth, async (req, res) => {
+  app.delete("/api/prospect-lists/:id", isAuthenticated, async (req, res) => {
     try {
       const listId = parseInt(req.params.id);
       

@@ -1,6 +1,6 @@
 import { Building2, Clock, Shield, CheckCircle, ArrowRight, Users, Zap, ArrowUpRight, CreditCard, TrendingUp, Star, Award, Target, User } from 'lucide-react';
 import { Link } from 'wouter';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/uiStore';
 import { useState } from 'react';
 import Navbar from '@/components/shared/navbar';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { SUCCESS_STORIES, NETWORK_CTA, NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS } from '@shared/network-messaging';
 
 export default function HomePage() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { loadingStates, setLoading, addToast } = useUIStore();
   const [selectedRole, setSelectedRole] = useState<'tenant' | 'landlord'>('tenant');
 
