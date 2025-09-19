@@ -7,7 +7,7 @@ import Navbar from '@/components/shared/navbar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { SUCCESS_STORIES, NETWORK_CTA, NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS } from '@shared/network-messaging';
+import { SUCCESS_STORIES, NETWORK_CTA, NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS } from '@shared/network-messaging';
 
 export default function HomePage() {
   const { user } = useAuthStore();
@@ -31,9 +31,9 @@ export default function HomePage() {
 
   const roleContent = {
     tenant: {
-      title: "Create Your Standardized RentCard",
-      subtitle: "One-Click Applications to Individual Landlords", 
-      description: "Join the network. Create once, apply everywhere. Individual landlords own 75% of rentals.",
+      title: "Create your RentCard. Share with Private Landlords.",
+      subtitle: "Private landlords own up to 75% of rentals.", 
+      description: "Create once. Apply anywhere—even off‑platform.",
       benefits: [
         {
           icon: Users,
@@ -44,7 +44,7 @@ export default function HomePage() {
         {
           icon: Clock,
           title: "2-3x Faster Responses",
-          desc: "Individual landlords respond faster and build personal relationships",
+          desc: "Private landlords respond faster and build personal relationships",
           stat: "Personal connections"
         },
         {
@@ -62,9 +62,9 @@ export default function HomePage() {
       }
     },
     landlord: {
-      title: "Streamline Tenant Connections",
-      subtitle: "Individual Landlord Network Tools",
-      description: "Join the network. One-click submissions, QR codes, cross-selling tools.",
+      title: "Get qualified tenants for your Private Rentals.",
+      subtitle: "Free QR codes • One‑click interest.",
+      description: "Accept interest without a RentCard. Cross‑sell your other units.",
       benefits: [
         {
           icon: Users,
@@ -279,12 +279,12 @@ export default function HomePage() {
                   <div className={`text-4xl font-bold mb-4 transition-colors duration-300 ${
                     selectedRole === 'tenant' ? 'text-blue-600' : 'text-green-600'
                   }`}>
-                    {selectedRole === 'tenant' ? 'More Individual Landlords' : 'More Tenants Preferring Individual Landlords'}
+                    {selectedRole === 'tenant' ? 'More Private Landlords' : 'More Tenants Preferring Private Landlords'}
                   </div>
                   <p className="text-gray-600">
                     {selectedRole === 'tenant' 
                       ? 'Joining means more individual property owner options and faster personal connections'
-                      : 'Joining means access to tenants who specifically prefer individual landlords'
+                      : 'Joining means access to tenants who specifically prefer private landlords'
                     }
                   </p>
                 </div>

@@ -5,47 +5,44 @@
  * across all platform messaging, marketing copy, and user communications.
  * 
  * Last Updated: September 18, 2025
- * Context: Network positioning focused on individual landlords vs corporate
+ * Context: Network positioning focused on private landlords vs corporate
  */
 
 export const OFFICIAL_VALUE_PROPOSITIONS = {
   TENANT: {
-    PRIMARY: "Join the network to create your standardized RentCard once, then easily share your prequalification information with individual landlords who own 70-75% of US rentals. Skip corporate application fees and bureaucracy - individual landlords in our network respond 2-3x faster and build the personal relationships that help you find the right rental more efficiently.",
+    PRIMARY: "Create your RentCard and send to Private Landlords. Private landlords own up to 75% of rentals in America. Create your Rentcard once and send with one click to Private landlords even if they aren't on our platform. Save time and get matched with the perfect Private Rental.",
     
     KEY_POINTS: [
-      "Join the network",
-      "Standardized RentCard creation", 
-      "Easy sharing of prequalification info",
-      "Individual landlords own 70-75% of US rentals",
-      "Skip corporate fees and bureaucracy",
-      "2-3x faster responses",
-      "Personal relationships",
-      "Find rentals more efficiently"
+      "Create RentCard",
+      "Send to Private Landlords", 
+      "Private landlords own up to 75% of rentals",
+      "Create once, send with one click",
+      "Works even if landlords not on platform",
+      "Save time",
+      "Get matched with perfect Private Rental"
     ]
   },
   
   LANDLORD: {
-    PRIMARY: "Join the network to streamline how tenants connect with your properties while maintaining your competitive edge as an individual landlord. Allow qualified tenants to submit interest with one click using standardized RentCards, review prequalification details before showings, and cross-sell other properties when appropriate. Stay competitive with corporate management efficiency while keeping the personal touch that tenants prefer - complete with QR code marketing tools.",
+    PRIMARY: "Create your landlord profile and streamline connecting to tenants interested in Private Rentals. Allow tenants to submit interest in your properties even if they don't have a RentCard. Generate free QR codes to put on signs and marketing materials that link directly to you. Cross-sell your other properties that may not be listed yet.",
     
     KEY_POINTS: [
-      "Join the network",
-      "Streamline tenant connections", 
-      "Maintain competitive edge as individual landlord",
-      "One-click tenant submissions",
-      "Standardized RentCards",
-      "Review prequalification before showings",
-      "Cross-sell other properties",
-      "Stay competitive with corporate efficiency", 
-      "Keep personal touch",
-      "QR code marketing tools"
+      "Create landlord profile",
+      "Streamline connecting to tenants", 
+      "Tenants interested in Private Rentals",
+      "Accept interest without RentCard",
+      "Generate free QR codes",
+      "Put on signs and marketing materials",
+      "Link directly to you",
+      "Cross-sell other properties"
     ]
   },
   
   NETWORK_POSITIONING: {
-    CORE_CONCEPT: "Platform for standardizing prequalification process between tenants and individual landlords",
+    CORE_CONCEPT: "Platform for standardizing prequalification process between tenants and private landlords",
     NOT_SOCIAL_MEDIA: "Professional network, not social platform",
-    INDIVIDUAL_LANDLORD_FOCUS: "70-75% market share, personal relationships, faster decisions vs corporate",
-    STANDARDIZATION_BENEFIT: "Consistent prequalification process across all individual landlords"
+    PRIVATE_LANDLORD_FOCUS: "Up to 75% market share, personal relationships, faster decisions vs corporate",
+    STANDARDIZATION_BENEFIT: "Consistent prequalification process across all private landlords"
   }
 } as const;
 
@@ -62,29 +59,29 @@ export const OFFICIAL_VALUE_PROPOSITIONS = {
 // Derived messaging components based on official value propositions
 export const DERIVED_MESSAGING = {
   TENANT: {
-    HERO: "Create Your Standardized RentCard",
-    SECONDARY: "One-Click Applications to Individual Landlords",
-    DESCRIPTION: "Join the network. Create once, apply everywhere. Individual landlords own 75% of rentals.",
+    HERO: "Create your RentCard and send to Private Landlords",
+    SECONDARY: "Private landlords own up to 75% of rentals in America",
+    DESCRIPTION: "Create your Rentcard once and send with one click to Private landlords even if they aren't on our platform. Save time and get matched with the perfect Private Rental.",
     BENEFITS: [
-      "Join the network to create your standardized RentCard once",
-      "Easily share prequalification information with individual landlords",
-      "Skip corporate application fees and bureaucracy", 
-      "Individual landlords respond 2-3x faster than corporate management",
-      "Build personal relationships that help you find the right rental"
+      "Create your RentCard once and send with one click",
+      "Send to Private landlords even if they're not on our platform",
+      "Private landlords own up to 75% of rentals in America", 
+      "Save time with standardized applications",
+      "Get matched with the perfect Private Rental"
     ],
     CALL_TO_ACTION: "Create Your Free RentCard"
   },
   
   LANDLORD: {
-    HERO: "Streamline Tenant Connections",
-    SECONDARY: "Individual Landlord Network Tools",
-    DESCRIPTION: "Join the network. One-click submissions, QR codes, cross-selling tools.",
+    HERO: "Create your landlord profile and streamline connecting to tenants interested in Private Rentals",
+    SECONDARY: "Private Landlord Network Tools",
+    DESCRIPTION: "Allow tenants to submit interest in your properties even if they don't have a RentCard. Generate free QR codes to put on signs and marketing materials that link directly to you. Cross-sell your other properties that may not be listed yet.",
     BENEFITS: [
-      "Allow qualified tenants to submit interest with one click",
-      "Review standardized RentCard prequalification before showings",
-      "Cross-sell other properties when appropriate",
-      "Stay competitive with corporate efficiency while keeping personal touch",
-      "Generate QR code marketing tools with one click"
+      "Allow tenants to submit interest even without a RentCard",
+      "Generate free QR codes for signs and marketing materials",
+      "Links point directly to you and your properties",
+      "Cross-sell other properties that may not be listed yet",
+      "Streamline connections with tenants interested in Private Rentals"
     ],
     CALL_TO_ACTION: "Create Your Free Landlord Profile"
   }

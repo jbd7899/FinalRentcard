@@ -10,7 +10,7 @@ import {
   NETWORK_CTA,
   TRUST_SIGNALS,
   SOCIAL_PROOF_STATS,
-  INDIVIDUAL_LANDLORD_STATS,
+  PRIVATE_LANDLORD_STATS,
   NETWORK_VALUE_PROPS
 } from '@shared/network-messaging';
 
@@ -154,7 +154,7 @@ export default function LandlordLanding() {
               <div className="text-sm text-gray-600">Individual Landlord Connection</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">{INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE}</div>
+              <div className="text-3xl font-bold text-orange-600">{PRIVATE_LANDLORD_STATS.MARKET_SHARE}</div>
               <div className="text-sm text-gray-600">Market Share</div>
             </div>
           </div>

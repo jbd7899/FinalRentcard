@@ -15,7 +15,7 @@ import {
 import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { Link } from 'wouter';
 import { ROUTES } from '@/constants';
-import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS } from '@shared/network-messaging';
+import { NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS } from '@shared/network-messaging';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import StatsCard from '@/components/landlord/StatsCard';

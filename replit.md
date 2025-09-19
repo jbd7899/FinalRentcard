@@ -31,16 +31,17 @@ Preferred communication style: Simple, everyday language.
 MyRentCard now uses a centralized value proposition system defined in `shared/value-propositions.ts` to ensure consistent messaging across all platform components. This source of truth contains the refined value propositions that emphasize:
 
 ### Official Value Propositions
-- **Tenant**: "Join the network to create your standardized RentCard once, then easily share your prequalification information with individual landlords who own 70-75% of US rentals"
-- **Landlord**: "Join the network to streamline how tenants connect with your properties while maintaining your competitive edge as an individual landlord"
+- **Tenant**: "Create your RentCard and send to Private Landlords. Private landlords own up to 75% of rentals in America. Create your Rentcard once and send with one click to Private landlords even if they aren't on our platform."
+- **Landlord**: "Create your landlord profile and streamline connecting to tenants interested in Private Rentals. Allow tenants to submit interest in your properties even if they don't have a RentCard. Generate free QR codes to put on signs and marketing materials."
 
 ### Key Messaging Elements
 - **Network positioning**: Platform for standardizing prequalification process
-- **Individual landlord focus**: 70-75% market share, personal relationships, faster decisions vs corporate
+- **Private landlord focus**: Up to 75% market share, personal relationships, faster decisions vs corporate
 - **Standardization benefits**: One-click submissions, QR code tools, cross-selling capabilities
 - **Professional efficiency**: Corporate-level tools while maintaining personal touch
+- **Shorter, stronger messaging**: Punchy, action-oriented copy that emphasizes practical benefits
 
-All components now derive messaging from this single source to maintain consistency and alignment with the refined value propositions focused on individual landlords rather than corporate property management.
+All components now derive messaging from this single source to maintain consistency and alignment with the refined value propositions focused on private landlords rather than corporate property management.
 
 ## System Architecture
 

@@ -1,7 +1,7 @@
 import sgMail from '@sendgrid/mail';
 import nodemailer from 'nodemailer';
 import { TenantReference } from '@shared/schema';
-import { INDIVIDUAL_LANDLORD_STATS, NETWORK_NOTIFICATIONS } from '@shared/network-messaging';
+import { PRIVATE_LANDLORD_STATS, NETWORK_NOTIFICATIONS } from '@shared/network-messaging';
 
 // Email service configuration
 interface EmailConfig {
@@ -76,7 +76,7 @@ class EmailService {
       provider: process.env.SENDGRID_API_KEY ? 'sendgrid' : 'nodemailer',
       sendgridApiKey: process.env.SENDGRID_API_KEY,
       fromEmail: process.env.EMAIL_FROM || 'noreply@myrentcard.com',
-      fromName: process.env.EMAIL_FROM_NAME || 'MyRentCard Individual Landlord Network'
+      fromName: process.env.EMAIL_FROM_NAME || 'MyRentCard Private Landlord Network'
     };
   }
 
@@ -474,7 +474,7 @@ Keep sharing MyRentCard: ${data.referralLink}
         <div style="padding: 40px 30px;">
           <h2 style="color: #2d3748; margin: 0 0 20px 0;">Hello ${data.userName},</h2>
           <p style="color: #4a5568; line-height: 1.6; margin: 0 0 20px 0;">
-            Welcome to the MyRentCard Individual Landlord Network! Your complete profile connects you directly with ${data.userType === 'tenant' ? `individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} and respond ${INDIVIDUAL_LANDLORD_STATS.DECISION_SPEED}` : 'verified tenants seeking personal landlord relationships over corporate management'}.
+            Welcome to the MyRentCard Private Landlord Network! Your complete profile connects you directly with ${data.userType === 'tenant' ? `private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} and respond ${PRIVATE_LANDLORD_STATS.DECISION_SPEED}` : 'verified tenants seeking personal landlord relationships over corporate management'}.
           </p>
           ${data.referrerName && data.rewardAmount ? `
           <div style="background-color: #edf2f7; padding: 20px; border-radius: 8px; margin: 30px 0;">
@@ -502,7 +502,7 @@ Keep sharing MyRentCard: ${data.referralLink}
     
     const text = `Welcome to MyRentCard, ${data.userName}!
 
-Your verified profile connects you with ${data.userType === 'tenant' ? `individual landlords who own ${INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} and make personal decisions faster than corporate management` : 'quality tenants who prefer individual landlord relationships over corporate bureaucracy'}.
+Your verified profile connects you with ${data.userType === 'tenant' ? `private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} and make personal decisions faster than corporate management` : 'quality tenants who prefer private landlord relationships over corporate bureaucracy'}.
 
 ${data.referrerName && data.rewardAmount ? `Thanks to ${data.referrerName} for referring you! You've both earned ${data.rewardAmount}.` : ''}
 

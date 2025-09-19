@@ -26,7 +26,7 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus, APPLICATION_LABELS } from "@/constants";
-import { NETWORK_VALUE_PROPS, INDIVIDUAL_LANDLORD_STATS, SOCIAL_PROOF_STATS } from '@shared/network-messaging';
+import { NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS, SOCIAL_PROOF_STATS } from '@shared/network-messaging';
 import { Link, useLocation } from "wouter";
 import TenantLayout from '@/components/layouts/TenantLayout';
 import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
@@ -119,7 +119,7 @@ const TenantDashboard = () => {
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Connect with Individual Landlords</h1>
             <p className="text-sm sm:text-base text-gray-500 mt-1">
-              Skip corporate bureaucracy – individual landlords who own {INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} respond faster
+              Skip corporate bureaucracy – private landlords who own {PRIVATE_LANDLORD_STATS.MARKET_SHARE} respond faster
             </p>
           </div>
           
@@ -437,7 +437,7 @@ const TenantDashboard = () => {
             <div>
               <h3 className="font-medium text-sm sm:text-base mb-1 sm:mb-2">Target Individual Landlords</h3>
               <p className="text-xs sm:text-sm text-gray-600">
-                Individual landlords who own {INDIVIDUAL_LANDLORD_STATS.MARKET_SHARE} respond faster than corporate management.
+                Private landlords who own {PRIVATE_LANDLORD_STATS.MARKET_SHARE} respond faster than corporate management.
               </p>
             </div>
             
