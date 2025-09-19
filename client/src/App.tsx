@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { ROUTES } from "@/constants/routes";
 import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import CreateRentCard from "@/pages/create-rentcard";
 import ScreeningPage from "@/pages/screening-page";
@@ -58,8 +57,6 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path={ROUTES.HOME} component={HomePage} />
       
-      {/* Auth page */}
-      <Route path={ROUTES.AUTH} component={AuthPage} />
       
       {/* Role-based Landing Pages */}
       <Route path="/tenant" component={TenantLanding} />
