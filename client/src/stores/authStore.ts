@@ -1,19 +1,17 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { User } from '@shared/schema';
-import { queryClient } from "../lib/queryClient";
+import { devtools } from 'zustand/middleware';
 
-type LoginData = {
-  email: string;
-  password: string;
-};
+// Drop-in replacement for legacy auth store that works with Replit Auth
+// This provides the same interface but delegates to the new auth system
 
-type RegisterData = {
-  email: string;
-  password: string;
-  phone: string;
-  userType: 'tenant' | 'landlord';
-};
+interface User {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  profileImageUrl?: string;
+  userType?: 'tenant' | 'landlord';
+}
 
 interface AuthState {
   user: User | null;
@@ -28,8 +26,8 @@ interface AuthActions {
   setToken: (token: string | null) => void;
   setError: (error: string | null) => void;
   setLoading: (isLoading: boolean) => void;
-  login: (credentials: LoginData) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  login: () => Promise<void>;
+  register: () => Promise<void>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
 }
@@ -44,174 +42,69 @@ const initialState: AuthState = {
 
 export const useAuthStore = create<AuthState & AuthActions>()(
   devtools(
-    persist(
-      (set, get) => ({
-        ...initialState,
+    (set, get) => ({
+      ...initialState,
 
-        setUser: (user) => {
-          queryClient.setQueryData(["/api/user"], user);
-          set(
-            { 
-              user,
-              isAuthenticated: !!user,
-              error: null 
-            },
-            false,
-            'auth/setUser'
-          );
-        },
+      setUser: (user) => {
+        set({ 
+          user,
+          isAuthenticated: !!user,
+          error: null 
+        }, false, 'auth/setUser');
+      },
 
-        setToken: (token) => {
-          if (token) {
-            localStorage.setItem('token', token);
-            queryClient.setQueryData(["token"], token);
-          } else {
-            localStorage.removeItem('token');
-            queryClient.setQueryData(["token"], null);
-          }
-          set(
-            { token },
-            false,
-            'auth/setToken'
-          );
-        },
+      setToken: (token) => {
+        set({ token }, false, 'auth/setToken');
+      },
 
-        setError: (error) => set(
-          { error },
-          false,
-          'auth/setError'
-        ),
+      setError: (error) => set({ error }, false, 'auth/setError'),
 
-        setLoading: (isLoading) => set(
-          { isLoading },
-          false,
-          'auth/setLoading'
-        ),
+      setLoading: (isLoading) => set({ isLoading }, false, 'auth/setLoading'),
 
-        login: async (credentials: LoginData) => {
-          const { setToken, setUser, setLoading, setError } = get();
+      login: async () => {
+        // Redirect to Replit Auth login
+        window.location.href = '/api/login';
+      },
+
+      register: async () => {
+        // Redirect to Replit Auth login (registration happens automatically)
+        window.location.href = '/api/login';
+      },
+
+      logout: async () => {
+        // Redirect to Replit Auth logout
+        window.location.href = '/api/logout';
+      },
+
+      initialize: async () => {
+        const { setLoading, setUser, setError } = get();
+        
+        try {
+          setLoading(true);
+          setError(null);
           
-          try {
-            setLoading(true);
-            setError(null);
-            
-            const response = await fetch('/api/login', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(credentials)
-            });
+          const response = await fetch('/api/auth/user', {
+            credentials: 'include'
+          });
 
-            if (!response.ok) {
-              throw new Error('Invalid credentials');
-            }
-
-            const { token, user } = await response.json();
-            setToken(token);
-            setUser(user);
-            return user;
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Authentication failed';
-            setError(message);
-            throw error;
-          } finally {
-            setLoading(false);
-          }
-        },
-
-        register: async (data: RegisterData) => {
-          const { setToken, setUser, setLoading, setError } = get();
-          
-          try {
-            setLoading(true);
-            setError(null);
-            
-            const response = await fetch('/api/register', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-              throw new Error('Registration failed');
-            }
-
-            const { token, user } = await response.json();
-            setToken(token);
-            setUser(user);
-            return user;
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Registration failed';
-            setError(message);
-            throw error;
-          } finally {
-            setLoading(false);
-          }
-        },
-
-        logout: async () => {
-          const { setToken, setUser } = get();
-          try {
-            setToken(null);
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else if (response.status === 401) {
+            // User not authenticated
             setUser(null);
-            queryClient.setQueryData(["/api/user"], null);
-            set(initialState, false, 'auth/logout');
-          } catch (error) {
-            console.error('Logout error:', error);
+          } else {
+            throw new Error('Failed to fetch user');
           }
-        },
-
-        initialize: async () => {
-          const { setLoading, setError, setToken, setUser } = get();
-          
-          try {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            
-            console.log('Auth initialization:', {
-              hasToken: !!token,
-              tokenPrefix: token ? token.substring(0, 15) + '...' : 'none'
-            });
-            
-            if (token) {
-              const response = await fetch('/api/user', {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
-
-              console.log('Auth validation response:', {
-                status: response.status,
-                ok: response.ok
-              });
-
-              if (response.ok) {
-                const userData = await response.json();
-                setToken(token);
-                setUser(userData);
-                console.log('Authentication successful, user data loaded');
-              } else {
-                // If token is invalid, clean up
-                console.warn('Invalid token detected, cleaning up authentication state');
-                setToken(null);
-                setUser(null);
-              }
-            }
-          } catch (error) {
-            console.error('Auth initialization error:', error);
-            setError(error instanceof Error ? error.message : 'Failed to initialize auth');
-          } finally {
-            setLoading(false);
-          }
-        },
-      }),
-      {
-        name: 'auth-storage',
-        partialize: (state) => ({ token: state.token }),
-      }
-    )
+        } catch (error) {
+          console.error('Auth initialization failed:', error);
+          setError(error instanceof Error ? error.message : 'Authentication failed');
+          setUser(null);
+        } finally {
+          setLoading(false);
+        }
+      },
+    }),
+    { name: 'auth-store' }
   )
-); 
+);

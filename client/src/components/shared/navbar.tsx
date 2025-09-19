@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,11 @@ import NotificationCenter from "@/components/notifications/NotificationCenter";
 import RoleSwitcher from "@/components/shared/RoleSwitcher";
 
 export default function Navbar() {
-  const { user, logout } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
+  
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
   const [location, setLocation] = useLocation();
   
   // Detect role context from current page
@@ -208,7 +212,7 @@ export default function Navbar() {
                 <DropdownMenuItem
                   className="gap-2 text-red-600 cursor-pointer"
                   onClick={() => {
-                    logout();
+                    handleLogout();
                     setLocation(ROUTES.AUTH);
                   }}
                 >

@@ -15,6 +15,7 @@ import ArchivedPropertyPage from "@/pages/archived-property";
 import DebugAuthPage from "@/components/AuthDebugTools";
 import { ProtectedRoute } from "./lib/protected-route";
 import { StoreProvider } from "@/providers/StoreProvider";
+import { useAuth } from "@/hooks/useAuth";
 
 // Sample Pages
 import SampleRentCard from "@/pages/samples/rentcard";
@@ -49,10 +50,21 @@ import TenantReferralsPage from "@/pages/tenant/referrals";
 import SharedRentCard from "@/pages/shared-rentcard";
 
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
   return (
     <Switch>
-      <Route path={ROUTES.HOME} component={HomePage} />
-      <Route path={ROUTES.AUTH} component={AuthPage} />
+      {isLoading || !isAuthenticated ? (
+        <>
+          <Route path="/" component={AuthPage} />
+          <Route path={ROUTES.AUTH} component={AuthPage} />
+        </>
+      ) : (
+        <>
+          <Route path="/" component={HomePage} />
+          <Route path={ROUTES.HOME} component={HomePage} />
+        </>
+      )}
       
       {/* Role-based Landing Pages */}
       <Route path="/tenant" component={TenantLanding} />
