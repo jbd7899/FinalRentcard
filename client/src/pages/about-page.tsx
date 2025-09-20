@@ -68,7 +68,7 @@ export default function AboutPage() {
         icon: Clock,
         title: "Make Decisions Faster",
         description: "Review complete applications in minutes, not days. Your personal touch with professional efficiency.",
-        detail: "Compete with corporate speed while maintaining personal relationships."
+        detail: "Make decisions quickly while maintaining personal service."
       }
     ]
   };
@@ -158,10 +158,10 @@ export default function AboutPage() {
             <Badge variant="outline" className="mb-4 text-blue-600 border-blue-600" data-testid="about-badge">
               About MyRentCard
             </Badge>
-            <h1 className="text-5xl font-bold mb-6 text-gray-800" data-testid="about-hero-title">
+            <h1 className="text-3xl sm:text-5xl font-bold mb-6 text-gray-800" data-testid="about-hero-title">
               Standardized Prequalification for Private Rentals
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Save time on both sides with standardized rental applications. Know if it's a match from the beginning 
               and skip unnecessary calls and showings that don't lead anywhere.
             </p>
@@ -169,11 +169,11 @@ export default function AboutPage() {
 
           {/* Role Toggle */}
           <div className="flex justify-center mb-12">
-            <div className="bg-white rounded-xl p-2 shadow-lg border">
-              <div className="flex">
+            <div className="bg-white rounded-xl p-2 shadow-lg border max-w-md mx-auto">
+              <div className="flex flex-col sm:flex-row">
                 <button
                   onClick={() => setSelectedRole('tenant')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+                  className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg transition-all mb-1 sm:mb-0 ${
                     !isLandlordSelected
                       ? 'bg-blue-600 text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-50'
@@ -185,7 +185,7 @@ export default function AboutPage() {
                 </button>
                 <button
                   onClick={() => setSelectedRole('landlord')}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+                  className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg transition-all ${
                     isLandlordSelected
                       ? 'bg-green-600 text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-50'
@@ -220,7 +220,7 @@ export default function AboutPage() {
                     <ul className="space-y-2 text-green-700">
                       <li>• Pre-qualified tenants with income verification ready to view</li>
                       <li>• Complete rental applications before first contact</li>
-                      <li>• Professional tools that help you compete with larger properties</li>
+                      <li>• Professional tools for efficient tenant screening</li>
                       <li>• Time saved on applicants who aren't a good fit</li>
                     </ul>
                   </div>
@@ -240,7 +240,7 @@ export default function AboutPage() {
                     <ul className="space-y-2 text-blue-700">
                       <li>• Each property has different application requirements and formats</li>
                       <li>• Re-entering the same employment and income information repeatedly</li>
-                      <li>• Private landlords expect professional applications but don't have corporate systems</li>
+                      <li>• Private landlords expect professional applications but may lack standardized systems</li>
                       <li>• Difficulty showing qualification before viewing properties</li>
                     </ul>
                   </div>
@@ -257,7 +257,7 @@ export default function AboutPage() {
         {/* How It Works */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-gray-800">How It Works</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-800">How It Works</h2>
             <p className="text-lg text-gray-600">
               {isLandlordSelected 
                 ? "Three steps to streamline your rental process"
@@ -266,7 +266,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {howItWorksSteps[selectedRole].map((step, index) => (
               <Card key={index} className="relative overflow-hidden hover:shadow-lg transition-shadow" data-testid={`how-it-works-step-${index}`}>
                 <CardHeader className="text-center pb-4">
@@ -298,7 +298,7 @@ export default function AboutPage() {
         {/* Real Benefits */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-gray-800">Practical Benefits</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-800">Practical Benefits</h2>
             <p className="text-lg text-gray-600">
               How standardized prequalification saves time for everyone
             </p>
@@ -331,7 +331,7 @@ export default function AboutPage() {
         {/* FAQ Section */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-gray-800">Common Questions</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-800">Common Questions</h2>
             <p className="text-lg text-gray-600">
               The stuff people actually want to know
             </p>
@@ -342,13 +342,13 @@ export default function AboutPage() {
               <Accordion type="single" collapsible>
                 {faqs.map((faq, index) => (
                   <AccordionItem key={index} value={`item-${index}`} data-testid={`faq-${index}`}>
-                    <AccordionTrigger className="px-6 py-4 text-left">
+                    <AccordionTrigger className="px-4 sm:px-6 py-4 text-left">
                       <div className="flex items-center gap-3">
                         <HelpCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
                         <span className="font-medium">{faq.question}</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-4">
+                    <AccordionContent className="px-4 sm:px-6 pb-4">
                       <p className="text-gray-700 leading-relaxed ml-8">{faq.answer}</p>
                     </AccordionContent>
                   </AccordionItem>

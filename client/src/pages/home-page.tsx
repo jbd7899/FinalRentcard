@@ -49,14 +49,14 @@ export default function HomePage() {
         },
         {
           icon: Shield,
-          title: "Skip Corporate Bureaucracy",
-          description: "Direct communication with private property owners",
+          title: "Direct Landlord Communication",
+          description: "Connect directly with private property owners",
           badge: "Personal relationships"
         },
         {
           icon: Zap,
-          title: "Faster Decisions",
-          description: "Private landlords respond 2-3x faster than corporate",
+          title: "Faster Response Times",
+          description: "Private landlords provide faster, more personal responses",
           badge: "Same-day responses"
         }
       ],
@@ -65,7 +65,7 @@ export default function HomePage() {
     landlord: {
       hero: "Get qualified tenants for your Private Rentals.",
       secondary: "Free QR codes • One‑click interest.",
-      description: "Compete with corporate efficiency. Keep your personal touch.",
+      description: "Professional efficiency with personal service.",
       primaryCTA: DERIVED_MESSAGING.LANDLORD.CALL_TO_ACTION,
       secondaryCTA: "View Screening Tools",
       primaryLink: "/api/login",
@@ -87,7 +87,7 @@ export default function HomePage() {
           icon: TrendingUp,
           title: "Competitive Tools",
           description: "Professional screening with personal service",
-          badge: "Corporate efficiency"
+          badge: "Professional efficiency"
         }
       ],
       networkEffects: NETWORK_VALUE_PROPS.NETWORK_EFFECTS.LANDLORD
@@ -110,11 +110,11 @@ export default function HomePage() {
       <main className="relative z-1 max-w-7xl mx-auto px-4 py-16">
         {/* Dynamic Toggle System */}
         <div className="flex justify-center mb-12">
-          <div className="bg-white rounded-xl p-2 shadow-lg border">
-            <div className="flex">
+          <div className="bg-white rounded-xl p-2 shadow-lg border max-w-md mx-auto">
+            <div className="flex flex-col sm:flex-row">
               <button
                 onClick={() => setSelectedRole('tenant')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg transition-all mb-1 sm:mb-0 ${
                   !isLandlordSelected
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-50'
@@ -126,7 +126,7 @@ export default function HomePage() {
               </button>
               <button
                 onClick={() => setSelectedRole('landlord')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg transition-all ${
                   isLandlordSelected
                     ? 'bg-green-600 text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-50'
@@ -154,17 +154,17 @@ export default function HomePage() {
 
           {/* Main title with sparkle */}
           <div className="relative">
-            <h1 className="text-6xl font-bold mb-6" data-testid="homepage-title">
+            <h1 className="text-4xl sm:text-6xl font-bold mb-6" data-testid="homepage-title">
               <span className="bg-gradient-to-r from-blue-600 to-blue-400 text-transparent bg-clip-text">
                 MyRentCard
               </span>
               <div className="absolute -right-4 top-0 text-yellow-400 text-xl">✨</div>
               
               {/* Dynamic headlines */}
-              <span className="block text-3xl mt-4 text-gray-800 transition-all duration-300">
+              <span className="block text-xl sm:text-3xl mt-4 text-gray-800 transition-all duration-300">
                 {content.hero}
               </span>
-              <span className={`block text-2xl mt-2 transition-all duration-300 ${
+              <span className={`block text-lg sm:text-2xl mt-2 transition-all duration-300 ${
                 isLandlordSelected ? 'text-green-600' : 'text-blue-600'
               }`}>
                 {content.secondary}
@@ -178,13 +178,13 @@ export default function HomePage() {
           </p>
 
           {/* CTA Buttons Section */}
-          <div className="flex flex-col sm:flex-row justify-center gap-6 mb-12">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-12">
             <button
               onClick={() => {
                 localStorage.setItem("selectedRole", selectedRole);
                 window.location.href = "/api/login";
               }}
-              className={`group px-8 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all text-white ${
+              className={`group px-6 sm:px-8 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all text-white text-sm sm:text-base ${
                 isLandlordSelected
                   ? 'bg-green-600 hover:bg-green-700'
                   : 'bg-blue-600 hover:bg-blue-700'
@@ -196,7 +196,7 @@ export default function HomePage() {
             </button>
             <Link
               href={content.secondaryLink}
-              className={`group border-2 px-8 py-4 rounded-xl font-medium flex items-center justify-center gap-3 transition-all ${
+              className={`group border-2 px-6 sm:px-8 py-4 rounded-xl font-medium flex items-center justify-center gap-3 transition-all text-sm sm:text-base ${
                 isLandlordSelected
                   ? 'border-green-600 text-green-600 hover:bg-green-50'
                   : 'border-blue-600 text-blue-600 hover:bg-blue-50'
@@ -209,7 +209,7 @@ export default function HomePage() {
           </div>
 
           {/* Benefits Grid (3 columns) */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-16">
             {content.benefits.map((benefit, index) => (
               <div
                 key={index}
@@ -251,26 +251,22 @@ export default function HomePage() {
 
         {/* Network Effects Section */}
         <div className="relative">
-          {/* Complex background gradients and overlays */}
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 rounded-3xl opacity-70"></div>
-          <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-white to-transparent rounded-3xl"></div>
-          
-          <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-12 shadow-xl border border-white/50">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-gray-800 to-gray-600 text-transparent bg-clip-text">
+          <div className="bg-gray-50 rounded-3xl p-8 sm:p-12 shadow-lg border">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-4xl font-bold mb-4 text-gray-800">
                 The Network Gets Stronger with Every Connection
               </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
                 Join a growing community of private landlords and quality tenants building better rental relationships
               </p>
             </div>
 
             {/* Two-column dynamic stats layout */}
-            <div className="grid md:grid-cols-2 gap-8 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 mb-8 sm:mb-12">
               {content.networkEffects.slice(0, 4).map((effect, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-4 p-6 bg-white/60 rounded-xl hover:bg-white/80 transition-all"
+                  className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-all"
                   data-testid={`network-effect-${index}`}
                 >
                   <div className={`p-2 rounded-full ${
@@ -299,7 +295,7 @@ export default function HomePage() {
               </div>
               <div className="inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full shadow-lg">
                 <Zap className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">Faster Decisions</span>
+                <span className="text-sm font-medium">Faster Response Times</span>
               </div>
             </div>
           </div>
@@ -321,7 +317,7 @@ export default function HomePage() {
             </span>
             <span className="flex items-center gap-1">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              2-3x faster decisions
+              Faster response times
             </span>
           </div>
         </div>

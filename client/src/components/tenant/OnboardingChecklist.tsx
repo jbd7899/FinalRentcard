@@ -324,7 +324,7 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
               <h3 className="text-xl font-semibold text-gray-800 mb-2">Individual Landlord Network Ready!</h3>
               <p className="text-gray-600 mb-4">
                 You can now connect directly with private landlords who own {PRIVATE_LANDLORD_STATS.MARKET_SHARE}. 
-                Individual landlords respond {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME} than corporate management.
+                Individual landlords respond {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME} and provide more personal service.
               </p>
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">

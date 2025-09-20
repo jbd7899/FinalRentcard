@@ -5,7 +5,7 @@
  * across all platform messaging, marketing copy, and user communications.
  * 
  * Last Updated: September 18, 2025
- * Context: Network positioning focused on private landlords vs corporate
+ * Context: Network positioning focused on private landlord relationships
  */
 
 export const OFFICIAL_VALUE_PROPOSITIONS = {
@@ -41,7 +41,7 @@ export const OFFICIAL_VALUE_PROPOSITIONS = {
   NETWORK_POSITIONING: {
     CORE_CONCEPT: "Platform for standardizing prequalification process between tenants and private landlords",
     NOT_SOCIAL_MEDIA: "Professional network, not social platform",
-    PRIVATE_LANDLORD_FOCUS: "Up to 75% market share, personal relationships, faster decisions vs corporate",
+    PRIVATE_LANDLORD_FOCUS: "Up to 75% market share, personal relationships, faster response times",
     STANDARDIZATION_BENEFIT: "Consistent prequalification process across all private landlords"
   }
 } as const;

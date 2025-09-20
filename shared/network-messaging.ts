@@ -6,25 +6,25 @@
 // Private landlord market statistics
 export const PRIVATE_LANDLORD_STATS = {
   MARKET_SHARE: 'up to 75% of US rentals',
-  DECISION_SPEED: 'Respond 2-3x faster than corporate',
+  DECISION_SPEED: 'Faster response times',
   PERSONAL_APPROACH: 'Direct landlord communication',
-  NO_JUNK_FEES: 'Skip corporate application fees',
+  NO_JUNK_FEES: 'No hidden application fees',
 } as const;
 
 
 // Mechanism-based statistics (realistic time savings and specific process improvements)
 export const SOCIAL_PROOF_STATS = {
   // Private landlord advantages - focus on mechanism, not inflated numbers
-  PRIVATE_LANDLORD_RESPONSE_TIME: '2-3x faster decisions',
-  INDIVIDUAL_LANDLORD_RESPONSE_TIME: '2-3x faster decisions', // DEPRECATED - use PRIVATE_LANDLORD_RESPONSE_TIME
+  PRIVATE_LANDLORD_RESPONSE_TIME: 'Faster response times',
+  INDIVIDUAL_LANDLORD_RESPONSE_TIME: 'Faster response times', // DEPRECATED - use PRIVATE_LANDLORD_RESPONSE_TIME
   TENANT_APPLICATION_TIME_SAVED: '60-90 minutes per application',
   // Process improvements with private landlords
-  SKIP_CORPORATE_BUREAUCRACY: 'Direct landlord communication',
-  ELIMINATE_JUNK_FEES: 'No corporate application fees',
+  STREAMLINED_COMMUNICATION: 'Direct landlord communication',
+  ELIMINATE_JUNK_FEES: 'No hidden application fees',
   FASTER_SCREENING: 'Same-day responses possible',
   PERSONAL_RELATIONSHIPS: 'Direct tenant-landlord connection',
-  PRIVATE_LANDLORD_DECISIONS: '1-2 days vs 5-10 days corporate',
-  INDIVIDUAL_LANDLORD_DECISIONS: '1-2 days vs 5-10 days corporate', // DEPRECATED - use PRIVATE_LANDLORD_DECISIONS
+  PRIVATE_LANDLORD_DECISIONS: 'Faster response times',
+  INDIVIDUAL_LANDLORD_DECISIONS: 'Faster response times', // DEPRECATED - use PRIVATE_LANDLORD_DECISIONS
   // Quality-focused growth indicators (realistic rates)
   PRIVATE_LANDLORDS_JOINING: 'Growing private landlord network',
   INDIVIDUAL_LANDLORDS_JOINING: 'Growing private landlord network', // DEPRECATED - use PRIVATE_LANDLORDS_JOINING
@@ -42,8 +42,8 @@ export const NETWORK_VALUE_PROPS = {
     SECONDARY: DERIVED_MESSAGING.TENANT.SECONDARY,
     BENEFITS: DERIVED_MESSAGING.TENANT.BENEFITS,
     SOCIAL_PROOF: [
-      'Private landlords make decisions in 1-2 days vs 5-10 days for corporate',
-      'Skip junk fees and corporate bureaucracy with direct landlord connections',
+      'Private landlords provide faster response times and more personal decisions',
+      'Direct landlord communication and transparent pricing',
       'Personal communication leads to faster approvals and better relationships',
       `Access to ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} rental market through private landlord network`,
     ],
@@ -53,10 +53,10 @@ export const NETWORK_VALUE_PROPS = {
     SECONDARY: DERIVED_MESSAGING.LANDLORD.SECONDARY,
     BENEFITS: DERIVED_MESSAGING.LANDLORD.BENEFITS,
     SOCIAL_PROOF: [
-      'Private landlords report staying competitive with corporate efficiency',
-      'Attract tenants seeking personal relationships over corporate bureaucracy',
+      'Private landlords provide professional efficiency with personal service',
+      'Attract tenants seeking personal relationships and direct communication',
       'Professional screening tools help private landlords compete effectively',
-      'Keep your personal touch while using corporate-level efficiency tools',
+      'Professional efficiency tools that maintain your personal approach',
     ],
   },
   NETWORK_EFFECTS: {
@@ -70,7 +70,7 @@ export const NETWORK_VALUE_PROPS = {
       'More Tenants Preferring Private Landlords = quality applicant pool',
       'Tenants seeking private landlords = better tenant-landlord fit',
       'Network of private landlords = shared best practices',
-      'Private landlord community = competitive advantage over corporate',
+      'Private landlord community = shared best practices and support',
     ],
   },
 } as const;
@@ -87,15 +87,15 @@ export const VIRAL_MESSAGING = {
     SHARE_TEXTS: {
       TENANT: [
         `MyRentCard connects me directly with private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE}`,
-        'Skip corporate management entirely - private landlords respond so much faster',
-        'No junk fees or corporate bureaucracy, just direct communication with property owners',
-        'Private landlords make personal decisions in days, not weeks like corporate management',
+        'Private landlords provide faster, more personal responses than large management companies',
+        'No hidden fees or complex processes, just direct communication with property owners',
+        'Private landlords make personal decisions quickly, typically within 1-2 days',
       ],
       LANDLORD: [
-        'MyRentCard helps me compete with corporate efficiency while keeping my personal touch',
-        'Attract tenants who specifically prefer private landlords over corporate management',
-        'Professional screening tools without corporate overhead or rigid policies',
-        'Stay competitive with big companies while maintaining personal private landlord relationships',
+        'MyRentCard provides professional efficiency tools while maintaining my personal approach',
+        'Attract tenants who prefer personal relationships and direct communication',
+        'Professional screening tools with flexible, personalized service',
+        'Professional tools that support personal tenant-landlord relationships',
       ],
     },
     BENEFITS_MESSAGING: [
@@ -127,7 +127,7 @@ export const VIRAL_MESSAGING = {
       'The private landlord network everyone is talking about',
     ],
     SOCIAL_PROOF: [
-      'Private landlords respond 2-3x faster',
+      'Private landlords provide faster response times',
       'Why private landlords choose MyRentCard',
       'Join satisfied private landlord network members',
       'Review time: 45 minutes to 15 minutes - see why private landlords switch',
@@ -141,19 +141,19 @@ export const SUCCESS_STORIES = {
     {
       name: 'Sarah M.',
       role: 'Renter',
-      quote: 'Found an amazing private landlord who responded same day. Skip corporate management entirely.',
+      quote: 'Found an amazing private landlord who responded same day. Direct communication made the process so smooth.',
       metric: 'Same-day private landlord response',
     },
     {
       name: 'Mike T.',
       role: 'Recent Graduate',
-      quote: 'Private landlord was so much more flexible than corporate properties. Personal communication made all the difference.',
+      quote: 'Private landlord was incredibly responsive and flexible. Personal communication made all the difference.',
       metric: 'Personal landlord relationship',
     },
     {
       name: 'Jessica L.',
       role: 'Working Professional',
-      quote: 'Connected directly with property owner. No junk fees, no corporate bureaucracy, just honest communication.',
+      quote: 'Connected directly with property owner. No hidden fees, transparent process, just honest communication.',
       metric: 'Direct property owner access',
     },
   ],
@@ -161,19 +161,19 @@ export const SUCCESS_STORIES = {
     {
       name: 'David R.',
       role: 'Private Property Owner',
-      quote: 'Stay competitive with corporate management while keeping my personal touch. Best of both worlds.',
+      quote: 'Professional efficiency tools with personal service. Best of both worlds.',
       metric: 'Competitive + Personal',
     },
     {
       name: 'Lisa K.',
       role: 'Private Landlord',
-      quote: 'Tenants specifically look for private landlords like me. They want personal relationships over corporate.',
+      quote: 'Tenants specifically look for private landlords like me. They value personal relationships and direct communication.',
       metric: 'Private landlord preference',
     },
     {
       name: 'Carlos M.',
       role: 'Property Owner',
-      quote: 'Professional screening tools help me compete with big companies without losing my personal approach.',
+      quote: 'Professional screening tools that support my personal approach to tenant relationships.',
       metric: 'Professional tools + personal service',
     },
   ],
@@ -214,9 +214,9 @@ export const NETWORK_MESSAGE_TEMPLATES = {
 
 I'm {tenant_name}, and I'm specifically interested in connecting with private landlords like you for your property at {property_address}.
 
-As someone who values personal landlord relationships over corporate management, I appreciate that private landlords:
+As someone who values personal landlord relationships and direct communication, I appreciate that private landlords:
 • Respond faster and make decisions quicker
-• Skip corporate bureaucracy and junk fees
+• Provide transparent pricing and streamlined processes
 • Build genuine tenant-landlord relationships
 
 My verified RentCard: {rentcard_link}
@@ -227,7 +227,7 @@ Looking forward to connecting directly!
 
 I found your property through MyRentCard's individual landlord network at {property_address}.
 
-As a private property owner, you're part of the ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} owned by private landlords. Our platform helps tenants like me connect specifically with responsive private landlords rather than corporate management.
+As a private property owner, you're part of the ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} owned by private landlords. Our platform helps tenants like me connect specifically with responsive private landlords who provide personal service.
 
 View my verified profile: {rentcard_link}
 
@@ -238,7 +238,7 @@ View my verified profile: {rentcard_link}
 
 Following up on my interest in {property_address}.
 
-I specifically seek out private landlords like you because you respond faster and make personal decisions rather than going through corporate bureaucracy.
+I specifically seek out private landlords like you because you respond faster and make personal decisions with streamlined processes.
 
 My complete profile with verified references: {rentcard_link}
 
@@ -251,7 +251,7 @@ Appreciate your direct, personal approach to landlording!
 
 I saw your listing for {property_address} and I'm very interested!
 
-I specifically choose to work with private landlords like you rather than corporate property management. Private landlords own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} and offer the personal touch and faster decisions I value.
+I specifically choose to work with private landlords like you because you own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} and offer the personal touch and faster decisions I value.
 
 My verified rental profile: {rentcard_link}
 
@@ -266,7 +266,7 @@ Best,
 export const NETWORK_NOTIFICATIONS = {
   WELCOME_MESSAGES: {
     TENANT: `RentCard complete! Connect with private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE}.`,
-    LANDLORD: 'Individual landlord tools ready! Compete with corporate efficiency while keeping your personal touch.',
+    LANDLORD: 'Individual landlord tools ready! Professional efficiency with personal service.',
   },
   ACHIEVEMENT_MESSAGES: {
     PROFILE_COMPLETE: 'RentCard ready! Private landlords can now make faster decisions about your application.',
@@ -286,10 +286,10 @@ export const NETWORK_CTA = {
     TENANT: {
       MAIN: 'Connect with Private Landlords',
       SECONDARY: `Access ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} Rental Market`,
-      URGENCY: 'Skip Corporate Bureaucracy Today',
+      URGENCY: 'Streamlined Process Today',
     },
     LANDLORD: {
-      MAIN: 'Compete with Corporate Efficiency',
+      MAIN: 'Professional Efficiency Tools',
       SECONDARY: 'Keep Your Personal Touch',
       URGENCY: 'Professional Tools for Private Landlords',
     },
@@ -304,7 +304,7 @@ export const NETWORK_CTA = {
     TENANT_WORKFLOW: 'Connect directly with property owners',
     LANDLORD_WORKFLOW: 'Individual landlord efficiency tools',
     RELATIONSHIP_FOCUSED: 'Build personal landlord relationships',
-    EFFICIENCY_FOCUSED: 'Skip corporate management entirely',
+    EFFICIENCY_FOCUSED: 'Streamlined rental processes',
   },
 } as const;
 

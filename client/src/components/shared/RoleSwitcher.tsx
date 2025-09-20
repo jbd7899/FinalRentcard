@@ -89,7 +89,7 @@ export default function RoleSwitcher({
       label: 'For Individual Landlords',
       shortLabel: 'Landlords',
       icon: Building2,
-      description: 'Compete with corporate efficiency',
+      description: 'Professional efficiency tools',
       stat: PRIVATE_LANDLORD_STATS.DECISION_SPEED,
       statLabel: 'faster decisions',
       color: 'green',
@@ -280,7 +280,7 @@ export function RoleCrossLink({ currentRole, className = "" }: RoleCrossLinkProp
       targetPath: "/landlord",
       icon: Building2,
       stat: PRIVATE_LANDLORD_STATS.DECISION_SPEED,
-      benefit: "Compete with corporate efficiency"
+      benefit: "Professional efficiency tools"
     },
     landlord: {
       message: "Are you a renter looking for an apartment?", 
@@ -288,7 +288,7 @@ export function RoleCrossLink({ currentRole, className = "" }: RoleCrossLinkProp
       targetPath: "/tenant",
       icon: User,
       stat: PRIVATE_LANDLORD_STATS.MARKET_SHARE,
-      benefit: "Skip corporate bureaucracy"
+      benefit: "Streamlined processes"
     }
   };
 
