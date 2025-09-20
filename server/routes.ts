@@ -267,7 +267,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Use the database user ID stored in the session
+      const userId = req.user.claims.dbUserId || req.user.claims.sub;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -301,7 +302,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Role update endpoint
   app.patch('/api/auth/user/role', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Use the database user ID stored in the session
+      const userId = req.user.claims.dbUserId || req.user.claims.sub;
       const { userType } = req.body;
 
       // Validate role
