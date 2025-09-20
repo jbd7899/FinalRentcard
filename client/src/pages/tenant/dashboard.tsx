@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ComingSoonBadge, ComingSoonCard, ComingSoonWithMockData } from "@/components/ui/coming-soon";
+import { MoreSection } from "@/components/ui/more-section";
 import { 
   FileText, 
   Star, 
@@ -43,11 +44,7 @@ const TenantDashboard = () => {
   const { logout, user } = useAuthStore();
   const { setLoading, loadingStates, addToast } = useUIStore();
   const [, setLocation] = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics'>('dashboard');
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
-  const [onboardingCollapsed, setOnboardingCollapsed] = useState(false);
 
   // Fetch the authenticated user's tenant profile
   const { data: tenantProfile, isLoading: isTenantProfileLoading, error: tenantProfileError } = useQuery({
@@ -104,13 +101,6 @@ const TenantDashboard = () => {
     }
   };
 
-  const navigationItems = [
-    { icon: <Home className="w-5 h-5" />, label: "Dashboard", route: ROUTES.TENANT.DASHBOARD, active: true },
-    { icon: <Star className="w-5 h-5" />, label: "My RentCard", route: ROUTES.TENANT.RENTCARD },
-    { icon: <FileText className="w-5 h-5" />, label: "Documents", route: ROUTES.TENANT.DOCUMENTS },
-    { icon: <UserCheck className="w-5 h-5" />, label: "References", route: ROUTES.TENANT.REFERENCES },
-    { icon: <Building2 className="w-5 h-5" />, label: "My Shared RentCards", route: ROUTES.TENANT.INTERESTS }
-  ];
 
   return (
     <TenantLayout activeRoute={ROUTES.TENANT.DASHBOARD}>
@@ -123,23 +113,8 @@ const TenantDashboard = () => {
             </p>
           </div>
           
+          {/* Simplified Header - Primary CTA only */}
           <div className="flex gap-2">
-            <Button 
-              variant={activeTab === 'dashboard' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setActiveTab('dashboard')}
-              data-testid="tab-dashboard"
-            >
-              Overview
-            </Button>
-            <Button 
-              variant={activeTab === 'analytics' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setActiveTab('analytics')}
-              data-testid="tab-analytics"
-            >
-              Analytics
-            </Button>
             <OneClickShareButton 
               variant="default" 
               size="sm"
@@ -151,115 +126,119 @@ const TenantDashboard = () => {
         </div>
       </header>
       
-      {/* Conditional Content Based on Active Tab */}
-      {activeTab === 'dashboard' ? (
-        <>
-        {/* Simplified Onboarding - Optional and Dismissible */}
-        {!onboardingDismissed && (
-          <div className="mb-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <Star className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-blue-900">
-                    Want to optimize your RentCard?
-                  </h3>
-                  <p className="text-sm text-blue-700">
-                    Add references and details to get faster landlord responses
-                  </p>
-                </div>
+      {/* Simplified Onboarding - Optional and Dismissible */}
+      {!onboardingDismissed && (
+        <div className="mb-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0">
+                <Star className="h-5 w-5 text-blue-600" />
               </div>
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
-                  className="text-blue-600 border-blue-300 hover:bg-blue-100"
-                  data-testid="button-optimize-rentcard"
-                >
-                  Optimize
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setOnboardingDismissed(true)}
-                  className="text-gray-400 hover:text-gray-600"
-                  data-testid="button-dismiss-optimization"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+              <div>
+                <h3 className="text-sm font-medium text-blue-900">
+                  Want to optimize your RentCard?
+                </h3>
+                <p className="text-sm text-blue-700">
+                  Add references and details to get faster landlord responses
+                </p>
               </div>
             </div>
-          </div>
-        )}
-        
-        {/* Quick Actions */}
-        <section className="mb-8">
-        <h2 className="text-lg font-medium mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
-              <Star className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 mb-1 sm:mb-2" />
-              <h3 className="font-medium text-sm sm:text-base">View RentCard</h3>
+            <div className="flex items-center space-x-2">
               <Button 
-                variant="ghost" 
-                size="sm" 
-                className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
+                variant="outline" 
+                size="sm"
                 onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+                className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                data-testid="button-optimize-rentcard"
               >
-                Open
+                Optimize
               </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setOnboardingDismissed(true)}
+                className="text-gray-400 hover:text-gray-600"
+                data-testid="button-dismiss-optimization"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+        
+      {/* Primary Actions - Only 2 CTAs above the fold */}
+      <section className="mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <Card className="hover:shadow-md transition-shadow border-2 border-blue-200">
+            <CardContent className="p-6 text-center">
+              <Share2 className="h-10 w-10 text-blue-500 mb-3 mx-auto" />
+              <h3 className="font-semibold text-lg mb-2">Share RentCard</h3>
+              <p className="text-sm text-gray-600 mb-4">One-click sharing available in header</p>
+              <p className="text-xs text-blue-600 font-medium">Use "Share My RentCard" button above ↗</p>
             </CardContent>
           </Card>
           
           <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
-              <Upload className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 mb-1 sm:mb-2" />
-              <h3 className="font-medium text-sm sm:text-base">Upload Document</h3>
+            <CardContent className="p-6 text-center">
+              <Star className="h-10 w-10 text-blue-500 mb-3 mx-auto" />
+              <h3 className="font-semibold text-lg mb-2">View & Edit RentCard</h3>
+              <p className="text-sm text-gray-600 mb-4">Update your profile and information</p>
               <Button 
-                variant="ghost" 
-                size="sm" 
-                className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
-                onClick={() => setLocation(ROUTES.TENANT.DOCUMENTS)}
+                variant="outline" 
+                size="sm"
+                className="w-full"
+                onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+                data-testid="button-view-rentcard-primary"
               >
-                Upload
-              </Button>
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
-              <UserCheck className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500 mb-1 sm:mb-2" />
-              <h3 className="font-medium text-sm sm:text-base">References</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
-                onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
-              >
-                Manage
-              </Button>
-            </CardContent>
-          </Card>
-          
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
-              <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 mb-1 sm:mb-2" />
-              <h3 className="font-medium text-sm sm:text-base">Shared RentCards</h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="mt-1 sm:mt-2 text-xs sm:text-sm h-7 sm:h-8"
-                onClick={() => setLocation(ROUTES.TENANT.INTERESTS)}
-              >
-                View
+                Open RentCard
               </Button>
             </CardContent>
           </Card>
         </div>
-
+        
+        {/* Advanced Features - Progressive Disclosure */}
+        <MoreSection 
+          title="More Tools & Features" 
+          persistKey="tenant-dashboard-tools"
+          testId="dashboard-tools"
+          className="mb-6"
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setLocation(ROUTES.TENANT.DOCUMENTS)}
+              className="flex flex-col items-center p-4 h-auto"
+              data-testid="button-documents-more"
+            >
+              <Upload className="h-5 w-5 text-green-500 mb-2" />
+              <span className="text-xs">Upload Documents</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
+              className="flex flex-col items-center p-4 h-auto"
+              data-testid="button-references-more"
+            >
+              <UserCheck className="h-5 w-5 text-purple-500 mb-2" />
+              <span className="text-xs">Manage References</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setLocation(ROUTES.TENANT.INTERESTS)}
+              className="flex flex-col items-center p-4 h-auto"
+              data-testid="button-interests-more"
+            >
+              <Building2 className="h-5 w-5 text-amber-500 mb-2" />
+              <span className="text-xs">Shared RentCards</span>
+            </Button>
+          </div>
+        </MoreSection>
       </section>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 md:gap-8">
@@ -404,18 +383,14 @@ const TenantDashboard = () => {
       </div>
       
       
-      {/* Enhanced Share Modal */}
-      <EnhancedShareModal
-        open={shareModalOpen}
-        onOpenChange={setShareModalOpen}
-        resourceType="rentcard"
-        title="Share Your RentCard"
-        description="Share your rental profile with landlords and property managers"
-      />
-        </>
-      ) : (
-        /* Analytics Content */
-        <div className="mt-6">
+      {/* Advanced Analytics - Progressive Disclosure */}
+      <MoreSection 
+        title="Analytics & Insights" 
+        persistKey="tenant-dashboard-analytics"
+        testId="dashboard-analytics"
+        className="mb-6"
+      >
+        <div className="mt-4">
           {isTenantProfileLoading ? (
             <div className="space-y-4">
               <Skeleton className="h-8 w-48" />
@@ -446,7 +421,8 @@ const TenantDashboard = () => {
             </Card>
           )}
         </div>
-      )}
+      </MoreSection>
+      
     </TenantLayout>
   );
 };
