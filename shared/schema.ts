@@ -30,6 +30,11 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   userType: text("user_type"), // 'tenant' or 'landlord' - custom field for MyRentCard - nullable for OAuth users
   phone: text("phone"), // Custom field for MyRentCard
+  requiresSetup: boolean("requires_setup").default(false), // Whether user needs to complete role setup
+  availableRoles: json("available_roles").$type<{
+    tenant: boolean;
+    landlord: boolean;
+  }>(), // Available roles for the user
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

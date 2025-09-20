@@ -15,6 +15,8 @@ import DebugAuthPage from "@/components/AuthDebugTools";
 import { ProtectedRoute } from "./lib/protected-route";
 import { StoreProvider } from "@/providers/StoreProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { RoleSelectionModal } from "@/components/RoleSelectionModal";
+import { useState, useEffect } from "react";
 
 // Sample Pages
 import SampleRentCard from "@/pages/samples/rentcard";
@@ -51,10 +53,25 @@ import SharedRentCard from "@/pages/shared-rentcard";
 import AboutPage from "@/pages/about-page";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [showRoleSelection, setShowRoleSelection] = useState(false);
+
+  // Check if user needs role selection after auth is loaded
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user?.requiresSetup) {
+      setShowRoleSelection(true);
+    } else {
+      setShowRoleSelection(false);
+    }
+  }, [isLoading, isAuthenticated, user?.requiresSetup]);
 
   return (
-    <Switch>
+    <>
+      <RoleSelectionModal 
+        isOpen={showRoleSelection}
+        onClose={() => setShowRoleSelection(false)}
+      />
+      <Switch>
       {/* Home page - always accessible */}
       <Route path="/" component={HomePage} />
       <Route path={ROUTES.HOME} component={HomePage} />
@@ -112,6 +129,7 @@ function Router() {
 
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 

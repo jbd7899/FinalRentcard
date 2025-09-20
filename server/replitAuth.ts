@@ -47,7 +47,7 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
@@ -77,13 +77,23 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  // Check if user already exists
+  const existingUser = await storage.getUser(claims["sub"]);
+  
   const user = await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
-    userType: 'tenant', // Default to tenant for Replit OIDC users
+    // Only preserve existing userType, don't default to tenant
+    userType: existingUser?.userType || null,
+    // Mark as requiring setup if no role is set
+    requiresSetup: !existingUser?.userType,
+    availableRoles: {
+      tenant: true,
+      landlord: true
+    }
   });
   
   return user;
