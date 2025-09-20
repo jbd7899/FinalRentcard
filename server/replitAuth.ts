@@ -83,7 +83,7 @@ async function upsertUser(
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
-    // userType will be set later through the profile setup flow
+    userType: 'tenant', // Default to tenant for Replit OIDC users
   });
   
   return user;
