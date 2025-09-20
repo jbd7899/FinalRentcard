@@ -35,7 +35,7 @@ export default function HomePage() {
     tenant: {
       hero: DERIVED_MESSAGING.TENANT.HERO,
       secondary: DERIVED_MESSAGING.TENANT.SECONDARY,
-      description: "Create once. Apply anywhere—even off‑platform.",
+      description: "Create once. Share anywhere—even off‑platform.",
       primaryCTA: DERIVED_MESSAGING.TENANT.CALL_TO_ACTION,
       secondaryCTA: "View Sample RentCard",
       primaryLink: "/api/login",
@@ -309,7 +309,7 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-500" data-testid="social-proof-list">
             <span className="flex items-center gap-1">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              No application fees
+              No prequalification fees
             </span>
             <span className="flex items-center gap-1">
               <CheckCircle className="w-4 h-4 text-green-500" />

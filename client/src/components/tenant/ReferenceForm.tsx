@@ -110,7 +110,7 @@ export function ReferenceForm({ isOpen, onClose, reference, tenantId }: Referenc
           <DialogDescription>
             {isEditMode 
               ? 'Update the details of your reference.' 
-              : 'Add a new reference to strengthen your rental application.'}
+              : 'Add a new reference to strengthen your prequalification profile.'}
           </DialogDescription>
         </DialogHeader>
         

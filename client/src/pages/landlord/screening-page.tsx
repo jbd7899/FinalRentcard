@@ -378,7 +378,7 @@ const ScreeningPage = () => {
             <div className="p-8 bg-blue-50 border-b border-blue-100">
               <div className="flex items-center gap-2 mb-4">
                 <Star className="w-6 h-6 text-blue-600 fill-current" />
-                <h2 className="text-2xl font-bold text-gray-800">Apply Easily with Your RentCard</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Express Interest Easily with Your RentCard</h2>
               </div>
               <div className="flex flex-col md:flex-row items-center gap-8">
                 <div className="flex-1 text-center md:text-left">
@@ -388,7 +388,7 @@ const ScreeningPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                       <Clock className="w-5 h-5 text-blue-600" />
-                      <span>Apply in seconds</span>
+                      <span>Express interest in seconds</span>
                     </div>
                     <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                       <Shield className="w-5 h-5 text-blue-600" />
@@ -422,7 +422,7 @@ const ScreeningPage = () => {
                       onClick={() => setLocation('/auth')}
                     >
                       <Share2 className="w-5 h-5" />
-                      Sign In to Apply
+                      Sign In to Express Interest
                     </Button>
                   )}
                   {!user && (

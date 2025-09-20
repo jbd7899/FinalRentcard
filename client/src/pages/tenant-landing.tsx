@@ -49,8 +49,8 @@ export default function TenantLanding() {
   const tenantBenefits = [
     {
       icon: Clock,
-      title: 'Save Time Per Application',
-      description: `One-time profile setup eliminates ${SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} of repetitive document entry per application`,
+      title: 'Save Time Per Prequalification',
+      description: `One-time profile setup eliminates ${SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} of repetitive document entry per prequalification`,
       badge: SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED + ' saved',
       color: 'blue' as keyof typeof colorClasses
     },
@@ -64,7 +64,7 @@ export default function TenantLanding() {
     {
       icon: Users,
       title: 'Eliminate Follow-up Emails',
-      description: 'Complete profiles eliminate 5-8 follow-up emails per application through upfront documentation',
+      description: 'Complete profiles eliminate 5-8 follow-up emails per prequalification through upfront documentation',
       badge: '5-8 emails eliminated',
       color: 'purple' as keyof typeof colorClasses
     },
@@ -136,14 +136,14 @@ export default function TenantLanding() {
           
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             {NETWORK_VALUE_PROPS.TENANT.HERO}. Pre-verified profiles eliminate 
-            5-8 follow-up emails per application and enable same-day application review.
+            5-8 follow-up emails per prequalification and enable same-day interest review.
           </p>
 
           {/* Key Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED}</div>
-              <div className="text-sm text-gray-600">Saved Per Application</div>
+              <div className="text-sm text-gray-600">Saved Per Prequalification</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600">{SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}</div>
@@ -276,9 +276,9 @@ export default function TenantLanding() {
 
         {/* Final CTA */}
         <div className="text-center bg-blue-600 text-white p-12 rounded-xl">
-          <h2 className="text-3xl font-bold mb-4">Ready to Save {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} Per Application?</h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to Save {SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED} Per Prequalification?</h2>
           <p className="text-xl text-blue-100 mb-8">
-            Complete your profile once, eliminate repetitive applications forever.
+            Complete your profile once, eliminate repetitive prequalifications forever.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4">

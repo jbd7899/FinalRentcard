@@ -8,7 +8,7 @@ export const PRIVATE_LANDLORD_STATS = {
   MARKET_SHARE: 'up to 75% of US rentals',
   DECISION_SPEED: 'Faster response times',
   PERSONAL_APPROACH: 'Direct landlord communication',
-  NO_JUNK_FEES: 'No hidden application fees',
+  NO_JUNK_FEES: 'No hidden prequalification fees',
 } as const;
 
 
@@ -17,10 +17,10 @@ export const SOCIAL_PROOF_STATS = {
   // Private landlord advantages - focus on mechanism, not inflated numbers
   PRIVATE_LANDLORD_RESPONSE_TIME: 'Faster response times',
   INDIVIDUAL_LANDLORD_RESPONSE_TIME: 'Faster response times', // DEPRECATED - use PRIVATE_LANDLORD_RESPONSE_TIME
-  TENANT_APPLICATION_TIME_SAVED: '60-90 minutes per application',
+  TENANT_APPLICATION_TIME_SAVED: '60-90 minutes per prequalification',
   // Process improvements with private landlords
   STREAMLINED_COMMUNICATION: 'Direct landlord communication',
-  ELIMINATE_JUNK_FEES: 'No hidden application fees',
+  ELIMINATE_JUNK_FEES: 'No hidden prequalification fees',
   FASTER_SCREENING: 'Same-day responses possible',
   PERSONAL_RELATIONSHIPS: 'Direct tenant-landlord connection',
   PRIVATE_LANDLORD_DECISIONS: 'Faster response times',
@@ -269,7 +269,7 @@ export const NETWORK_NOTIFICATIONS = {
     LANDLORD: 'Individual landlord tools ready! Professional efficiency with personal service.',
   },
   ACHIEVEMENT_MESSAGES: {
-    PROFILE_COMPLETE: 'RentCard ready! Private landlords can now make faster decisions about your application.',
+    PROFILE_COMPLETE: 'RentCard ready! Private landlords can now make faster decisions about your prequalification.',
     REFERENCE_VERIFIED: 'References verified! Private landlords appreciate pre-verified tenant information.',
     FIRST_SHARE: 'RentCard shared! Individual landlord has everything needed for quick, personal decision-making.',
   },

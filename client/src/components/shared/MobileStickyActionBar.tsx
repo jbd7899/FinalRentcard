@@ -124,7 +124,7 @@ export default function MobileStickyActionBar({
       if (hasWebShare) {
         await navigator.share({
           title: title,
-          text: 'Check out this rental application profile',
+          text: 'Check out this prequalification profile',
           url: shareUrl,
         });
         return true;

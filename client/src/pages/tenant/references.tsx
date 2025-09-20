@@ -235,7 +235,7 @@ const ReferencesPage = () => {
           <div>
             <h1 className="text-3xl font-bold">References</h1>
             <p className="text-gray-500 mt-1">
-              Manage your references to strengthen your rental applications
+              Manage your references to strengthen your prequalification profile
             </p>
           </div>
           <Button onClick={handleAddReference}>
@@ -358,7 +358,7 @@ const ReferencesPage = () => {
                 <UserCheck className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900">No references found</h3>
                 <p className="text-gray-500 mt-1">
-                  Add references to strengthen your rental applications.
+                  Add references to strengthen your prequalification profile.
                 </p>
                 <Button onClick={handleAddReference} className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />

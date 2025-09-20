@@ -66,7 +66,7 @@ export const DERIVED_MESSAGING = {
       "Create your RentCard once and send with one click",
       "Send to Private landlords even if they're not on our platform",
       "Private landlords own up to 75% of rentals in America", 
-      "Save time with standardized applications",
+      "Save time with standardized prequalification",
       "Get matched with the perfect Private Rental"
     ],
     CALL_TO_ACTION: "Create Your Free RentCard"
