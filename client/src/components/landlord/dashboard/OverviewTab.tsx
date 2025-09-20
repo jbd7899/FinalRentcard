@@ -101,7 +101,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div>
                   <h3 className="font-medium text-sm sm:text-base text-blue-800">1. List Properties</h3>
                   <p className="text-xs sm:text-sm text-blue-700 mt-1">
-                    Professional screening tools without corporate overhead
+                    Professional screening tools without unnecessary overhead
                   </p>
                   <Button 
                     variant="link" 
@@ -254,21 +254,21 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
           </h2>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
             <div>
-              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Compete with Corporate Efficiency</h3>
+              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Professional Efficiency Tools</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Professional screening tools help you compete with corporate property management while maintaining your personal touch.
+                Professional screening tools that provide efficiency while maintaining your personal touch.
               </p>
             </div>
             <div>
               <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Attract Individual-Landlord-Preferring Tenants</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                Tenants seek out individual landlords for faster decisions and personal relationships over corporate bureaucracy.
+                Tenants seek out individual landlords for faster decisions and personalized service.
               </p>
             </div>
             <div className="sm:col-span-2 md:col-span-1">
-              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Professional Tools Without Corporate Overhead</h3>
+              <h3 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">Professional Tools Without Unnecessary Overhead</h3>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                No corporate fees, bureaucracy, or rigid policies - just professional tools that help you stay competitive.
+                No hidden fees, streamlined processes, and flexible policies - just professional tools for efficient screening.
               </p>
             </div>
           </div>

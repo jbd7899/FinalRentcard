@@ -165,7 +165,7 @@ const LandlordDashboard = () => {
       <header className="mb-6 md:mb-8">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Individual Landlord Dashboard</h1>
         <p className="text-sm sm:text-base text-gray-500 mt-1 md:mt-2">
-          Professional tools to compete with corporate efficiency while maintaining your personal touch
+          Professional tools for efficient screening while maintaining your personal touch
         </p>
       </header>
 
