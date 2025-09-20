@@ -445,11 +445,13 @@ export class DatabaseStorage implements IStorage {
     return newUser;
   }
 
-  async updateUser(id: string, user: Partial<User>): Promise<User> {
+  async updateUser(id: string | number, user: Partial<User>): Promise<User> {
+    // Convert to string since the schema expects varchar
+    const userId = String(id);
     const [updatedUser] = await db
       .update(users)
       .set(user)
-      .where(eq(users.id, id))
+      .where(eq(users.id, userId))
       .returning();
     return updatedUser;
   }

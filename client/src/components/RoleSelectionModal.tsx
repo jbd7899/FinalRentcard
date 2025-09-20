@@ -10,8 +10,10 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/stores/authStore";
+import { useLocation } from "wouter";
+import { ROUTES } from "@/constants/routes";
 
 interface RoleSelectionModalProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { initialize } = useAuthStore();
+  const [, setLocation] = useLocation();
 
   const handleRoleSelect = (role: 'tenant' | 'landlord') => {
     setSelectedRole(role);
@@ -50,8 +53,19 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
           description: `You're now set up as a ${selectedRole}.`,
         });
         
+        // Invalidate the auth query to force refresh
+        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        
         // Refresh auth state to get updated user data
         await initialize();
+        
+        // Navigate to the appropriate dashboard
+        if (selectedRole === 'tenant') {
+          setLocation(ROUTES.TENANT.DASHBOARD);
+        } else if (selectedRole === 'landlord') {
+          setLocation(ROUTES.LANDLORD.DASHBOARD);
+        }
+        
         onClose();
       } else {
         throw new Error('Failed to update role');
