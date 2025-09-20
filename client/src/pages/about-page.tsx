@@ -35,20 +35,20 @@ export default function AboutPage() {
       {
         icon: UserCheck,
         title: "Create Your RentCard Once",
-        description: "Fill out your rental information one time. Income, references, documents - everything landlords need.",
-        detail: "No more copying the same info from application to application."
+        description: "Complete your standardized rental profile with income, references, and documents.",
+        detail: "Use the same professional application format with every landlord."
       },
       {
         icon: Eye,
         title: "Apply Instantly Anywhere",
-        description: "Share your RentCard link or QR code. Landlords can view your complete profile immediately.",
-        detail: "Works with private landlords whether they're on the platform or not."
+        description: "Share your RentCard link or QR code. Landlords can review your qualifications before scheduling showings.",
+        detail: "Know if it's a match from the beginning - saves time for everyone."
       },
       {
         icon: Zap,
         title: "Get Faster Responses",
-        description: "Private landlords respond 2-3x faster than corporate properties. Personal relationships matter.",
-        detail: "Skip the corporate bureaucracy and connect directly with property owners."
+        description: "Get faster responses from landlords who can see you're qualified upfront.",
+        detail: "Skip unnecessary showings when your profile doesn't match their requirements."
       }
     ],
     landlord: [
@@ -61,8 +61,8 @@ export default function AboutPage() {
       {
         icon: Users,
         title: "Get Pre-Qualified Tenants",
-        description: "Tenants who find you already have their rental information ready to view.",
-        detail: "See income, references, and documents upfront - no back-and-forth."
+        description: "Receive complete applications from pre-qualified tenants before first contact.",
+        detail: "Review income, references, and documents upfront - no back-and-forth collection."
       },
       {
         icon: Clock,
@@ -77,41 +77,41 @@ export default function AboutPage() {
     tenant: [
       {
         icon: RefreshCw,
-        title: "Stop Repeating Yourself",
-        description: "Create your rental profile once, use it everywhere. No more filling out the same forms over and over.",
-        reality: "Reality: You've probably filled out your employment info 10+ times already."
+        title: "Standardized Application Format",
+        description: "Create your rental profile once, use it with any landlord. Consistent professional presentation every time.",
+        reality: "Saves hours of time re-entering the same employment and income information."
       },
       {
         icon: Clock,
-        title: "Get Responses That Actually Matter",
-        description: "Private landlords respond faster and give real feedback, not automated rejections.",
-        reality: "Reality: Corporate properties send form letters. Private landlords actually talk to you."
+        title: "Faster Response Times",
+        description: "Landlords can review your qualifications immediately and respond with specific feedback.",
+        reality: "Know upfront if you meet requirements instead of waiting for form responses."
       },
       {
         icon: Shield,
-        title: "Skip the Corporate Maze",
-        description: "Apply directly to property owners who make their own decisions.",
-        reality: "Reality: No more waiting weeks for some algorithm to reject you."
+        title: "Direct Communication",
+        description: "Connect directly with property owners who can make immediate decisions.",
+        reality: "Streamlined communication leads to faster rental decisions."
       }
     ],
     landlord: [
       {
         icon: Smartphone,
-        title: "You Don't Need Another Account",
-        description: "Generate QR codes and collect applications without signing up for anything.",
-        reality: "Reality: You just want qualified tenants, not another login to remember."
+        title: "No Complex Setup Required",
+        description: "Generate QR codes and collect applications without creating accounts or learning new systems.",
+        reality: "Focus on finding qualified tenants with minimal administrative overhead."
       },
       {
         icon: UserCheck,
-        title: "Pre-Qualified Tenants Find You",
-        description: "Tenants using MyRentCard already have their income, references, and documents ready.",
-        reality: "Reality: No more chasing people for basic information you need anyway."
+        title: "Complete Applications Upfront",
+        description: "Tenants using MyRentCard provide income verification, references, and documents before contact.",
+        reality: "Eliminate time spent collecting basic qualification information."
       },
       {
         icon: Zap,
-        title: "Compete with Corporate Efficiency",
-        description: "Get the professional tools you need while keeping your personal approach.",
-        reality: "Reality: Tenants expect fast, professional service from everyone now."
+        title: "Professional Tools",
+        description: "Access efficient screening tools while maintaining your personal approach to tenant relationships.",
+        reality: "Meet tenant expectations for professional service without sacrificing personal connections."
       }
     ]
   };
@@ -159,11 +159,11 @@ export default function AboutPage() {
               About MyRentCard
             </Badge>
             <h1 className="text-5xl font-bold mb-6 text-gray-800" data-testid="about-hero-title">
-              Stop Filling Out the Same Rental Info Over and Over
+              Standardized Prequalification for Private Rentals
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              We get it. The rental process is broken. You're tired of copying your employment info for the hundredth time, 
-              and landlords are tired of chasing people for basic documents. Let's fix this together.
+              Save time on both sides with standardized rental applications. Know if it's a match from the beginning 
+              and skip unnecessary calls and showings that don't lead anywhere.
             </p>
           </div>
 
@@ -205,48 +205,48 @@ export default function AboutPage() {
           <Card className="overflow-hidden">
             <CardHeader className={`text-center ${isLandlordSelected ? 'bg-green-50' : 'bg-blue-50'}`}>
               <CardTitle className={`text-2xl ${isLandlordSelected ? 'text-green-800' : 'text-blue-800'}`}>
-                {isLandlordSelected ? "Why Should I Sign Up for Another Thing?" : "We Get It, This is Exhausting"}
+                {isLandlordSelected ? "Get Information Upfront" : "Different Formats, Different Requirements"}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
               {isLandlordSelected ? (
                 <div className="space-y-6">
                   <p className="text-lg text-gray-700 leading-relaxed">
-                    <strong>You don't have to sign up for anything.</strong> Generate a QR code for your property right now, for free. 
-                    No account required.
+                    <strong>Get complete tenant information before scheduling showings.</strong> Generate a QR code for your property - 
+                    no account required for basic use.
                   </p>
                   <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-400">
-                    <h4 className="font-semibold text-green-800 mb-2">Here's the reality:</h4>
+                    <h4 className="font-semibold text-green-800 mb-2">What you get:</h4>
                     <ul className="space-y-2 text-green-700">
-                      <li>• You just want qualified tenants who can actually afford your place</li>
-                      <li>• You're tired of people applying who clearly didn't read your listing</li>
-                      <li>• You want to compete with corporate properties but keep your personal touch</li>
-                      <li>• You don't need another platform taking a cut or making you jump through hoops</li>
+                      <li>• Pre-qualified tenants with income verification ready to view</li>
+                      <li>• Complete rental applications before first contact</li>
+                      <li>• Professional tools that help you compete with larger properties</li>
+                      <li>• Time saved on applicants who aren't a good fit</li>
                     </ul>
                   </div>
                   <p className="text-gray-700">
-                    We built MyRentCard so you can get the tools you need without the commitment you don't want. 
-                    Your tenants create RentCards, you get better applications. That's it.
+                    MyRentCard provides standardized prequalification tools that save time for both landlords and tenants. 
+                    Focus on qualified applicants who are ready to move forward.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-6">
                   <p className="text-lg text-gray-700 leading-relaxed">
-                    You're probably here because you're tired. Tired of filling out the same employment information. 
-                    Tired of uploading the same pay stubs. Tired of getting rejected by algorithms.
+                    Different landlords require different application formats and information. 
+                    Standardized prequalification lets you maintain one complete profile that works everywhere.
                   </p>
                   <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-400">
-                    <h4 className="font-semibold text-blue-800 mb-2">Sound familiar?</h4>
+                    <h4 className="font-semibold text-blue-800 mb-2">Common challenges:</h4>
                     <ul className="space-y-2 text-blue-700">
-                      <li>• You've filled out your employment info at least 10 times this month</li>
-                      <li>• You keep uploading the same documents over and over</li>
-                      <li>• Corporate properties send you form rejection letters</li>
-                      <li>• You want to apply to private landlords but they expect professional applications</li>
+                      <li>• Each property has different application requirements and formats</li>
+                      <li>• Re-entering the same employment and income information repeatedly</li>
+                      <li>• Private landlords expect professional applications but don't have corporate systems</li>
+                      <li>• Difficulty showing qualification before viewing properties</li>
                     </ul>
                   </div>
                   <p className="text-gray-700">
-                    We built MyRentCard so you can create your rental profile once and use it everywhere. 
-                    Apply to private landlords with the same professional presentation that corporate properties expect.
+                    MyRentCard provides a standardized format that works with any landlord. 
+                    Present professional applications consistently while saving time on repeated data entry.
                   </p>
                 </div>
               )}
@@ -257,11 +257,11 @@ export default function AboutPage() {
         {/* How It Works */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-gray-800">How It Actually Works</h2>
+            <h2 className="text-3xl font-bold mb-4 text-gray-800">How It Works</h2>
             <p className="text-lg text-gray-600">
               {isLandlordSelected 
-                ? "Three steps to get better tenant applications"
-                : "Three steps to stop repeating yourself"
+                ? "Three steps to streamline your rental process"
+                : "Three steps to standardized prequalification"
               }
             </p>
           </div>
@@ -298,9 +298,9 @@ export default function AboutPage() {
         {/* Real Benefits */}
         <div className="mb-16">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4 text-gray-800">Real Benefits, Not Marketing Fluff</h2>
+            <h2 className="text-3xl font-bold mb-4 text-gray-800">Practical Benefits</h2>
             <p className="text-lg text-gray-600">
-              Here's what actually changes when you use MyRentCard
+              How standardized prequalification saves time for everyone
             </p>
           </div>
 
@@ -363,14 +363,14 @@ export default function AboutPage() {
           <Card className="overflow-hidden">
             <CardHeader className={`text-center ${isLandlordSelected ? 'bg-green-50' : 'bg-blue-50'}`}>
               <CardTitle className="text-2xl text-gray-800">
-                Ready to Stop the Rental Insanity?
+                Ready to Try Standardized Prequalification?
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
               <p className="text-lg text-gray-600 mb-6">
                 {isLandlordSelected 
-                  ? "Generate your first QR code in under 2 minutes. No signup required."
-                  : "Create your RentCard once and use it everywhere. Free forever."
+                  ? "Start collecting complete applications from qualified tenants today."
+                  : "Create your standardized rental profile and save time on every application."
                 }
               </p>
               
