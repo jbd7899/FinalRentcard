@@ -144,7 +144,8 @@ const TenantDashboard = () => {
               variant="default" 
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              showText={false}
+              showText={true}
+              data-testid="button-share-rentcard-header"
             />
           </div>
         </div>
@@ -153,13 +154,45 @@ const TenantDashboard = () => {
       {/* Conditional Content Based on Active Tab */}
       {activeTab === 'dashboard' ? (
         <>
-        {/* Onboarding Checklist */}
-        {!onboardingDismissed && !onboardingCollapsed && (
-          <OnboardingChecklist 
-            onDismiss={() => setOnboardingDismissed(true)}
-            collapsed={true}
-            onToggleCollapse={() => setOnboardingCollapsed(!onboardingCollapsed)}
-          />
+        {/* Simplified Onboarding - Optional and Dismissible */}
+        {!onboardingDismissed && (
+          <div className="mb-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <Star className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-blue-900">
+                    Want to optimize your RentCard?
+                  </h3>
+                  <p className="text-sm text-blue-700">
+                    Add references and details to get faster landlord responses
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+                  className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                  data-testid="button-optimize-rentcard"
+                >
+                  Optimize
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setOnboardingDismissed(true)}
+                  className="text-gray-400 hover:text-gray-600"
+                  data-testid="button-dismiss-optimization"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
         
         {/* Quick Actions */}
