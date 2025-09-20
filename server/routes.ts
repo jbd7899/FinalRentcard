@@ -773,7 +773,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // New route to get property by screening page slug
   app.get("/api/properties/screening/:slug", async (req, res) => {
     try {
-      const property = await storage.getPropertyBySlug(req.params.slug);
+      const slug = req.params.slug;
+      let property;
+      
+      // Handle property-{id} format for QR code compatibility
+      if (slug.startsWith('property-')) {
+        const propertyId = parseInt(slug.replace('property-', ''));
+        if (!isNaN(propertyId)) {
+          property = await storage.getProperty(propertyId);
+        }
+      } else {
+        // Original slug-based lookup
+        property = await storage.getPropertyBySlug(slug);
+      }
+      
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
       }
@@ -781,8 +794,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Increment view count
       await storage.incrementPropertyViewCount(property.id);
 
-      // Get updated property with new view count
-      const updatedProperty = await storage.getPropertyBySlug(req.params.slug);
+      // Get updated property with new view count - handle both slug types
+      let updatedProperty;
+      if (slug.startsWith('property-')) {
+        updatedProperty = await storage.getProperty(property.id);
+      } else {
+        updatedProperty = await storage.getPropertyBySlug(slug);
+      }
       
       // Get property images
       const images = await storage.getPropertyImages(property.id);

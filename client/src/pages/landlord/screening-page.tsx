@@ -62,6 +62,29 @@ const usePropertyDetails = (slug: string) => {
   return useQuery({
     queryKey: [API_ENDPOINTS.PROPERTIES.SCREENING.BY_SLUG(slug)],
     queryFn: async () => {
+      // Handle property-{id} format by using existing public screening endpoint
+      if (slug.startsWith('property-')) {
+        // Use existing public /api/properties/screening/:slug endpoint
+        // This endpoint is already public and returns full property data
+        const response = await apiRequest("GET", `/api/properties/screening/${slug}`);
+        const property = await response.json();
+        
+        // Transform property data to match screening page format
+        return {
+          ...property,
+          businessName: `Property at ${property.address}`,
+          contactName: 'Property Owner',
+          businessEmail: 'owner@example.com',
+          screeningCriteria: {
+            minCreditScore: property.requirements?.creditScore || 650,
+            minMonthlyIncome: property.rent * 3,
+            noEvictions: true,
+            cleanRentalHistory: true
+          }
+        };
+      }
+      
+      // Original slug-based lookup for real screening pages
       const response = await apiRequest("GET", API_ENDPOINTS.PROPERTIES.SCREENING.BY_SLUG(slug));
       return response.json();
     },

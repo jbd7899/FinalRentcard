@@ -28,6 +28,7 @@ import LandlordLanding from "@/pages/landlord-landing";
 import LandlordDashboard from "@/pages/landlord/dashboard";
 import LandlordApplications from "@/pages/landlord/applications";
 import AddProperty from "@/pages/landlord/add-property";
+import CreatePropertySimple from "@/pages/landlord/create-property-simple";
 import PropertyScreeningPage from "@/pages/landlord/screening-page";
 import ScreeningManagement from "@/pages/landlord/screening";
 import VerifyDocumentsPage from "@/pages/landlord/verify-documents";
@@ -72,6 +73,7 @@ function Router() {
       <ProtectedRoute path={ROUTES.LANDLORD.DASHBOARD} component={LandlordDashboard} />
       <ProtectedRoute path={ROUTES.LANDLORD.INTERESTS} component={LandlordApplications} />
       <ProtectedRoute path={ROUTES.LANDLORD.ADD_PROPERTY} component={AddProperty} />
+      <ProtectedRoute path="/landlord/create-property-simple" component={CreatePropertySimple} />
       <ProtectedRoute path="/landlord/properties/:id/edit" component={AddProperty} />
       <ProtectedRoute path={ROUTES.LANDLORD.VERIFY_DOCUMENTS} component={VerifyDocumentsPage} />
       <ProtectedRoute path={ROUTES.LANDLORD.CONTACT_MANAGEMENT} component={ContactManagement} />
