@@ -298,6 +298,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Role update endpoint
+  app.patch('/api/auth/user/role', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { userType } = req.body;
+
+      // Validate role
+      if (!userType || !['tenant', 'landlord'].includes(userType)) {
+        return res.status(400).json({ 
+          message: "Invalid role. Must be 'tenant' or 'landlord'" 
+        });
+      }
+
+      // Update user role and clear requiresSetup
+      const updatedUser = await storage.updateUser(userId, {
+        userType,
+        requiresSetup: false,
+        availableRoles: {
+          tenant: true,
+          landlord: true
+        }
+      });
+
+      res.json({ 
+        message: "Role updated successfully",
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+
   // Note: isAuthenticated middleware imported from replitAuth.ts handles Replit Auth sessions
 
   // Shortlink routes - added early for redirect performance
