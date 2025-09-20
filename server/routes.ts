@@ -285,7 +285,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tenant: tenantProfile,
           landlord: landlordProfile
         },
-        requiresSetup: !user.userType || (!tenantProfile && !landlordProfile),
+        // Use the actual database value for requiresSetup
+        requiresSetup: user.requiresSetup || false,
         availableRoles: {
           tenant: !tenantProfile,
           landlord: !landlordProfile
@@ -586,13 +587,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add endpoint for current user's tenant profile
   app.get("/api/tenant/profile", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      // Use the database user ID stored in the session
+      const userId = req.user?.claims?.dbUserId || req.user?.claims?.sub;
+      if (!userId) {
         console.error('Unauthorized access to tenant profile: No user ID in request');
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log(`Fetching tenant profile for user ID: ${req.user.claims.sub}`);
-      const profile = await storage.getTenantProfile(req.user.claims.sub);
+      console.log(`Fetching tenant profile for user ID: ${userId}`);
+      const profile = await storage.getTenantProfile(String(userId));
       
       if (!profile) {
         console.log(`No tenant profile found for user ID: ${req.user.claims.sub}`);
@@ -651,13 +654,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add endpoint for current user's landlord profile
   app.get("/api/landlord/profile", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      const userId = req.user?.claims?.dbUserId || req.user?.claims?.sub;
+      if (!userId) {
         console.error('Unauthorized access to landlord profile: No user ID in request');
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log(`Fetching landlord profile for user ID: ${req.user.claims.sub}`);
-      const profile = await storage.getLandlordProfile(req.user.claims.sub);
+      console.log(`Fetching landlord profile for user ID: ${userId}`);
+      const profile = await storage.getLandlordProfile(String(userId));
       
       if (!profile) {
         console.log(`No landlord profile found for user ID: ${req.user.claims.sub}`);
@@ -1827,11 +1831,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/share-tokens", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      const userId = req.user?.claims?.dbUserId || req.user?.claims?.sub;
+      if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(String(userId));
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
