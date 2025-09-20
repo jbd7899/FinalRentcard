@@ -77,26 +77,40 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  // Check if user already exists
-  const existingUser = await storage.getUser(claims["sub"]);
+  // Check if user already exists by email (not by OAuth sub)
+  const existingUser = await storage.getUserByEmail(claims["email"]);
   
-  const user = await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-    // Only preserve existing userType, don't default to tenant
-    userType: existingUser?.userType || null,
-    // Mark as requiring setup if no role is set
-    requiresSetup: !existingUser?.userType,
-    availableRoles: {
-      tenant: true,
-      landlord: true
-    }
-  });
-  
-  return user;
+  if (existingUser) {
+    // Update existing user
+    const user = await storage.updateUser(existingUser.id, {
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      profileImageUrl: claims["profile_image_url"],
+      // Preserve existing userType, don't overwrite
+      // Only set requiresSetup if they don't have a role
+      requiresSetup: !existingUser.userType,
+      availableRoles: {
+        tenant: true,
+        landlord: true
+      }
+    });
+    return user;
+  } else {
+    // Create new user (ID will be auto-generated)
+    const user = await storage.createUser({
+      email: claims["email"],
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      profileImageUrl: claims["profile_image_url"],
+      userType: null,
+      requiresSetup: true,
+      availableRoles: {
+        tenant: true,
+        landlord: true
+      }
+    });
+    return user;
+  }
 }
 
 export async function setupAuth(app: Express) {
