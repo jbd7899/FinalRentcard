@@ -12,6 +12,7 @@ import {
   Building2,
   Users
 } from 'lucide-react';
+import OneClickShareButton from './OneClickShareButton';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { ROUTES } from "@/constants";
@@ -66,11 +67,19 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
       <aside className="hidden md:flex flex-col w-64 bg-white border-r h-screen sticky top-0">
         <div className="p-4 md:p-6 border-b">
           <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
+            <div className="flex items-center gap-2 cursor-pointer mb-4">
               <Building2 className="w-7 h-7 md:w-8 md:h-8 text-blue-600" />
               <span className="text-lg md:text-xl font-semibold text-blue-600">MyRentCard</span>
             </div>
           </Link>
+          <OneClickShareButton 
+            variant="default" 
+            size="default"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            showText={true}
+            mode="simple"
+            data-testid="button-share-sidebar"
+          />
         </div>
         
         <nav className="flex-1 p-4">
@@ -122,6 +131,16 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <nav className="md:hidden p-4 bg-white border-b">
+          <div className="mb-4">
+            <OneClickShareButton 
+              variant="default" 
+              size="default"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              showText={true}
+              mode="simple"
+              data-testid="button-share-mobile-menu"
+            />
+          </div>
           <ul className="space-y-1 sm:space-y-2">
             {navigationItems.map((item) => (
               <li key={item.route}>
