@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ROUTES } from "@/constants/routes";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
-import CreateRentCard from "@/pages/create-rentcard";
+import CreateRentCardSimple from "@/pages/create-rentcard-simple";
 import ScreeningPage from "@/pages/screening-page";
 import EditScreeningPage from "@/pages/edit-screening-page";
 import PropertyScreeningEdit from "@/pages/property-screening-edit";
@@ -102,7 +102,7 @@ function Router() {
       <ProtectedRoute path={ROUTES.TENANT.MESSAGE_TEMPLATES} component={MessageTemplatesPage} />
       <ProtectedRoute path={ROUTES.TENANT.REFERRALS} component={TenantReferralsPage} />
       <ProtectedRoute path={ROUTES.TENANT.CONTACT_PREFERENCES} component={ContactPreferences} />
-      <Route path="/create-rentcard" component={CreateRentCard} />
+      <Route path="/create-rentcard" component={CreateRentCardSimple} />
       <Route path="/rentcard/:slug" component={TenantRentCard} />
       
       {/* Public Shared RentCard Route */}

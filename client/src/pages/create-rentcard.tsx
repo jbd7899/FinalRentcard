@@ -268,7 +268,7 @@ export default function CreateRentCard() {
       queryClient.invalidateQueries({ queryKey: ['share-tokens'] });
       
       toast({
-        title: MESSAGES.SUCCESS.GENERAL,
+        title: MESSAGES.SUCCESS.CREATED,
         description: "Your RentCard has been created successfully!",
       });
     },
@@ -383,7 +383,8 @@ export default function CreateRentCard() {
           email: formData.email,
           password: passwordData.password
         };
-        await login(loginData);
+        // Handle login after account creation
+        // Note: This will be updated when we implement simplified creation
         
         // Convert numeric fields before submitting
         const processedData = convertFormNumericValues(formData, numericFields);
