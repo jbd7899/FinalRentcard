@@ -115,19 +115,31 @@ const TenantDashboard = () => {
           
           {/* Simplified Header - Primary CTA only */}
           <div className="flex gap-2">
-            <OneClickShareButton 
-              variant="default" 
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              showText={true}
-              data-testid="button-share-rentcard-header"
-            />
+            {tenantProfile ? (
+              <OneClickShareButton 
+                variant="default" 
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                showText={true}
+                data-testid="button-share-rentcard-header"
+              />
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => setLocation("/create-rentcard")}
+                data-testid="button-create-rentcard-header"
+              >
+                Create RentCard
+              </Button>
+            )}
           </div>
         </div>
       </header>
       
-      {/* Simplified Onboarding - Optional and Dismissible */}
-      {!onboardingDismissed && (
+      {/* Simplified Onboarding - Optional and Dismissible, only show if profile exists */}
+      {!onboardingDismissed && tenantProfile && (
         <div className="mb-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -147,11 +159,11 @@ const TenantDashboard = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+                onClick={() => setLocation(tenantProfile ? ROUTES.TENANT.RENTCARD : "/create-rentcard")}
                 className="text-blue-600 border-blue-300 hover:bg-blue-100"
                 data-testid="button-optimize-rentcard"
               >
-                Optimize
+                {tenantProfile ? "Optimize" : "Create RentCard"}
               </Button>
               <Button 
                 variant="ghost" 
@@ -181,18 +193,44 @@ const TenantDashboard = () => {
           
           <Card className="hover:shadow-md transition-shadow">
             <CardContent className="p-6 text-center">
-              <Star className="h-10 w-10 text-blue-500 mb-3 mx-auto" />
-              <h3 className="font-semibold text-lg mb-2">View & Edit RentCard</h3>
-              <p className="text-sm text-gray-600 mb-4">Update your profile and information</p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="w-full"
-                onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
-                data-testid="button-view-rentcard-primary"
-              >
-                Open RentCard
-              </Button>
+              {isTenantProfileLoading ? (
+                <>
+                  <Skeleton className="h-10 w-10 rounded-full mx-auto mb-3" />
+                  <Skeleton className="h-6 w-32 mx-auto mb-2" />
+                  <Skeleton className="h-4 w-48 mx-auto mb-4" />
+                  <Skeleton className="h-8 w-full" />
+                </>
+              ) : !tenantProfile ? (
+                <>
+                  <FileText className="h-10 w-10 text-green-500 mb-3 mx-auto" />
+                  <h3 className="font-semibold text-lg mb-2">Create Your RentCard</h3>
+                  <p className="text-sm text-gray-600 mb-4">Build your rental profile to share with landlords</p>
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => setLocation("/create-rentcard")}
+                    data-testid="button-create-rentcard-primary"
+                  >
+                    Get Started
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Star className="h-10 w-10 text-blue-500 mb-3 mx-auto" />
+                  <h3 className="font-semibold text-lg mb-2">View & Edit RentCard</h3>
+                  <p className="text-sm text-gray-600 mb-4">Update your profile and information</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+                    data-testid="button-view-rentcard-primary"
+                  >
+                    Open RentCard
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
