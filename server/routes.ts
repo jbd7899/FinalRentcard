@@ -59,29 +59,29 @@ function handleRouteError(error: unknown, res: any, operation: string): void {
 
 // Authorization helper functions
 async function assertTenantOwnership(req: any, tenantId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  if (!req.user?.id) {
     throw new Error("Unauthorized: No user session");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+  const tenantProfile = await storage.getTenantProfile(req.user.id);
   if (!tenantProfile || tenantProfile.id !== tenantId) {
     throw new Error("Forbidden: Access denied to this tenant resource");
   }
 }
 
 async function assertLandlordOwnership(req: any, landlordId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  if (!req.user?.id) {
     throw new Error("Unauthorized: No user session");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+  const landlordProfile = await storage.getLandlordProfile(req.user.id);
   if (!landlordProfile || landlordProfile.id !== landlordId) {
     throw new Error("Forbidden: Access denied to this landlord resource");
   }
 }
 
 async function assertReferenceOwnership(req: any, referenceId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  if (!req.user?.id) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -90,14 +90,14 @@ async function assertReferenceOwnership(req: any, referenceId: number): Promise<
     throw new Error("Reference not found");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+  const tenantProfile = await storage.getTenantProfile(req.user.id);
   if (!tenantProfile || !reference.tenantId || tenantProfile.id !== reference.tenantId) {
     throw new Error("Forbidden: Access denied to this reference");
   }
 }
 
 async function assertDocumentOwnership(req: any, documentId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  if (!req.user?.id) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -106,7 +106,7 @@ async function assertDocumentOwnership(req: any, documentId: number): Promise<vo
     throw new Error("Document not found");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+  const tenantProfile = await storage.getTenantProfile(req.user.id);
   if (!tenantProfile || !document.tenantId || tenantProfile.id !== document.tenantId) {
     throw new Error("Forbidden: Access denied to this document");
   }
@@ -465,12 +465,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let landlordId: number | undefined;
       
       if (req.user?.userType === 'tenant') {
-        const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+        const tenantProfile = await storage.getTenantProfile(req.user.id);
         if (tenantProfile) {
           tenantId = tenantProfile.id;
         }
       } else if (req.user?.userType === 'landlord') {
-        const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+        const landlordProfile = await storage.getLandlordProfile(req.user.id);
         if (landlordProfile) {
           landlordId = landlordProfile.id;
         }
@@ -503,12 +503,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let shortlinks: Shortlink[] = [];
       
       if (req.user?.userType === 'tenant') {
-        const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+        const tenantProfile = await storage.getTenantProfile(req.user.id);
         if (tenantProfile) {
           shortlinks = await storage.getShortlinks(tenantProfile.id);
         }
       } else if (req.user?.userType === 'landlord') {
-        const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+        const landlordProfile = await storage.getLandlordProfile(req.user.id);
         if (landlordProfile) {
           shortlinks = await storage.getShortlinks(undefined, landlordProfile.id);
         }
@@ -682,7 +682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure the profile is created for the authenticated user
-      const profileData = { ...req.body, userId: req.user.claims.sub };
+      const profileData = { ...req.body, userId: req.user.id };
       const profile = await storage.createTenantProfile(profileData);
       res.status(201).json(profile);
     } catch (error) {
@@ -714,7 +714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Ensure the profile is created for the authenticated user
-      const profileData = { ...req.body, userId: req.user.claims.sub };
+      const profileData = { ...req.body, userId: req.user.id };
       const profile = await storage.createLandlordProfile(profileData);
       res.status(201).json(profile);
     } catch (error) {
@@ -762,18 +762,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log(`Creating RentCard for user ID: ${req.user.claims.sub}`);
+      console.log(`Creating RentCard for user ID: ${req.user.id}`);
       
       // Validate the request body against the RentCard schema
       const validatedData = {
         ...req.body,
-        userId: req.user.claims.sub
+        userId: req.user.id
       };
       
       // Create the RentCard
       const rentCard = await storage.createRentCard(validatedData);
       
-      console.log(`Successfully created RentCard for user ID: ${req.user.claims.sub}`);
+      console.log(`Successfully created RentCard for user ID: ${req.user.id}`);
       res.status(201).json(rentCard);
     } catch (error) {
       handleRouteError(error, res, '/api/tenant/rentcard POST endpoint');
@@ -866,7 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get the landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(400).json({ message: "Landlord profile not found" });
       }
@@ -1357,8 +1357,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { propertyId } = req.query;
       
       // Get applications based on user type
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       
       let applications;
       
@@ -1404,7 +1404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get the tenant profile
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(400).json({ message: "Tenant profile not found" });
       }
@@ -1481,7 +1481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let tenantId = null;
       if (req.user?.id) {
         // User is authenticated - get their tenant profile
-        const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+        const tenantProfile = await storage.getTenantProfile(req.user.id);
         if (tenantProfile) {
           tenantId = tenantProfile.id;
         }
@@ -1594,8 +1594,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { propertyId, status } = req.query;
       
       // Get user profile to determine access permissions
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       
       if (!landlordProfile && !tenantProfile) {
         return res.status(403).json({ message: "User profile not found" });
@@ -1690,8 +1690,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check authorization
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       
       let hasAccess = false;
       if (landlordProfile && interest.landlordId === landlordProfile.id) {
@@ -1746,7 +1746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify landlord ownership via interest -> landlord relationship
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Only landlords can manage interests" });
       }
@@ -1770,7 +1770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify landlord ownership via interest -> landlord relationship
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Only landlords can manage interests" });
       }
@@ -1809,7 +1809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2019,7 +2019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Only landlords who own the property can update application status
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Only landlords can update application status" });
       }
@@ -2169,7 +2169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the authenticated user's tenant profile
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(400).json({ message: "Tenant profile not found" });
       }
@@ -2228,7 +2228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify the user is a landlord (only landlords should verify documents)
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Only landlords can verify documents" });
       }
@@ -2299,7 +2299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the authenticated user's tenant profile
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(400).json({ message: "Tenant profile not found" });
       }
@@ -2442,7 +2442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2474,7 +2474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2491,7 +2491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2534,7 +2534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2560,7 +2560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile || contact.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2579,7 +2579,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2606,7 +2606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile || template.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2623,7 +2623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2662,7 +2662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile || template.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2688,7 +2688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify ownership
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile || template.tenantId !== tenantProfile.id) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -2707,7 +2707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2730,7 +2730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2771,7 +2771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { notes } = req.body;
 
       // Verify ownership by checking if the sharing history belongs to the tenant
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -2810,7 +2810,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: type as string
       };
 
-      const notifications = await storage.getUserNotifications(req.user.claims.sub, options);
+      const notifications = await storage.getUserNotifications(req.user.id, options);
       res.json(notifications);
     } catch (error) {
       handleRouteError(error, res, 'get user notifications');
@@ -3287,7 +3287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile || property.landlordId !== landlordProfile.id) {
         return res.status(403).json({ message: "You can only update your own properties" });
       }
@@ -3311,7 +3311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3329,7 +3329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3368,7 +3368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3395,7 +3395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let logs;
       if (req.user.userType === 'landlord') {
-        const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+        const landlordProfile = await storage.getLandlordProfile(req.user.id);
         if (!landlordProfile) {
           return res.status(404).json({ message: "Landlord profile not found" });
         }
@@ -3416,7 +3416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         logs = await storage.getCommunicationLogs(landlordProfile.id, tenantIdNum, propertyIdNum);
       } else if (req.user.userType === 'tenant') {
-        const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+        const tenantProfile = await storage.getTenantProfile(req.user.id);
         if (!tenantProfile) {
           return res.status(404).json({ message: "Tenant profile not found" });
         }
@@ -3437,7 +3437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only landlords can create communication logs" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3594,7 +3594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3612,7 +3612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3643,7 +3643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const contactId = parseInt(req.params.id);
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3669,7 +3669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -3690,7 +3690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3713,7 +3713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3740,7 +3740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const templateId = parseInt(req.params.id);
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3768,7 +3768,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const templateId = parseInt(req.params.id);
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3793,7 +3793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -3847,7 +3847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -4206,7 +4206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(404).json({ message: "Landlord profile not found" });
       }
@@ -4256,7 +4256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -4406,11 +4406,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Initialize onboarding if not exists
       if (!progress) {
-        progress = await storage.initializeOnboarding(req.user.claims.sub, req.user.userType as 'tenant' | 'landlord');
+        progress = await storage.initializeOnboarding(req.user.id, req.user.userType as 'tenant' | 'landlord');
       }
 
       const steps = await storage.getOnboardingSteps(progress.id);
-      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.claims.sub);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
 
       res.json({
         progress: {
@@ -4456,7 +4456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // SECURITY: Validate prerequisites before marking complete
       // This prevents manual completion without meeting requirements
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       const rentCard = await storage.getRentCard(req.user.claims.sub);
       let canComplete = false;
       let validationError = "";
@@ -4520,8 +4520,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Get updated progress
-      const progress = await storage.getOnboardingProgress(req.user.claims.sub);
-      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.claims.sub);
+      const progress = await storage.getOnboardingProgress(req.user.id);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
 
       res.json({
         success: true,
@@ -4562,7 +4562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const results: { [key: string]: boolean } = {};
 
       // Check profile completion
-      const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const tenantProfile = await storage.getTenantProfile(req.user.id);
       const rentCard = await storage.getRentCard(req.user.claims.sub);
       
       const profileCompleted = !!(
@@ -4610,8 +4610,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get updated progress
-      const progress = await storage.getOnboardingProgress(req.user.claims.sub);
-      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.claims.sub);
+      const progress = await storage.getOnboardingProgress(req.user.id);
+      const calculatedProgress = await storage.calculateOnboardingProgress(req.user.id);
 
       res.json({
         success: true,
@@ -4961,7 +4961,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Landlord profile required" });
       }
@@ -5031,7 +5031,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Landlord profile required" });
       }
@@ -5177,7 +5177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify landlord profile
-      const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+      const landlordProfile = await storage.getLandlordProfile(req.user.id);
       if (!landlordProfile) {
         return res.status(403).json({ message: "Landlord profile required" });
       }
