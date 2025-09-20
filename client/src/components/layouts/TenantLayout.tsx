@@ -5,6 +5,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import OneClickShareButton from '../shared/OneClickShareButton';
 import { ROUTES } from "@/constants";
 import { Link } from "wouter";
 import TenantSidebar from '../shared/TenantSidebar';
@@ -28,14 +29,24 @@ const TenantLayout: React.FC<TenantLayoutProps> = ({ children, activeRoute = ROU
             <span className="text-base sm:text-lg font-semibold text-blue-600">MyRentCard</span>
           </div>
         </Link>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="h-8 w-8 sm:h-9 sm:w-9"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <OneClickShareButton 
+            variant="outline" 
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+            showText={false}
+            mode="simple"
+            data-testid="button-share-mobile-header"
+          />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="h-8 w-8 sm:h-9 sm:w-9"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -52,6 +52,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useParams } from 'wouter';
 import TenantLayout from '@/components/layouts/TenantLayout';
 import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
+import OneClickShareButton from '@/components/shared/OneClickShareButton';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useForm } from 'react-hook-form';
@@ -502,16 +503,14 @@ const RentCard = () => {
                 </Button>
               )}
               {(!isPublicView || (user && slug === `${user.email.split('@')[0]}-${user.id}`)) && (
-                <Button 
+                <OneClickShareButton 
                   variant="outline"
-                  onClick={handleShare}
+                  size="default"
                   className="bg-white text-blue-600 hover:bg-blue-50"
-                  disabled={loadingStates.downloadPDF}
+                  showText={true}
+                  mode="simple"
                   data-testid="button-share-rentcard"
-                >
-                  <Share2 className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Share</span>
-                </Button>
+                />
               )}
               <Button 
                 variant="outline"
