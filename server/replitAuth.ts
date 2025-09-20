@@ -127,7 +127,9 @@ export async function setupAuth(app: Express) {
   ) => {
     const user = {} as Express.User;
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    const dbUser = await upsertUser(tokens.claims());
+    // Store the actual database user ID in the session
+    user.claims.dbUserId = dbUser.id;
     verified(null, user);
   };
 
