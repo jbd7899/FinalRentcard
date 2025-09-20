@@ -28,7 +28,7 @@ type TimeFilter = '7days' | '30days' | '90days' | 'all';
 type TabType = 'overview' | 'properties' | 'interests' | 'analytics';
 
 interface PropertyWithCount extends Omit<Property, 'isArchived'> {
-  applicationCount: number | null;
+  interestCount: number | null;
   viewCount: number | null;
   isArchived: boolean;
 }
@@ -89,7 +89,7 @@ const LandlordDashboard = () => {
           slug: 'general-screening',
           businessName: user?.userType === 'landlord' ? 'Your Business' : 'Your Business',
           viewCount: 35,
-          applicationCount: 8
+          interestCount: 8
         };
       }
     },
@@ -130,8 +130,8 @@ const LandlordDashboard = () => {
     toggleArchiveProperty.mutate(propertyId);
   };
 
-  const totalSubmissions = properties?.reduce((sum, property) => {
-    return sum + (property.applicationCount || 0);
+  const totalInterests = properties?.reduce((sum, property) => {
+    return sum + (property.interestCount || 0);
   }, 0) || 0;
   const activeProperties = properties?.filter(p => !p.isArchived)?.length || 0;
   const totalViews = properties?.reduce((sum, property) => {
@@ -221,7 +221,7 @@ const LandlordDashboard = () => {
       {activeTab === 'overview' && (
         <OverviewTab
           totalViews={totalViews}
-          totalSubmissions={totalSubmissions}
+          totalInterests={totalInterests}
           activeProperties={activeProperties}
           generalScreening={generalScreening}
           generalScreeningLoading={generalScreeningLoading}

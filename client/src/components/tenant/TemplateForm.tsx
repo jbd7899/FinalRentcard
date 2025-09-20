@@ -64,7 +64,7 @@ const templateFormSchema = z.object({
   templateName: z.string().min(1, 'Template name is required').max(100, 'Template name is too long'),
   subject: z.string().min(1, 'Subject is required').max(200, 'Subject is too long'),
   body: z.string().min(1, 'Message body is required').max(5000, 'Message is too long'),
-  category: z.enum(['initial_inquiry', 'follow_up', 'application', 'custom']),
+  category: z.enum(['initial_inquiry', 'follow_up', 'interest', 'custom']),
   isDefault: z.boolean().default(false),
 });
 
@@ -84,10 +84,10 @@ const TEMPLATE_CATEGORIES = [
     description: 'Following up with individual landlords after viewings or initial contact' 
   },
   { 
-    value: 'application', 
-    label: 'Application', 
+    value: 'interest', 
+    label: 'Interest', 
     icon: FileText, 
-    description: 'When submitting rental applications to individual landlords' 
+    description: 'When expressing interest to individual landlords' 
   },
   { 
     value: 'custom', 
@@ -139,11 +139,11 @@ I'm available to discuss this at your convenience and appreciate the personal to
 Best regards,
 {tenant_name}`
   },
-  application: {
-    subject: 'Rental Application - {property_address}',
+  interest: {
+    subject: 'Interest in Property - {property_address}',
     body: `Dear {contact_name},
 
-I am submitting my rental application for the property at {property_address}. I'm very excited about this opportunity and believe I would be an excellent tenant.
+I am expressing my interest in the property at {property_address}. I'm very excited about this opportunity and believe I would be an excellent tenant.
 
 Please find my complete rental profile here: {rentcard_link}
 
@@ -152,11 +152,11 @@ This RentCard contains:
 - Complete rental history with references
 - Credit information and financial documentation
 - Personal and professional references
-- All required application materials
+- All required prequalification materials
 
-I've ensured all information is current and complete. Please don't hesitate to contact me if you need any additional documentation or have any questions about my application.
+I've ensured all information is current and complete. Please don't hesitate to contact me if you need any additional documentation or have any questions about my profile.
 
-Thank you for considering my application. I look forward to hearing from you soon.
+Thank you for considering my interest. I look forward to hearing from you soon.
 
 Sincerely,
 {tenant_name}`
@@ -194,7 +194,7 @@ export const TemplateForm = ({ template, onClose, onSuccess }: TemplateFormProps
         templateName: template.templateName,
         subject: template.subject,
         body: template.body,
-        category: template.category as 'initial_inquiry' | 'follow_up' | 'application' | 'custom',
+        category: template.category as 'initial_inquiry' | 'follow_up' | 'interest' | 'custom',
         isDefault: template.isDefault,
       });
     } else {

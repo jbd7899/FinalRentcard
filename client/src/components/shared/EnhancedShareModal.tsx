@@ -323,15 +323,15 @@ export function EnhancedShareModal({
   const shareViaEmail = async () => {
     try {
       const shareUrl = await createShortlinkWithChannel('email');
-      const subject = encodeURIComponent('My RentCard Profile - Rental Application');
+      const subject = encodeURIComponent('My RentCard Profile - Prequalification');
       const body = encodeURIComponent(
         `Hi there,
 
-I'd like to share my rental application profile with you. Please take a look at my RentCard:
+I'd like to share my prequalification profile with you. Please take a look at my RentCard:
 
 ${shareUrl}
 
-This secure link contains my verified rental history, references, and all the information you need for my application.
+This secure link contains my verified rental history, references, and all the information you need for my prequalification.
 
 Best regards`
       );
@@ -351,7 +351,7 @@ Best regards`
     try {
       const shareUrl = await createShortlinkWithChannel('sms');
       const message = encodeURIComponent(
-        `Here's my RentCard for your rental application review: ${shareUrl}`
+        `Here's my RentCard for your prequalification review: ${shareUrl}`
       );
       const smsUrl = `sms:?body=${message}`;
       window.location.href = smsUrl;

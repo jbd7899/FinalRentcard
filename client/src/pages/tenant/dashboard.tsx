@@ -109,7 +109,7 @@ const TenantDashboard = () => {
     { icon: <Star className="w-5 h-5" />, label: "My RentCard", route: ROUTES.TENANT.RENTCARD },
     { icon: <FileText className="w-5 h-5" />, label: "Documents", route: ROUTES.TENANT.DOCUMENTS },
     { icon: <UserCheck className="w-5 h-5" />, label: "References", route: ROUTES.TENANT.REFERENCES },
-    { icon: <Building2 className="w-5 h-5" />, label: "Applications", route: ROUTES.TENANT.INTERESTS }
+    { icon: <Building2 className="w-5 h-5" />, label: "My Shared RentCards", route: ROUTES.TENANT.INTERESTS }
   ];
 
   return (
@@ -119,7 +119,7 @@ const TenantDashboard = () => {
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-sm sm:text-base text-gray-500 mt-1">
-              Manage your rental profile and applications
+              Manage your rental profile and interests
             </p>
           </div>
           
@@ -214,7 +214,7 @@ const TenantDashboard = () => {
           <Card className="hover:shadow-md transition-shadow">
             <CardContent className="p-3 sm:p-4 flex flex-col items-center justify-center text-center">
               <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500 mb-1 sm:mb-2" />
-              <h3 className="font-medium text-sm sm:text-base">Applications</h3>
+              <h3 className="font-medium text-sm sm:text-base">Shared RentCards</h3>
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -289,7 +289,7 @@ const TenantDashboard = () => {
         <section>
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-medium">Active Applications</h2>
+              <h2 className="text-base sm:text-lg font-medium">Active Interests</h2>
               <ComingSoonBadge type="feature" size="sm" title="Beta" />
             </div>
             <Link href={ROUTES.TENANT.INTERESTS}>
@@ -300,8 +300,8 @@ const TenantDashboard = () => {
           {applications.length > 0 ? (
             <ComingSoonWithMockData
               type="feature"
-              title="Application Tracking"
-              description="Real-time application tracking with landlord communications is coming soon. Currently showing demo data."
+              title="Interest Tracking"
+              description="Real-time interest tracking with landlord communications is coming soon. Currently showing demo data."
               overlay={false}
               mockDataComponent={
                 <Card>
@@ -355,7 +355,7 @@ const TenantDashboard = () => {
             <Card>
               <CardContent className="p-5 sm:p-6 text-center">
                 <Building2 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">No active applications</p>
+                <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">No active interests</p>
                 <Button 
                   variant="outline" 
                   size="sm" 

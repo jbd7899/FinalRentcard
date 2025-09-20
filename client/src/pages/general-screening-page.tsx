@@ -169,7 +169,7 @@ const GeneralScreeningPage = () => {
                 Your General Screening Page
               </h1>
               <p className="text-gray-600">
-                This is your general screening page for tenant applications. Tenants can submit their RentCard or complete a quick pre-screening form.
+                This is your general screening page for tenant prequalification. Tenants can submit their RentCard or complete a quick pre-screening form.
               </p>
             </div>
             <Button 
@@ -235,7 +235,7 @@ const GeneralScreeningPage = () => {
                   </div>
                   <div className="ml-0 md:ml-4 mt-4 md:mt-0 text-center md:text-left">
                     <h1 className="text-2xl font-bold text-white">Multiple Properties Available</h1>
-                    <p className="text-blue-100">Apply once for all properties</p>
+                    <p className="text-blue-100">Express interest for all properties</p>
                   </div>
                 </div>
               </div>
@@ -248,7 +248,7 @@ const GeneralScreeningPage = () => {
             <div className="p-8 bg-blue-50 border-b border-blue-100">
               <div className="flex items-center gap-2 mb-4">
                 <Star className="w-6 h-6 text-blue-600 fill-current" />
-                <h2 className="text-2xl font-bold text-gray-800">Fast-Track Your Application with RentCard</h2>
+                <h2 className="text-2xl font-bold text-gray-800">Fast-Track Your Prequalification with RentCard</h2>
               </div>
               <div className="flex flex-col md:flex-row items-center gap-8">
                 <div className="flex-1 text-center md:text-left">
@@ -258,7 +258,7 @@ const GeneralScreeningPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                       <Clock className="w-5 h-5 text-blue-600" />
-                      <span>Apply in seconds</span>
+                      <span>Express interest in seconds</span>
                     </div>
                     <div className="flex items-center gap-3 text-gray-700 justify-center md:justify-start">
                       <Shield className="w-5 h-5 text-blue-600" />
@@ -292,7 +292,7 @@ const GeneralScreeningPage = () => {
                       onClick={() => setLocation('/auth')}
                     >
                       <Share2 className="w-5 h-5" />
-                      Sign In to Apply
+                      Sign In to Express Interest
                     </Button>
                   )}
                   {!user && (

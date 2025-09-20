@@ -90,7 +90,7 @@ export default function Navbar() {
                       {location.includes('/rentcard') ? 'RentCard' :
                        location.includes('/documents') ? 'Documents' :
                        location.includes('/references') ? 'References' :
-                       location.includes('/applications') ? 'Applications' :
+                       location.includes('/applications') ? 'Interest Tracking' :
                        'Dashboard'}
                     </span>
                   </>
@@ -106,7 +106,7 @@ export default function Navbar() {
                   <>
                     <ChevronRight className="w-3 h-3 text-gray-400" />
                     <span className="text-gray-700">
-                      {location.includes('/applications') ? 'Applications' :
+                      {location.includes('/applications') ? 'Interest Tracking' :
                        location.includes('/screening') ? 'Screening' :
                        location.includes('/properties') ? 'Properties' :
                        location.includes('/verify-documents') ? 'Verify Documents' :
@@ -152,7 +152,7 @@ export default function Navbar() {
                   <Link href="/landlord/applications">
                     <span className="text-muted-foreground hover:text-foreground flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      Verified Applicants
+                      Interest Tracking
                     </span>
                   </Link>
                   <Link href="/landlord/verify-documents">

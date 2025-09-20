@@ -56,11 +56,11 @@ const TEMPLATE_CATEGORIES = {
     color: 'bg-green-500',
     description: 'Following up after property viewings'
   },
-  application: { 
-    label: 'Application', 
+  interest: { 
+    label: 'Interest', 
     icon: FileText, 
     color: 'bg-purple-500',
-    description: 'When submitting rental applications'
+    description: 'When expressing interest to landlords'
   },
   custom: { 
     label: 'Custom', 
@@ -93,7 +93,7 @@ const MessageTemplatesPage = () => {
     categories: {
       initial_inquiry: true,
       follow_up: true,
-      application: true,
+      interest: true,
       custom: true,
     }
   });
@@ -421,9 +421,9 @@ const MessageTemplatesPage = () => {
               <Mail className="h-4 w-4 mr-1" />
               Follow-up ({categoryStats.follow_up || 0})
             </TabsTrigger>
-            <TabsTrigger value="application" data-testid="tab-application">
+            <TabsTrigger value="interest" data-testid="tab-interest">
               <FileText className="h-4 w-4 mr-1" />
-              Application ({categoryStats.application || 0})
+              Interest ({categoryStats.interest || 0})
             </TabsTrigger>
           </TabsList>
 

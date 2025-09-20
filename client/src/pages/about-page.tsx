@@ -36,11 +36,11 @@ export default function AboutPage() {
         icon: UserCheck,
         title: "Create Your RentCard Once",
         description: "Complete your standardized rental profile with income, references, and documents.",
-        detail: "Use the same professional application format with every landlord."
+        detail: "Use the same professional prequalification format with every landlord."
       },
       {
         icon: Eye,
-        title: "Apply Instantly Anywhere",
+        title: "Express Interest Instantly Anywhere",
         description: "Share your RentCard link or QR code. Landlords can review your qualifications before scheduling showings.",
         detail: "Know if it's a match from the beginning - saves time for everyone."
       },
@@ -61,13 +61,13 @@ export default function AboutPage() {
       {
         icon: Users,
         title: "Get Pre-Qualified Tenants",
-        description: "Receive complete applications from pre-qualified tenants before first contact.",
+        description: "Receive complete prequalification from pre-qualified tenants before first contact.",
         detail: "Review income, references, and documents upfront - no back-and-forth collection."
       },
       {
         icon: Clock,
         title: "Make Decisions Faster",
-        description: "Review complete applications in minutes, not days. Your personal touch with professional efficiency.",
+        description: "Review complete prequalification in minutes, not days. Your personal touch with professional efficiency.",
         detail: "Make decisions quickly while maintaining personal service."
       }
     ]
@@ -77,7 +77,7 @@ export default function AboutPage() {
     tenant: [
       {
         icon: RefreshCw,
-        title: "Standardized Application Format",
+        title: "Standardized Prequalification Format",
         description: "Create your rental profile once, use it with any landlord. Consistent professional presentation every time.",
         reality: "Saves hours of time re-entering the same employment and income information."
       },
@@ -98,12 +98,12 @@ export default function AboutPage() {
       {
         icon: Smartphone,
         title: "No Complex Setup Required",
-        description: "Generate QR codes and collect applications without creating accounts or learning new systems.",
+        description: "Generate QR codes and collect prequalification without creating accounts or learning new systems.",
         reality: "Focus on finding qualified tenants with minimal administrative overhead."
       },
       {
         icon: UserCheck,
-        title: "Complete Applications Upfront",
+        title: "Complete Prequalification Upfront",
         description: "Tenants using MyRentCard provide income verification, references, and documents before contact.",
         reality: "Eliminate time spent collecting basic qualification information."
       },
@@ -119,7 +119,7 @@ export default function AboutPage() {
   const faqs = [
     {
       question: "Do I have to create an account to use this?",
-      answer: "Tenants create RentCards to apply places. Landlords can generate QR codes and collect applications without any account - you only sign up if you want to save your properties and view applications later."
+      answer: "Tenants create RentCards to express interest with landlords. Landlords can generate QR codes and collect prequalification without any account - you only sign up if you want to save your properties and view prequalification later."
     },
     {
       question: "What if the landlord isn't on your platform?",
@@ -162,7 +162,7 @@ export default function AboutPage() {
               Standardized Prequalification for Private Rentals
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Save time on both sides with standardized rental applications. Know if it's a match from the beginning 
+              Save time on both sides with standardized prequalification. Know if it's a match from the beginning 
               and skip unnecessary calls and showings that don't lead anywhere.
             </p>
           </div>
@@ -219,7 +219,7 @@ export default function AboutPage() {
                     <h4 className="font-semibold text-green-800 mb-2">What you get:</h4>
                     <ul className="space-y-2 text-green-700">
                       <li>• Pre-qualified tenants with income verification ready to view</li>
-                      <li>• Complete rental applications before first contact</li>
+                      <li>• Complete prequalification before first contact</li>
                       <li>• Professional tools for efficient tenant screening</li>
                       <li>• Time saved on applicants who aren't a good fit</li>
                     </ul>
@@ -232,21 +232,21 @@ export default function AboutPage() {
               ) : (
                 <div className="space-y-6">
                   <p className="text-lg text-gray-700 leading-relaxed">
-                    Different landlords require different application formats and information. 
+                    Different landlords require different prequalification formats and information. 
                     Standardized prequalification lets you maintain one complete profile that works everywhere.
                   </p>
                   <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-400">
                     <h4 className="font-semibold text-blue-800 mb-2">Common challenges:</h4>
                     <ul className="space-y-2 text-blue-700">
-                      <li>• Each property has different application requirements and formats</li>
+                      <li>• Each property has different prequalification requirements and formats</li>
                       <li>• Re-entering the same employment and income information repeatedly</li>
-                      <li>• Private landlords expect professional applications but may lack standardized systems</li>
+                      <li>• Private landlords expect professional prequalification but may lack standardized systems</li>
                       <li>• Difficulty showing qualification before viewing properties</li>
                     </ul>
                   </div>
                   <p className="text-gray-700">
                     MyRentCard provides a standardized format that works with any landlord. 
-                    Present professional applications consistently while saving time on repeated data entry.
+                    Present professional prequalification consistently while saving time on repeated data entry.
                   </p>
                 </div>
               )}
@@ -369,8 +369,8 @@ export default function AboutPage() {
             <CardContent className="p-8">
               <p className="text-lg text-gray-600 mb-6">
                 {isLandlordSelected 
-                  ? "Start collecting complete applications from qualified tenants today."
-                  : "Create your standardized rental profile and save time on every application."
+                  ? "Start collecting complete prequalification from qualified tenants today."
+                  : "Create your standardized rental profile and save time on every prequalification."
                 }
               </p>
               

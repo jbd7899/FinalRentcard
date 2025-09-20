@@ -63,7 +63,7 @@ const RequestModal: React.FC = () => {
             <Textarea
               rows={3}
               placeholder="Add a personal message..."
-              defaultValue={`Hi! Join our trusted network of individual landlords and quality tenants. Complete your RentCard profile to apply for my property and connect with individual property owners who make ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}.`}
+              defaultValue={`Hi! Join our trusted network of individual landlords and quality tenants. Complete your RentCard profile to express interest in my property and connect with individual property owners who make ${SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_DECISIONS}.`}
               className="text-xs sm:text-sm mt-1"
             />
           </div>

@@ -55,8 +55,8 @@ import { useAuthStore } from '@/stores/authStore';
 interface OverviewTabProps {
   /** Total number of screening page views across all properties */
   totalViews: number;
-  /** Total number of tenant applications submitted */
-  totalSubmissions: number;
+  /** Total number of tenant interests submitted */
+  totalInterests: number;
   /** Number of active (non-archived) properties */
   activeProperties: number;
   /** General screening page data */
@@ -74,7 +74,7 @@ interface OverviewTabProps {
  */
 const OverviewTab: React.FC<OverviewTabProps> = ({
   totalViews,
-  totalSubmissions,
+  totalInterests,
   activeProperties,
   generalScreening,
   generalScreeningLoading,
@@ -174,11 +174,11 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
         />
 
         <StatsCard
-          title="Total Submissions"
-          value={totalSubmissions}
+          title="Total Interests"
+          value={totalInterests}
           description="From all properties"
           icon={<Users className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />}
-          type="submissions"
+          type="interests"
         />
 
         <Card className="sm:col-span-2 md:col-span-1">
@@ -319,14 +319,14 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                       </div>
                       <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                         <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
-                        <span>{generalScreening.applicationCount || 0}</span>
+                        <span>{generalScreening.interestCount || 0}</span>
                       </div>
                     </div>
                   </div>
 
                   <GeneralScreeningActions
                     screeningLink={generalScreening.slug || `landlord-${user?.id || '1'}-screening`}
-                    submissionCount={generalScreening.applicationCount || 0}
+                    submissionCount={generalScreening.interestCount || 0}
                     viewCount={generalScreening.viewCount || 0}
                   />
                 </CardContent>

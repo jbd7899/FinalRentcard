@@ -98,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         { 
           icon: <Users className="w-5 h-5" />, 
-          label: "Applications", 
+          label: "Interest Tracking", 
           route: ROUTES.LANDLORD.APPLICATIONS, 
           active: isActive(ROUTES.LANDLORD.APPLICATIONS) 
         },
@@ -154,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         },
         { 
           icon: <Building2 className="w-5 h-5" />, 
-          label: "Applications", 
+          label: "Interest Tracking", 
           route: ROUTES.TENANT.APPLICATIONS, 
           active: isActive(ROUTES.TENANT.APPLICATIONS) 
         },

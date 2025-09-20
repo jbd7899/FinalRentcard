@@ -44,7 +44,7 @@ const ArchivedPropertyPage = () => {
         
         <CardContent className="text-center">
           <p className="text-muted-foreground mb-6">
-            This property is no longer accepting applications or screening requests.
+            This property is no longer accepting prequalification or screening requests.
           </p>
           
           {property && (

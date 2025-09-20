@@ -147,7 +147,7 @@ export default function LandlordLanding() {
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">{SOCIAL_PROOF_STATS.TENANT_APPLICATION_TIME_SAVED}</div>
-              <div className="text-sm text-gray-600">Application Processing Time</div>
+              <div className="text-sm text-gray-600">Prequalification Processing Time</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-purple-600">Direct Communication</div>
@@ -293,7 +293,7 @@ export default function LandlordLanding() {
         <div className="text-center bg-green-600 text-white p-12 rounded-xl">
           <h2 className="text-3xl font-bold mb-4">Ready to Get {SOCIAL_PROOF_STATS.INDIVIDUAL_LANDLORD_RESPONSE_TIME}?</h2>
           <p className="text-xl text-green-100 mb-8">
-            Skip reference verification, eliminate follow-up emails, and review applications in 15 minutes instead of 45.
+            Skip reference verification, eliminate follow-up emails, and review prequalifications in 15 minutes instead of 45.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4">
