@@ -84,15 +84,19 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={() => !isSubmitting && onClose()}>
-      <DialogContent className="max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
+      <DialogContent 
+        className="max-w-2xl max-h-[95vh] flex flex-col" 
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Welcome! Choose your role</DialogTitle>
           <DialogDescription>
             To get started, please let us know how you'll be using MyRentCard.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
           <Card 
             className={`cursor-pointer transition-all hover:shadow-md ${
               selectedRole === 'tenant' ? 'ring-2 ring-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'hover:ring-1 hover:ring-gray-300'
@@ -144,9 +148,10 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
               </ul>
             </CardContent>
           </Card>
+          </div>
         </div>
 
-        <div className="flex justify-center gap-4 pt-6 border-t">
+        <div className="flex justify-center gap-4 pt-4 border-t flex-shrink-0">
           <Button
             onClick={handleSubmit}
             disabled={!selectedRole || isSubmitting}
