@@ -95,7 +95,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
           <Card 
             className={`cursor-pointer transition-all hover:shadow-md ${
-              selectedRole === 'tenant' ? 'ring-2 ring-primary' : ''
+              selectedRole === 'tenant' ? 'ring-2 ring-blue-600 bg-blue-50 dark:bg-blue-900/20' : 'hover:ring-1 hover:ring-gray-300'
             }`}
             onClick={() => handleRoleSelect('tenant')}
             data-testid="card-role-tenant"
@@ -121,7 +121,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
 
           <Card 
             className={`cursor-pointer transition-all hover:shadow-md ${
-              selectedRole === 'landlord' ? 'ring-2 ring-primary' : ''
+              selectedRole === 'landlord' ? 'ring-2 ring-green-600 bg-green-50 dark:bg-green-900/20' : 'hover:ring-1 hover:ring-gray-300'
             }`}
             onClick={() => handleRoleSelect('landlord')}
             data-testid="card-role-landlord"
@@ -146,13 +146,15 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
           </Card>
         </div>
 
-        <div className="flex justify-end gap-4 pt-6 border-t">
+        <div className="flex justify-center gap-4 pt-6 border-t">
           <Button
             onClick={handleSubmit}
             disabled={!selectedRole || isSubmitting}
+            size="lg"
+            className="w-full sm:w-auto min-w-[200px]"
             data-testid="button-confirm-role"
           >
-            {isSubmitting ? "Setting up..." : "Continue"}
+            {isSubmitting ? "Setting up..." : selectedRole ? `Continue as ${selectedRole}` : "Select a role above"}
           </Button>
         </div>
       </DialogContent>
