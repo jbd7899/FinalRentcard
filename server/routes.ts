@@ -35,7 +35,7 @@ import { sendReferenceVerificationEmail, verifyToken } from "./email";
 import { emailService, EmailType } from "./services/emailService";
 
 // Helper function to get database user ID consistently
-function getDbUserId(req: Request): string | null {
+function getDbUserId(req: any): string | null {
   return req.user?.claims?.dbUserId || null;
 }
 
@@ -156,7 +156,8 @@ async function assertRentCardRequestOwnership(req: any, requestId: number): Prom
 }
 
 async function assertProspectListOwnership(req: any, listId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -165,14 +166,15 @@ async function assertProspectListOwnership(req: any, listId: number): Promise<vo
     throw new Error("Prospect list not found");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+  const landlordProfile = await storage.getLandlordProfile(userId);
   if (!landlordProfile || landlordProfile.id !== list.landlordId) {
     throw new Error("Forbidden: Access denied to this prospect list");
   }
 }
 
 async function assertShareTokenOwnership(req: any, tokenId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -181,18 +183,19 @@ async function assertShareTokenOwnership(req: any, tokenId: number): Promise<voi
     throw new Error("Share token not found");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.claims.sub);
+  const tenantProfile = await storage.getTenantProfile(userId);
   if (!tenantProfile || tenantProfile.id !== shareToken.tenantId) {
     throw new Error("Forbidden: Access denied to this share token");
   }
 }
 
 async function assertLandlordTenantAssociation(req: any, tenantId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+  const landlordProfile = await storage.getLandlordProfile(userId);
   if (!landlordProfile) {
     throw new Error("Landlord profile not found");
   }
