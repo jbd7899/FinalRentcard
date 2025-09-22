@@ -176,7 +176,8 @@ export async function setupAuth(app: Express) {
   });
   
   // Development-only test authentication endpoint
-  if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+  // SECURITY: Only enabled in explicit development mode
+  if (process.env.NODE_ENV === 'development') {
     const crypto = await import('crypto');
     
     app.post("/api/dev/test-login", async (req, res) => {
