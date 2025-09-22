@@ -611,11 +611,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`Fetching tenant profile for user ID: ${userId}`);
-      const profile = await storage.getTenantProfile(String(userId));
+      let profile = await storage.getTenantProfile(String(userId));
       
       if (!profile) {
-        console.log(`No tenant profile found for user ID: ${userId}`);
-        return res.status(404).json({ message: "Profile not found" });
+        console.log(`No tenant profile found for user ID: ${userId}, creating minimal profile...`);
+        
+        // Lazy profile creation: Create a minimal profile if it doesn't exist
+        const user = await storage.getUser(String(userId));
+        if (!user) {
+          console.error(`User not found for ID: ${userId}`);
+          return res.status(404).json({ message: "User not found" });
+        }
+        
+        // Create minimal tenant profile
+        try {
+          profile = await storage.createTenantProfile({
+            userId: String(userId),
+            fullName: user.fullName || user.firstName + ' ' + user.lastName || 'New User',
+            email: user.email || '',
+            phoneNumber: user.phoneNumber || '',
+            currentEmployer: '',
+            annualIncome: '',
+            creditScore: null,
+            rentalHistory: JSON.stringify([]),
+            employmentInfo: JSON.stringify({}),
+            emergencyContact: JSON.stringify({}),
+            pets: JSON.stringify([]),
+            references: JSON.stringify([]),
+            additionalInfo: ''
+          });
+          
+          console.log(`Created minimal tenant profile for user ID: ${userId}`);
+        } catch (createError) {
+          console.error('Error creating minimal profile:', createError);
+          return res.status(500).json({ message: "Failed to initialize profile" });
+        }
       }
       
       console.log(`Successfully retrieved tenant profile for user ID: ${userId}`);
@@ -1854,9 +1884,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(String(userId));
+      let tenantProfile = await storage.getTenantProfile(String(userId));
       if (!tenantProfile) {
-        return res.status(404).json({ message: "Tenant profile not found" });
+        // Lazy profile creation for share-tokens endpoint
+        const user = await storage.getUser(String(userId));
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        
+        tenantProfile = await storage.createTenantProfile({
+          userId: String(userId),
+          fullName: user.fullName || user.firstName + ' ' + user.lastName || 'New User',
+          email: user.email || '',
+          phoneNumber: user.phoneNumber || '',
+          currentEmployer: '',
+          annualIncome: '',
+          creditScore: null,
+          rentalHistory: JSON.stringify([]),
+          employmentInfo: JSON.stringify({}),
+          emergencyContact: JSON.stringify({}),
+          pets: JSON.stringify([]),
+          references: JSON.stringify([]),
+          additionalInfo: ''
+        });
       }
 
       const shareTokens = await storage.getShareTokensByTenant(tenantProfile.id);
