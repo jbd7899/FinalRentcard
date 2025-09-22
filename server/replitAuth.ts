@@ -174,6 +174,81 @@ export async function setupAuth(app: Express) {
       );
     });
   });
+  
+  // Development-only test authentication endpoint
+  if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
+    const crypto = await import('crypto');
+    
+    app.post("/api/dev/test-login", async (req, res) => {
+      try {
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+          return res.status(400).json({ message: "Email and password required" });
+        }
+        
+        // Only allow test accounts
+        if (!email.includes('@myrentcard.com') || !email.includes('test-')) {
+          return res.status(403).json({ message: "Only test accounts allowed" });
+        }
+        
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+        
+        // Verify password using same method as seed script
+        const hashPassword = (pwd: string): Promise<string> => {
+          return new Promise((resolve, reject) => {
+            crypto.scrypt(pwd, 'salt', 64, (err: Error, derivedKey: Buffer) => {
+              if (err) reject(err);
+              resolve(derivedKey.toString('hex'));
+            });
+          });
+        };
+        
+        const hashedInput = await hashPassword(password);
+        if (user.password !== hashedInput) {
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+        
+        // Create session mimicking OAuth structure
+        const testUser: Express.User = {
+          claims: {
+            sub: user.id,
+            email: user.email || '',
+            dbUserId: user.id,  // Critical: Set the database user ID
+            userType: user.userType
+          },
+          expires_at: Math.floor(Date.now() / 1000) + 3600  // 1 hour expiry
+        };
+        
+        // Save session
+        req.login(testUser, (err) => {
+          if (err) {
+            console.error("Session creation error:", err);
+            return res.status(500).json({ message: "Session creation failed" });
+          }
+          
+          res.json({ 
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              userType: user.userType,
+              fullName: user.fullName
+            }
+          });
+        });
+        
+      } catch (error) {
+        console.error("Test login error:", error);
+        res.status(500).json({ message: "Login failed" });
+      }
+    });
+    
+    console.log("⚠️  Development mode: Test login endpoint enabled at /api/dev/test-login");
+  }
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
