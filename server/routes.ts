@@ -34,6 +34,11 @@ import { db } from "./db";
 import { sendReferenceVerificationEmail, verifyToken } from "./email";
 import { emailService, EmailType } from "./services/emailService";
 
+// Helper function to get database user ID consistently
+function getDbUserId(req: Request): string | null {
+  return req.user?.claims?.dbUserId || null;
+}
+
 // Standardized error handler for consistent API responses
 function handleRouteError(error: unknown, res: any, operation: string): void {
   console.error(`Error in ${operation}:`, error);
@@ -59,29 +64,32 @@ function handleRouteError(error: unknown, res: any, operation: string): void {
 
 // Authorization helper functions
 async function assertTenantOwnership(req: any, tenantId: number): Promise<void> {
-  if (!req.user?.id) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  const tenantProfile = await storage.getTenantProfile(userId);
   if (!tenantProfile || tenantProfile.id !== tenantId) {
     throw new Error("Forbidden: Access denied to this tenant resource");
   }
 }
 
 async function assertLandlordOwnership(req: any, landlordId: number): Promise<void> {
-  if (!req.user?.id) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.id);
+  const landlordProfile = await storage.getLandlordProfile(userId);
   if (!landlordProfile || landlordProfile.id !== landlordId) {
     throw new Error("Forbidden: Access denied to this landlord resource");
   }
 }
 
 async function assertReferenceOwnership(req: any, referenceId: number): Promise<void> {
-  if (!req.user?.id) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -90,14 +98,15 @@ async function assertReferenceOwnership(req: any, referenceId: number): Promise<
     throw new Error("Reference not found");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  const tenantProfile = await storage.getTenantProfile(userId);
   if (!tenantProfile || !reference.tenantId || tenantProfile.id !== reference.tenantId) {
     throw new Error("Forbidden: Access denied to this reference");
   }
 }
 
 async function assertDocumentOwnership(req: any, documentId: number): Promise<void> {
-  if (!req.user?.id) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -106,14 +115,15 @@ async function assertDocumentOwnership(req: any, documentId: number): Promise<vo
     throw new Error("Document not found");
   }
   
-  const tenantProfile = await storage.getTenantProfile(req.user.id);
+  const tenantProfile = await storage.getTenantProfile(userId);
   if (!tenantProfile || !document.tenantId || tenantProfile.id !== document.tenantId) {
     throw new Error("Forbidden: Access denied to this document");
   }
 }
 
 async function assertPropertyOwnership(req: any, propertyId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -122,14 +132,15 @@ async function assertPropertyOwnership(req: any, propertyId: number): Promise<vo
     throw new Error("Property not found");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+  const landlordProfile = await storage.getLandlordProfile(userId);
   if (!landlordProfile || landlordProfile.id !== property.landlordId) {
     throw new Error("Forbidden: Access denied to this property");
   }
 }
 
 async function assertRentCardRequestOwnership(req: any, requestId: number): Promise<void> {
-  if (!req.user?.claims?.sub) {
+  const userId = getDbUserId(req);
+  if (!userId) {
     throw new Error("Unauthorized: No user session");
   }
   
@@ -138,7 +149,7 @@ async function assertRentCardRequestOwnership(req: any, requestId: number): Prom
     throw new Error("RentCard request not found");
   }
   
-  const landlordProfile = await storage.getLandlordProfile(req.user.claims.sub);
+  const landlordProfile = await storage.getLandlordProfile(userId);
   if (!landlordProfile || landlordProfile.id !== request.landlordId) {
     throw new Error("Forbidden: Access denied to this RentCard request");
   }
@@ -500,15 +511,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's shortlinks
   app.get("/api/shortlinks", isAuthenticated, async (req, res) => {
     try {
+      const userId = req.user?.claims?.dbUserId;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       let shortlinks: Shortlink[] = [];
       
       if (req.user?.userType === 'tenant') {
-        const tenantProfile = await storage.getTenantProfile(req.user.id);
+        const tenantProfile = await storage.getTenantProfile(userId);
         if (tenantProfile) {
           shortlinks = await storage.getShortlinks(tenantProfile.id);
         }
       } else if (req.user?.userType === 'landlord') {
-        const landlordProfile = await storage.getLandlordProfile(req.user.id);
+        const landlordProfile = await storage.getLandlordProfile(userId);
         if (landlordProfile) {
           shortlinks = await storage.getShortlinks(undefined, landlordProfile.id);
         }
@@ -628,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`Fetching tenant profile for user ID: ${req.user.id} (verified tenant ID: ${tenantId})`);
-      const profile = await storage.getTenantProfile(req.user.id);
+      const profile = await storage.getTenantProfile(String(req.user.id));
       
       if (!profile) {
         console.log(`No tenant profile found for tenant ID: ${tenantId}`);
@@ -1806,11 +1822,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Share Token routes
   app.post("/api/share-tokens", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      const userId = req.user?.claims?.dbUserId;
+      if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const tenantProfile = await storage.getTenantProfile(req.user.id);
+      const tenantProfile = await storage.getTenantProfile(userId);
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
