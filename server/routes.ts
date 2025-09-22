@@ -598,11 +598,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profile = await storage.getTenantProfile(String(userId));
       
       if (!profile) {
-        console.log(`No tenant profile found for user ID: ${req.user.claims.sub}`);
+        console.log(`No tenant profile found for user ID: ${userId}`);
         return res.status(404).json({ message: "Profile not found" });
       }
       
-      console.log(`Successfully retrieved tenant profile for user ID: ${req.user.claims.sub}`);
+      console.log(`Successfully retrieved tenant profile for user ID: ${userId}`);
       res.json(profile);
     } catch (error) {
       handleRouteError(error, res, '/api/tenant/profile endpoint');
@@ -627,8 +627,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error("Unexpected: User session lost after ownership verification");
       }
       
-      console.log(`Fetching tenant profile for user ID: ${req.user.claims.sub} (verified tenant ID: ${tenantId})`);
-      const profile = await storage.getTenantProfile(req.user.claims.sub);
+      console.log(`Fetching tenant profile for user ID: ${req.user.id} (verified tenant ID: ${tenantId})`);
+      const profile = await storage.getTenantProfile(req.user.id);
       
       if (!profile) {
         console.log(`No tenant profile found for tenant ID: ${tenantId}`);
@@ -732,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Updating tenant profile for user ID: ${req.user.claims.sub}`);
       
       // Get the user's tenant profile to get the profile ID
-      const existingProfile = await storage.getTenantProfile(req.user.claims.sub);
+      const existingProfile = await storage.getTenantProfile(req.user.id);
       if (!existingProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
@@ -758,22 +758,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST endpoint for creating tenant RentCard
   app.post("/api/tenant/rentcard", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      const userId = req.user?.claims?.dbUserId;
+      if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      console.log(`Creating RentCard for user ID: ${req.user.id}`);
+      console.log(`Creating RentCard for user ID: ${userId}`);
       
       // Validate the request body against the RentCard schema
       const validatedData = {
         ...req.body,
-        userId: req.user.id
+        userId: userId
       };
       
       // Create the RentCard
       const rentCard = await storage.createRentCard(validatedData);
       
-      console.log(`Successfully created RentCard for user ID: ${req.user.id}`);
+      console.log(`Successfully created RentCard for user ID: ${userId}`);
       res.status(201).json(rentCard);
     } catch (error) {
       handleRouteError(error, res, '/api/tenant/rentcard POST endpoint');
@@ -1789,7 +1790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const rentCard = await storage.getRentCard(req.user.claims.sub);
+      const rentCard = await storage.getRentCard(req.user.id);
       if (!rentCard) {
         return res.status(404).json({ message: "RentCard not found" });
       }
@@ -2797,7 +2798,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user notifications with pagination and filtering
   app.get("/api/tenant/notifications", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      const userId = req.user?.claims?.dbUserId;
+      if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
@@ -2810,7 +2812,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: type as string
       };
 
-      const notifications = await storage.getUserNotifications(req.user.id, options);
+      const notifications = await storage.getUserNotifications(userId, options);
       res.json(notifications);
     } catch (error) {
       handleRouteError(error, res, 'get user notifications');
@@ -2820,12 +2822,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get notification count/badge count
   app.get("/api/tenant/notifications/count", isAuthenticated, async (req, res) => {
     try {
-      if (!req.user?.id) {
+      const userId = req.user?.claims?.dbUserId;
+      if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
       const { unreadOnly } = req.query;
-      const count = await storage.getUserNotificationCount(req.user.claims.sub, unreadOnly === 'true');
+      const count = await storage.getUserNotificationCount(userId, unreadOnly === 'true');
       
       res.json({ count });
     } catch (error) {
@@ -2843,7 +2846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notificationId = parseInt(req.params.id);
       
       // Verify ownership by getting the notification first
-      const notifications = await storage.getUserNotifications(req.user.claims.sub);
+      const notifications = await storage.getUserNotifications(req.user.id);
       const notification = notifications.find(n => n.id === notificationId);
       
       if (!notification) {
@@ -2867,7 +2870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notificationId = parseInt(req.params.id);
       
       // Verify ownership
-      const notifications = await storage.getUserNotifications(req.user.claims.sub);
+      const notifications = await storage.getUserNotifications(req.user.id);
       const notification = notifications.find(n => n.id === notificationId);
       
       if (!notification) {
@@ -2888,7 +2891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      await storage.markAllNotificationsAsRead(req.user.claims.sub);
+      await storage.markAllNotificationsAsRead(req.user.id);
       res.json({ message: "All notifications marked as read" });
     } catch (error) {
       handleRouteError(error, res, 'mark all notifications as read');
@@ -2902,12 +2905,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      let preferences = await storage.getUserNotificationPreferences(req.user.claims.sub);
+      let preferences = await storage.getUserNotificationPreferences(req.user.id);
       
       // Create default preferences if none exist
       if (!preferences) {
         preferences = await storage.createUserNotificationPreferences({
-          userId: req.user.claims.sub,
+          userId: req.user.id,
           rentcardViewsEnabled: true,
           rentcardViewsEmail: false,
           rentcardViewsFrequency: 'instant',
@@ -2951,12 +2954,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if preferences exist, create if not
-      let preferences = await storage.getUserNotificationPreferences(req.user.claims.sub);
+      let preferences = await storage.getUserNotificationPreferences(req.user.id);
       
       if (!preferences) {
         preferences = await storage.createUserNotificationPreferences({
           ...validationResult.data,
-          userId: req.user.claims.sub,
+          userId: req.user.id,
           quietHoursStart: validationResult.data.quietHoursStart ?? null,
           quietHoursEnd: validationResult.data.quietHoursEnd ?? null,
           rentcardViewsEnabled: validationResult.data.rentcardViewsEnabled ?? true,
@@ -2977,7 +2980,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           groupSimilarNotifications: validationResult.data.groupSimilarNotifications ?? true
         });
       } else {
-        preferences = await storage.updateUserNotificationPreferences(req.user.claims.sub, validationResult.data);
+        preferences = await storage.updateUserNotificationPreferences(req.user.id, validationResult.data);
       }
       
       res.json(preferences);
@@ -2994,7 +2997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { timeframe } = req.query;
-      const stats = await storage.getUserNotificationStats(req.user.claims.sub, timeframe as string);
+      const stats = await storage.getUserNotificationStats(req.user.id, timeframe as string);
       
       res.json(stats);
     } catch (error) {
@@ -3013,7 +3016,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const days = olderThanDays ? parseInt(olderThanDays as string) : 30;
       const olderThanDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-      await storage.deleteUserNotifications(req.user.claims.sub, olderThanDate);
+      await storage.deleteUserNotifications(req.user.id, olderThanDate);
       res.json({ message: `Deleted notifications older than ${days} days` });
     } catch (error) {
       handleRouteError(error, res, 'cleanup old notifications');
@@ -4457,7 +4460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // SECURITY: Validate prerequisites before marking complete
       // This prevents manual completion without meeting requirements
       const tenantProfile = await storage.getTenantProfile(req.user.id);
-      const rentCard = await storage.getRentCard(req.user.claims.sub);
+      const rentCard = await storage.getRentCard(req.user.id);
       let canComplete = false;
       let validationError = "";
 
@@ -4563,7 +4566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check profile completion
       const tenantProfile = await storage.getTenantProfile(req.user.id);
-      const rentCard = await storage.getRentCard(req.user.claims.sub);
+      const rentCard = await storage.getRentCard(req.user.id);
       
       const profileCompleted = !!(
         tenantProfile?.employmentInfo && 
