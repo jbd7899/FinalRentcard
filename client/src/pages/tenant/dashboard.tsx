@@ -35,6 +35,57 @@ import OneClickShareButton from '@/components/shared/OneClickShareButton';
 import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
 import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
 import { apiRequest } from '@/lib/queryClient';
+import type { TenantProfile } from '@shared/schema';
+
+type TenantProfileWithMeta = TenantProfile & {
+  updatedAt?: string | null;
+  createdAt?: string | null;
+};
+
+interface TenantReference {
+  id: number;
+  isVerified: boolean;
+}
+
+const calculateProfileCompleteness = (profile?: TenantProfileWithMeta | null) => {
+  if (!profile) return 0;
+
+  let completedFields = 0;
+  const totalFields = 8;
+
+  if (profile.employmentInfo?.employer) completedFields++;
+  if (profile.employmentInfo?.position) completedFields++;
+  if (profile.employmentInfo?.monthlyIncome) completedFields++;
+  if (profile.employmentInfo?.startDate) completedFields++;
+  if (profile.creditScore) completedFields++;
+  if (profile.maxRent) completedFields++;
+  if (profile.moveInDate) completedFields++;
+  if (profile.rentalHistory?.previousAddresses?.length) completedFields++;
+
+  return Math.round((completedFields / totalFields) * 100);
+};
+
+const formatDate = (value?: string | Date | null) => {
+  if (!value) return null;
+
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
+
+const hasRentCardData = (profile?: TenantProfileWithMeta | null, verifiedReferences = 0) => {
+  if (!profile) return false;
+
+  const hasCreditScore = typeof profile.creditScore === 'number' && profile.creditScore > 0;
+  const completion = calculateProfileCompleteness(profile);
+
+  return hasCreditScore || verifiedReferences > 0 || completion > 0;
+};
 
 const generateRoute = {
   application: (id: string) => `/tenant/applications/${id}`
@@ -47,22 +98,43 @@ const TenantDashboard = () => {
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
   // Fetch the authenticated user's tenant profile
-  const { data: tenantProfile, isLoading: isTenantProfileLoading, error: tenantProfileError } = useQuery({
+  const { data: tenantProfile, isLoading: isTenantProfileLoading, error: tenantProfileError } = useQuery<TenantProfileWithMeta | null>({
     queryKey: ['tenant-profile'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/tenant/profile');
-      return response.json();
+      return response.json() as Promise<TenantProfileWithMeta>;
     },
     enabled: !!user // Only fetch if user is authenticated
   });
 
-  // Demo data
-  const rentCardStatus = {
-    score: 4.8,
-    verifiedReferences: 2,
-    completionStatus: 85,
-    lastUpdated: "Feb 15, 2025"
-  };
+  const { data: tenantReferences = [], isLoading: isReferencesLoading, error: tenantReferencesError } = useQuery<TenantReference[]>({
+    queryKey: ['tenant-references', tenantProfile?.id],
+    queryFn: async ({ queryKey }) => {
+      const [, profileId] = queryKey;
+      const id = typeof profileId === 'number' ? profileId : Number(profileId);
+      if (!id) return [];
+
+      const response = await apiRequest('GET', `/api/tenant/references/${id}`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return [];
+        }
+
+        const message = await response.text();
+        throw new Error(message || 'Failed to load references');
+      }
+
+      return response.json() as Promise<TenantReference[]>;
+    },
+    enabled: !!tenantProfile?.id
+  });
+
+  const verifiedReferencesCount = tenantReferences.filter((reference) => reference.isVerified).length;
+  const profileCompletion = calculateProfileCompleteness(tenantProfile);
+  const rentCardHasData = hasRentCardData(tenantProfile, verifiedReferencesCount);
+  const lastUpdated = formatDate(tenantProfile?.updatedAt ?? tenantProfile?.moveInDate ?? tenantProfile?.createdAt ?? null);
+  const isRentCardLoading = isTenantProfileLoading || (tenantProfile?.id ? isReferencesLoading : false);
 
   const applications = [
     {
@@ -286,53 +358,106 @@ const TenantDashboard = () => {
             <div className="flex justify-between items-start mb-4 sm:mb-5">
               <div>
                 <h2 className="text-base sm:text-lg font-medium">Your RentCard</h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-1.5">
-                  Last updated: {rentCardStatus.lastUpdated}
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-1.5" data-testid="text-rentcard-last-updated">
+                  {lastUpdated ? `Last updated: ${lastUpdated}` : 'No updates yet'}
                 </p>
               </div>
-              <Badge variant="outline" className="px-2 py-1 text-xs font-medium">
-                {rentCardStatus.completionStatus}% Complete
-              </Badge>
+              {rentCardHasData && (
+                <Badge variant="outline" className="px-2 py-1 text-xs font-medium" data-testid="badge-rentcard-completion">
+                  {profileCompletion}% Complete
+                </Badge>
+              )}
             </div>
-            
-            <div className="flex items-center justify-between mb-4 sm:mb-5">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center">
-                  <Star className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+
+            {isRentCardLoading ? (
+              <>
+                <Skeleton className="h-10 w-10 rounded-full mb-4" />
+                <Skeleton className="h-4 w-32 mb-2" />
+                <Skeleton className="h-4 w-48 mb-6" />
+                <Skeleton className="h-8 w-full" />
+              </>
+            ) : tenantProfileError ? (
+              <div className="text-center py-6">
+                <h3 className="text-sm font-medium text-red-600 mb-2">Unable to load your RentCard</h3>
+                <p className="text-sm text-gray-500">Please refresh the page and try again.</p>
+              </div>
+            ) : !rentCardHasData ? (
+              <div className="text-center">
+                <div className="flex flex-col items-center mb-4">
+                  <FileText className="h-10 w-10 text-blue-500 mb-3" />
+                  <h3 className="font-semibold text-lg mb-2">Build your RentCard</h3>
+                  <p className="text-sm text-gray-600">
+                    Add your employment details, rental history, and references to unlock sharing tools.
+                  </p>
                 </div>
-                <div>
-                  <p className="text-sm sm:text-base font-medium">Tenant Score</p>
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <span className="text-lg sm:text-xl font-semibold">{rentCardStatus.score}</span>
-                    <span className="text-xs sm:text-sm text-gray-500">/ 5.0</span>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+                  data-testid="button-complete-rentcard"
+                >
+                  Complete My RentCard
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4 sm:mb-5">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center">
+                      <Star className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm sm:text-base font-medium">Credit Score</p>
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <span className="text-lg sm:text-xl font-semibold" data-testid="text-credit-score">
+                          {tenantProfile?.creditScore ?? '--'}
+                        </span>
+                        {tenantProfile?.creditScore ? (
+                          <span className="text-xs sm:text-sm text-gray-500">FICO</span>
+                        ) : (
+                          <span className="text-xs sm:text-sm text-gray-400">Not provided</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-sm sm:text-base font-medium">References</p>
+                    <div className="flex items-center justify-end gap-1 sm:gap-2">
+                      <span className="text-lg sm:text-xl font-semibold" data-testid="text-verified-references">
+                        {verifiedReferencesCount}
+                      </span>
+                      <span className="text-xs sm:text-sm text-gray-500">
+                        {tenantReferences.length ? `verified / ${tenantReferences.length} total` : 'verified'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="text-right">
-                <p className="text-sm sm:text-base font-medium">References</p>
-                <div className="flex items-center justify-end gap-1 sm:gap-2">
-                  <span className="text-lg sm:text-xl font-semibold">{rentCardStatus.verifiedReferences}</span>
-                  <span className="text-xs sm:text-sm text-gray-500">verified</span>
+
+                {tenantReferencesError && (
+                  <p className="text-xs text-red-500 mb-3" data-testid="text-references-error">
+                    There was an issue loading your references. Showing the latest available data.
+                  </p>
+                )}
+
+                <div className="mt-4 sm:mt-6 flex gap-2">
+                  <Button
+                    variant="default"
+                    className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
+                    onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
+                  >
+                    Manage References
+                  </Button>
+                  <OneClickShareButton
+                    variant="outline"
+                    size="sm"
+                    className="text-xs sm:text-sm h-8 sm:h-9 px-3"
+                    showText={false}
+                  />
                 </div>
-              </div>
-            </div>
-            
-            <div className="mt-4 sm:mt-6 flex gap-2">
-              <Button 
-                variant="default" 
-                className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
-                onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
-              >
-                Manage References
-              </Button>
-              <OneClickShareButton 
-                variant="outline" 
-                size="sm"
-                className="text-xs sm:text-sm h-8 sm:h-9 px-3"
-                showText={false}
-              />
-            </div>
+              </>
+            )}
           </CardContent>
         </Card>
         
