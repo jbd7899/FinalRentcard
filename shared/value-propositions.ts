@@ -10,39 +10,38 @@
 
 export const OFFICIAL_VALUE_PROPOSITIONS = {
   TENANT: {
-    PRIMARY: "Create your RentCard and send to Private Landlords. Private landlords own up to 75% of rentals in America. Create your Rentcard once and send with one click to Private landlords even if they aren't on our platform. Save time and get matched with the perfect Private Rental.",
-    
+    PRIMARY:
+      'Create once, share easily. Private landlords own 68.7% of rentals in America. Build your RentCard one time, keep it updated in minutes, and share it without any extra verification steps.',
+
     KEY_POINTS: [
-      "Create RentCard",
-      "Send to Private Landlords", 
-      "Private landlords own up to 75% of rentals",
-      "Create once, send with one click",
-      "Works even if landlords not on platform",
-      "Save time",
-      "Get matched with perfect Private Rental"
+      'Create your RentCard once',
+      'Share with private landlords anywhere',
+      'Private landlords own 68.7% of rentals in America',
+      'Update easily and share with one click',
+      'Provide clear prequalification information',
+      'No verification hoops—share only what you choose'
     ]
   },
-  
+
   LANDLORD: {
-    PRIMARY: "Create your landlord profile and streamline connecting to tenants interested in Private Rentals. Allow tenants to submit interest in your properties even if they don't have a RentCard. Generate free QR codes to put on signs and marketing materials that link directly to you. Cross-sell your other properties that may not be listed yet.",
-    
+    PRIMARY:
+      'Spend your time with pre-qualified tenants. Create a RentCard profile for each property, collect organized tenant interest with one click submissions, and reuse QR codes anywhere you promote rentals.',
+
     KEY_POINTS: [
-      "Create landlord profile",
-      "Streamline connecting to tenants", 
-      "Tenants interested in Private Rentals",
-      "Accept interest without RentCard",
-      "Generate free QR codes",
-      "Put on signs and marketing materials",
-      "Link directly to you",
-      "Cross-sell other properties"
+      'Create a landlord profile for each property',
+      'Collect organized tenant interest',
+      'Tenants submit interest with one click',
+      'Generate reusable QR codes',
+      'Share links on signs and listings',
+      'Cross-sell between properties with the same toolkit'
     ]
   },
-  
+
   NETWORK_POSITIONING: {
-    CORE_CONCEPT: "Platform for standardizing prequalification process between tenants and private landlords",
-    NOT_SOCIAL_MEDIA: "Professional network, not social platform",
-    PRIVATE_LANDLORD_FOCUS: "Up to 75% market share, personal relationships, faster response times",
-    STANDARDIZATION_BENEFIT: "Consistent prequalification process across all private landlords"
+    CORE_CONCEPT: 'Platform for standardizing prequalification between tenants and private landlords',
+    NOT_SOCIAL_MEDIA: 'Professional network, not social platform',
+    PRIVATE_LANDLORD_FOCUS: '68.7% market share, personal relationships, faster responses',
+    STANDARDIZATION_BENEFIT: 'Consistent prequalification process across private landlords'
   }
 } as const;
 
@@ -59,31 +58,33 @@ export const OFFICIAL_VALUE_PROPOSITIONS = {
 // Derived messaging components based on official value propositions
 export const DERIVED_MESSAGING = {
   TENANT: {
-    HERO: "Create your RentCard and send to Private Landlords",
-    SECONDARY: "Private landlords own up to 75% of rentals in America",
-    DESCRIPTION: "Create your Rentcard once and send with one click to Private landlords even if they aren't on our platform. Save time and get matched with the perfect Private Rental.",
+    HERO: 'Create once, share easily.',
+    SECONDARY: 'Share prequalification details with private landlords in seconds.',
+    DESCRIPTION:
+      'Create your RentCard one time, update it easily, and share with one click to private landlords—even if they are not on RentCard. No verification hoops—just the information you choose to show.',
     BENEFITS: [
-      "Create your RentCard once and send with one click",
-      "Send to Private landlords even if they're not on our platform",
-      "Private landlords own up to 75% of rentals in America", 
-      "Save time with standardized prequalification",
-      "Get matched with the perfect Private Rental"
+      'One RentCard you can update in minutes',
+      'Share links or QR codes with any private landlord',
+      'Stay ready for the 68.7% of rentals owned by private landlords',
+      'Provide the prequalification details landlords expect up front',
+      'Cut the back-and-forth before a showing'
     ],
-    CALL_TO_ACTION: "Create Your Free RentCard"
+    CALL_TO_ACTION: 'Create Your Free RentCard'
   },
-  
+
   LANDLORD: {
-    HERO: "Create your landlord profile and streamline connecting to tenants interested in Private Rentals",
-    SECONDARY: "Private Landlord Network Tools",
-    DESCRIPTION: "Allow tenants to submit interest in your properties even if they don't have a RentCard. Generate free QR codes to put on signs and marketing materials that link directly to you. Cross-sell your other properties that may not be listed yet.",
+    HERO: 'Spend your time with pre-qualified tenants.',
+    SECONDARY: 'Easily collect and organize tenant interest.',
+    DESCRIPTION:
+      'Create a RentCard profile for each property, let tenants submit interest with one click, and keep QR codes ready for every listing so you can focus on renters who are already a match.',
     BENEFITS: [
-      "Allow tenants to submit interest even without a RentCard",
-      "Generate free QR codes for signs and marketing materials",
-      "Links point directly to you and your properties",
-      "Cross-sell other properties that may not be listed yet",
-      "Streamline connections with tenants interested in Private Rentals"
+      'Collect organized tenant interest in one place',
+      'Create reusable QR codes for every property',
+      'Let tenants raise their hand with one click',
+      'Highlight other properties to interested renters',
+      'Focus follow-ups on renters who already shared context'
     ],
-    CALL_TO_ACTION: "Create Your Free Landlord Profile"
+    CALL_TO_ACTION: 'Create Your Free Landlord Profile'
   }
 } as const;
 
