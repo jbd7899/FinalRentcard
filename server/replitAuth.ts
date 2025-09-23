@@ -163,15 +163,6 @@ export async function setupAuth(app: Express) {
     passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
     app.get("/api/login", (req, res, next) => {
-      const { selectedRole } = req.query as { selectedRole?: string };
-      if (
-        typeof selectedRole === 'string' &&
-        (selectedRole === 'tenant' || selectedRole === 'landlord') &&
-        req.session
-      ) {
-        req.session.selectedRole = selectedRole;
-      }
-
       passport.authenticate(`replitauth:${req.hostname}`, {
         prompt: "login consent",
         scope: ["openid", "email", "profile", "offline_access"],

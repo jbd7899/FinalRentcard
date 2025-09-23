@@ -293,11 +293,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantProfile = await storage.getTenantProfile(userId);
       const landlordProfile = await storage.getLandlordProfile(userId);
       
-      const sessionRole =
-        req.session && (req.session.selectedRole === 'tenant' || req.session.selectedRole === 'landlord')
-          ? req.session.selectedRole
-          : null;
-
       const response = {
         ...user,
         profiles: {
@@ -309,8 +304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         availableRoles: {
           tenant: !tenantProfile,
           landlord: !landlordProfile
-        },
-        pendingRoleSelection: sessionRole,
+        }
       };
       
       res.json(response);
@@ -343,10 +337,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           landlord: true
         }
       });
-
-      if (req.session) {
-        delete req.session.selectedRole;
-      }
 
       res.json({ 
         message: "Role updated successfully",
