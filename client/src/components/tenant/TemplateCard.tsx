@@ -60,7 +60,7 @@ interface TemplateCardProps {
 const TEMPLATE_CATEGORIES = {
   initial_inquiry: { label: 'Initial Inquiry', icon: MessageCircle, color: 'bg-blue-500' },
   follow_up: { label: 'Follow-up', icon: Mail, color: 'bg-green-500' },
-  application: { label: 'Application', icon: FileText, color: 'bg-purple-500' },
+  application: { label: 'Prequalification', icon: FileText, color: 'bg-purple-500' },
   custom: { label: 'Custom', icon: Star, color: 'bg-orange-500' },
 };
 

@@ -228,7 +228,7 @@ export default function ScreeningPage() {
 
       <h2 className="text-2xl font-semibold mb-4">Pre-Screening Page Created!</h2>
       <p className="text-gray-600 mb-8">
-        Your screening page is ready to receive applications
+        Your screening page is ready to receive prequalification submissions
       </p>
 
       <div className="bg-gray-50 p-4 rounded-lg mb-8">
@@ -297,7 +297,7 @@ export default function ScreeningPage() {
             {
               icon: Clock,
               title: "Save Time",
-              description: "Receive complete applications instantly. No more phone tag or incomplete forms.",
+              description: "Receive complete RentCards instantly. No more phone tag or incomplete forms.",
             },
             {
               icon: Shield,

@@ -245,7 +245,7 @@ export default function Navbar() {
                   className="gap-2 cursor-pointer text-blue-600"
                   onClick={() => {
                     localStorage.setItem("selectedRole", "tenant");
-                    window.location.href = "/api/login";
+                    setLocation("/auth?mode=login&type=tenant");
                   }}
                   data-testid="button-login-tenant"
                 >
@@ -256,7 +256,7 @@ export default function Navbar() {
                   className="gap-2 cursor-pointer text-green-600"
                   onClick={() => {
                     localStorage.setItem("selectedRole", "landlord");
-                    window.location.href = "/api/login";
+                    setLocation("/auth?mode=login&type=landlord");
                   }}
                   data-testid="button-login-landlord"
                 >

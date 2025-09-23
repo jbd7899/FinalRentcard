@@ -115,9 +115,9 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Create and share your digital rent card</li>
-                <li>• Apply to properties with one click</li>
-                <li>• Track your application status</li>
+                <li>• Create and share your digital RentCard</li>
+                <li>• Express interest with one link or QR code</li>
+                <li>• Track landlord responses in one place</li>
                 <li>• Store your rental documents securely</li>
               </ul>
             </CardContent>
@@ -142,7 +142,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-2">
                 <li>• List your rental properties</li>
-                <li>• Review tenant applications</li>
+                <li>• Review standardized RentCards</li>
                 <li>• Screen potential tenants efficiently</li>
                 <li>• Manage property inquiries</li>
               </ul>
