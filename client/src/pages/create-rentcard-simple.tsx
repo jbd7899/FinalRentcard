@@ -105,26 +105,42 @@ export default function CreateRentCardSimple() {
       if (!response.ok) throw new Error(MESSAGES.ERRORS.GENERAL);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('RentCard created successfully:', data);
       setIsPublished(true);
       setShowSuccess(true);
-      
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['share-tokens'] });
-      
+
       toast({
         title: "🎉 RentCard Created!",
         description: "Your RentCard is ready to share with landlords instantly!",
       });
 
+      // Refresh the tenant profile so downstream flows (like share tokens) see the enriched data
+      try {
+        await queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
+
+        const profileResponse = await apiRequest('GET', '/api/tenant/profile');
+        if (profileResponse.ok) {
+          const updatedProfile = await profileResponse.json();
+          queryClient.setQueryData(['tenant-profile'], updatedProfile);
+          console.log('Tenant profile refreshed after RentCard creation:', updatedProfile);
+        } else {
+          const errorText = await profileResponse.text().catch(() => profileResponse.statusText);
+          console.warn('Failed to refresh tenant profile after RentCard creation:', errorText);
+        }
+      } catch (profileError) {
+        console.error('Error refreshing tenant profile after RentCard creation:', profileError);
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['share-tokens'] });
+
       // Auto-scroll to success section
       setTimeout(() => {
-        document.getElementById('success-section')?.scrollIntoView({ 
-          behavior: 'smooth' 
+        document.getElementById('success-section')?.scrollIntoView({
+          behavior: 'smooth'
         });
       }, 100);
+
     },
     onError: (error) => {
       toast({
