@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Building2, User, ArrowRight, CheckCircle, Users, Shield, TrendingUp, Star, Zap, Eye, QrCode } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Building2, User, ArrowRight, CheckCircle, TrendingUp } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/shared/navbar';
-import { Button } from '@/components/ui/button';
 import { DERIVED_MESSAGING } from '@shared/value-propositions';
 import { NETWORK_VALUE_PROPS } from '@shared/network-messaging';
 
@@ -35,65 +35,69 @@ export default function HomePage() {
     tenant: {
       hero: DERIVED_MESSAGING.TENANT.HERO,
       secondary: DERIVED_MESSAGING.TENANT.SECONDARY,
-      description: "Create once. Share anywhere—even off‑platform.",
+      description:
+        'Stay in control of standardized prequalification. Create once and share anywhere—even off-platform.',
       primaryCTA: DERIVED_MESSAGING.TENANT.CALL_TO_ACTION,
-      secondaryCTA: "View Sample RentCard",
-      primaryLink: "/auth?mode=register&type=tenant",
-      secondaryLink: "/samples/rentcard",
-      benefits: [
-        {
-          icon: Users,
-          title: "Standardized Network Access",
-          description: "Join the network to create your standardized RentCard once",
-          badge: "One profile, many landlords"
-        },
-        {
-          icon: Shield,
-          title: "Direct Landlord Communication",
-          description: "Connect directly with private property owners",
-          badge: "Personal relationships"
-        },
-        {
-          icon: Zap,
-          title: "Faster Response Times",
-          description: "Private landlords provide faster, more personal responses",
-          badge: "Same-day responses"
-        }
+      primaryLink: '/auth?mode=register&type=tenant',
+      proofPoints: [
+        'Standardized RentCard private landlords recognize',
+        'Share one secure link or QR code anywhere',
+        'Hear sooner if a property is the right fit',
       ],
-      networkEffects: NETWORK_VALUE_PROPS.NETWORK_EFFECTS.TENANT
+      learnMore: {
+        summary: 'Reuse a professional RentCard while keeping ownership of your data and presentation.',
+        highlights: NETWORK_VALUE_PROPS.TENANT.BENEFITS,
+        networkEffects: NETWORK_VALUE_PROPS.NETWORK_EFFECTS.TENANT,
+        resources: [{ label: 'Preview a RentCard', href: '/samples/rentcard' }],
+      },
     },
     landlord: {
-      hero: "Get qualified tenants for your Private Rentals.",
-      secondary: "Free QR codes • One‑click interest.",
-      description: "Keep your personal approach while receiving consistent prequalification details.",
+      hero: DERIVED_MESSAGING.LANDLORD.HERO,
+      secondary: DERIVED_MESSAGING.LANDLORD.SECONDARY,
+      description:
+        'Collect standardized prequalification before tours while keeping your personal approach.',
       primaryCTA: DERIVED_MESSAGING.LANDLORD.CALL_TO_ACTION,
-      secondaryCTA: "View Screening Tools",
-      primaryLink: "/auth?mode=register&type=landlord",
-      secondaryLink: "/samples/screening-page",
-      benefits: [
-        {
-          icon: QrCode,
-          title: "Free QR Code Generation",
-          description: "Generate QR codes for signs and marketing materials",
-          badge: "Direct property links"
-        },
-        {
-          icon: Users,
-          title: "Quality Tenant Pool",
-          description: "Attract tenants who prefer private landlords",
-          badge: "Better tenant fit"
-        },
-        {
-          icon: TrendingUp,
-          title: "Competitive Tools",
-          description: "Professional screening with personal service",
-          badge: "Professional efficiency"
-        }
+      primaryLink: '/auth?mode=register&type=landlord',
+      proofPoints: [
+        'Invite prospects through property links or QR codes',
+        'Receive consistent RentCards before you coordinate tours',
+        'Respond quickly while keeping conversations personal',
       ],
-      networkEffects: NETWORK_VALUE_PROPS.NETWORK_EFFECTS.LANDLORD
+      learnMore: {
+        summary: 'Stay organized across properties with consistent, no-cost prequalification tools.',
+        highlights: NETWORK_VALUE_PROPS.LANDLORD.BENEFITS,
+        networkEffects: NETWORK_VALUE_PROPS.NETWORK_EFFECTS.LANDLORD,
+        resources: [{ label: 'Preview landlord tools', href: '/samples/screening-page' }],
+      },
+    },
+  } satisfies Record<
+    UserRole,
+    {
+      hero: string;
+      secondary: string;
+      description: string;
+      primaryCTA: string;
+      primaryLink: string;
+      proofPoints: string[];
+      learnMore: {
+        summary: string;
+        highlights: readonly string[];
+        networkEffects: readonly string[];
+        resources: { label: string; href: string }[];
+      };
     }
+  >;
+
+  const roleMeta: Record<UserRole, { label: string; icon: typeof User }> = {
+    tenant: { label: 'For renters using MyRentCard', icon: User },
+    landlord: { label: 'For private landlords', icon: Building2 },
   };
 
+  const STANDARDIZED_DETAILS = [
+    'Standardized prequalification keeps expectations aligned before tours begin.',
+    'Shared formats mean fewer missing documents and faster answers.',
+    'Both sides save time while keeping direct, personal conversations front and center.',
+  ];
   const content = roleContent[selectedRole];
   const isLandlordSelected = selectedRole === 'landlord';
 
@@ -101,39 +105,37 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
       {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[url('/api/placeholder/20/20')] opacity-5 z-0"></div>
-      
       <div className="relative z-10">
         <Navbar />
       </div>
 
-      <main className="relative z-1 max-w-7xl mx-auto px-4 py-16">
+      <main className="relative z-1 mx-auto max-w-7xl px-4 py-16">
         {/* Dynamic Toggle System */}
-        <div className="flex justify-center mb-12">
-          <div className="bg-white rounded-xl p-2 shadow-lg border max-w-md mx-auto">
+        <div className="mb-12 flex justify-center">
+          <div className="mx-auto max-w-md rounded-xl border bg-white p-2 shadow-lg">
             <div className="flex flex-col sm:flex-row">
               <button
                 onClick={() => setSelectedRole('tenant')}
-                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg transition-all mb-1 sm:mb-0 ${
+                className={`flex items-center justify-center gap-2 rounded-lg px-4 py-3 transition-all sm:px-6 ${
                   !isLandlordSelected
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
                 data-testid="toggle-tenant"
               >
-                <User className="w-4 h-4" />
+                <User className="h-4 w-4" />
                 I'm Looking for a Place
               </button>
               <button
                 onClick={() => setSelectedRole('landlord')}
-                className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg transition-all ${
+                className={`flex items-center justify-center gap-2 rounded-lg px-4 py-3 transition-all sm:px-6 ${
                   isLandlordSelected
                     ? 'bg-green-600 text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}
                 data-testid="toggle-landlord"
               >
-                <Building2 className="w-4 h-4" />
+                <Building2 className="h-4 w-4" />
                 I Own/Manage Properties
               </button>
             </div>
@@ -141,191 +143,192 @@ export default function HomePage() {
         </div>
 
         {/* Hero Section */}
-        <div className="text-center mb-16 relative">
-          {/* Professional badge */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <div className="inline-block bg-purple-100 text-purple-600 px-4 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow" data-testid="badge-prequalification">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <CheckCircle className="w-4 h-4" />
-                <span>Prequalification network</span>
-              </span>
+        <section className="mb-16 space-y-8 text-center">
+          <div className="flex justify-center">
+            <div
+              className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-medium text-purple-600 shadow-md"
+              data-testid="badge-prequalification"
+            >
+              <CheckCircle className="h-4 w-4" />
+              <span>Standardized prequalification network</span>
             </div>
           </div>
-
-          {/* Main title with sparkle */}
-          <div className="relative">
-            <h1 className="text-4xl sm:text-6xl font-bold mb-6" data-testid="homepage-title">
-              <span className="bg-gradient-to-r from-blue-600 to-blue-400 text-transparent bg-clip-text">
-                MyRentCard
-              </span>
-              <div className="absolute -right-4 top-0 text-yellow-400 text-xl">✨</div>
-              
-              {/* Dynamic headlines */}
-              <span className="block text-xl sm:text-3xl mt-4 text-gray-800 transition-all duration-300">
-                {content.hero}
-              </span>
-              <span className={`block text-lg sm:text-2xl mt-2 transition-all duration-300 ${
-                isLandlordSelected ? 'text-green-600' : 'text-blue-600'
-              }`}>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-bold sm:text-6xl" data-testid="homepage-title">
+              <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">MyRentCard</span>
+              <span className="mt-4 block text-xl text-gray-800 transition-all sm:text-3xl">{content.hero}</span>
+              <span
+                className={`mt-2 block text-lg transition-all sm:text-2xl ${
+                  isLandlordSelected ? 'text-green-600' : 'text-blue-600'
+                }`}
+              >
                 {content.secondary}
               </span>
             </h1>
+            <p className="mx-auto max-w-3xl text-xl leading-relaxed text-gray-600">{content.description}</p>
           </div>
-
-          {/* Professional tagline */}
-          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed transition-all duration-300">
-            {content.description}
-          </p>
-
-          {/* CTA Buttons Section */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mb-12">
+          <ul className="mx-auto max-w-2xl space-y-3 text-left text-base text-gray-700">
+            {content.proofPoints.map((point) => (
+              <li key={point} className="flex items-start gap-3">
+                <CheckCircle
+                  className={`mt-1 h-5 w-5 flex-shrink-0 ${
+                    isLandlordSelected ? 'text-green-600' : 'text-blue-600'
+                  }`}
+                />
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex justify-center">
             <button
               onClick={() => {
-                localStorage.setItem("selectedRole", selectedRole);
+                localStorage.setItem('selectedRole', selectedRole);
                 setLocation(`/auth?mode=register&type=${selectedRole}`);
               }}
-              className={`group px-6 sm:px-8 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all text-white text-sm sm:text-base ${
-                isLandlordSelected
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
+              className={`group inline-flex items-center gap-3 rounded-xl px-7 py-4 text-sm font-semibold text-white shadow-lg transition-colors ${
+                isLandlordSelected ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
               }`}
               data-testid="button-primary-cta"
             >
               {content.primaryCTA}
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </button>
+          </div>
+          <p className="text-sm text-gray-500">
+            Prefer to preview first?{' '}
             <Link
-              href={content.secondaryLink}
-              className={`group border-2 px-6 sm:px-8 py-4 rounded-xl font-medium flex items-center justify-center gap-3 transition-all text-sm sm:text-base ${
-                isLandlordSelected
-                  ? 'border-green-600 text-green-600 hover:bg-green-50'
-                  : 'border-blue-600 text-blue-600 hover:bg-blue-50'
-              }`}
-              data-testid="button-secondary-cta"
+              href={content.learnMore.resources[0]?.href ?? '#'}
+              className={`${
+                isLandlordSelected ? 'text-green-600 hover:text-green-700' : 'text-blue-600 hover:text-blue-700'
+              } font-medium`}
             >
-              {content.secondaryCTA}
-              <Eye className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              {content.learnMore.resources[0]?.label}
             </Link>
-          </div>
-
-          {/* Benefits Grid (3 columns) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-16">
-            {content.benefits.map((benefit, index) => (
-              <div
-                key={index}
-                className="relative bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-all overflow-hidden"
-                data-testid={`benefit-card-${index}`}
-              >
-                {/* Gradient top border */}
-                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r transition-all duration-300 ${
-                  isLandlordSelected
-                    ? 'from-green-400 to-green-600'
-                    : 'from-blue-400 to-blue-600'
-                }`}></div>
-                
-                {/* Icon with colored circle */}
-                <div className={`p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 transition-all duration-300 ${
-                  isLandlordSelected ? 'bg-green-100' : 'bg-blue-100'
-                }`}>
-                  <benefit.icon className={`w-8 h-8 transition-colors duration-300 ${
-                    isLandlordSelected ? 'text-green-600' : 'text-blue-600'
-                  }`} />
-                </div>
-                
-                <h3 className="text-xl font-semibold mb-3">{benefit.title}</h3>
-                <p className="text-gray-600 mb-4">{benefit.description}</p>
-                
-                {/* Professional badge */}
-                <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors duration-300 ${
-                  isLandlordSelected
-                    ? 'text-green-600 border-green-600'
-                    : 'text-blue-600 border-blue-600'
-                }`}>
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {benefit.badge}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Network Effects Section */}
-        <div className="relative">
-          <div className="bg-gray-50 rounded-3xl p-8 sm:p-12 shadow-lg border">
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-4xl font-bold mb-4 text-gray-800">
-                The Network Gets Stronger with Every Connection
-              </h2>
-              <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-                Join a growing community of private landlords and quality tenants building better rental relationships
-              </p>
-            </div>
-
-            {/* Two-column dynamic stats layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 mb-8 sm:mb-12">
-              {content.networkEffects.slice(0, 4).map((effect, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-3 sm:gap-4 p-4 sm:p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-all"
-                  data-testid={`network-effect-${index}`}
-                >
-                  <div className={`p-2 rounded-full ${
-                    isLandlordSelected ? 'bg-green-100' : 'bg-blue-100'
-                  }`}>
-                    <Star className={`w-5 h-5 ${
-                      isLandlordSelected ? 'text-green-600' : 'text-blue-600'
-                    }`} />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">{effect}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Professional badges at bottom */}
-            <div className="flex flex-wrap justify-center gap-4">
-              <div className="inline-flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full shadow-lg">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">Growing Network</span>
-              </div>
-              <div className="inline-flex items-center bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-2 rounded-full shadow-lg">
-                <Shield className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">Verified Connections</span>
-              </div>
-              <div className="inline-flex items-center bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full shadow-lg">
-                <Zap className="w-4 h-4 mr-2" />
-                <span className="text-sm font-medium">Faster Response Times</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom social proof */}
-        <div className="mt-16 text-center">
-          <p className="text-gray-600 mb-4">
-            Join the network that's standardizing prequalification for private rentals
           </p>
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-500" data-testid="social-proof-list">
+        </section>
+
+        {/* Learn more accordions */}
+        <section className="mb-16">
+          <div className="mx-auto max-w-4xl rounded-3xl border border-gray-100 bg-white p-6 shadow-lg sm:p-8">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-semibold text-gray-900 sm:text-2xl">
+                Learn how standardized prequalification keeps the network aligned
+              </h2>
+              <TrendingUp className={`h-6 w-6 ${isLandlordSelected ? 'text-green-500' : 'text-blue-500'}`} />
+            </div>
+            <p className="mt-2 text-sm text-gray-600">
+              Explore role-specific highlights and network advantages without leaving the hero.
+            </p>
+            <Accordion type="multiple" className="mt-6 space-y-3">
+              {(['tenant', 'landlord'] as UserRole[]).map((role) => {
+                const { label, icon: RoleIcon } = roleMeta[role];
+                const roleDetails = roleContent[role];
+                const accentText = role === 'landlord' ? 'text-green-600' : 'text-blue-600';
+                const accentSoft = role === 'landlord' ? 'text-green-500' : 'text-blue-500';
+                return (
+                  <AccordionItem key={role} value={role} className="rounded-2xl border border-gray-100 px-2">
+                    <AccordionTrigger className="text-left text-base font-semibold text-gray-900">
+                      <span className="flex items-center gap-3">
+                        <RoleIcon className={`h-5 w-5 ${accentText}`} />
+                        {label}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-2 text-sm text-gray-600">
+                      <div className="space-y-4">
+                        <p>{roleDetails.learnMore.summary}</p>
+                        <div className="grid gap-6 md:grid-cols-2">
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900">Highlights</h3>
+                            <ul className="mt-2 space-y-2">
+                              {roleDetails.learnMore.highlights.map((highlight) => (
+                                <li key={highlight} className="flex items-start gap-2">
+                                  <CheckCircle className={`mt-0.5 h-4 w-4 ${accentSoft}`} />
+                                  <span>{highlight}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-900">Network benefits</h3>
+                            <ul className="mt-2 space-y-2">
+                              {roleDetails.learnMore.networkEffects.map((effect) => (
+                                <li key={effect} className="flex items-start gap-2">
+                                  <TrendingUp className={`mt-0.5 h-4 w-4 ${accentSoft}`} />
+                                  <span>{effect}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2 pt-2 text-sm">
+                          <Link
+                            href={roleDetails.primaryLink}
+                            className={`${accentText} inline-flex items-center gap-1 font-semibold`}
+                          >
+                            {roleDetails.primaryCTA}
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                          <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                            {roleDetails.learnMore.resources.map((resource) => (
+                              <Link
+                                key={resource.href}
+                                href={resource.href}
+                                className="inline-flex items-center gap-1 font-medium text-gray-600 hover:text-gray-800"
+                              >
+                                {resource.label}
+                                <ArrowRight className="h-3 w-3" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+              <AccordionItem value="standardized" className="rounded-2xl border border-gray-100 px-2">
+                <AccordionTrigger className="text-left text-base font-semibold text-gray-900">
+                  Why standardized prequalification matters
+                </AccordionTrigger>
+                <AccordionContent className="px-2 text-sm text-gray-600">
+                  <ul className="space-y-3">
+                    {STANDARDIZED_DETAILS.map((detail) => (
+                      <li key={detail} className="flex items-start gap-2">
+                        <CheckCircle className="mt-0.5 h-4 w-4 text-blue-500" />
+                        <span>{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </section>
+
+        {/* Social proof */}
+        <section className="space-y-3 text-center text-gray-600">
+          <p className="text-sm sm:text-base">
+            Join the network that standardizes prequalification while keeping private rentals personal.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500 sm:text-sm" data-testid="social-proof-list">
             <span className="flex items-center gap-1">
-              <CheckCircle className="w-4 h-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-green-500" />
               No prequalification fees
             </span>
             <span className="flex items-center gap-1">
-              <CheckCircle className="w-4 h-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-green-500" />
               Personal relationships
             </span>
             <span className="flex items-center gap-1">
-              <CheckCircle className="w-4 h-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-green-500" />
               Faster response times
             </span>
           </div>
-        </div>
+        </section>
 
-        {/* Simple Footer */}
-        <footer className="mt-20 pt-8 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-6 text-sm text-gray-500">
-            <Link href="/about" className="hover:text-gray-700 transition-colors" data-testid="footer-about-link">
+        <footer className="mt-20 border-t border-gray-200 pt-8">
+          <div className="flex flex-col items-center justify-center gap-6 text-sm text-gray-500 sm:flex-row">
+            <Link href="/about" className="transition-colors hover:text-gray-700" data-testid="footer-about-link">
               About MyRentCard
             </Link>
             <span className="hidden sm:block">•</span>

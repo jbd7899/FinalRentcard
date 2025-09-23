@@ -63,6 +63,10 @@ interface OverviewTabProps {
   generalScreening: any;
   /** Loading state for general screening data */
   generalScreeningLoading: boolean;
+  /** Error state for general screening data */
+  generalScreeningError?: unknown;
+  /** Callback to retry fetching general screening data */
+  onRetryGeneralScreening?: () => void;
   /** Function to open a modal dialog */
   openModal: (modalType: string) => void;
   /** Function to navigate to a different route */
@@ -78,6 +82,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   activeProperties,
   generalScreening,
   generalScreeningLoading,
+  generalScreeningError,
+  onRetryGeneralScreening,
   openModal,
   setLocation,
 }) => {
@@ -296,6 +302,37 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
             {generalScreeningLoading ? (
               <div className="flex items-center justify-center p-8 sm:p-10">
                 <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin text-primary" />
+              </div>
+            ) : generalScreeningError ? (
+              <div className="text-center p-8 sm:p-10 space-y-4">
+                <Globe className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto" />
+                <div className="space-y-2">
+                  <p className="text-base font-medium text-gray-900">We couldn't load your general screening stats.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Please try again, and if the issue continues, contact{' '}
+                    <a href="mailto:support@rentcard.com" className="underline">
+                      support@rentcard.com
+                    </a>
+                    .
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  {onRetryGeneralScreening && (
+                    <Button
+                      variant="outline"
+                      onClick={onRetryGeneralScreening}
+                      disabled={generalScreeningLoading}
+                    >
+                      Retry loading
+                    </Button>
+                  )}
+                  <Button
+                    variant="link"
+                    asChild
+                  >
+                    <a href="mailto:support@rentcard.com">Contact support</a>
+                  </Button>
+                </div>
               </div>
             ) : generalScreening ? (
               <Card className="shadow-sm">

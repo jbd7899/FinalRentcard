@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Property } from "@shared/schema";
-import { ComingSoonBadge, ComingSoonCard } from "@/components/ui/coming-soon";
+import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { 
   ROUTES, 
   API_ENDPOINTS, 
@@ -23,6 +23,7 @@ import { useLocation, useSearch } from "wouter";
 import { useUIStore } from '@/stores/uiStore';
 import LandlordLayout from '@/components/layouts/LandlordLayout';
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type TimeFilter = '7days' | '30days' | '90days' | 'all';
 type TabType = 'overview' | 'properties' | 'interests' | 'analytics';
@@ -77,23 +78,26 @@ const LandlordDashboard = () => {
     enabled: !!user?.id
   });
 
-  const { data: generalScreening, isLoading: generalScreeningLoading } = useQuery({
+  const { data: generalScreening, isLoading: generalScreeningLoading, error: generalScreeningError, refetch: refetchGeneralScreening, isFetching: generalScreeningFetching } = useQuery({
     queryKey: ['/api/screening/general'],
     queryFn: async () => {
       try {
         const response = await apiRequest('GET', '/api/screening/general');
         return response.json();
       } catch (error) {
-        // Return dummy data if API fails
-        return {
-          slug: 'general-screening',
-          businessName: user?.userType === 'landlord' ? 'Your Business' : 'Your Business',
-          viewCount: 35,
-          interestCount: 8
-        };
+        console.error('Error fetching general screening data:', error);
+        toast({
+          title: "General screening unavailable",
+          description: "We couldn't load your general screening stats. Please try again or contact support.",
+          variant: "destructive",
+        });
+        throw error instanceof Error
+          ? error
+          : new Error('Failed to fetch general screening data');
       }
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    retry: false,
   });
 
   const toggleArchiveProperty = useMutation({
@@ -129,6 +133,8 @@ const LandlordDashboard = () => {
   const handleArchiveToggle = (propertyId: number) => {
     toggleArchiveProperty.mutate(propertyId);
   };
+
+  const generalScreeningIsLoading = generalScreeningLoading || generalScreeningFetching;
 
   const totalInterests = properties?.reduce((sum, property) => {
     return sum + (property.interestCount || 0);
@@ -168,6 +174,22 @@ const LandlordDashboard = () => {
           Professional tools for efficient screening while maintaining your personal touch
         </p>
       </header>
+
+      {generalScreeningError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTitle>General screening data unavailable</AlertTitle>
+          <AlertDescription>
+            We couldn't load your general screening stats. Try again shortly or contact{' '}
+            <a
+              href="mailto:support@rentcard.com"
+              className="underline"
+            >
+              support@rentcard.com
+            </a>
+            .
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Dashboard Tabs */}
       <div className="flex border-b mb-6 overflow-x-auto">
@@ -224,7 +246,11 @@ const LandlordDashboard = () => {
           totalInterests={totalInterests}
           activeProperties={activeProperties}
           generalScreening={generalScreening}
-          generalScreeningLoading={generalScreeningLoading}
+          generalScreeningLoading={generalScreeningIsLoading}
+          generalScreeningError={generalScreeningError}
+          onRetryGeneralScreening={() => {
+            void refetchGeneralScreening();
+          }}
           openModal={openModal}
           setLocation={setLocation}
         />
