@@ -8,6 +8,7 @@ import {
   Referral, ReferralReward, InsertReferral, InsertReferralReward,
   // Import RentCard request and prospect list types
   RentCardRequest, InsertRentCardRequest, ProspectList, InsertProspectList,
+  InsertRentCard,
   insertRentCardRequestSchema, insertProspectListSchema
 } from "@shared/schema";
 import { 
@@ -83,7 +84,14 @@ export interface IStorage {
 
   // Rent card operations
   getRentCard(userId: string): Promise<RentCard | undefined>;
-  createRentCard(rentCard: Omit<RentCard, "id" | "createdAt" | "updatedAt">, dbClient?: any): Promise<RentCard>;
+  createRentCard(
+    rentCard: Omit<RentCard, "id" | "createdAt" | "updatedAt">,
+    dbClient?: any
+  ): Promise<RentCard>;
+  createRentCardWithProfileSync(
+    userId: string,
+    rentCard: InsertRentCard
+  ): Promise<{ rentCard: RentCard; tenantProfile: TenantProfile }>;
 
   // Share token operations
   createShareToken(tenantId: number, data: { scope?: string; expiresAt?: Date }): Promise<ShareToken>;
@@ -405,6 +413,92 @@ export interface IStorage {
   sessionStore: session.Store;
 }
 
+type TenantEmploymentInfo = NonNullable<TenantProfile["employmentInfo"]>;
+type TenantRentalHistory = NonNullable<TenantProfile["rentalHistory"]>;
+
+const DEFAULT_EMPLOYMENT_INFO: TenantEmploymentInfo = {
+  employer: "",
+  position: "",
+  monthlyIncome: 0,
+  startDate: "",
+};
+
+const DEFAULT_RENTAL_HISTORY: TenantRentalHistory = {
+  previousAddresses: [],
+};
+
+function deriveTenantProfileUpdatesFromRentCard(
+  rentCard: InsertRentCard,
+  existingProfile?: TenantProfile
+): Partial<TenantProfile> {
+  const updates: Partial<TenantProfile> = {};
+
+  if (rentCard.moveInDate) {
+    const parsedMoveIn = new Date(rentCard.moveInDate);
+    if (!Number.isNaN(parsedMoveIn.getTime())) {
+      updates.moveInDate = parsedMoveIn;
+    }
+  }
+
+  if (typeof rentCard.maxRent === "number") {
+    updates.maxRent = rentCard.maxRent;
+  }
+
+  if (typeof rentCard.creditScore === "number") {
+    updates.creditScore = rentCard.creditScore;
+  }
+
+  const baseEmploymentInfo: TenantEmploymentInfo = {
+    ...DEFAULT_EMPLOYMENT_INFO,
+    ...(existingProfile?.employmentInfo ?? {}),
+  };
+
+  let hasEmploymentUpdates = false;
+
+  if (rentCard.currentEmployer) {
+    baseEmploymentInfo.employer = rentCard.currentEmployer;
+    hasEmploymentUpdates = true;
+  }
+
+  if (typeof rentCard.monthlyIncome === "number") {
+    baseEmploymentInfo.monthlyIncome = rentCard.monthlyIncome;
+    hasEmploymentUpdates = true;
+  }
+
+  if (rentCard.yearsEmployed) {
+    baseEmploymentInfo.startDate = rentCard.yearsEmployed;
+    hasEmploymentUpdates = true;
+  }
+
+  if (hasEmploymentUpdates) {
+    updates.employmentInfo = baseEmploymentInfo;
+  }
+
+  if (rentCard.currentAddress) {
+    const existingRentalHistory: TenantRentalHistory = {
+      ...DEFAULT_RENTAL_HISTORY,
+      ...(existingProfile?.rentalHistory ?? {}),
+    };
+
+    const filteredAddresses = existingRentalHistory.previousAddresses.filter(
+      (addressEntry) => addressEntry.address !== rentCard.currentAddress
+    );
+
+    const newAddress: TenantRentalHistory["previousAddresses"][number] = {
+      address: rentCard.currentAddress,
+      startDate: rentCard.moveInDate || filteredAddresses[0]?.startDate || "",
+      endDate: "Present",
+      landlordContact: filteredAddresses[0]?.landlordContact ?? "",
+    };
+
+    updates.rentalHistory = {
+      previousAddresses: [newAddress, ...filteredAddresses],
+    };
+  }
+
+  return updates;
+}
+
 export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
@@ -480,10 +574,9 @@ export class DatabaseStorage implements IStorage {
     profile: Partial<TenantProfile>,
     dbClient: typeof db | any = db
   ): Promise<TenantProfile> {
-    const sanitizedProfileEntries = Object.entries(profile).filter(([, value]) => value !== undefined);
+    const sanitizedEntries = Object.entries(profile).filter(([, value]) => value !== undefined);
 
-    // If there are no changes, return the existing profile without issuing an update statement
-    if (sanitizedProfileEntries.length === 0) {
+    if (sanitizedEntries.length === 0) {
       const [existingProfile] = await dbClient
         .select()
         .from(tenantProfiles)
@@ -496,7 +589,7 @@ export class DatabaseStorage implements IStorage {
       return existingProfile;
     }
 
-    const sanitizedProfile = Object.fromEntries(sanitizedProfileEntries) as Partial<TenantProfile>;
+    const sanitizedProfile = Object.fromEntries(sanitizedEntries) as Partial<TenantProfile>;
 
     const [updatedProfile] = await dbClient
       .update(tenantProfiles)
@@ -627,6 +720,52 @@ export class DatabaseStorage implements IStorage {
   ): Promise<RentCard> {
     const [newRentCard] = await dbClient.insert(rentCards).values(rentCard).returning();
     return newRentCard;
+  }
+
+  async createRentCardWithProfileSync(
+    userId: string,
+    rentCard: InsertRentCard
+  ): Promise<{ rentCard: RentCard; tenantProfile: TenantProfile }> {
+    const normalizedUserId = String(userId);
+
+    return db.transaction(async (tx) => {
+      const rentCardRecord = await this.createRentCard(
+        { ...rentCard, userId: normalizedUserId },
+        tx
+      );
+
+      const [existingProfile] = await tx
+        .select()
+        .from(tenantProfiles)
+        .where(eq(tenantProfiles.userId, normalizedUserId));
+
+      const profileForUpdate =
+        existingProfile ??
+        (await this.createTenantProfile(
+          {
+            userId: normalizedUserId,
+            moveInDate: null,
+            maxRent: null,
+            employmentInfo: null,
+            creditScore: null,
+            rentalHistory: { previousAddresses: [] },
+          },
+          tx
+        ));
+
+      const profileUpdates = deriveTenantProfileUpdatesFromRentCard(
+        rentCard,
+        profileForUpdate
+      );
+
+      const updatedProfile = await this.updateTenantProfile(
+        profileForUpdate.id,
+        profileUpdates,
+        tx
+      );
+
+      return { rentCard: rentCardRecord, tenantProfile: updatedProfile };
+    });
   }
 
   // Share token operations

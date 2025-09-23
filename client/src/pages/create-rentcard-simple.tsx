@@ -115,7 +115,7 @@ export default function CreateRentCardSimple() {
         description: "Your RentCard is ready to share with landlords instantly!",
       });
 
-      // Refresh the tenant profile so dependent flows (like share tokens) see the enriched data
+      // Refresh the tenant profile so downstream flows (like share tokens) see the enriched data
       try {
         await queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
 
@@ -140,6 +140,7 @@ export default function CreateRentCardSimple() {
           behavior: 'smooth'
         });
       }, 100);
+
     },
     onError: (error) => {
       toast({
