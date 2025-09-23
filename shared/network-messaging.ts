@@ -3,23 +3,23 @@
  */
 
 export const PRIVATE_LANDLORD_STATS = {
-  MARKET_SHARE: 'Private landlords manage most U.S. rentals',
-  DECISION_SPEED: 'Quicker personal decisions',
-  PERSONAL_APPROACH: 'Direct communication with owners',
+  MARKET_SHARE: 'Private landlords own 68.7% of U.S. rentals',
+  DECISION_SPEED: 'Decisions move faster when details are clear',
+  PERSONAL_APPROACH: 'Keep your personal approach while staying organized',
   NO_JUNK_FEES: 'No unnecessary prequalification fees',
 } as const;
 
 export const SOCIAL_PROOF_STATS = {
-  PRIVATE_LANDLORD_RESPONSE_TIME: 'Faster replies from owners',
+  PRIVATE_LANDLORD_RESPONSE_TIME: 'Faster replies when landlords review details upfront',
   TENANT_APPLICATION_TIME_SAVED: 'Less time rewriting forms',
-  STREAMLINED_COMMUNICATION: 'Direct landlord communication',
+  STREAMLINED_COMMUNICATION: 'Clear information replaces back-and-forth',
   ELIMINATE_JUNK_FEES: 'Transparent, fee-free prequalification',
-  FASTER_SCREENING: 'Decisions with fewer follow-up emails',
-  PERSONAL_RELATIONSHIPS: 'Personalized conversations',
-  PRIVATE_LANDLORD_DECISIONS: 'Faster personal decisions',
-  PRIVATE_LANDLORDS_JOINING: 'Growing private landlord network',
-  NETWORK_QUALITY: 'Trusted private rental network',
-  PERSONAL_APPROACH: 'Direct property owner relationships',
+  FASTER_SCREENING: 'Decisions without chasing documents',
+  PERSONAL_RELATIONSHIPS: 'Personal touch stays intact',
+  PRIVATE_LANDLORD_DECISIONS: 'Private landlords decide quickly with context',
+  PRIVATE_LANDLORDS_JOINING: 'More private landlords using RentCard links',
+  NETWORK_QUALITY: 'Reliable RentCards build trust fast',
+  PERSONAL_APPROACH: 'Respect the personal approach of private rentals',
 } as const;
 
 import { DERIVED_MESSAGING } from './value-propositions';
@@ -45,16 +45,16 @@ export const NETWORK_VALUE_PROPS = {
   },
   NETWORK_EFFECTS: {
     TENANT: [
-      'More private landlords mean more direct opportunities',
-      'Shared standards make responses clearer and faster',
-      'Verified RentCards build trust across the network',
-      'Every share improves landlord awareness of qualified renters',
+      'More private landlords mean more places to share your RentCard',
+      'Shared expectations make responses clearer and faster',
+      'Consistent RentCards build trust with private landlords',
+      'Every share reminds landlords you are ready with details',
     ],
     LANDLORD: [
       'More prepared tenants reduce your screening workload',
       'Shared templates keep expectations consistent',
       'Quality RentCards encourage quick, confident replies',
-      'Network effects help surface serious prospects sooner',
+      'Organized interest helps surface serious prospects sooner',
     ],
   },
 } as const;
