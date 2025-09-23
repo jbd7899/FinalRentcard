@@ -1,57 +1,96 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ComingSoonBadge, ComingSoonCard, ComingSoonWithMockData } from "@/components/ui/coming-soon";
+import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { MoreSection } from "@/components/ui/more-section";
-import { 
-  FileText, 
-  Star, 
-  Clock, 
-  Building2, 
-  ArrowRight,
-  CheckCircle,
-  LogOut,
-  Loader2,
+import {
+  FileText,
+  Star,
+  Building2,
   Share2,
   Upload,
-  Home,
   UserCheck,
-  Menu,
   X,
-  User,
-  BarChart3
-} from 'lucide-react';
-import { useAuthStore } from '@/stores/authStore';
-import { useUIStore } from '@/stores/uiStore';
-import { ROUTES, API_ENDPOINTS, APPLICATION_STATUS, type ApplicationStatus, APPLICATION_LABELS } from "@/constants";
-import { NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS, SOCIAL_PROOF_STATS } from '@shared/network-messaging';
+} from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
+import { ROUTES, API_ENDPOINTS } from "@/constants";
 import { Link, useLocation } from "wouter";
-import TenantLayout from '@/components/layouts/TenantLayout';
-import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
-import OneClickShareButton from '@/components/shared/OneClickShareButton';
-import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
-import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
-import { apiRequest } from '@/lib/queryClient';
+import TenantLayout from "@/components/layouts/TenantLayout";
+import OneClickShareButton from "@/components/shared/OneClickShareButton";
+import TenantAnalyticsDashboard from "@/components/tenant/AnalyticsDashboard";
+import { apiRequest } from "@/lib/queryClient";
 import {
   SHARE_PREREQUISITES_MESSAGE,
   canShareRentCardProfile,
   isShareReadinessMissing,
   type EmploymentInfoDetails,
-} from '@/lib/rentcardShareReadiness';
-import type { TenantProfile } from '@shared/schema';
-import type { TenantReference } from '@shared/schema-enhancements';
+} from "@/lib/rentcardShareReadiness";
+import type { TenantProfile } from "@shared/schema";
+import type { TenantReference } from "@shared/schema-enhancements";
+import {
+  TenantDashboardInterests,
+  type DashboardInterest,
+} from "@/components/tenant/DashboardInterests";
+import { ENV } from "@/constants/env";
 
+const parseCreatedAt = (value: string) => {
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
 
-const generateRoute = {
-  application: (id: string) => `/tenant/applications/${id}`
+const normalizeInterests = (data: unknown): DashboardInterest[] => {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  const normalized: DashboardInterest[] = [];
+
+  for (const item of data) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    const record = item as Record<string, unknown>;
+    if (typeof record.id !== "number") {
+      continue;
+    }
+
+    const propertySource = record.property;
+    let property: DashboardInterest["property"] = null;
+
+    if (propertySource && typeof propertySource === "object") {
+      const propertyRecord = propertySource as Record<string, unknown>;
+      property = {
+        address:
+          typeof propertyRecord.address === "string"
+            ? propertyRecord.address
+            : undefined,
+        rent:
+          typeof propertyRecord.rent === "number"
+            ? propertyRecord.rent
+            : undefined,
+      };
+    }
+
+    normalized.push({
+      id: record.id,
+      status: typeof record.status === "string" ? record.status : "new",
+      createdAt: typeof record.createdAt === "string" ? record.createdAt : "",
+      property,
+      isGeneral: Boolean(record.isGeneral),
+    });
+  }
+
+  return normalized.sort(
+    (a, b) => parseCreatedAt(b.createdAt) - parseCreatedAt(a.createdAt),
+  );
 };
 
 const TenantDashboard = () => {
-  const { logout, user } = useAuthStore();
-  const { setLoading, addToast } = useUIStore();
+  const { user } = useAuthStore();
   const [, setLocation] = useLocation();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
@@ -60,20 +99,20 @@ const TenantDashboard = () => {
     isLoading: isTenantProfileLoading,
     error: tenantProfileError,
   } = useQuery<TenantProfile | null, Error>({
-    queryKey: ['/api/tenant/profile'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/tenant/profile');
+    queryKey: ["/api/tenant/profile"],
+    queryFn: async (): Promise<TenantProfile | null> => {
+      try {
+        const response = await apiRequest("GET", "/api/tenant/profile");
+        return (await response.json()) as TenantProfile;
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("404")) {
+          return null;
+        }
 
-      if (response.status === 404) {
-        return null;
+        throw error instanceof Error
+          ? error
+          : new Error("Failed to fetch tenant profile");
       }
-
-      if (!response.ok) {
-        const message = await response.text().catch(() => null);
-        throw new Error(message || 'Failed to fetch tenant profile');
-      }
-
-      return response.json() as Promise<TenantProfile>;
     },
     enabled: Boolean(user),
     staleTime: 30_000,
@@ -86,18 +125,58 @@ const TenantDashboard = () => {
     isLoading: tenantReferencesLoading,
     error: tenantReferencesError,
   } = useQuery<TenantReference[], Error>({
-    queryKey: ['/api/tenant/references', tenantId],
-    queryFn: async () => {
-      const response = await apiRequest('GET', API_ENDPOINTS.TENANT_REFERENCES.LIST(tenantId!));
-
-      if (!response.ok) {
-        const message = await response.text().catch(() => null);
-        throw new Error(message || 'Failed to fetch tenant references');
+    queryKey: ["/api/tenant/references", tenantId],
+    queryFn: async (): Promise<TenantReference[]> => {
+      const currentTenantId = tenantId;
+      if (!currentTenantId) {
+        return [];
       }
 
-      return response.json() as Promise<TenantReference[]>;
+      try {
+        const response = await apiRequest(
+          "GET",
+          API_ENDPOINTS.TENANT_REFERENCES.LIST(currentTenantId),
+        );
+        return (await response.json()) as TenantReference[];
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("404")) {
+          return [];
+        }
+
+        throw error instanceof Error
+          ? error
+          : new Error("Failed to fetch tenant references");
+      }
     },
     enabled: Boolean(tenantId),
+    staleTime: 30_000,
+  });
+
+  const shouldFetchInterests = Boolean(user);
+  const {
+    data: interestsData = [],
+    isLoading: isInterestsLoading,
+    isFetching: isInterestsFetching,
+    error: interestsError,
+    refetch: refetchInterests,
+  } = useQuery<DashboardInterest[], Error>({
+    queryKey: ["/api/interests"],
+    queryFn: async (): Promise<DashboardInterest[]> => {
+      try {
+        const response = await apiRequest("GET", "/api/interests");
+        const raw = await response.json();
+        return normalizeInterests(raw);
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("404")) {
+          return [];
+        }
+
+        throw error instanceof Error
+          ? error
+          : new Error("Failed to fetch interests");
+      }
+    },
+    enabled: shouldFetchInterests,
     staleTime: 30_000,
   });
 
@@ -106,11 +185,11 @@ const TenantDashboard = () => {
       return null;
     }
 
-    if (typeof tenantProfile.employmentInfo === 'string') {
+    if (typeof tenantProfile.employmentInfo === "string") {
       try {
         return JSON.parse(tenantProfile.employmentInfo) as EmploymentInfoDetails;
       } catch (error) {
-        console.warn('Unable to parse employment info for dashboard:', error);
+        console.warn("Unable to parse employment info for dashboard:", error);
         return null;
       }
     }
@@ -118,16 +197,20 @@ const TenantDashboard = () => {
     return tenantProfile.employmentInfo as EmploymentInfoDetails;
   }, [tenantProfile]);
 
-  const parsedRentalHistory = useMemo<TenantProfile['rentalHistory'] | null>(() => {
+  const parsedRentalHistory = useMemo<
+    TenantProfile["rentalHistory"] | null
+  >(() => {
     if (!tenantProfile?.rentalHistory) {
       return null;
     }
 
-    if (typeof tenantProfile.rentalHistory === 'string') {
+    if (typeof tenantProfile.rentalHistory === "string") {
       try {
-        return JSON.parse(tenantProfile.rentalHistory) as TenantProfile['rentalHistory'];
+        return JSON.parse(
+          tenantProfile.rentalHistory,
+        ) as TenantProfile["rentalHistory"];
       } catch (error) {
-        console.warn('Unable to parse rental history for dashboard:', error);
+        console.warn("Unable to parse rental history for dashboard:", error);
         return null;
       }
     }
@@ -148,11 +231,16 @@ const TenantDashboard = () => {
     if (parsedEmploymentInfo?.monthlyIncome) completedFields++;
     if (parsedEmploymentInfo?.startDate) completedFields++;
 
-    if (typeof tenantProfile.creditScore === 'number' && tenantProfile.creditScore > 0) {
+    if (
+      typeof tenantProfile.creditScore === "number" &&
+      tenantProfile.creditScore > 0
+    ) {
       completedFields++;
     }
 
-    if (typeof tenantProfile.maxRent === 'number' && tenantProfile.maxRent > 0) {
+    if (
+      typeof tenantProfile.maxRent === "number" && tenantProfile.maxRent > 0
+    ) {
       completedFields++;
     }
 
@@ -170,7 +258,7 @@ const TenantDashboard = () => {
 
   const verifiedReferencesCount = useMemo(
     () => tenantReferences.filter((reference) => reference.isVerified).length,
-    [tenantReferences]
+    [tenantReferences],
   );
 
   const rentCardHasData = useMemo(() => {
@@ -182,15 +270,17 @@ const TenantDashboard = () => {
       parsedEmploymentInfo?.employer ||
         parsedEmploymentInfo?.position ||
         parsedEmploymentInfo?.monthlyIncome ||
-        parsedEmploymentInfo?.startDate
+        parsedEmploymentInfo?.startDate,
     );
 
     const hasOtherDetails = Boolean(
-      (typeof tenantProfile.creditScore === 'number' && tenantProfile.creditScore > 0) ||
-        (typeof tenantProfile.maxRent === 'number' && tenantProfile.maxRent > 0) ||
+      (typeof tenantProfile.creditScore === "number" &&
+        tenantProfile.creditScore > 0) ||
+        (typeof tenantProfile.maxRent === "number" &&
+          tenantProfile.maxRent > 0) ||
         tenantProfile.moveInDate ||
         (Array.isArray(parsedRentalHistory?.previousAddresses) &&
-          (parsedRentalHistory?.previousAddresses?.length ?? 0) > 0)
+          (parsedRentalHistory?.previousAddresses?.length ?? 0) > 0),
     );
 
     return hasEmploymentInfo || hasOtherDetails;
@@ -212,7 +302,7 @@ const TenantDashboard = () => {
       return null;
     }
 
-    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    const date = typeof timestamp === "string" ? new Date(timestamp) : timestamp;
 
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
       return null;
@@ -222,67 +312,44 @@ const TenantDashboard = () => {
   }, [tenantProfile]);
 
   const canShareRentCard = canShareRentCardProfile(tenantProfile ?? undefined);
-  const shareRequirementsMissing = isShareReadinessMissing(tenantProfile ?? undefined);
+  const shareRequirementsMissing = isShareReadinessMissing(
+    tenantProfile ?? undefined,
+  );
   const isRentCardLoading = isTenantProfileLoading || tenantReferencesLoading;
 
+  const tenantInterests = shouldFetchInterests ? interestsData : [];
+  const visibleInterests = tenantInterests.slice(0, 3);
+  const isInterestsInFlight =
+    (isInterestsLoading || isInterestsFetching) && tenantInterests.length === 0;
+  const interestsErrorToShow = !isInterestsInFlight
+    ? interestsError ?? null
+    : null;
 
-  const applications = [
-    {
-      id: 1,
-      property: "123 Main Street Unit A",
-      landlord: "John Smith",
-      status: APPLICATION_STATUS.CONTACTED as ApplicationStatus,
-      submittedAt: "2025-02-18T10:30:00",
-      requirements: {
-        creditScore: "✓ Meets requirement",
-        income: "✓ 3.5x monthly rent",
-        employment: "✓ Verified",
-        references: "✓ 2 verified references"
-      }
-    }
-  ];
-
-  const handleLogout = async () => {
-    try {
-      setLoading('logout', true);
-      await logout();
-      addToast({
-        title: 'Success',
-        description: 'You have been logged out successfully.',
-        type: 'success'
-      });
-      setLocation(ROUTES.AUTH);
-    } catch (error) {
-      addToast({
-        title: 'Error',
-        description: 'Failed to log out. Please try again.',
-        type: 'destructive'
-      });
-    } finally {
-      setLoading('logout', false);
-    }
+  const handleRetryInterests = () => {
+    if (!shouldFetchInterests) return;
+    void refetchInterests();
   };
-
 
   return (
     <TenantLayout activeRoute={ROUTES.TENANT.DASHBOARD}>
       <header className="mb-6 md:mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
+              Dashboard
+            </h1>
             <p className="text-sm sm:text-base text-gray-500 mt-1">
               Manage your rental profile and interests
             </p>
           </div>
-          
-          {/* Simplified Header - Primary CTA only */}
+
           <div className="flex gap-2">
             {canShareRentCard ? (
               <OneClickShareButton
                 variant="default"
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white"
-                showText={true}
+                showText
                 data-testid="button-share-rentcard-header"
               />
             ) : (
@@ -290,23 +357,32 @@ const TenantDashboard = () => {
                 <Button
                   variant="default"
                   size="sm"
-                  className={`${tenantProfile ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-600 hover:bg-green-700'} text-white`}
-                  onClick={() => setLocation('/create-rentcard')}
-                  data-testid={tenantProfile ? 'button-complete-rentcard-share' : 'button-create-rentcard-header'}
+                  className={`${
+                    tenantProfile
+                      ? "bg-amber-500 hover:bg-amber-600"
+                      : "bg-green-600 hover:bg-green-700"
+                  } text-white`}
+                  onClick={() => setLocation("/create-rentcard")}
+                  data-testid={
+                    tenantProfile
+                      ? "button-complete-rentcard-share"
+                      : "button-create-rentcard-header"
+                  }
                 >
-                  {tenantProfile ? 'Finish RentCard to Share' : 'Create RentCard'}
+                  {tenantProfile ? "Finish RentCard to Share" : "Create RentCard"}
                 </Button>
 
                 {shareRequirementsMissing && (
-                  <p className="text-xs text-gray-500">{SHARE_PREREQUISITES_MESSAGE}</p>
+                  <p className="text-xs text-gray-500">
+                    {SHARE_PREREQUISITES_MESSAGE}
+                  </p>
                 )}
               </div>
             )}
           </div>
         </div>
       </header>
-      
-      {/* Simplified Onboarding - Optional and Dismissible, only show if profile exists */}
+
       {!onboardingDismissed && tenantProfile && (
         <div className="mb-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
@@ -316,12 +392,14 @@ const TenantDashboard = () => {
               </div>
               <div>
                 <h3 className="text-sm font-medium text-blue-900">
-                  {shareRequirementsMissing ? 'Finish setting up your RentCard' : 'Want to optimize your RentCard?'}
+                  {shareRequirementsMissing
+                    ? "Finish setting up your RentCard"
+                    : "Want to optimize your RentCard?"}
                 </h3>
                 <p className="text-sm text-blue-700">
                   {shareRequirementsMissing
                     ? SHARE_PREREQUISITES_MESSAGE
-                    : 'Add references and details to get faster landlord responses'}
+                    : "Add references and details to get faster landlord responses"}
                 </p>
               </div>
             </div>
@@ -329,14 +407,20 @@ const TenantDashboard = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setLocation(shareRequirementsMissing ? '/create-rentcard' : ROUTES.TENANT.RENTCARD)}
+                onClick={() =>
+                  setLocation(
+                    shareRequirementsMissing
+                      ? "/create-rentcard"
+                      : ROUTES.TENANT.RENTCARD,
+                  )
+                }
                 className="text-blue-600 border-blue-300 hover:bg-blue-100"
                 data-testid="button-optimize-rentcard"
               >
-                {shareRequirementsMissing ? 'Finish Setup' : 'Optimize'}
+                {shareRequirementsMissing ? "Finish Setup" : "Optimize"}
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setOnboardingDismissed(true)}
                 className="text-gray-400 hover:text-gray-600"
@@ -348,8 +432,7 @@ const TenantDashboard = () => {
           </div>
         </div>
       )}
-        
-      {/* Primary Actions - Only 2 CTAs above the fold */}
+
       <section className="mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <Card className="hover:shadow-md transition-shadow border-2 border-blue-200">
@@ -358,11 +441,11 @@ const TenantDashboard = () => {
               <h3 className="font-semibold text-lg mb-2">Share RentCard</h3>
               <p className="text-sm text-gray-600 mb-4">
                 {canShareRentCard
-                  ? 'One-click sharing available in header'
-                  : 'Complete your RentCard to unlock one-click sharing'}
+                  ? "One-click sharing available in header"
+                  : "Complete your RentCard to unlock one-click sharing"}
               </p>
               <p
-                className={`text-xs font-medium ${canShareRentCard ? 'text-blue-600' : 'text-amber-600'}`}
+                className={`text-xs font-medium ${canShareRentCard ? "text-blue-600" : "text-amber-600"}`}
               >
                 {canShareRentCard
                   ? 'Use "Share My RentCard" button above ↗'
@@ -370,7 +453,7 @@ const TenantDashboard = () => {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card className="hover:shadow-md transition-shadow">
             <CardContent className="p-6 text-center">
               {isTenantProfileLoading ? (
@@ -384,9 +467,11 @@ const TenantDashboard = () => {
                 <>
                   <FileText className="h-10 w-10 text-green-500 mb-3 mx-auto" />
                   <h3 className="font-semibold text-lg mb-2">Create Your RentCard</h3>
-                  <p className="text-sm text-gray-600 mb-4">Build your rental profile to share with landlords</p>
-                  <Button 
-                    variant="default" 
+                  <p className="text-sm text-gray-600 mb-4">
+                    Build your rental profile to share with landlords
+                  </p>
+                  <Button
+                    variant="default"
                     size="sm"
                     className="w-full bg-green-600 hover:bg-green-700 text-white"
                     onClick={() => setLocation("/create-rentcard")}
@@ -398,10 +483,12 @@ const TenantDashboard = () => {
               ) : (
                 <>
                   <Star className="h-10 w-10 text-blue-500 mb-3 mx-auto" />
-                  <h3 className="font-semibold text-lg mb-2">View & Edit RentCard</h3>
-                  <p className="text-sm text-gray-600 mb-4">Update your profile and information</p>
-                  <Button 
-                    variant="outline" 
+                  <h3 className="font-semibold text-lg mb-2">View &amp; Edit RentCard</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Update your profile and information
+                  </p>
+                  <Button
+                    variant="outline"
                     size="sm"
                     className="w-full"
                     onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
@@ -414,17 +501,16 @@ const TenantDashboard = () => {
             </CardContent>
           </Card>
         </div>
-        
-        {/* Advanced Features - Progressive Disclosure */}
-        <MoreSection 
-          title="More Tools & Features" 
+
+        <MoreSection
+          title="More Tools & Features"
           persistKey="tenant-dashboard-tools"
           testId="dashboard-tools"
           className="mb-6"
         >
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setLocation(ROUTES.TENANT.DOCUMENTS)}
               className="flex flex-col items-center p-4 h-auto"
@@ -433,9 +519,9 @@ const TenantDashboard = () => {
               <Upload className="h-5 w-5 text-green-500 mb-2" />
               <span className="text-xs">Upload Documents</span>
             </Button>
-            
-            <Button 
-              variant="ghost" 
+
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
               className="flex flex-col items-center p-4 h-auto"
@@ -444,9 +530,9 @@ const TenantDashboard = () => {
               <UserCheck className="h-5 w-5 text-purple-500 mb-2" />
               <span className="text-xs">Manage References</span>
             </Button>
-            
-            <Button 
-              variant="ghost" 
+
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setLocation(ROUTES.TENANT.INTERESTS)}
               className="flex flex-col items-center p-4 h-auto"
@@ -458,20 +544,26 @@ const TenantDashboard = () => {
           </div>
         </MoreSection>
       </section>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 md:gap-8">
-        {/* RentCard Status */}
         <Card>
           <CardContent className="p-5 sm:p-6">
             <div className="flex justify-between items-start mb-4 sm:mb-5">
               <div>
                 <h2 className="text-base sm:text-lg font-medium">Your RentCard</h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-1.5" data-testid="text-rentcard-last-updated">
-                  {lastUpdated ? `Last updated: ${lastUpdated}` : 'No updates yet'}
+                <p
+                  className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-1.5"
+                  data-testid="text-rentcard-last-updated"
+                >
+                  {lastUpdated ? `Last updated: ${lastUpdated}` : "No updates yet"}
                 </p>
               </div>
               {rentCardHasData && (
-                <Badge variant="outline" className="px-2 py-1 text-xs font-medium" data-testid="badge-rentcard-completion">
+                <Badge
+                  variant="outline"
+                  className="px-2 py-1 text-xs font-medium"
+                  data-testid="badge-rentcard-completion"
+                >
                   {profileCompletion}% Complete
                 </Badge>
               )}
@@ -486,14 +578,20 @@ const TenantDashboard = () => {
               </>
             ) : tenantProfileError ? (
               <div className="text-center py-6">
-                <h3 className="text-sm font-medium text-red-600 mb-2">Unable to load your RentCard</h3>
-                <p className="text-sm text-gray-500">Please refresh the page and try again.</p>
+                <h3 className="text-sm font-medium text-red-600 mb-2">
+                  Unable to load your RentCard
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Please refresh the page and try again.
+                </p>
               </div>
             ) : !rentCardHasData ? (
               <div className="text-center">
                 <div className="flex flex-col items-center mb-4">
                   <FileText className="h-10 w-10 text-blue-500 mb-3" />
-                  <h3 className="font-semibold text-lg mb-2">Build your RentCard</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    Build your RentCard
+                  </h3>
                   <p className="text-sm text-gray-600">
                     Add your employment details, rental history, and references to unlock sharing tools.
                   </p>
@@ -518,13 +616,20 @@ const TenantDashboard = () => {
                     <div>
                       <p className="text-sm sm:text-base font-medium">Credit Score</p>
                       <div className="flex items-center gap-1 sm:gap-2">
-                        <span className="text-lg sm:text-xl font-semibold" data-testid="text-credit-score">
-                          {tenantProfile?.creditScore ?? '--'}
+                        <span
+                          className="text-lg sm:text-xl font-semibold"
+                          data-testid="text-credit-score"
+                        >
+                          {tenantProfile?.creditScore ?? "--"}
                         </span>
                         {tenantProfile?.creditScore ? (
-                          <span className="text-xs sm:text-sm text-gray-500">FICO</span>
+                          <span className="text-xs sm:text-sm text-gray-500">
+                            FICO
+                          </span>
                         ) : (
-                          <span className="text-xs sm:text-sm text-gray-400">Not provided</span>
+                          <span className="text-xs sm:text-sm text-gray-400">
+                            Not provided
+                          </span>
                         )}
                       </div>
                     </div>
@@ -533,18 +638,26 @@ const TenantDashboard = () => {
                   <div className="text-right">
                     <p className="text-sm sm:text-base font-medium">References</p>
                     <div className="flex items-center justify-end gap-1 sm:gap-2">
-                      <span className="text-lg sm:text-xl font-semibold" data-testid="text-verified-references">
+                      <span
+                        className="text-lg sm:text-xl font-semibold"
+                        data-testid="text-verified-references"
+                      >
                         {verifiedReferencesCount}
                       </span>
                       <span className="text-xs sm:text-sm text-gray-500">
-                        {tenantReferences.length ? `verified / ${tenantReferences.length} total` : 'verified'}
+                        {tenantReferences.length
+                          ? `verified / ${tenantReferences.length} total`
+                          : "verified"}
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {tenantReferencesError && (
-                  <p className="text-xs text-red-500 mb-3" data-testid="text-references-error">
+                  <p
+                    className="text-xs text-red-500 mb-3"
+                    data-testid="text-references-error"
+                  >
                     There was an issue loading your references. Showing the latest available data.
                   </p>
                 )}
@@ -568,95 +681,39 @@ const TenantDashboard = () => {
             )}
           </CardContent>
         </Card>
-        
+
         <section>
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-medium">Active Interests</h2>
-              <ComingSoonBadge type="feature" size="sm" title="Beta" />
+              {!ENV.IS_PRODUCTION && (
+                <ComingSoonBadge type="feature" size="sm" title="Beta" />
+              )}
             </div>
             <Link href={ROUTES.TENANT.INTERESTS}>
-              <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs sm:text-sm">View All</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 sm:h-8 text-xs sm:text-sm"
+              >
+                View All
+              </Button>
             </Link>
           </div>
-          
-          {applications.length > 0 ? (
-            <ComingSoonWithMockData
-              type="feature"
-              title="Interest Tracking"
-              description="Real-time interest tracking with landlord communications is coming soon. Currently showing demo data."
-              overlay={false}
-              mockDataComponent={
-                <Card>
-                  <CardContent className="p-5 sm:p-6">
-                    {applications.map((application) => (
-                      <div key={application.id} className="border-b pb-4 mb-4 last:border-0 last:pb-0 last:mb-0">
-                        <div className="flex justify-between items-start mb-2 sm:mb-3">
-                          <div>
-                            <h3 className="font-medium text-sm sm:text-base">{application.property}</h3>
-                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
-                              Landlord: {application.landlord}
-                            </p>
-                          </div>
-                          <Badge 
-                            className={`px-2 py-1 text-xs font-medium ${
-                              application.status === APPLICATION_STATUS.CONTACTED 
-                                ? 'bg-green-100 text-green-800' 
-                                : application.status === APPLICATION_STATUS.ARCHIVED
-                                ? 'bg-gray-100 text-gray-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {APPLICATION_LABELS.STATUS[application.status]}
-                          </Badge>
-                        </div>
-                        
-                        <div className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-                          <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            <span>Submitted {new Date(application.submittedAt).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                        
-                        <Link href={generateRoute.application(application.id.toString())}>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full text-xs sm:text-sm h-7 sm:h-8 flex items-center justify-center gap-1 sm:gap-2"
-                          >
-                            <span>View Details</span>
-                            <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          </Button>
-                        </Link>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              }
-            />
-          ) : (
-            <Card>
-              <CardContent className="p-5 sm:p-6 text-center">
-                <Building2 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">No active interests</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="text-xs sm:text-sm h-8 sm:h-9"
-                  onClick={() => setLocation(ROUTES.TENANT.INTERESTS)}
-                >
-                  Browse Properties
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+
+          <TenantDashboardInterests
+            interests={visibleInterests}
+            totalCount={tenantInterests.length}
+            isLoading={isInterestsInFlight}
+            error={interestsErrorToShow}
+            onBrowseProperties={() => setLocation(ROUTES.TENANT.INTERESTS)}
+            onRetry={handleRetryInterests}
+          />
         </section>
       </div>
-      
-      
-      {/* Advanced Analytics - Progressive Disclosure */}
-      <MoreSection 
-        title="Analytics & Insights" 
+
+      <MoreSection
+        title="Analytics & Insights"
         persistKey="tenant-dashboard-analytics"
         testId="dashboard-analytics"
         className="mb-6"
@@ -671,8 +728,12 @@ const TenantDashboard = () => {
           ) : tenantProfileError ? (
             <Card className="p-6">
               <div className="text-center">
-                <h3 className="text-lg font-medium text-red-600 mb-2">Profile Error</h3>
-                <p className="text-gray-500">Unable to load tenant profile. Please try refreshing the page.</p>
+                <h3 className="text-lg font-medium text-red-600 mb-2">
+                  Profile Error
+                </h3>
+                <p className="text-gray-500">
+                  Unable to load tenant profile. Please try refreshing the page.
+                </p>
               </div>
             </Card>
           ) : tenantProfile?.id ? (
@@ -680,9 +741,13 @@ const TenantDashboard = () => {
           ) : (
             <Card className="p-6">
               <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-600 mb-2">Profile Incomplete</h3>
-                <p className="text-gray-500 mb-4">Please complete your tenant profile to view analytics.</p>
-                <Button 
+                <h3 className="text-lg font-medium text-gray-600 mb-2">
+                  Profile Incomplete
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  Please complete your tenant profile to view analytics.
+                </p>
+                <Button
                   onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
                   data-testid="button-complete-profile"
                 >
@@ -693,7 +758,6 @@ const TenantDashboard = () => {
           )}
         </div>
       </MoreSection>
-      
     </TenantLayout>
   );
 };
