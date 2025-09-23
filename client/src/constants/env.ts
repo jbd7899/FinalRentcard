@@ -16,6 +16,10 @@ export const ENV = {
   FEATURES: {
     ENABLE_ANALYTICS: import.meta.env.VITE_ENABLE_ANALYTICS === 'true',
     ENABLE_CHAT: import.meta.env.VITE_ENABLE_CHAT === 'true',
+    ENABLE_DEV_AUTH:
+      import.meta.env.VITE_ENABLE_DEV_AUTH === 'true' ||
+      (import.meta.env.VITE_ENABLE_DEV_AUTH !== 'false' &&
+        (import.meta.env.MODE === 'development' || import.meta.env.VITE_NODE_ENV === 'development')),
   },
 } as const;
 

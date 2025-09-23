@@ -1284,7 +1284,7 @@ const RentCard = () => {
               {!tenantProfile?.creditScore && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-700">
-                    Adding your credit score helps landlords assess your application more quickly.
+                    Adding your credit score helps landlords assess your prequalification more quickly.
                   </p>
                 </div>
               )}

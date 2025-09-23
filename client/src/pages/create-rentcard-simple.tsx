@@ -158,7 +158,7 @@ export default function CreateRentCardSimple() {
             </h1>
             
             <p className="text-lg text-gray-600 mb-8">
-              Private landlords can now review your profile in seconds instead of reviewing dozens of applications.
+              Private landlords can now review your profile in seconds instead of juggling multiple forms.
             </p>
 
             {/* Quick Stats */}
@@ -199,7 +199,7 @@ export default function CreateRentCardSimple() {
             </div>
 
             <p className="text-sm text-gray-500">
-              💡 Pro tip: Landlords respond 3x faster to RentCards than traditional applications
+              💡 Pro tip: Landlords respond faster when they receive a complete RentCard up front
             </p>
           </div>
         </div>
@@ -466,7 +466,7 @@ export default function CreateRentCardSimple() {
                   </div>
                   <div>
                     <h4 className="font-medium text-sm">Faster Decisions</h4>
-                    <p className="text-sm text-gray-600">Landlords respond 2x faster than traditional applications</p>
+                    <p className="text-sm text-gray-600">Landlords respond faster than with traditional forms</p>
                   </div>
                 </div>
 
@@ -482,7 +482,7 @@ export default function CreateRentCardSimple() {
 
                 <div className="bg-yellow-50 p-3 rounded-lg mt-4">
                   <p className="text-sm text-yellow-800">
-                    <strong>Pro tip:</strong> Complete RentCards get 3x more responses than incomplete applications
+                    <strong>Pro tip:</strong> Complete RentCards receive more responses than incomplete profiles
                   </p>
                 </div>
               </CardContent>

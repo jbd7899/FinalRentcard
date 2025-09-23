@@ -38,7 +38,7 @@ export default function HomePage() {
       description: "Create once. Share anywhere—even off‑platform.",
       primaryCTA: DERIVED_MESSAGING.TENANT.CALL_TO_ACTION,
       secondaryCTA: "View Sample RentCard",
-      primaryLink: "/api/login",
+      primaryLink: "/auth?mode=register&type=tenant",
       secondaryLink: "/samples/rentcard",
       benefits: [
         {
@@ -65,10 +65,10 @@ export default function HomePage() {
     landlord: {
       hero: "Get qualified tenants for your Private Rentals.",
       secondary: "Free QR codes • One‑click interest.",
-      description: "Professional efficiency with personal service.",
+      description: "Keep your personal approach while receiving consistent prequalification details.",
       primaryCTA: DERIVED_MESSAGING.LANDLORD.CALL_TO_ACTION,
       secondaryCTA: "View Screening Tools",
-      primaryLink: "/api/login",
+      primaryLink: "/auth?mode=register&type=landlord",
       secondaryLink: "/samples/screening-page",
       benefits: [
         {
@@ -182,7 +182,7 @@ export default function HomePage() {
             <button
               onClick={() => {
                 localStorage.setItem("selectedRole", selectedRole);
-                window.location.href = "/api/login";
+                setLocation(`/auth?mode=register&type=${selectedRole}`);
               }}
               className={`group px-6 sm:px-8 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl flex items-center justify-center gap-3 transition-all text-white text-sm sm:text-base ${
                 isLandlordSelected

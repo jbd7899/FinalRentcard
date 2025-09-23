@@ -1,5 +1,5 @@
 Project Overview:
-I am developing MyRentCard, a React + Node.js application that streamlines rental applications for tenants and landlords. The project is being built in Replit using React (Frontend) and Node.js/Express (Backend) with a MongoDB database (or PostgreSQL, if recommended).
+I am developing MyRentCard, a React + Node.js application that standardizes rental prequalification for tenants and landlords. The project is being built in Replit using React (Frontend) and Node.js/Express (Backend) with a MongoDB database (or PostgreSQL, if recommended).
 
 1. File Structure
 I need a scalable and maintainable project structure that follows best practices. Here’s what I need:

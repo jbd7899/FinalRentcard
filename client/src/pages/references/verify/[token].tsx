@@ -377,7 +377,7 @@ const VerificationPage = () => {
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Please provide your feedback</h3>
                 <div className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-4">
                   <p className="text-blue-800 text-sm">
-                    Your honest feedback helps landlords make informed decisions. All information you provide will be shared with potential landlords reviewing this tenant's application.
+                    Your honest feedback helps landlords make informed decisions. All information you provide will be shared with potential landlords reviewing this tenant's prequalification details.
                   </p>
                 </div>
                 <Form {...form}>
@@ -466,7 +466,7 @@ const VerificationPage = () => {
                     <div className="space-y-4">
                       <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
                         <p className="text-gray-700 text-sm">
-                          <strong>Privacy Notice:</strong> By submitting this verification, you acknowledge that your feedback will be shared with the tenant and potential landlords reviewing their application. Your contact information will not be shared with third parties.
+                          <strong>Privacy Notice:</strong> By submitting this verification, you acknowledge that your feedback will be shared with the tenant and potential landlords reviewing their prequalification details. Your contact information will not be shared with third parties.
                         </p>
                       </div>
                       

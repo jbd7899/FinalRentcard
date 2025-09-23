@@ -89,7 +89,7 @@ const GeneralScreeningPage = () => {
           tenantId: user?.id,
           status: "pending",
         });
-        if (!response.ok) throw new Error("Failed to submit application");
+        if (!response.ok) throw new Error("Failed to submit prequalification");
         return response.json();
       } finally {
         setLoading('submitRentCard', false);

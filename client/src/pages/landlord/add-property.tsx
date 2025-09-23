@@ -1451,7 +1451,7 @@ const AddPropertyForm = ({
           <p className="text-gray-500 mt-2">
             {isEditMode 
               ? 'Update your property details and requirements' 
-              : 'Set up your property details and requirements to start receiving qualified RentCard applications'}
+              : 'Set up your property details and requirements to start receiving qualified RentCard prequalification submissions'}
           </p>
         </div>
         <div className="p-4 bg-blue-50 border-b border-blue-100">

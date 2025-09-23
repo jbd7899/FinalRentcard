@@ -452,7 +452,7 @@ const ContactPreferences = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries({
                   propertyInquiries: 'Property Inquiries',
-                  applicationUpdates: 'Application Updates',
+                  applicationUpdates: 'Interest Updates',
                   generalNotifications: 'General Notifications',
                   marketingEmails: 'Marketing Emails'
                 }).map(([field, label]) => (
@@ -487,7 +487,7 @@ const ContactPreferences = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries({
                   propertyInquiries: 'Property Inquiries',
-                  applicationUpdates: 'Application Updates',
+                  applicationUpdates: 'Interest Updates',
                   maintenanceRequests: 'Maintenance Requests',
                   leaseInformation: 'Lease Information',
                   marketingOffers: 'Marketing Offers'

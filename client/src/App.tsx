@@ -12,6 +12,7 @@ import PropertyScreeningEdit from "@/pages/property-screening-edit";
 import GeneralScreeningPage from "@/pages/general-screening-page";
 import ArchivedPropertyPage from "@/pages/archived-property";
 import DebugAuthPage from "@/components/AuthDebugTools";
+import AuthPage from "@/pages/auth-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { StoreProvider } from "@/providers/StoreProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -78,6 +79,9 @@ function Router() {
       
       {/* About page - always accessible */}
       <Route path="/about" component={AboutPage} />
+
+      {/* Authentication explainer */}
+      <Route path="/auth" component={AuthPage} />
       
       {/* Role-based Landing Pages */}
       <Route path="/tenant" component={TenantLanding} />
