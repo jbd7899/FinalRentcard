@@ -586,11 +586,40 @@ Complete action: ${data.actionUrl}
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
     const secretKey = process.env.TOKEN_SECRET || 'default-secret-key-change-in-production';
-    
+
     const data = `${referenceId}:${timestamp}:${randomString}:${secretKey}`;
     const hash = require('crypto').createHash('sha256').update(data).digest('hex');
-    
+
     return Buffer.from(`${referenceId}:${timestamp}:${hash}`).toString('base64');
+  }
+
+  verifyToken(token: string): { referenceId: number; timestamp: number } | null {
+    try {
+      const decoded = Buffer.from(token, 'base64').toString('ascii');
+      const [referenceIdStr, timestampStr] = decoded.split(':');
+
+      const referenceId = parseInt(referenceIdStr, 10);
+      const timestamp = parseInt(timestampStr, 10);
+
+      if (isNaN(referenceId) || isNaN(timestamp)) {
+        console.error('Invalid token format: could not parse referenceId or timestamp');
+        return null;
+      }
+
+      const now = Date.now();
+      const tokenAge = now - timestamp;
+      const maxAge = 24 * 60 * 60 * 1000;
+
+      if (tokenAge > maxAge) {
+        console.error('Token expired: token age is', tokenAge, 'ms, max age is', maxAge, 'ms');
+        return null;
+      }
+
+      return { referenceId, timestamp };
+    } catch (error) {
+      console.error('Error verifying token:', error);
+      return null;
+    }
   }
 
   // Get service status
@@ -635,31 +664,6 @@ export async function sendReferenceVerificationEmail(
 }
 
 // Token verification (existing logic from email.ts) 
-export function verifyToken(token: string): { referenceId: number, timestamp: number } | null {
-  try {
-    const decoded = Buffer.from(token, 'base64').toString('ascii');
-    const [referenceIdStr, timestampStr, hash] = decoded.split(':');
-    
-    const referenceId = parseInt(referenceIdStr, 10);
-    const timestamp = parseInt(timestampStr, 10);
-    
-    if (isNaN(referenceId) || isNaN(timestamp)) {
-      console.error('Invalid token format: could not parse referenceId or timestamp');
-      return null;
-    }
-    
-    const now = Date.now();
-    const tokenAge = now - timestamp;
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-    
-    if (tokenAge > maxAge) {
-      console.error('Token expired: token age is', tokenAge, 'ms, max age is', maxAge, 'ms');
-      return null;
-    }
-    
-    return { referenceId, timestamp };
-  } catch (error) {
-    console.error('Error verifying token:', error);
-    return null;
-  }
+export function verifyToken(token: string): { referenceId: number; timestamp: number } | null {
+  return emailService.verifyToken(token);
 }
