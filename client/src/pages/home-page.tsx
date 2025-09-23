@@ -292,17 +292,25 @@ export default function HomePage() {
                 MyRentCard
               </span>
               <span className="text-xl sm:text-2xl lg:text-3xl text-slate-800">
-                Standardized prequalification for private rentals
+                Create once, share everywhere
               </span>
             </h1>
-            <p className="text-lg text-slate-600 mb-8 px-2">
-              {content.secondary}
+            <p className="text-lg text-slate-600 mb-6 px-2">
+              <span className="font-semibold text-blue-600">Tenants:</span> No more filling out forms for every landlord. 
+              <span className="font-semibold text-emerald-600">Landlords:</span> Collect organized interest fast.
             </p>
-
-            {/* Mobile-Optimized Role Toggle */}
             <div className="mb-8">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-4">
-                Choose who you are
+              <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
+                <Clock className="h-3 w-3 mr-1" />
+                Start in 2 minutes • Free forever
+              </Badge>
+            </div>
+
+            {/* Optional View As Switcher */}
+            <div className="mb-8">
+              <p className="text-sm font-medium text-slate-500 mb-4">
+                <Eye className="h-3 w-3 inline mr-1" />
+                View as:
               </p>
               <div className="grid gap-3 sm:grid-cols-2 max-w-2xl mx-auto" role="tablist" aria-label="Choose tenant or landlord view">
                 <button
@@ -346,60 +354,97 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Hero Content */}
+            {/* Unified Hero Content */}
             <div className="mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4 px-2">
-                {content.hero}
+                {selectedRole === 'landlord' ? content.hero : 'Create your rental profile once, share it everywhere'}
               </h2>
               <p className="text-lg text-slate-600 mb-6 px-2 leading-relaxed">
-                {content.description}
+                {selectedRole === 'landlord' 
+                  ? 'Create property profiles with QR codes. Tenants submit interest with one click, and you keep every lead organized.' 
+                  : 'Build your RentCard once, keep it updated in minutes, and send to any private landlord—no extra forms.'
+                }
               </p>
             </div>
 
-            {/* Mobile-Optimized CTAs */}
+            {/* Unified Primary CTA */}
             <div className="flex flex-col gap-4 mb-8">
               <button
                 onClick={() => {
-                  localStorage.setItem('selectedRole', selectedRole);
-                  const quickStartRoute = isLandlordSelected ? '/quickstart/landlord' : '/quickstart/tenant';
-                  setLocation(quickStartRoute);
+                  setLocation('/quickstart');
                 }}
-                className={`w-full inline-flex items-center justify-center gap-3 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-all shadow-xl ${
-                  isLandlordSelected
-                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/40'
-                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/40'
-                }`}
+                className="w-full inline-flex items-center justify-center gap-3 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-all shadow-xl bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 shadow-blue-600/40"
                 data-testid="button-primary-cta"
               >
-                {content.primaryCTA}
+                Start in 2 minutes
                 <ArrowRight className="h-5 w-5" />
               </button>
-              <Link
-                href={content.secondaryLink}
-                className={`w-full inline-flex items-center justify-center gap-3 rounded-2xl border px-6 py-4 text-base font-semibold transition-all ${
-                  isLandlordSelected
-                    ? 'border-emerald-600 text-emerald-700 hover:bg-emerald-50'
-                    : 'border-blue-600 text-blue-700 hover:bg-blue-50'
-                }`}
-                data-testid="button-secondary-cta"
-              >
-                {content.secondaryCTA}
-                <Eye className="h-5 w-5" />
-              </Link>
+              
+              {/* Balanced Secondary CTAs */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Link
+                  href="/samples/rentcard"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-blue-600 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-50 transition-all"
+                  data-testid="button-sample-rentcard"
+                >
+                  <User className="h-4 w-4" />
+                  See Sample RentCard
+                </Link>
+                <Link
+                  href="/samples/screening-page"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 px-4 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition-all"
+                  data-testid="button-sample-screening"
+                >
+                  <QrCode className="h-4 w-4" />
+                  See Landlord Tools
+                </Link>
+              </div>
             </div>
 
-            {/* Quick Benefits */}
-            <div className="grid gap-3 max-w-lg mx-auto">
-              {content.heroBullets.map((bullet, index) => (
-                <div key={index} className="flex items-start gap-3 text-sm text-slate-600 px-2">
-                  <CheckCircle
-                    className={`mt-0.5 h-5 w-5 flex-shrink-0 ${
-                      isLandlordSelected ? 'text-emerald-500' : 'text-blue-500'
-                    }`}
-                  />
-                  <span>{bullet}</span>
+            {/* Unified Quick Benefits */}
+            <div className="grid gap-3 max-w-2xl mx-auto">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-semibold text-blue-700">For Tenants</span>
+                  </div>
+                  <ul className="space-y-1 text-xs text-blue-600">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      Reusable profile for every landlord
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      Update once, share everywhere
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      Look professional instantly
+                    </li>
+                  </ul>
                 </div>
-              ))}
+                <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="h-4 w-4 text-emerald-600" />
+                    <span className="text-sm font-semibold text-emerald-700">For Landlords</span>
+                  </div>
+                  <ul className="space-y-1 text-xs text-emerald-600">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      Generate QR codes instantly
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      Collect organized interest
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      Focus on qualified tenants
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </section>

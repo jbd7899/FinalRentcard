@@ -52,6 +52,7 @@ import TenantReferralsPage from "@/pages/tenant/referrals";
 import SharedRentCard from "@/pages/shared-rentcard";
 
 // QuickStart Pages
+import QuickStartEntry from "@/pages/quickstart/quickstart-entry";
 import TenantQuickStart from "@/pages/quickstart/tenant-quickstart";
 import LandlordQuickStart from "@/pages/quickstart/landlord-quickstart";
 
@@ -86,6 +87,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       
       {/* QuickStart flows - public access for immediate value */}
+      <Route path="/quickstart" component={QuickStartEntry} />
       <Route path="/quickstart/tenant" component={TenantQuickStart} />
       <Route path="/quickstart/landlord" component={LandlordQuickStart} />
       
