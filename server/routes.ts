@@ -2444,7 +2444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Reference has no associated tenant" });
       }
       
-      const tenantProfile = await storage.getTenantProfile(tenantId);
+      const tenantProfile = await storage.getTenantProfileById(tenantId);
       
       if (!tenantProfile) {
         return res.status(404).json({ message: "Tenant profile not found" });
@@ -3202,25 +3202,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      if (!reference.tenantId) {
+        return res.status(400).json({
+          error: 'Reference is not linked to a tenant',
+          code: 'TENANT_ID_MISSING',
+          message: 'The reference is missing tenant information. Please contact the tenant for assistance.'
+        });
+      }
+
+      const tenantProfile = await storage.getTenantProfileById(reference.tenantId);
+      if (!tenantProfile) {
+        return res.status(404).json({
+          error: 'Tenant profile not found',
+          code: 'TENANT_PROFILE_NOT_FOUND',
+          message: 'The tenant associated with this reference could not be found. Please contact the tenant for assistance.'
+        });
+      }
+
       // Get tenant information for the response
       let tenantName = 'the tenant';
-      if (reference.tenantId) {
+      if (tenantProfile.userId) {
         try {
-          const tenantProfile = await storage.getTenantProfile(reference.tenantId);
-          
-          if (tenantProfile && tenantProfile.userId) {
-            const user = await storage.getUser(tenantProfile.userId);
-            
-            if (user) {
-              tenantName = user.email;
-            }
+          const user = await storage.getUser(tenantProfile.userId);
+
+          if (user) {
+            tenantName = user.email;
           }
         } catch (profileError) {
-          console.error('Error fetching tenant profile:', profileError);
+          console.error('Error fetching tenant user:', profileError);
           // Continue with default tenant name
         }
       }
-      
+
       // Return reference data with tenant name and verification status
       return res.json({
         ...reference,
@@ -3297,38 +3310,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      if (!reference.tenantId) {
+        return res.status(400).json({
+          error: 'Reference is not linked to a tenant',
+          code: 'TENANT_ID_MISSING',
+          message: 'The reference is missing tenant information. Please contact the tenant for assistance.'
+        });
+      }
+
+      const tenantProfile = await storage.getTenantProfileById(reference.tenantId);
+      if (!tenantProfile) {
+        return res.status(404).json({
+          error: 'Tenant profile not found',
+          code: 'TENANT_PROFILE_NOT_FOUND',
+          message: 'The tenant associated with this reference could not be found. Please contact the tenant for assistance.'
+        });
+      }
+
       // Update the reference with verification data
       const updatedReference = await storage.verifyTenantReference(referenceId);
-      
+
       if (!updatedReference) {
         throw new Error('Failed to update reference verification status');
       }
-      
+
       // Update the notes separately
       const notesUpdate = `${reference.notes || ''}\n\nVerified on ${new Date().toISOString()}\nRating: ${rating}\nComments: ${comments}`;
       await storage.updateTenantReference(referenceId, { notes: notesUpdate });
-      
+
       // Get tenant information for the response
       let tenantName = 'the tenant';
-      if (reference.tenantId) {
+      if (tenantProfile.userId) {
         try {
-          const tenantProfile = await storage.getTenantProfile(reference.tenantId);
-          
-          if (tenantProfile && tenantProfile.userId) {
-            const user = await storage.getUser(tenantProfile.userId);
-            
-            if (user) {
-              tenantName = user.email;
-            }
+          const user = await storage.getUser(tenantProfile.userId);
+
+          if (user) {
+            tenantName = user.email;
           }
         } catch (profileError) {
-          console.error('Error fetching tenant profile:', profileError);
+          console.error('Error fetching tenant user:', profileError);
           // Continue with default tenant name
         }
       }
-      
-      return res.json({ 
-        message: 'Reference verified successfully', 
+
+      return res.json({
+        message: 'Reference verified successfully',
         reference: updatedReference,
         tenantName,
         verificationDate: new Date().toISOString()
