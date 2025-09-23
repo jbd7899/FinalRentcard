@@ -23,6 +23,7 @@ interface User {
     tenant: boolean;
     landlord: boolean;
   };
+  pendingRoleSelection?: 'tenant' | 'landlord' | null;
 }
 
 interface AuthState {
