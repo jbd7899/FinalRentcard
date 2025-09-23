@@ -184,7 +184,7 @@ const PropertiesTab: React.FC<PropertiesTabProps> = ({
           Property Screening Pages
         </h2>
         <Button 
-          onClick={() => setLocation(ROUTES.LANDLORD.ADD_PROPERTY)} 
+          onClick={() => setLocation('/quickstart/landlord')} 
           className="text-xs sm:text-sm h-9 sm:h-10"
         >
           <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3" />
@@ -213,7 +213,7 @@ const PropertiesTab: React.FC<PropertiesTabProps> = ({
               <Button 
                 variant="link" 
                 className="mt-2 sm:mt-3 text-xs sm:text-sm"
-                onClick={() => setLocation(ROUTES.LANDLORD.ADD_PROPERTY)}
+                onClick={() => setLocation('/quickstart/landlord')}
               >
                 Add your first property
               </Button>

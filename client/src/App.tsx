@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ROUTES } from "@/constants/routes";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
-import CreateRentCardSimple from "@/pages/create-rentcard-simple";
+// Removed: Replaced with TenantQuickStart
 import ScreeningPage from "@/pages/screening-page";
 import EditScreeningPage from "@/pages/edit-screening-page";
 import PropertyScreeningEdit from "@/pages/property-screening-edit";
@@ -30,8 +30,7 @@ import LandlordLanding from "@/pages/landlord-landing";
 // Landlord Pages
 import LandlordDashboard from "@/pages/landlord/dashboard";
 import LandlordApplications from "@/pages/landlord/applications";
-import AddProperty from "@/pages/landlord/add-property";
-import CreatePropertySimple from "@/pages/landlord/create-property-simple";
+import AddProperty from "@/pages/landlord/add-property"; // Still needed for editing properties
 import PropertyScreeningPage from "@/pages/landlord/screening-page";
 import ScreeningManagement from "@/pages/landlord/screening";
 import VerifyDocumentsPage from "@/pages/landlord/verify-documents";
@@ -100,8 +99,7 @@ function Router() {
       {/* Landlord Routes */}
       <ProtectedRoute path={ROUTES.LANDLORD.DASHBOARD} component={LandlordDashboard} />
       <ProtectedRoute path={ROUTES.LANDLORD.INTERESTS} component={LandlordApplications} />
-      <ProtectedRoute path={ROUTES.LANDLORD.ADD_PROPERTY} component={AddProperty} />
-      <ProtectedRoute path="/landlord/create-property-simple" component={CreatePropertySimple} />
+      <ProtectedRoute path={ROUTES.LANDLORD.ADD_PROPERTY} component={LandlordQuickStart} />
       <ProtectedRoute path="/landlord/properties/:id/edit" component={AddProperty} />
       <ProtectedRoute path={ROUTES.LANDLORD.VERIFY_DOCUMENTS} component={VerifyDocumentsPage} />
       <ProtectedRoute path={ROUTES.LANDLORD.CONTACT_MANAGEMENT} component={ContactManagement} />
@@ -132,7 +130,7 @@ function Router() {
       <ProtectedRoute path={ROUTES.TENANT.MESSAGE_TEMPLATES} component={MessageTemplatesPage} />
       <ProtectedRoute path={ROUTES.TENANT.REFERRALS} component={TenantReferralsPage} />
       <ProtectedRoute path={ROUTES.TENANT.CONTACT_PREFERENCES} component={ContactPreferences} />
-      <Route path="/create-rentcard" component={CreateRentCardSimple} />
+      <Route path="/create-rentcard" component={TenantQuickStart} />
       <Route path="/rentcard/:slug" component={TenantRentCard} />
       
       {/* Public Shared RentCard Route */}

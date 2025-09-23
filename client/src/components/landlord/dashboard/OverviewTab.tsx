@@ -112,7 +112,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                   <Button 
                     variant="link" 
                     className="text-xs sm:text-sm text-blue-600 p-0 h-auto mt-2"
-                    onClick={() => setLocation(ROUTES.LANDLORD.ADD_PROPERTY)}
+                    onClick={() => setLocation('/quickstart/landlord')}
                   >
                     Add a property →
                   </Button>
