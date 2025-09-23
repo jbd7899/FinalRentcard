@@ -75,12 +75,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
       login: async () => {
         // Redirect to Replit Auth login
-        window.location.href = '/api/login';
+        window.location.href = '/auth?mode=login';
       },
 
       register: async () => {
         // Redirect to Replit Auth login (registration happens automatically)
-        window.location.href = '/api/login';
+        window.location.href = '/auth?mode=register';
       },
 
       logout: async () => {

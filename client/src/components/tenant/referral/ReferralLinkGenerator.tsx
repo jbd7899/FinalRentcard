@@ -171,7 +171,7 @@ export function ReferralLinkGenerator({
     
     const subject = encodeURIComponent("Join MyRentCard with my referral link!");
     const body = encodeURIComponent(
-      `Hi there!\n\nI'd like to invite you to join MyRentCard, the easiest way to create and share rental applications.\n\nUse my referral link to get started:\n${currentLink.url}\n\nBest regards!`
+      `Hi there!\n\nI'd like to invite you to join MyRentCard, the easiest way to manage your rental prequalification.\n\nUse my referral link to get started:\n${currentLink.url}\n\nBest regards!`
     );
     const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
     window.location.href = mailtoUrl;
@@ -181,7 +181,7 @@ export function ReferralLinkGenerator({
     if (!currentLink) return;
     
     const message = encodeURIComponent(
-      `Join MyRentCard with my referral link and simplify your rental applications: ${currentLink.shortUrl || currentLink.url}`
+      `Join MyRentCard with my referral link and simplify your rental prequalification: ${currentLink.shortUrl || currentLink.url}`
     );
     const smsUrl = `sms:?body=${message}`;
     window.location.href = smsUrl;
@@ -194,7 +194,7 @@ export function ReferralLinkGenerator({
       try {
         await navigator.share({
           title: 'Join MyRentCard',
-          text: 'Simplify your rental applications with MyRentCard',
+          text: 'Simplify your rental prequalification with MyRentCard',
           url: currentLink.shortUrl || currentLink.url,
         });
       } catch (error) {

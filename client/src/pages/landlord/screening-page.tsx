@@ -241,7 +241,7 @@ const ScreeningPage = () => {
           tenantId: user?.id,
           status: "pending",
         });
-        if (!response.ok) throw new Error("Failed to submit application");
+        if (!response.ok) throw new Error("Failed to submit prequalification");
         return response.json();
       } finally {
         setLoading('submitRentCard', false);
@@ -315,7 +315,7 @@ const ScreeningPage = () => {
                 Your Property Screening Page
               </h1>
               <p className="text-gray-600">
-                This is your property screening page for tenant applications. Tenants can submit their RentCard or complete a quick pre-screening form.
+                This is your property screening page for tenant prequalification. Tenants can submit their RentCard or complete a quick pre-screening form.
               </p>
             </div>
             <Button 

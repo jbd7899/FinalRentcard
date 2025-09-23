@@ -1,314 +1,281 @@
 /**
- * Network value messaging and social proof constants for viral growth
- * Focus: Private landlords who own up to 75% of US rentals
+ * Network value messaging and social proof constants for private landlord workflows
  */
 
-// Private landlord market statistics
 export const PRIVATE_LANDLORD_STATS = {
-  MARKET_SHARE: 'up to 75% of US rentals',
-  DECISION_SPEED: 'Faster response times',
-  PERSONAL_APPROACH: 'Direct landlord communication',
-  NO_JUNK_FEES: 'No hidden prequalification fees',
+  MARKET_SHARE: 'Private landlords manage most U.S. rentals',
+  DECISION_SPEED: 'Quicker personal decisions',
+  PERSONAL_APPROACH: 'Direct communication with owners',
+  NO_JUNK_FEES: 'No unnecessary prequalification fees',
 } as const;
 
-
-// Mechanism-based statistics (realistic time savings and specific process improvements)
 export const SOCIAL_PROOF_STATS = {
-  // Private landlord advantages - focus on mechanism, not inflated numbers
-  PRIVATE_LANDLORD_RESPONSE_TIME: 'Faster response times',
-  INDIVIDUAL_LANDLORD_RESPONSE_TIME: 'Faster response times', // DEPRECATED - use PRIVATE_LANDLORD_RESPONSE_TIME
-  TENANT_APPLICATION_TIME_SAVED: '60-90 minutes per prequalification',
-  // Process improvements with private landlords
+  PRIVATE_LANDLORD_RESPONSE_TIME: 'Faster replies from owners',
+  TENANT_APPLICATION_TIME_SAVED: 'Less time rewriting forms',
   STREAMLINED_COMMUNICATION: 'Direct landlord communication',
-  ELIMINATE_JUNK_FEES: 'No hidden prequalification fees',
-  FASTER_SCREENING: 'Same-day responses possible',
-  PERSONAL_RELATIONSHIPS: 'Direct tenant-landlord connection',
-  PRIVATE_LANDLORD_DECISIONS: 'Faster response times',
-  INDIVIDUAL_LANDLORD_DECISIONS: 'Faster response times', // DEPRECATED - use PRIVATE_LANDLORD_DECISIONS
-  // Quality-focused growth indicators (realistic rates)
+  ELIMINATE_JUNK_FEES: 'Transparent, fee-free prequalification',
+  FASTER_SCREENING: 'Decisions with fewer follow-up emails',
+  PERSONAL_RELATIONSHIPS: 'Personalized conversations',
+  PRIVATE_LANDLORD_DECISIONS: 'Faster personal decisions',
   PRIVATE_LANDLORDS_JOINING: 'Growing private landlord network',
-  INDIVIDUAL_LANDLORDS_JOINING: 'Growing private landlord network', // DEPRECATED - use PRIVATE_LANDLORDS_JOINING
-  NETWORK_QUALITY: 'Verified private landlord connections',
+  NETWORK_QUALITY: 'Trusted private rental network',
   PERSONAL_APPROACH: 'Direct property owner relationships',
 } as const;
 
-// Import official value propositions from source of truth
 import { DERIVED_MESSAGING } from './value-propositions';
 
-// Private landlord-focused value propositions (derived from official source)
 export const NETWORK_VALUE_PROPS = {
   TENANT: {
     HERO: DERIVED_MESSAGING.TENANT.HERO,
     SECONDARY: DERIVED_MESSAGING.TENANT.SECONDARY,
-    BENEFITS: DERIVED_MESSAGING.TENANT.BENEFITS,
-    SOCIAL_PROOF: [
-      'Private landlords provide faster response times and more personal decisions',
-      'Direct landlord communication and transparent pricing',
-      'Personal communication leads to faster approvals and better relationships',
-      `Access to ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} rental market through private landlord network`,
+    BENEFITS: [
+      'Create your RentCard once and reuse it anywhere',
+      'Share links or QR codes with private landlords quickly',
+      'Know earlier if you meet a landlord’s criteria',
     ],
   },
   LANDLORD: {
     HERO: DERIVED_MESSAGING.LANDLORD.HERO,
     SECONDARY: DERIVED_MESSAGING.LANDLORD.SECONDARY,
-    BENEFITS: DERIVED_MESSAGING.LANDLORD.BENEFITS,
-    SOCIAL_PROOF: [
-      'Private landlords provide professional efficiency with personal service',
-      'Attract tenants seeking personal relationships and direct communication',
-      'Professional screening tools help private landlords compete effectively',
-      'Professional efficiency tools that maintain your personal approach',
+    BENEFITS: [
+      'Receive consistent prequalification information',
+      'Collect interest through links or QR codes',
+      'Decide faster while keeping conversations personal',
     ],
   },
   NETWORK_EFFECTS: {
     TENANT: [
-      'More Private Landlords = direct property owner access',
-      'Verified private landlord network = faster, personal decisions',
-      'Private landlord community = responsive communication',
-      `Growing network = more ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} market access`,
+      'More private landlords mean more direct opportunities',
+      'Shared standards make responses clearer and faster',
+      'Verified RentCards build trust across the network',
+      'Every share improves landlord awareness of qualified renters',
     ],
     LANDLORD: [
-      'More Tenants Preferring Private Landlords = quality applicant pool',
-      'Tenants seeking private landlords = better tenant-landlord fit',
-      'Network of private landlords = shared best practices',
-      'Private landlord community = shared best practices and support',
+      'More prepared tenants reduce your screening workload',
+      'Shared templates keep expectations consistent',
+      'Quality RentCards encourage quick, confident replies',
+      'Network effects help surface serious prospects sooner',
     ],
   },
 } as const;
 
-// Viral messaging for sharing and referrals
 export const VIRAL_MESSAGING = {
   REFERRAL: {
     HEADLINES: [
       'Help grow the trusted private landlord network',
-      'Share MyRentCard with your network',
-      'Connect friends with private landlords',
-      'Grow our community, earn rewards together',
+      'Share MyRentCard with fellow renters and owners',
+      'Connect friends with responsive private landlords',
+      'Grow our prequalification community',
     ],
     SHARE_TEXTS: {
       TENANT: [
-        `MyRentCard connects me directly with private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE}`,
-        'Private landlords provide faster, more personal responses than large management companies',
-        'No hidden fees or complex processes, just direct communication with property owners',
-        'Private landlords make personal decisions quickly, typically within 1-2 days',
+        'I use MyRentCard to share my qualifications instantly with private landlords.',
+        'Private landlords respond faster when they get the full story up front.',
+        'No extra fees—just a clean RentCard I control.',
+        'Sharing my RentCard saves both sides back-and-forth emails.',
       ],
       LANDLORD: [
-        'MyRentCard provides professional efficiency tools while maintaining my personal approach',
-        'Attract tenants who prefer personal relationships and direct communication',
-        'Professional screening tools with flexible, personalized service',
-        'Professional tools that support personal tenant-landlord relationships',
+        'MyRentCard gives me consistent RentCards before I schedule tours.',
+        'Tenants send the right details the first time, so I can respond quickly.',
+        'It keeps the personal feel of private landlording while saving time.',
+        'Sharing property links helps me stay organized across channels.',
       ],
     },
     BENEFITS_MESSAGING: [
-      'Growing network means better matches for everyone',
-      'Every new member makes the platform more valuable',
-      'Join a community that values trust and verification',
-      'Help us create the rental network everyone can trust',
+      'Each new member keeps the network trustworthy and useful',
+      'Better data means better decisions for everyone',
+      'Help us build a standard that respects both sides',
+      'More verified RentCards create smoother conversations',
     ],
   },
   ONBOARDING: {
     NETWORK_PARTICIPATION: [
-      'Your complete profile helps the entire network',
-      'Verified profiles make the platform stronger',
-      'Quality members attract quality connections',
-      'Every verification builds community trust',
+      'Your complete RentCard helps landlords respond with clarity',
+      'Verified details shorten the path to a yes or no',
+      'Quality profiles attract quality conversations',
+      'Every profile builds confidence in the network',
     ],
     SOCIAL_PROOF_STEPS: [
       'Complete your profile to connect with private landlords',
-      'Build verified references for private landlord connections',
-      'Join our community focused on private landlord relationships',
-      'Help build the private landlord network',
+      'Verified references show landlords you are ready',
+      'Stay in control of what you share and when',
+      'Invite trusted contacts to strengthen the network',
     ],
   },
   EMAIL_SUBJECTS: {
     NETWORK_GROWTH: [
-      'Join the private landlord network',
-      'Connect with verified private landlords',
-      'Your friends are joining MyRentCard',
-      'The private landlord network everyone is talking about',
+      'Join the private landlord prequalification network',
+      'Connect with private landlords who respond quickly',
+      'Your RentCard opens doors to new rentals',
+      'See how other renters stay organized with MyRentCard',
     ],
     SOCIAL_PROOF: [
-      'Private landlords provide faster response times',
-      'Why private landlords choose MyRentCard',
-      'Join satisfied private landlord network members',
-      'Review time: 45 minutes to 15 minutes - see why private landlords switch',
+      'Private landlords appreciate ready-to-review RentCards',
+      'A consistent format speeds up rental decisions',
+      'Tenants save time by sharing one RentCard everywhere',
+      'Landlords rely on standardized prequalification',
     ],
   },
 } as const;
 
-// Individual landlord success stories and testimonials
 export const SUCCESS_STORIES = {
   TENANT_TESTIMONIALS: [
     {
       name: 'Sarah M.',
       role: 'Renter',
-      quote: 'Found an amazing private landlord who responded same day. Direct communication made the process so smooth.',
-      metric: 'Same-day private landlord response',
+      quote: 'MyRentCard let me share everything a landlord asked for without rewriting forms. We scheduled a tour the same day.',
+      metric: 'Faster private landlord response',
     },
     {
       name: 'Mike T.',
       role: 'Recent Graduate',
-      quote: 'Private landlord was incredibly responsive and flexible. Personal communication made all the difference.',
-      metric: 'Personal landlord relationship',
+      quote: 'Private landlords like seeing my RentCard ahead of time. It sets expectations before we even speak.',
+      metric: 'Prepared first conversations',
     },
     {
       name: 'Jessica L.',
       role: 'Working Professional',
-      quote: 'Connected directly with property owner. No hidden fees, transparent process, just honest communication.',
-      metric: 'Direct property owner access',
+      quote: 'Having one link to send everywhere saved me hours. Landlords appreciated the clarity.',
+      metric: 'Consistent presentation',
     },
   ],
   LANDLORD_TESTIMONIALS: [
     {
       name: 'David R.',
       role: 'Private Property Owner',
-      quote: 'Professional efficiency tools with personal service. Best of both worlds.',
-      metric: 'Competitive + Personal',
+      quote: 'RentCards give me the context I need to respond quickly without losing the personal touch.',
+      metric: 'Efficient + personal',
     },
     {
       name: 'Lisa K.',
       role: 'Private Landlord',
-      quote: 'Tenants specifically look for private landlords like me. They value personal relationships and direct communication.',
-      metric: 'Private landlord preference',
+      quote: 'Tenants arrive prepared. MyRentCard keeps expectations aligned from the first message.',
+      metric: 'Prepared inquiries',
     },
     {
       name: 'Carlos M.',
       role: 'Property Owner',
-      quote: 'Professional screening tools that support my personal approach to tenant relationships.',
-      metric: 'Professional tools + personal service',
+      quote: 'I can review qualified tenants in minutes and keep my notes organized.',
+      metric: 'Organized screening',
     },
   ],
 } as const;
 
-// Trust signals and verification badges
 export const TRUST_SIGNALS = {
   VERIFICATION_BADGES: [
-    'Verified by community',
+    'Verified by MyRentCard',
     'Trusted network member',
     'Reference confirmed',
-    'Background checked',
+    'Identity verified',
     'Income verified',
     'Community endorsed',
   ],
   TRUST_INDICATORS: [
-    'Part of verified network',
-    'Community-trusted profile',
-    'Network-verified references',
-    'Peer-endorsed member',
-    'Platform-verified identity',
-    'Community-approved',
+    'Part of the verified private landlord network',
+    'Controls what information is shared',
+    'References confirmed by trusted contacts',
+    'Profile kept up to date',
+    'Transparent about requirements',
+    'Respects data privacy',
   ],
   NETWORK_GROWTH_INDICATORS: [
-    '50+ private landlords joining monthly',
-    'Private landlord network expanding to new cities',
-    'New private property owners joining weekly',
-    'Direct landlord opportunities added daily',
-    'Private landlord community expanding nationwide',
-    'Personal landlord connections reaching new markets',
+    'More private landlords joining each week',
+    'Growing pool of verified RentCards',
+    'Expanding to more neighborhoods and cities',
+    'New referrals strengthen the network',
+    'Quality connections create better outcomes',
+    'Shared standards keep expectations clear',
   ],
 } as const;
 
-// Message templates with network emphasis
 export const NETWORK_MESSAGE_TEMPLATES = {
   RENTCARD_REQUEST: {
     INDIVIDUAL_LANDLORD_FOCUS: `Hi {contact_name},
 
-I'm {tenant_name}, and I'm specifically interested in connecting with private landlords like you for your property at {property_address}.
+I'm {tenant_name}. I prefer working with private landlords who can review my details upfront.
 
-As someone who values personal landlord relationships and direct communication, I appreciate that private landlords:
-• Respond faster and make decisions quicker
-• Provide transparent pricing and streamlined processes
-• Build genuine tenant-landlord relationships
+Here is my RentCard with income, references, and documents:
+{rentcard_link}
 
-My verified RentCard: {rentcard_link}
-
-Looking forward to connecting directly!
+Looking forward to connecting!
 {tenant_name}`,
     NETWORK_VALUE: `Hi {contact_name},
 
-I found your property through MyRentCard's individual landlord network at {property_address}.
+I found your property in the MyRentCard private landlord network and would love to connect.
 
-As a private property owner, you're part of the ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} owned by private landlords. Our platform helps tenants like me connect specifically with responsive private landlords who provide personal service.
+My RentCard is ready whenever you are:
+{rentcard_link}
 
-View my verified profile: {rentcard_link}
-
+Thanks for reviewing,
 {tenant_name}`,
   },
   FOLLOW_UP: {
     INDIVIDUAL_LANDLORD_EMPHASIS: `Hi {contact_name},
 
-Following up on my interest in {property_address}.
+Checking in about {property_address}. My RentCard keeps everything in one place so you can decide quickly:
+{rentcard_link}
 
-I specifically seek out private landlords like you because you respond faster and make personal decisions with streamlined processes.
-
-My complete profile with verified references: {rentcard_link}
-
-Appreciate your direct, personal approach to landlording!
-
+Happy to answer any questions.
 {tenant_name}`,
   },
   INITIAL_INQUIRY: {
     INDIVIDUAL_LANDLORD_CONNECTION: `Hi {contact_name},
 
-I saw your listing for {property_address} and I'm very interested!
+I saw your listing for {property_address} and have already prepared my RentCard.
 
-I specifically choose to work with private landlords like you because you own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} and offer the personal touch and faster decisions I value.
+You can view it here:
+{rentcard_link}
 
-My verified rental profile: {rentcard_link}
-
-Would love to schedule a viewing and discuss your property directly.
-
+Let me know if we should schedule a tour.
 Best,
 {tenant_name}`,
   },
 } as const;
 
-// Individual landlord-focused notification messaging
 export const NETWORK_NOTIFICATIONS = {
   WELCOME_MESSAGES: {
-    TENANT: `RentCard complete! Connect with private landlords who own ${PRIVATE_LANDLORD_STATS.MARKET_SHARE}.`,
-    LANDLORD: 'Individual landlord tools ready! Professional efficiency with personal service.',
+    TENANT: 'RentCard ready! Share it with private landlords who value preparedness.',
+    LANDLORD: 'Landlord tools activated! Collect interest with a consistent process.',
   },
   ACHIEVEMENT_MESSAGES: {
-    PROFILE_COMPLETE: 'RentCard ready! Private landlords can now make faster decisions about your prequalification.',
-    REFERENCE_VERIFIED: 'References verified! Private landlords appreciate pre-verified tenant information.',
-    FIRST_SHARE: 'RentCard shared! Individual landlord has everything needed for quick, personal decision-making.',
+    PROFILE_COMPLETE: 'RentCard complete—share it with private landlords today.',
+    REFERENCE_VERIFIED: 'Reference confirmed! Landlords see a stronger profile.',
+    FIRST_SHARE: 'Nice work! Your RentCard link is live and ready to reuse.',
   },
   WORKFLOW_MESSAGES: {
-    DOCUMENT_COMPLETE: 'Documentation complete! Private landlords can make informed decisions quickly.',
-    REFERENCE_READY: 'References ready! Private landlords appreciate verified tenant references.',
-    EMPLOYMENT_VERIFIED: 'Employment verified! Private landlords value transparent tenant information.',
+    DOCUMENT_COMPLETE: 'Documents uploaded. Landlords will appreciate the clarity.',
+    REFERENCE_READY: 'Reference verified. Share confidently with property owners.',
+    EMPLOYMENT_VERIFIED: 'Employment details updated. Keep your RentCard current.',
   },
 } as const;
 
-// Individual landlord-focused CTA messaging
 export const NETWORK_CTA = {
   PRIMARY: {
     TENANT: {
-      MAIN: 'Connect with Private Landlords',
-      SECONDARY: `Access ${PRIVATE_LANDLORD_STATS.MARKET_SHARE} Rental Market`,
-      URGENCY: 'Streamlined Process Today',
+      MAIN: 'Create my RentCard',
+      SECONDARY: 'Reuse it with private landlords',
+      URGENCY: 'Share once, reuse everywhere',
     },
     LANDLORD: {
-      MAIN: 'Professional Efficiency Tools',
-      SECONDARY: 'Keep Your Personal Touch',
-      URGENCY: 'Professional Tools for Private Landlords',
+      MAIN: 'Set up landlord tools',
+      SECONDARY: 'Review standardized RentCards',
+      URGENCY: 'Save time on every inquiry',
     },
   },
   SECONDARY: {
-    SHARE: 'Connect with Private Property Owners',
-    REFER: 'Join Individual Landlord Network',
-    EXPLORE: 'See Individual Landlord Benefits',
-    LEARN_MORE: 'Why Private Landlords Respond Faster',
+    SHARE: 'Invite another landlord',
+    REFER: 'Refer a renter who is ready to move',
+    EXPLORE: 'See how the network works',
+    LEARN_MORE: 'Learn why private landlords use MyRentCard',
   },
   INDIVIDUAL_LANDLORD_FOCUSED: {
-    TENANT_WORKFLOW: 'Connect directly with property owners',
-    LANDLORD_WORKFLOW: 'Individual landlord efficiency tools',
-    RELATIONSHIP_FOCUSED: 'Build personal landlord relationships',
-    EFFICIENCY_FOCUSED: 'Streamlined rental processes',
+    TENANT_WORKFLOW: 'Keep your RentCard up to date',
+    LANDLORD_WORKFLOW: 'Collect interest with one link',
+    RELATIONSHIP_FOCUSED: 'Build direct tenant-landlord conversations',
+    EFFICIENCY_FOCUSED: 'Stay organized without losing the personal touch',
   },
 } as const;
 
-// Types for TypeScript support
 export type SocialProofStat = keyof typeof SOCIAL_PROOF_STATS;
 export type NetworkValueProp = keyof typeof NETWORK_VALUE_PROPS;
 export type ViralMessage = keyof typeof VIRAL_MESSAGING;

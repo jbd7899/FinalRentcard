@@ -54,7 +54,7 @@ const ROLE_CONTENT: Record<UserRole, RoleContent> = {
   tenant: {
     hero: DERIVED_MESSAGING.TENANT.HERO,
     secondary: DERIVED_MESSAGING.TENANT.SECONDARY,
-    description: 'Create once. Share anywhere—even off‑platform.',
+    description: 'Create once. Share anywhere—even off-platform.',
     primaryCTA: DERIVED_MESSAGING.TENANT.CALL_TO_ACTION,
     secondaryCTA: 'View Sample RentCard',
     primaryLink: '/api/login',
@@ -111,7 +111,7 @@ const ROLE_CONTENT: Record<UserRole, RoleContent> = {
   },
   landlord: {
     hero: 'Get qualified tenants for your Private Rentals.',
-    secondary: 'Free QR codes • One‑click interest.',
+    secondary: 'Free QR codes • One-click interest.',
     description: 'Professional efficiency with personal service.',
     primaryCTA: DERIVED_MESSAGING.LANDLORD.CALL_TO_ACTION,
     secondaryCTA: 'View Screening Tools',
@@ -177,16 +177,14 @@ export default function HomePage() {
   useEffect(() => {
     if (user) {
       const dashboardPath =
-        user && 'userType' in user && user.userType === 'landlord'
+        'userType' in user && user.userType === 'landlord'
           ? '/landlord/dashboard'
           : '/tenant/dashboard';
       setLocation(dashboardPath);
     }
   }, [user, setLocation]);
 
-  if (user) {
-    return null;
-  }
+  if (user) return null;
 
   const content = ROLE_CONTENT[selectedRole];
   const isLandlordSelected = selectedRole === 'landlord';
@@ -416,7 +414,7 @@ export default function HomePage() {
               <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
                 The Network Gets Stronger with Every Connection
               </h2>
-              <p className="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">
+            <p className="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">
                 Join a growing community of private landlords and quality tenants building faster, more personal rental relationships.
               </p>
             </div>

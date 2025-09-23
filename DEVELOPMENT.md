@@ -247,7 +247,7 @@ The application uses Zustand for centralized UI state management. See the UI Sto
 
 ### Individual Landlord Routes
 - GET /api/landlord/dashboard → Get individual landlord dashboard data with personal insights
-- GET /api/landlord/applications → List rental applications for individual landlord review
+- GET /api/landlord/applications → List tenant interest submissions for individual landlord review
 - PATCH /api/landlord/applications/:id/status → Update application status with individual decision-making
 - GET /api/landlord/applications/stats → Get application statistics for individual property owners
 - POST /api/landlord/screening → Create screening page for individual landlord criteria

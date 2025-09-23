@@ -3,7 +3,7 @@
 ## For Tenants: Managing Your References
 
 ### Overview
-References are an important part of your rental application. They provide landlords with insights into your reliability as a tenant. The RentCard platform allows you to manage your references efficiently and securely.
+References are an important part of your rental prequalification. They give landlords confidence before committing to tours or paperwork. The RentCard platform allows you to manage your references efficiently and securely.
 
 ### Adding a New Reference
 1. Navigate to the **References** tab in your tenant dashboard.
@@ -69,4 +69,4 @@ References are an important part of your rental application. They provide landlo
 ### For References
 - **Expired verification link**: Contact the tenant to request a new verification email.
 - **Technical issues**: If you encounter any problems with the verification process, contact support at support@rentcard.com.
-- **Privacy concerns**: Your information is only shared with the tenant and potential landlords reviewing their application. 
+- **Privacy concerns**: Your information is only shared with the tenant and potential landlords reviewing their prequalification details.

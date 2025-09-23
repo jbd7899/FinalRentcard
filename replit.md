@@ -2,7 +2,7 @@
 
 ## Overview
 
-MyRentCard is a modern rental management platform that streamlines the rental application process by enabling tenants to create reusable rental profiles ("RentCards") that can be instantly shared with potential landlords. The application provides a comprehensive solution for both tenants and landlords with features including document verification, property listings, application tracking, messaging, and analytics.
+MyRentCard is a modern rental management platform that standardizes the rental prequalification process. Tenants create reusable rental profiles ("RentCards") they control and can instantly share with private landlords. The application focuses on saving time for both sides with features including document verification, property interest pages, interest tracking, messaging, and analytics.
 
 ## User Preferences
 
@@ -66,7 +66,7 @@ All components now derive messaging from this single source to maintain consiste
 - **Password Security**: Scrypt with salt for password hashing
 
 ### Database Design
-- **Core Tables**: Users, tenant profiles, landlord profiles, properties, applications
+- **Core Tables**: Users, tenant profiles, landlord profiles, properties, interests
 - **Enhanced Features**: Document storage, messaging system, property images/amenities, tenant references, notifications
 - **Relationships**: Proper foreign key relationships with Drizzle relations for type-safe joins
 - **Data Types**: JSON fields for complex data structures (employment info, rental history, screening criteria)

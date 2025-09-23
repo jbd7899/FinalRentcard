@@ -106,7 +106,7 @@ const OnboardingChecklist: React.FC<OnboardingChecklistProps> = ({
           
           addToast({
             title: 'Individual Landlord Network Ready! 🎉',
-            description: 'Great job! Individual landlords can now make faster decisions about your application.',
+            description: 'Great job! Individual landlords can now make faster decisions about your prequalification.',
             type: 'success'
           });
         } else {

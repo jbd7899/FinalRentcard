@@ -1,58 +1,55 @@
 # MyRentCard
 
-MyRentCard simplifies the rental application process by allowing tenants to create a reusable rental profile ("RentCard") that can be instantly shared with individual property owners. Built specifically for the 70-75% of rental properties owned by individual landlords, MyRentCard enables personal decision-making and direct relationships while streamlining the tenant qualification process.
+MyRentCard standardizes the rental prequalification process for private landlords and renters. Tenants build a reusable RentCard that summarises their qualifications and decide when to share it. Landlords receive consistent information before they invest time in tours or paperwork, keeping conversations focused on fit instead of forms.
 
 ## Features
 
-- Create and manage reusable rental profiles
-- Instant profile sharing with individual property owners who make personal decisions
-- Property view tracking and analytics
-- Secure document storage and verification
-  - Upload various document types (ID, payslips, references, etc.)
-  - Landlord verification of tenant documents
-  - Document status tracking and management
-  - Secure document preview and storage
-- Real-time application status updates
-- Automated reference checks
-- Direct messaging system enabling personal communication between tenants and individual property owners
-- Comprehensive property listings with images and amenities
-- Roommate/co-applicant support for group applications
-- Notification system for important updates
-- Detailed analytics and reporting
+- **Reusable RentCards** – tenants create one profile with income, employment, references, and documents they control.
+- **Share anywhere** – send RentCard links or QR codes to landlords, even if they are not on MyRentCard.
+- **Property interest pages** – landlords generate shareable pages or QR codes to collect tenant interest in a consistent format.
+- **Document and reference management** – store supporting documents and track reference verification in one place.
+- **Interest tracking dashboards** – both roles can review the status of shared RentCards and landlord responses.
+- **Messaging-ready workflows** – keep context when following up so every conversation starts with clear expectations.
 
 ## Documentation
 
-- [Development Guide](DEVELOPMENT.md) - Setup and development workflow
-- [Deployment Guide](DEPLOYMENT.md) - Production deployment instructions
-- [Contributing Guide](CONTRIBUTING.md) - How to contribute to the project
-- [Authentication Debugging Guide](DEVELOPMENT.md#authentication-debugging) - Troubleshooting authentication issues
+- [Development Guide](DEVELOPMENT.md) – setup and development workflow
+- [Deployment Guide](DEPLOYMENT.md) – production deployment instructions
+- [Contributing Guide](CONTRIBUTING.md) – how to contribute to the project
+- [Authentication Debugging](DEVELOPMENT.md#authentication-debugging) – troubleshooting login issues
 
 ## Prerequisites
 
 - Node.js (v18 or higher)
 - PostgreSQL (v14 or higher)
-- npm or yarn
+- npm
 
 ## Getting Started
 
-1. Clone the repository
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    npm install
    ```
-
-3. Set up environment variables:
+2. Copy the example environment file and update values:
    ```bash
-   # Create .env file in root directory
    cp .env.example .env
    ```
-
+3. Seed development test accounts (optional but recommended for local testing):
+   ```bash
+   npm run db:push
+   node server/seed-test-accounts.ts
+   ```
 4. Start the development server:
    ```bash
    npm run dev
    ```
 
-The application will be available at `http://localhost:5173`
+The client is served at `http://localhost:5173` and the API at `http://localhost:3000` when using the default configuration.
+
+### Authentication in development
+
+- **Replit Auth** (production): configure `REPLIT_DOMAINS`, `REPL_ID`, and related secrets. All `/auth` flows redirect through Replit.
+- **Test login** (development): set `ENABLE_DEV_LOGIN=true` in your server environment and `VITE_ENABLE_DEV_AUTH=true` in the client. The `/auth` page exposes a development login form that signs into seeded test accounts (`test-tenant@myrentcard.com` / `test123`, `test-landlord@myrentcard.com` / `test123`).
 
 ## Project Structure
 
@@ -60,128 +57,83 @@ The application will be available at `http://localhost:5173`
 ├── client/                 # Frontend application
 │   ├── src/
 │   │   ├── components/    # Reusable UI components
-│   │   ├── constants/     # Application constants
-│   │   ├── hooks/        # Custom React hooks
-│   │   ├── lib/          # Utility functions
-│   │   ├── pages/        # Page components
-│   │   ├── providers/    # Context providers
-│   │   ├── shared/       # Shared interfaces and types
-│   │   ├── stores/       # State management stores
-│   │   └── App.tsx       # Main application
+│   │   ├── pages/         # Page components and routes
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── stores/        # Zustand stores
+│   │   ├── lib/           # Client utilities
+│   │   └── providers/     # Context providers
 ├── server/                # Backend application
-│   ├── auth.ts           # Authentication logic
-│   ├── routes.ts         # API route definitions
-│   ├── storage.ts        # Database operations
-│   └── index.ts          # Server entry point
-└── shared/               # Shared types and schemas
-    └── schema.ts         # Database and validation schemas
+│   ├── routes.ts          # API route definitions
+│   ├── replitAuth.ts      # Authentication setup
+│   ├── services/          # Domain logic
+│   └── storage.ts         # Database access layer
+└── shared/                # Shared schema and messaging constants
+    └── schema.ts          # Database schema definitions
 ```
 
 ## Tech Stack
 
-- **Frontend:** React, TailwindCSS, React Router
-- **Backend:** Node.js, Express.js
-- **Database:** PostgreSQL (Drizzle ORM)
-- **Authentication:** JWT (LocalStorage for dev, Secure Cookies for prod)
-- **Storage:** Cloudinary/AWS S3 (For image uploads)
-- **Development:** Replit
+- **Frontend:** React 18, TypeScript, Tailwind CSS, shadcn/ui, Wouter, TanStack Query
+- **Backend:** Node.js, Express, TypeScript, Drizzle ORM, Passport
+- **Database:** PostgreSQL
+- **File storage:** Cloudinary (configurable)
 
-## Development
+## Environment Variables
 
-For detailed development guidelines, including constants management, authentication handling, and best practices, please refer to our [Development Guide](DEVELOPMENT.md).
-
-For UI state management patterns and best practices, including the toast notification system, see our [UI State Management Guide](UI_STATE.md).
-
-### Running Tests
-
-```bash
-# Run frontend tests
-npm run test:client
-
-# Run backend tests
-npm run test:server
-
-# Run all tests
-npm run test
-```
-
-### Environment Variables
-
-Required environment variables:
+Key environment variables:
 
 ```
+# Client
 VITE_API_URL=http://localhost:3000
+VITE_NODE_ENV=development
+VITE_ENABLE_DEV_AUTH=true
+
+# Server
 DATABASE_URL=postgresql://user:password@localhost:5432/myrentcard
-JWT_SECRET=your-secret-key
-CLOUDINARY_URL=your-cloudinary-url
+SESSION_SECRET=super-secret-string
+ENABLE_DEV_LOGIN=true
+REPLIT_DOMAINS=your-replit-domain (optional when using Replit Auth)
+REPL_ID=your-replit-app-id (optional when using Replit Auth)
 ```
+
+Set `ENABLE_DEV_LOGIN` and `VITE_ENABLE_DEV_AUTH` to `false` in production.
 
 ## Deployment
 
-1. Build the application:
+1. Build the client and server bundles:
    ```bash
    npm run build
    ```
-
 2. Start the production server:
    ```bash
    npm start
    ```
 
-For detailed deployment instructions, see [Deployment Guide](DEPLOYMENT.md).
+Refer to [DEPLOYMENT.md](DEPLOYMENT.md) for infrastructure-specific instructions.
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/my-change`).
+3. Commit changes (`git commit -m 'Describe change'`).
+4. Push to your fork and open a pull request.
 
-For detailed contribution guidelines, see [Contributing Guide](CONTRIBUTING.md).
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+## Database Overview
+
+MyRentCard uses PostgreSQL with Drizzle ORM. Core tables include:
+
+- `users` – authentication details and role flags
+- `tenant_profiles` – renter-specific information and preferences
+- `landlord_profiles` – property owner information and screening preferences
+- `properties` – landlord property records and QR codes
+- `interests` – tenant interest submissions tied to properties or general inquiries
+- `rent_cards` – reusable tenant prequalification records
+- `share_tokens` – secure sharing tokens and analytics
+
+Supporting tables cover documents, references, notifications, and property metadata. See `shared/schema.ts` for the complete schema.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Database Structure
-
-MyRentCard uses PostgreSQL with Drizzle ORM for database management. Designed specifically for individual property owners who represent 70-75% of the rental market, the database schema includes:
-
-### Core Tables
-- **users**: Authentication and basic user information
-- **tenant_profiles**: Detailed tenant information
-- **landlord_profiles**: Individual property owner business information
-- **properties**: Property listings with details
-- **applications**: Tenant applications for properties
-- **screening_pages**: Custom screening pages for individual property owners
-- **rent_cards**: Comprehensive tenant rental profiles
-
-### Enhanced Features
-
-#### Document Management
-- **tenant_documents**: Store and verify tenant documents (ID, payslips, etc.)
-
-#### Messaging System
-- **conversations**: Property-related conversations
-- **conversation_participants**: Users participating in conversations
-- **messages**: Individual messages within conversations
-
-#### Property Enhancements
-- **property_images**: Multiple images for properties
-- **property_amenities**: Detailed property amenities
-
-#### Analytics
-- **property_analytics**: Detailed property performance metrics
-- **user_activity**: Track user actions for analytics
-
-#### Notifications
-- **notifications**: System notifications for users
-
-#### References
-- **tenant_references**: Detailed tenant references with verification
-
-#### Roommates
-- **roommate_groups**: Groups of tenants applying together
-- **roommate_group_members**: Members of roommate groups
-- **group_applications**: Applications submitted by roommate groups
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

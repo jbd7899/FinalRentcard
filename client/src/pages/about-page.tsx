@@ -25,6 +25,7 @@ import { Link } from 'wouter';
 import Navbar from '@/components/shared/navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type UserRole = 'tenant' | 'landlord';
@@ -41,10 +42,12 @@ type RoleNarrative = {
 const ROLE_NARRATIVE: Record<UserRole, RoleNarrative> = {
   tenant: {
     headline: 'Built for renters who want momentum',
-    subheadline: 'Stop rewriting your story for every landlord. Create one polished RentCard and put it everywhere you apply.',
+    subheadline:
+      'Stop rewriting your story for every landlord. Create one polished RentCard and put it everywhere you apply.',
     description:
       'MyRentCard standardizes the information private landlords need to say yes—income, references, documents, and your story. You look prepared before the first conversation.',
-    promise: 'Landlords get the full picture instantly so you spend time touring places that are actually a fit.',
+    promise:
+      'Landlords get the full picture instantly so you spend time touring places that are actually a fit.',
     highlightStats: [
       { label: 'Reusable profile', detail: 'Share one link or QR code anywhere' },
       { label: 'Direct relationships', detail: 'Start conversations with decision makers' },
@@ -61,7 +64,8 @@ const ROLE_NARRATIVE: Record<UserRole, RoleNarrative> = {
       'Capture interest from serious renters without sacrificing the personal touch that sets you apart. MyRentCard handles the paperwork so you can focus on the conversation.',
     description:
       'Offer renters a professional experience with zero setup. Generate a QR code for your property, collect standardized prequalification, and review applications from anywhere.',
-    promise: 'You keep control of your process while renters deliver complete information right away.',
+    promise:
+      'You keep control of your process while renters deliver complete information right away.',
     highlightStats: [
       { label: 'Free QR codes', detail: 'Launch a property toolkit in under a minute' },
       { label: 'Complete context', detail: 'Income, documents, and references upfront' },
@@ -74,12 +78,16 @@ const ROLE_NARRATIVE: Record<UserRole, RoleNarrative> = {
   }
 };
 
-const howItWorksSteps = {
+const howItWorksSteps: Record<
+  UserRole,
+  { icon: any; title: string; description: string; detail: string }[]
+> = {
   tenant: [
     {
       icon: UserCheck,
       title: 'Create Your RentCard Once',
-      description: 'Complete your standardized rental profile with income, references, and documents.',
+      description:
+        'Complete your standardized rental profile with income, references, and documents.',
       detail: 'Use the same professional prequalification format with every landlord.'
     },
     {
@@ -92,22 +100,27 @@ const howItWorksSteps = {
     {
       icon: Zap,
       title: 'Get Faster Responses',
-      description: 'Get faster responses from landlords who can see you\'re qualified upfront.',
-      detail: "Skip unnecessary showings when your profile doesn't match their requirements."
+      description:
+        "Get faster responses from landlords who can see you're qualified upfront.",
+      detail:
+        "Skip unnecessary showings when your profile doesn't match their requirements."
     }
   ],
   landlord: [
     {
       icon: QrCode,
       title: 'Post Your Property (Free)',
-      description: 'Generate a free QR code for your property. No account required - just create and go.',
+      description:
+        'Generate a free QR code for your property. No account required - just create and go.',
       detail: 'Put the QR code on signs, listings, or share the link directly.'
     },
     {
       icon: Users,
       title: 'Get Pre-Qualified Tenants',
-      description: 'Receive complete prequalification from pre-qualified tenants before first contact.',
-      detail: 'Review income, references, and documents upfront - no back-and-forth collection.'
+      description:
+        'Receive complete prequalification from tenants before first contact.',
+      detail:
+        'Review income, references, and documents upfront - no back-and-forth collection.'
     },
     {
       icon: Clock,
@@ -119,24 +132,32 @@ const howItWorksSteps = {
   ]
 };
 
-const benefits = {
+const benefits: Record<
+  UserRole,
+  { icon: any; title: string; description: string; reality: string }[]
+> = {
   tenant: [
     {
       icon: RefreshCw,
       title: 'Standardized Prequalification Format',
-      description: 'Create your rental profile once, use it with any landlord. Consistent professional presentation every time.',
-      reality: 'Saves hours of time re-entering the same employment and income information.'
+      description:
+        'Create your rental profile once, use it with any landlord. Consistent professional presentation every time.',
+      reality:
+        'Saves hours of time re-entering the same employment and income information.'
     },
     {
       icon: Clock,
       title: 'Faster Response Times',
-      description: 'Landlords can review your qualifications immediately and respond with specific feedback.',
-      reality: 'Know upfront if you meet requirements instead of waiting for form responses.'
+      description:
+        'Landlords can review your qualifications immediately and respond with specific feedback.',
+      reality:
+        'Know upfront if you meet requirements instead of waiting for form responses.'
     },
     {
       icon: Shield,
       title: 'Direct Communication',
-      description: 'Connect directly with property owners who can make immediate decisions.',
+      description:
+        'Connect directly with property owners who can make immediate decisions.',
       reality: 'Streamlined communication leads to faster rental decisions.'
     }
   ],
@@ -144,20 +165,26 @@ const benefits = {
     {
       icon: Smartphone,
       title: 'No Complex Setup Required',
-      description: 'Generate QR codes and collect prequalification without creating accounts or learning new systems.',
-      reality: 'Focus on finding qualified tenants with minimal administrative overhead.'
+      description:
+        'Generate QR codes and collect prequalification without creating accounts or learning new systems.',
+      reality:
+        'Focus on finding qualified tenants with minimal administrative overhead.'
     },
     {
       icon: UserCheck,
       title: 'Complete Prequalification Upfront',
-      description: 'Tenants using MyRentCard provide income verification, references, and documents before contact.',
-      reality: 'Eliminate time spent collecting basic qualification information.'
+      description:
+        'Tenants using MyRentCard provide income verification, references, and documents before contact.',
+      reality:
+        'Eliminate time spent collecting basic qualification information.'
     },
     {
       icon: Zap,
       title: 'Professional Tools',
-      description: 'Access efficient screening tools while maintaining your personal approach to tenant relationships.',
-      reality: 'Meet tenant expectations for professional service without sacrificing personal connections.'
+      description:
+        'Access efficient screening tools while maintaining your personal approach to tenant relationships.',
+      reality:
+        'Meet tenant expectations for professional service without sacrificing personal connections.'
     }
   ]
 };
@@ -187,17 +214,20 @@ const visionPoints = [
   {
     icon: Compass,
     title: 'A standard for private rentals',
-    description: 'We\'re building the shared language that helps independent landlords and renters move faster together.'
+    description:
+      "We're building the shared language that helps independent landlords and renters move faster together."
   },
   {
     icon: Home,
     title: 'Access that travels with you',
-    description: 'Your RentCard is portable. Wherever you search, you bring a complete story and verifications along.'
+    description:
+      'Your RentCard is portable. Wherever you search, you bring a complete story and verifications along.'
   },
   {
     icon: ListChecks,
     title: 'Confidence in every introduction',
-    description: 'When information is consistent and verified, everyone can make decisions with clarity.'
+    description:
+      'When information is consistent and verified, everyone can make decisions with clarity.'
   }
 ];
 
@@ -205,12 +235,12 @@ const faqs = [
   {
     question: 'Do I have to create an account to use this?',
     answer:
-      'Tenants create RentCards to express interest with landlords. Landlords can generate QR codes and collect prequalification without any account - you only sign up if you want to save your properties and view prequalification later.'
+      'Tenants create RentCards to express interest with landlords. Landlords can generate QR codes and collect prequalification without any account — you only sign up if you want to save your properties and view prequalification later.'
   },
   {
     question: "What if the landlord isn't on your platform?",
     answer:
-      "That's totally fine! Your RentCard works anywhere. You can share the link directly, send it in emails, or even print the QR code. The landlord just clicks and sees your complete rental information."
+      "That's totally fine! Your RentCard works anywhere. Share the link directly, send it in emails, or even print the QR code. The landlord just clicks and sees your complete rental information."
   },
   {
     question: 'How is this different from other rental platforms?',
@@ -230,7 +260,7 @@ const faqs = [
   {
     question: "Can I use this if I'm just looking at places online?",
     answer:
-      "Absolutely! Whether you're responding to Craigslist ads, Facebook Marketplace, or driving around looking at signs - your RentCard makes you look professional and prepared from the first contact."
+      "Absolutely! Whether you're responding to Craigslist ads, Facebook Marketplace, or driving around looking at signs — your RentCard makes you look professional and prepared from the first contact."
   }
 ];
 
@@ -296,10 +326,7 @@ export default function AboutPage() {
 
               <div className="mt-10 grid gap-4 sm:grid-cols-3">
                 {narrative.highlightStats.map((stat, index) => (
-                  <div
-                    key={index}
-                    className="rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm"
-                  >
+                  <div key={index} className="rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{stat.label}</p>
                     <p className="mt-2 text-sm font-medium text-slate-700">{stat.detail}</p>
                   </div>
@@ -315,9 +342,7 @@ export default function AboutPage() {
               />
               <Card className="relative h-full border-none bg-white/90 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-slate-900">
-                    {narrative.headline}
-                  </CardTitle>
+                  <CardTitle className="text-xl font-semibold text-slate-900">{narrative.headline}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center gap-3 rounded-xl bg-slate-900 text-white px-4 py-3 text-sm font-medium">
@@ -342,17 +367,16 @@ export default function AboutPage() {
             <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
               <Layers className="h-4 w-4" /> Why we built MyRentCard
             </span>
-            <h2 className="mt-4 text-3xl font-bold text-slate-900">A better starting point for every rental conversation</h2>
+            <h2 className="mt-4 text-3xl font-bold text-slate-900">
+              A better starting point for every rental conversation
+            </h2>
             <p className="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">
               Private rentals thrive on trust and speed. We help both sides show up prepared so decisions happen faster without losing the personal connection.
             </p>
           </div>
           <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
             {missionPillars.map((pillar, index) => (
-              <div
-                key={index}
-                className="rounded-2xl border border-slate-100 bg-white/90 p-6 shadow-lg"
-              >
+              <div key={index} className="rounded-2xl border border-slate-100 bg-white/90 p-6 shadow-lg">
                 <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
                   <pillar.icon className="h-6 w-6" />
                 </div>
@@ -460,7 +484,9 @@ export default function AboutPage() {
             <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
               <ListChecks className="h-4 w-4" /> Practical benefits
             </span>
-            <h2 className="mt-4 text-3xl font-bold text-slate-900">How standardized prequalification saves everyone time</h2>
+            <h2 className="mt-4 className text-3xl font-bold text-slate-900">
+              How standardized prequalification saves everyone time
+            </h2>
           </div>
           <div className="grid gap-6">
             {benefits[selectedRole].map((benefit, index) => (
@@ -549,7 +575,7 @@ export default function AboutPage() {
               </span>
               <h2 className="mt-4 text-3xl sm:text-4xl font-bold">Bring confidence to your next rental conversation</h2>
               <p className="mt-4 text-lg text-slate-200">
-                Whether you\'re prequalifying for your dream place or prepping your next vacancy, MyRentCard makes the introduction feel effortless.
+                Whether you're prequalifying for your dream place or prepping your next vacancy, MyRentCard makes the introduction feel effortless.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link
