@@ -35,6 +35,80 @@ import OneClickShareButton from '@/components/shared/OneClickShareButton';
 import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
 import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
 import { apiRequest } from '@/lib/queryClient';
+import type { TenantProfile } from '@shared/schema';
+
+type EmploymentInfoDetails = {
+  employer?: string | null;
+  position?: string | null;
+  monthlyIncome?: number | string | null;
+  startDate?: string | null;
+};
+
+const parseEmploymentInfo = (
+  employmentInfo: TenantProfile['employmentInfo'] | string | null | undefined
+): EmploymentInfoDetails | null => {
+  if (!employmentInfo) {
+    return null;
+  }
+
+  if (typeof employmentInfo === 'string') {
+    try {
+      return JSON.parse(employmentInfo) as EmploymentInfoDetails;
+    } catch (error) {
+      console.warn('Unable to parse employment info for share readiness check:', error);
+      return null;
+    }
+  }
+
+  return employmentInfo as EmploymentInfoDetails;
+};
+
+const toNumberValue = (value: unknown): number => {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
+
+  return NaN;
+};
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const canShareRentCardProfile = (profile?: TenantProfile | null): boolean => {
+  if (!profile) {
+    return false;
+  }
+
+  const employmentDetails = parseEmploymentInfo(profile.employmentInfo);
+  if (!employmentDetails) {
+    return false;
+  }
+
+  const monthlyIncomeValue = toNumberValue(employmentDetails.monthlyIncome);
+  const hasEmploymentDetails =
+    isNonEmptyString(employmentDetails.employer) &&
+    isNonEmptyString(employmentDetails.position) &&
+    isNonEmptyString(employmentDetails.startDate) &&
+    Number.isFinite(monthlyIncomeValue) &&
+    monthlyIncomeValue > 0;
+
+  if (!hasEmploymentDetails) {
+    return false;
+  }
+
+  const creditScoreValue = toNumberValue(profile.creditScore);
+  const maxRentValue = toNumberValue(profile.maxRent);
+
+  const hasCreditScore = Number.isFinite(creditScoreValue) && creditScoreValue >= 300;
+  const hasMaxRent = Number.isFinite(maxRentValue) && maxRentValue > 0;
+
+  return hasCreditScore && hasMaxRent;
+};
 
 const generateRoute = {
   application: (id: string) => `/tenant/applications/${id}`
@@ -47,14 +121,27 @@ const TenantDashboard = () => {
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
   // Fetch the authenticated user's tenant profile
-  const { data: tenantProfile, isLoading: isTenantProfileLoading, error: tenantProfileError } = useQuery({
+  const { data: tenantProfile, isLoading: isTenantProfileLoading, error: tenantProfileError } = useQuery<TenantProfile | null>({
     queryKey: ['tenant-profile'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/tenant/profile');
-      return response.json();
+
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to load tenant profile');
+      }
+
+      const data = await response.json();
+      return (data ?? null) as TenantProfile | null;
     },
     enabled: !!user // Only fetch if user is authenticated
   });
+
+  const canShareRentCard = canShareRentCardProfile(tenantProfile);
+  const shareRequirementsMissing = Boolean(tenantProfile) && !canShareRentCard;
 
   // Demo data
   const rentCardStatus = {
@@ -115,24 +202,32 @@ const TenantDashboard = () => {
           
           {/* Simplified Header - Primary CTA only */}
           <div className="flex gap-2">
-            {tenantProfile ? (
-              <OneClickShareButton 
-                variant="default" 
+            {canShareRentCard ? (
+              <OneClickShareButton
+                variant="default"
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white"
                 showText={true}
                 data-testid="button-share-rentcard-header"
               />
             ) : (
-              <Button
-                variant="default"
-                size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => setLocation("/create-rentcard")}
-                data-testid="button-create-rentcard-header"
-              >
-                Create RentCard
-              </Button>
+              <div className="flex flex-col items-start gap-1">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className={`${tenantProfile ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-600 hover:bg-green-700'} text-white`}
+                  onClick={() => setLocation('/create-rentcard')}
+                  data-testid={tenantProfile ? 'button-complete-rentcard-share' : 'button-create-rentcard-header'}
+                >
+                  {tenantProfile ? 'Finish RentCard to Share' : 'Create RentCard'}
+                </Button>
+
+                {shareRequirementsMissing && (
+                  <p className="text-xs text-gray-500">
+                    Add your employment info, credit score, and rent budget to unlock sharing.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -148,22 +243,24 @@ const TenantDashboard = () => {
               </div>
               <div>
                 <h3 className="text-sm font-medium text-blue-900">
-                  Want to optimize your RentCard?
+                  {shareRequirementsMissing ? 'Finish setting up your RentCard' : 'Want to optimize your RentCard?'}
                 </h3>
                 <p className="text-sm text-blue-700">
-                  Add references and details to get faster landlord responses
+                  {shareRequirementsMissing
+                    ? 'Complete your employment details, credit score, and rent budget to unlock sharing.'
+                    : 'Add references and details to get faster landlord responses'}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                onClick={() => setLocation(tenantProfile ? ROUTES.TENANT.RENTCARD : "/create-rentcard")}
+                onClick={() => setLocation(shareRequirementsMissing ? '/create-rentcard' : ROUTES.TENANT.RENTCARD)}
                 className="text-blue-600 border-blue-300 hover:bg-blue-100"
                 data-testid="button-optimize-rentcard"
               >
-                {tenantProfile ? "Optimize" : "Create RentCard"}
+                {shareRequirementsMissing ? 'Finish Setup' : 'Optimize'}
               </Button>
               <Button 
                 variant="ghost" 
@@ -186,8 +283,18 @@ const TenantDashboard = () => {
             <CardContent className="p-6 text-center">
               <Share2 className="h-10 w-10 text-blue-500 mb-3 mx-auto" />
               <h3 className="font-semibold text-lg mb-2">Share RentCard</h3>
-              <p className="text-sm text-gray-600 mb-4">One-click sharing available in header</p>
-              <p className="text-xs text-blue-600 font-medium">Use "Share My RentCard" button above ↗</p>
+              <p className="text-sm text-gray-600 mb-4">
+                {canShareRentCard
+                  ? 'One-click sharing available in header'
+                  : 'Complete your RentCard to unlock one-click sharing'}
+              </p>
+              <p
+                className={`text-xs font-medium ${canShareRentCard ? 'text-blue-600' : 'text-amber-600'}`}
+              >
+                {canShareRentCard
+                  ? 'Use "Share My RentCard" button above ↗'
+                  : 'Add employment details, credit score, and rent budget to enable sharing.'}
+              </p>
             </CardContent>
           </Card>
           
