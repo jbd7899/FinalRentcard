@@ -287,165 +287,172 @@ export default function HomePage() {
         {/* Mobile-First Hero Section */}
         <section className="mb-12 sm:mb-16">
           <div className="text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4" data-testid="homepage-title">
-              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 bg-clip-text text-transparent block mb-2">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6" data-testid="homepage-title">
+              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 bg-clip-text text-transparent block mb-3">
                 MyRentCard
               </span>
-              <span className="text-xl sm:text-2xl lg:text-3xl text-slate-800">
-                Create once, share everywhere
+              <span className="text-xl sm:text-2xl lg:text-3xl text-slate-700">
+                The pre-qualification form for private landlords
               </span>
             </h1>
-            <p className="text-lg text-slate-600 mb-6 px-2">
-              <span className="font-semibold text-blue-600">Tenants:</span> No more filling out forms for every landlord. 
-              <span className="font-semibold text-emerald-600">Landlords:</span> Collect organized interest fast.
-            </p>
-            <div className="mb-8">
-              <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
-                <Clock className="h-3 w-3 mr-1" />
-                Start in 2 minutes • Free forever
-              </Badge>
+            
+            {/* Clear Explanation */}
+            <div className="max-w-3xl mx-auto mb-10">
+              <p className="text-lg text-slate-600 mb-6 leading-relaxed">
+                A standardized rental application that works everywhere. Tenants create one profile and share it with any private landlord. Landlords get organized interest without chasing paperwork.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-3 text-center">
+                <div className="flex flex-col items-center">
+                  <div className="bg-blue-100 p-3 rounded-xl mb-2">
+                    <UserCheck className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">One profile</p>
+                  <p className="text-xs text-slate-500">Create once, share everywhere</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="bg-emerald-100 p-3 rounded-xl mb-2">
+                    <QrCode className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">Easy sharing</p>
+                  <p className="text-xs text-slate-500">Links, QR codes, any platform</p>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="bg-slate-100 p-3 rounded-xl mb-2">
+                    <Handshake className="h-6 w-6 text-slate-600" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">Private focus</p>
+                  <p className="text-xs text-slate-500">Built for individual landlords</p>
+                </div>
+              </div>
             </div>
 
-            {/* Optional View As Switcher */}
+            {/* Clear Role Choice */}
             <div className="mb-8">
-              <p className="text-sm font-medium text-slate-500 mb-4">
-                <Eye className="h-3 w-3 inline mr-1" />
-                View as:
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2 max-w-2xl mx-auto" role="tablist" aria-label="Choose tenant or landlord view">
+              <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-6 text-center">
+                Are you renting or do you own property?
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
                 <button
                   onClick={() => setSelectedRole('tenant')}
-                  className={`group relative flex flex-col gap-3 rounded-2xl border-2 p-4 sm:p-5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+                  className={`group relative flex flex-col gap-3 rounded-2xl border-2 p-6 text-left transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
                     !isLandlordSelected
                       ? 'border-blue-600 bg-blue-50/70 shadow-lg shadow-blue-600/20'
-                      : 'border-transparent bg-white/70 hover:border-blue-200'
+                      : 'border-slate-200 bg-white hover:border-blue-300'
                   }`}
-                  data-testid="toggle-tenant"
-                  role="tab"
-                  aria-selected={!isLandlordSelected}
+                  data-testid="choice-tenant"
                 >
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <User className="h-4 w-4" /> Tenant
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                      <User className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold text-slate-900">I'm looking to rent</p>
+                      <p className="text-sm text-slate-600">Create a reusable rental profile</p>
+                    </div>
                   </div>
-                  <p className="text-base sm:text-lg font-semibold text-slate-900">Create once, share easily.</p>
-                  <p className="text-sm text-slate-600">
-                    Keep a polished RentCard ready for the 68.7% of rentals owned by private landlords.
-                  </p>
                 </button>
                 <button
                   onClick={() => setSelectedRole('landlord')}
-                  className={`group relative flex flex-col gap-3 rounded-2xl border-2 p-4 sm:p-5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                  className={`group relative flex flex-col gap-3 rounded-2xl border-2 p-6 text-left transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
                     isLandlordSelected
                       ? 'border-emerald-600 bg-emerald-50/70 shadow-lg shadow-emerald-600/20'
-                      : 'border-transparent bg-white/70 hover:border-emerald-200'
+                      : 'border-slate-200 bg-white hover:border-emerald-300'
                   }`}
-                  data-testid="toggle-landlord"
-                  role="tab"
-                  aria-selected={isLandlordSelected}
+                  data-testid="choice-landlord"
                 >
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <Building2 className="h-4 w-4" /> Landlord
+                  <div className="flex items-center gap-3">
+                    <div className="bg-emerald-100 p-2 rounded-lg">
+                      <Building2 className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold text-slate-900">I own rental property</p>
+                      <p className="text-sm text-slate-600">Collect tenant interest efficiently</p>
+                    </div>
                   </div>
-                  <p className="text-base sm:text-lg font-semibold text-slate-900">Spend your time with pre-qualified tenants.</p>
-                  <p className="text-sm text-slate-600">
-                    Collect organized interest and reuse QR codes across every property.
-                  </p>
                 </button>
               </div>
             </div>
 
-            {/* Unified Hero Content */}
+            {/* Role-Specific Next Steps */}
             <div className="mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4 px-2">
-                {selectedRole === 'landlord' ? content.hero : 'Create your rental profile once, share it everywhere'}
-              </h2>
-              <p className="text-lg text-slate-600 mb-6 px-2 leading-relaxed">
-                {selectedRole === 'landlord' 
-                  ? 'Create property profiles with QR codes. Tenants submit interest with one click, and you keep every lead organized.' 
-                  : 'Build your RentCard once, keep it updated in minutes, and send to any private landlord—no extra forms.'
-                }
-              </p>
+              {selectedRole === 'tenant' ? (
+                <div className="text-center p-6 bg-blue-50/70 rounded-2xl border border-blue-200">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                    Create your RentCard in 2 minutes
+                  </h3>
+                  <p className="text-sm text-blue-700 mb-4">
+                    Build your rental profile once and share it with any private landlord. No more filling out forms for every application.
+                  </p>
+                  <div className="flex items-center justify-center gap-1 text-xs text-blue-600">
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Free forever</span>
+                    <span className="mx-2">•</span>
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Works everywhere</span>
+                    <span className="mx-2">•</span>
+                    <CheckCircle className="h-3 w-3" />
+                    <span>2 minute setup</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center p-6 bg-emerald-50/70 rounded-2xl border border-emerald-200">
+                  <h3 className="text-lg font-semibold text-emerald-900 mb-2">
+                    Create property profiles and QR codes
+                  </h3>
+                  <p className="text-sm text-emerald-700 mb-4">
+                    Generate QR codes for your properties. Tenants submit interest with one click, and you keep every lead organized.
+                  </p>
+                  <div className="flex items-center justify-center gap-1 text-xs text-emerald-600">
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Free QR codes</span>
+                    <span className="mx-2">•</span>
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Organized leads</span>
+                    <span className="mx-2">•</span>
+                    <CheckCircle className="h-3 w-3" />
+                    <span>2 minute setup</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Unified Primary CTA */}
+            {/* Role-Specific CTAs */}
             <div className="flex flex-col gap-4 mb-8">
               <button
                 onClick={() => {
-                  setLocation('/quickstart');
+                  localStorage.setItem('selectedRole', selectedRole);
+                  const quickStartRoute = isLandlordSelected ? '/quickstart/landlord' : '/quickstart/tenant';
+                  setLocation(quickStartRoute);
                 }}
-                className="w-full inline-flex items-center justify-center gap-3 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-all shadow-xl bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 shadow-blue-600/40"
-                data-testid="button-primary-cta"
+                className={`w-full inline-flex items-center justify-center gap-3 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-all shadow-xl ${
+                  isLandlordSelected
+                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/40'
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/40'
+                }`}
+                data-testid="button-proceed-cta"
               >
-                Start in 2 minutes
+                {isLandlordSelected ? 'Add your property' : 'Create your RentCard'}
                 <ArrowRight className="h-5 w-5" />
               </button>
               
-              {/* Balanced Secondary CTAs */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Link
-                  href="/samples/rentcard"
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-blue-600 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-50 transition-all"
-                  data-testid="button-sample-rentcard"
-                >
-                  <User className="h-4 w-4" />
-                  See Sample RentCard
-                </Link>
-                <Link
-                  href="/samples/screening-page"
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 px-4 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition-all"
-                  data-testid="button-sample-screening"
-                >
-                  <QrCode className="h-4 w-4" />
-                  See Landlord Tools
-                </Link>
-              </div>
+              {/* Secondary CTA */}
+              <Link
+                href={isLandlordSelected ? '/samples/screening-page' : '/samples/rentcard'}
+                className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
+                  isLandlordSelected
+                    ? 'border-emerald-600 text-emerald-700 hover:bg-emerald-50'
+                    : 'border-blue-600 text-blue-700 hover:bg-blue-50'
+                }`}
+                data-testid="button-sample-cta"
+              >
+                {isLandlordSelected ? (
+                  <><QrCode className="h-4 w-4" />See sample QR code & tools</>
+                ) : (
+                  <><User className="h-4 w-4" />See sample RentCard</>
+                )}
+              </Link>
             </div>
 
-            {/* Unified Quick Benefits */}
-            <div className="grid gap-3 max-w-2xl mx-auto">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-semibold text-blue-700">For Tenants</span>
-                  </div>
-                  <ul className="space-y-1 text-xs text-blue-600">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-3 w-3" />
-                      Reusable profile for every landlord
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-3 w-3" />
-                      Update once, share everywhere
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-3 w-3" />
-                      Look professional instantly
-                    </li>
-                  </ul>
-                </div>
-                <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Building2 className="h-4 w-4 text-emerald-600" />
-                    <span className="text-sm font-semibold text-emerald-700">For Landlords</span>
-                  </div>
-                  <ul className="space-y-1 text-xs text-emerald-600">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-3 w-3" />
-                      Generate QR codes instantly
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-3 w-3" />
-                      Collect organized interest
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-3 w-3" />
-                      Focus on qualified tenants
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
