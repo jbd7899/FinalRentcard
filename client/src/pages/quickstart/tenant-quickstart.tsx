@@ -29,11 +29,14 @@ import { useLocation } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useMutation } from '@tanstack/react-query';
 import { ROUTES } from '@/constants';
+import { US_STATES } from '@/constants/states';
 
 // Step 1: Essentials Schema
 const essentialsSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  phone: z.string().min(10, "Please enter a valid phone number"),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
   maxRent: z.number().min(100, "Maximum rent must be at least $100")
@@ -73,6 +76,7 @@ const TenantQuickStart = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showCelebration, setShowCelebration] = useState(false);
   const [rentCardPreview, setRentCardPreview] = useState<any>(null);
+  const [hasLoadedFromLocalStorage, setHasLoadedFromLocalStorage] = useState(false);
 
   // Form data storage
   const [essentialsData, setEssentialsData] = useState<EssentialsForm | null>(null);
@@ -135,6 +139,8 @@ const TenantQuickStart = () => {
     defaultValues: essentialsData || {
       firstName: '',
       lastName: '',
+      email: '',
+      phone: '',
       city: '',
       state: '',
       maxRent: 1500
@@ -162,8 +168,10 @@ const TenantQuickStart = () => {
     }
   });
 
-  // Auto-save to localStorage
+  // Auto-save to localStorage (only after initial load)
   useEffect(() => {
+    if (!hasLoadedFromLocalStorage) return; // Don't save until we've loaded first
+    
     const draftData = {
       essentials: essentialsData,
       employment: employmentData,
@@ -171,8 +179,9 @@ const TenantQuickStart = () => {
       currentStep,
       timestamp: Date.now()
     };
+    console.log('Saving draft to localStorage:', draftData);
     localStorage.setItem('tenantQuickStartDraft', JSON.stringify(draftData));
-  }, [essentialsData, employmentData, documentsData, currentStep]);
+  }, [essentialsData, employmentData, documentsData, currentStep, hasLoadedFromLocalStorage]);
 
   // Load draft on mount
   useEffect(() => {
@@ -180,14 +189,26 @@ const TenantQuickStart = () => {
     if (draft) {
       try {
         const parsed = JSON.parse(draft);
-        if (parsed.essentials) setEssentialsData(parsed.essentials);
-        if (parsed.employment) setEmploymentData(parsed.employment);
-        if (parsed.documents) setDocumentsData(parsed.documents);
+        console.log('Loading draft from localStorage:', parsed);
+        if (parsed.essentials) {
+          setEssentialsData(parsed.essentials);
+          essentialsForm.reset(parsed.essentials);
+        }
+        if (parsed.employment) {
+          setEmploymentData(parsed.employment);
+          employmentForm.reset(parsed.employment);
+        }
+        if (parsed.documents) {
+          setDocumentsData(parsed.documents);
+          documentsForm.reset(parsed.documents);
+        }
         if (parsed.currentStep && parsed.currentStep > 1) setCurrentStep(parsed.currentStep);
       } catch (e) {
         console.error('Failed to load draft:', e);
       }
     }
+    // Always set this flag to enable auto-saving after load attempt
+    setHasLoadedFromLocalStorage(true);
   }, []);
 
   const handleEssentialsSubmit = async (data: EssentialsForm) => {
@@ -197,6 +218,8 @@ const TenantQuickStart = () => {
     const localPreview = {
       id: 'preview',
       name: `${data.firstName} ${data.lastName}`,
+      email: data.email,
+      phone: data.phone,
       location: `${data.city}, ${data.state}`,
       maxRent: data.maxRent,
       shareUrl: `${window.location.origin}/rentcard/preview-${Date.now()}`,
@@ -356,6 +379,35 @@ const TenantQuickStart = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={essentialsForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="john@example.com" {...field} data-testid="input-email" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={essentialsForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input type="tel" placeholder="(555) 123-4567" {...field} data-testid="input-phone" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={essentialsForm.control}
                       name="city"
                       render={({ field }) => (
                         <FormItem>
@@ -380,11 +432,11 @@ const TenantQuickStart = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="TX">Texas</SelectItem>
-                              <SelectItem value="CA">California</SelectItem>
-                              <SelectItem value="NY">New York</SelectItem>
-                              <SelectItem value="FL">Florida</SelectItem>
-                              {/* Add more states as needed */}
+                              {US_STATES.map((state) => (
+                                <SelectItem key={state.value} value={state.value}>
+                                  {state.label}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />
