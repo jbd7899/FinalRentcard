@@ -48,11 +48,6 @@ const TenantDashboard = () => {
   const [, setLocation] = useLocation();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
- 
-    },
-    enabled: !!user // Only fetch if user is authenticated
-  });
-
 
   const applications = [
     {
@@ -392,7 +387,8 @@ const TenantDashboard = () => {
                     showText={false}
                   />
                 </div>
-
+              </>
+            )}
           </CardContent>
         </Card>
         
