@@ -41,6 +41,50 @@ import type { RentCard } from '@shared/schema';
 
 interface SharedRentCardProps {}
 
+const clamp = (value: number, min: number, max: number) => {
+  return Math.min(Math.max(value, min), max);
+};
+
+const calculateProfileScore = (data: RentCard): number | null => {
+  const metrics: number[] = [];
+
+  if (typeof data.creditScore === 'number' && data.creditScore > 0) {
+    const creditRatio =
+      (clamp(data.creditScore, 300, 850) - 300) / (850 - 300);
+    metrics.push(creditRatio * 100);
+  }
+
+  if (
+    typeof data.monthlyIncome === 'number' &&
+    typeof data.maxRent === 'number' &&
+    data.maxRent > 0
+  ) {
+    const incomeCoverage = data.monthlyIncome / data.maxRent;
+    const normalizedCoverage = clamp(incomeCoverage / 3, 0, 1);
+    metrics.push(normalizedCoverage * 100);
+  }
+
+  const yearsEmployedRaw =
+    typeof data.yearsEmployed === 'number'
+      ? data.yearsEmployed
+      : Number.parseFloat(String(data.yearsEmployed).replace(/[^0-9.]/g, ''));
+
+  if (Number.isFinite(yearsEmployedRaw) && yearsEmployedRaw > 0) {
+    const employmentStability = clamp(yearsEmployedRaw / 5, 0, 1);
+    metrics.push(employmentStability * 100);
+  }
+
+  if (metrics.length === 0) {
+    return null;
+  }
+
+  const average =
+    metrics.reduce((total, value) => total + value, 0) / metrics.length;
+  const scoreOutOfFive = clamp(average / 20, 0, 5);
+
+  return Number(scoreOutOfFive.toFixed(1));
+};
+
 const SharedRentCard: React.FC<SharedRentCardProps> = () => {
   const params = useParams();
   const token = params?.token;
@@ -279,8 +323,11 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
     return null;
   }
 
-  // Calculate profile score (simplified for demo - would be more complex in real app)
-  const profileScore = 4.8;
+  // Calculate profile score from available data
+  const profileScore = calculateProfileScore(rentCardData);
+  const lastUpdatedLabel = rentCardData.updatedAt
+    ? new Date(rentCardData.updatedAt).toLocaleDateString()
+    : new Date(Date.now()).toLocaleDateString();
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -370,23 +417,27 @@ const SharedRentCard: React.FC<SharedRentCardProps> = () => {
                   </div>
 
                   {/* Verification and Score */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-end gap-4 sm:gap-6">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-300" />
                       <span className="bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
                         Verified Profile
                       </span>
                     </div>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-6 h-6 text-yellow-300 fill-current" />
-                        <span className="text-xl font-bold text-white">{profileScore}</span>
-                        <span className="text-blue-100 whitespace-nowrap">Profile Score</span>
+                    {profileScore !== null && (
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <Star className="w-6 h-6 text-yellow-300 fill-current" />
+                          <span className="text-xl font-bold text-white">
+                            {profileScore.toFixed(1)}
+                          </span>
+                          <span className="text-blue-100 whitespace-nowrap">Profile Score</span>
+                        </div>
+                        <p className="text-sm text-blue-100 mt-1">
+                          Last updated: {lastUpdatedLabel}
+                        </p>
                       </div>
-                      <p className="text-sm text-blue-100 mt-1">
-                        Last updated: {new Date(rentCardData.updatedAt || Date.now()).toLocaleDateString()}
-                      </p>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>

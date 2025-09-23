@@ -105,8 +105,6 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
       {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[url('/api/placeholder/20/20')] opacity-5 z-0"></div>
-
       <div className="relative z-10">
         <Navbar />
       </div>

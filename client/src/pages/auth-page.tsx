@@ -46,8 +46,14 @@ export default function AuthPage() {
       : 'Review standardized tenant information before scheduling showings or collecting interest.';
 
   const handleReplitRedirect = () => {
-    localStorage.setItem('selectedRole', role);
-    window.location.href = '/api/login';
+    try {
+      localStorage.setItem('selectedRole', role);
+    } catch (error) {
+      console.warn('Unable to persist role selection in localStorage before redirect', error);
+    }
+
+    const loginUrl = `/api/login?selectedRole=${encodeURIComponent(role)}`;
+    window.location.href = loginUrl;
   };
 
   const handleDevLogin = async (event: React.FormEvent<HTMLFormElement>) => {
