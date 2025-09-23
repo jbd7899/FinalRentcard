@@ -1,5 +1,4 @@
 import React, { ReactNode, useEffect } from 'react';
-import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { toast } from '@/hooks/use-toast';
 
@@ -8,23 +7,10 @@ interface StoreProviderProps {
 }
 
 export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
-  const initialize = useAuthStore((state) => state.initialize);
-  const setLoading = useUIStore((state) => state.setLoading);
   const { toasts, removeToast } = useUIStore();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        setLoading('auth', true);
-        await initialize();
-      } catch (error) {
-        console.error('Failed to initialize auth:', error);
-      } finally {
-        setLoading('auth', false);
-      }
-    };
-
-    initializeAuth();
+    // Auth initialization is now handled by useAuth hook automatically
 
     // Listen for network state changes
     const updateOnlineStatus = () => {
@@ -52,7 +38,7 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
     };
-  }, [initialize, setLoading]);
+  }, []);
 
   // Bridge between useUIStore toasts and the main toast system
   useEffect(() => {

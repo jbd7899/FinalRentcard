@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,10 +93,27 @@ const normalizeInterests = (data: unknown): DashboardInterest[] => {
 };
 
 const TenantDashboard = () => {
-  const { logout, user } = useAuthStore();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { logout } = useAuthStore();
   const { setLoading, loadingStates, addToast } = useUIStore();
   const [, setLocation] = useLocation();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  
+  // Tenant profile and sharing logic
+  const tenantProfile = user?.profiles?.tenant || null;
+  const isTenantProfileLoading = isAuthLoading;
+  const SHARE_PREREQUISITES_MESSAGE = "Complete your profile to enable sharing";
+  const shareRequirementsMissing = !tenantProfile || !tenantProfile.firstName || !tenantProfile.lastName;
+  const canShareRentCard = !shareRequirementsMissing;
+  
+  // RentCard status variables
+  const rentCardHasData = Boolean(tenantProfile);
+  const profileCompletion = rentCardHasData ? 75 : 0; // Default completion percentage
+  const isRentCardLoading = isAuthLoading;
+  const tenantProfileError = null; // No error handling needed for now
+  const lastUpdated = tenantProfile?.updatedAt ? new Date(tenantProfile.updatedAt).toLocaleDateString() : null;
+  const verifiedReferencesCount = 0; // Default to 0 verified references
+  const tenantReferences = []; // Default to empty array of references
 
   const shouldFetchInterests = Boolean(user);
   const {

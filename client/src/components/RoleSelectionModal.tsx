@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Home, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useAuthStore } from "@/stores/authStore";
 import { useLocation } from "wouter";
 import { ROUTES } from "@/constants/routes";
 
@@ -24,7 +23,6 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
   const [selectedRole, setSelectedRole] = useState<'tenant' | 'landlord' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { initialize } = useAuthStore();
   const [, setLocation] = useLocation();
 
   const handleRoleSelect = (role: 'tenant' | 'landlord') => {
@@ -53,11 +51,8 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
           description: `You're now set up as a ${selectedRole}.`,
         });
         
-        // Invalidate the auth query to force refresh
+        // Invalidate the auth query to force refresh user data
         await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-        
-        // Refresh auth state to get updated user data
-        await initialize();
         
         // Navigate to the appropriate dashboard
         if (selectedRole === 'tenant') {

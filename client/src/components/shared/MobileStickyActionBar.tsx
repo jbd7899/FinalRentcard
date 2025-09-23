@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Share2, Download, Loader2 } from 'lucide-react';
 import { useUIStore } from '@/stores/uiStore';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import type { ShareToken, InsertShareToken } from '@shared/schema';
@@ -37,7 +37,7 @@ export default function MobileStickyActionBar({
   className = ""
 }: MobileStickyActionBarProps) {
   const { addToast } = useUIStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const platform = detectPlatform();
   const hasWebShare = supportsWebShare();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import { debugAuthToken, apiRequest } from '@/lib/queryClient';
 
 /**
@@ -25,26 +25,22 @@ export function AuthDebugTools({
   autoInitialize?: boolean;
   showEndpointTester?: boolean;
 }) {
-  const { user, token, isAuthenticated, initialize } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
   const [testEndpoint, setTestEndpoint] = useState('/api/user');
   const [testResponse, setTestResponse] = useState<any>(null);
   const [testError, setTestError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Initialize auth on component mount if autoInitialize is true
-    if (autoInitialize) {
-      initialize();
-      // Log basic auth status to console in embedded mode
-      if (embedded) {
-        console.log('Authentication status:', {
-          isAuthenticated,
-          userId: user?.id,
-          userType: user?.userType
-        });
-      }
+    // Log basic auth status to console in embedded mode
+    if (embedded && autoInitialize) {
+      console.log('Authentication status:', {
+        isAuthenticated,
+        userId: user?.id,
+        userType: user?.userType
+      });
     }
-  }, [initialize, autoInitialize, isAuthenticated, user, embedded]);
+  }, [autoInitialize, isAuthenticated, user, embedded]);
 
   const handleDebugToken = () => {
     const tokenInfo = debugAuthToken();
@@ -99,10 +95,10 @@ export function AuthDebugTools({
           </button>
           
           <button
-            onClick={() => initialize()}
+            onClick={() => window.location.reload()}
             className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
           >
-            Reinitialize Auth
+            Reload Page
           </button>
           
           <button
@@ -132,8 +128,8 @@ export function AuthDebugTools({
           <div className="font-semibold">Authenticated:</div>
           <div>{isAuthenticated ? 'Yes' : 'No'}</div>
           
-          <div className="font-semibold">Token Present:</div>
-          <div>{token ? 'Yes' : 'No'}</div>
+          <div className="font-semibold">Session-based Auth:</div>
+          <div>Active</div>
           
           <div className="font-semibold">User ID:</div>
           <div>{user?.id || 'Not logged in'}</div>
@@ -154,10 +150,10 @@ export function AuthDebugTools({
           </button>
           
           <button 
-            onClick={() => initialize()}
+            onClick={() => window.location.reload()}
             className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
           >
-            Reinitialize Auth
+            Reload Page
           </button>
           
           <button 

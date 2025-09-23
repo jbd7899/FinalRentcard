@@ -13,6 +13,7 @@ import {
   Users
 } from 'lucide-react';
 import OneClickShareButton from './OneClickShareButton';
+import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { ROUTES } from "@/constants";
@@ -27,7 +28,8 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({
   activeRoute,
   mobileMenuOpen = false
 }) => {
-  const { logout, user } = useAuthStore();
+  const { user } = useAuth();
+  const { logout } = useAuthStore();
   const { setLoading, loadingStates, addToast } = useUIStore();
   const [, setLocation] = useLocation();
 

@@ -1,85 +1,25 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-// Drop-in replacement for legacy auth store that works with Replit Auth
-// This provides the same interface but delegates to the new auth system
-
-interface User {
-  id: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  profileImageUrl?: string;
-  userType?: 'tenant' | 'landlord';
-  phone?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  profiles?: {
-    tenant: any;
-    landlord: any;
-  };
-  requiresSetup?: boolean;
-  availableRoles?: {
-    tenant: boolean;
-    landlord: boolean;
-  };
-}
-
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-}
+// Simplified auth actions store - state management is handled by useAuth hook
+// This store only provides redirect actions for login/register/logout
 
 interface AuthActions {
-  setUser: (user: User | null) => void;
-  setToken: (token: string | null) => void;
-  setError: (error: string | null) => void;
-  setLoading: (isLoading: boolean) => void;
   login: () => Promise<void>;
   register: () => Promise<void>;
   logout: () => Promise<void>;
-  initialize: () => Promise<void>;
 }
 
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  isLoading: true,
-  error: null,
-};
-
-export const useAuthStore = create<AuthState & AuthActions>()(
+export const useAuthStore = create<AuthActions>()(
   devtools(
-    (set, get) => ({
-      ...initialState,
-
-      setUser: (user) => {
-        set({ 
-          user,
-          isAuthenticated: !!user,
-          error: null 
-        }, false, 'auth/setUser');
-      },
-
-      setToken: (token) => {
-        set({ token }, false, 'auth/setToken');
-      },
-
-      setError: (error) => set({ error }, false, 'auth/setError'),
-
-      setLoading: (isLoading) => set({ isLoading }, false, 'auth/setLoading'),
-
+    () => ({
       login: async () => {
         // Redirect to Replit Auth login
         window.location.href = '/auth?mode=login';
       },
 
       register: async () => {
-        // Redirect to Replit Auth login (registration happens automatically)
+        // Redirect to Replit Auth registration
         window.location.href = '/auth?mode=register';
       },
 
@@ -87,36 +27,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         // Redirect to Replit Auth logout
         window.location.href = '/api/logout';
       },
-
-      initialize: async () => {
-        const { setLoading, setUser, setError } = get();
-        
-        try {
-          setLoading(true);
-          setError(null);
-          
-          const response = await fetch('/api/auth/user', {
-            credentials: 'include'
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-          } else if (response.status === 401) {
-            // User not authenticated
-            setUser(null);
-          } else {
-            throw new Error('Failed to fetch user');
-          }
-        } catch (error) {
-          console.error('Auth initialization failed:', error);
-          setError(error instanceof Error ? error.message : 'Authentication failed');
-          setUser(null);
-        } finally {
-          setLoading(false);
-        }
-      },
     }),
-    { name: 'auth-store' }
+    { name: 'auth-actions' }
   )
 );

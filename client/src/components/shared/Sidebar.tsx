@@ -22,6 +22,7 @@ import {
   MessageSquare,
   BookOpen,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { ROUTES } from '@/constants';
@@ -41,7 +42,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   setMobileMenuOpen,
   activeRoute,
 }) => {
-  const { logout, user } = useAuthStore();
+  const { user } = useAuth();
+  const { logout } = useAuthStore();
   const { setLoading, loadingStates, openModal, addToast } = useUIStore();
   const [location, setLocation] = useLocation();
 
