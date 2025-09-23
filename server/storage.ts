@@ -58,8 +58,8 @@ export interface IStorage {
   // Tenant profile operations
   getTenantProfile(userId: string): Promise<TenantProfile | undefined>;
   getTenantProfileById(id: number): Promise<TenantProfile | undefined>;
-  createTenantProfile(profile: Omit<TenantProfile, "id">): Promise<TenantProfile>;
-  updateTenantProfile(id: number, profile: Partial<TenantProfile>): Promise<TenantProfile>;
+  createTenantProfile(profile: Omit<TenantProfile, "id">, dbClient?: any): Promise<TenantProfile>;
+  updateTenantProfile(id: number, profile: Partial<TenantProfile>, dbClient?: any): Promise<TenantProfile>;
 
   // Landlord profile operations
   getLandlordProfile(userId: string): Promise<LandlordProfile | undefined>;
@@ -83,6 +83,7 @@ export interface IStorage {
 
   // Rent card operations
   getRentCard(userId: string): Promise<RentCard | undefined>;
+  createRentCard(rentCard: Omit<RentCard, "id" | "createdAt" | "updatedAt">, dbClient?: any): Promise<RentCard>;
 
   // Share token operations
   createShareToken(tenantId: number, data: { scope?: string; expiresAt?: Date }): Promise<ShareToken>;
@@ -466,15 +467,40 @@ export class DatabaseStorage implements IStorage {
     return profile;
   }
 
-  async createTenantProfile(profile: Omit<TenantProfile, "id">): Promise<TenantProfile> {
-    const [newProfile] = await db.insert(tenantProfiles).values(profile).returning();
+  async createTenantProfile(
+    profile: Omit<TenantProfile, "id">,
+    dbClient: typeof db | any = db
+  ): Promise<TenantProfile> {
+    const [newProfile] = await dbClient.insert(tenantProfiles).values(profile).returning();
     return newProfile;
   }
 
-  async updateTenantProfile(id: number, profile: Partial<TenantProfile>): Promise<TenantProfile> {
-    const [updatedProfile] = await db
+  async updateTenantProfile(
+    id: number,
+    profile: Partial<TenantProfile>,
+    dbClient: typeof db | any = db
+  ): Promise<TenantProfile> {
+    const sanitizedProfileEntries = Object.entries(profile).filter(([, value]) => value !== undefined);
+
+    // If there are no changes, return the existing profile without issuing an update statement
+    if (sanitizedProfileEntries.length === 0) {
+      const [existingProfile] = await dbClient
+        .select()
+        .from(tenantProfiles)
+        .where(eq(tenantProfiles.id, id));
+
+      if (!existingProfile) {
+        throw new Error("Tenant profile not found");
+      }
+
+      return existingProfile;
+    }
+
+    const sanitizedProfile = Object.fromEntries(sanitizedProfileEntries) as Partial<TenantProfile>;
+
+    const [updatedProfile] = await dbClient
       .update(tenantProfiles)
-      .set(profile)
+      .set(sanitizedProfile)
       .where(eq(tenantProfiles.id, id))
       .returning();
     return updatedProfile;
@@ -595,8 +621,11 @@ export class DatabaseStorage implements IStorage {
     return rentCard;
   }
 
-  async createRentCard(rentCard: Omit<RentCard, "id" | "createdAt" | "updatedAt">): Promise<RentCard> {
-    const [newRentCard] = await db.insert(rentCards).values(rentCard).returning();
+  async createRentCard(
+    rentCard: Omit<RentCard, "id" | "createdAt" | "updatedAt">,
+    dbClient: typeof db | any = db
+  ): Promise<RentCard> {
+    const [newRentCard] = await dbClient.insert(rentCards).values(rentCard).returning();
     return newRentCard;
   }
 

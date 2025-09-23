@@ -9,10 +9,12 @@ import {
   // Import referral schemas
   insertReferralSchema, insertReferralRewardSchema,
   // Import RentCard request and prospect list schemas
-  insertRentCardRequestSchema, insertProspectListSchema
+  insertRentCardRequestSchema, insertProspectListSchema,
+  insertRentCardSchema
 } from "@shared/schema";
 import { 
   properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode,
+  TenantProfile,
   TenantContactPreferences, CommunicationLog, TenantBlockedContact, CommunicationTemplate, Shortlink, ShortlinkClick,
   RecipientContact, TenantMessageTemplate, ContactSharingHistory,
   // Import referral types
@@ -811,20 +813,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
-      
-      console.log(`Creating RentCard for user ID: ${userId}`);
-      
+
+      const normalizedUserId = String(userId);
+      console.log(`Creating RentCard for user ID: ${normalizedUserId}`);
+
       // Validate the request body against the RentCard schema
-      const validatedData = {
-        ...req.body,
-        userId: userId
+      const rentCardPayload = insertRentCardSchema.parse(req.body);
+      const rentCardData = {
+        ...rentCardPayload,
+        userId: normalizedUserId
       };
-      
-      // Create the RentCard
-      const rentCard = await storage.createRentCard(validatedData);
-      
-      console.log(`Successfully created RentCard for user ID: ${userId}`);
-      res.status(201).json(rentCard);
+
+      // Prepare profile updates based on the RentCard payload
+      let tenantProfile = await storage.getTenantProfile(normalizedUserId);
+      const profileUpdates: Partial<TenantProfile> = {};
+
+      if (rentCardPayload.moveInDate) {
+        const parsedMoveInDate = new Date(rentCardPayload.moveInDate);
+        if (!Number.isNaN(parsedMoveInDate.getTime())) {
+          profileUpdates.moveInDate = parsedMoveInDate;
+        }
+      }
+
+      if (typeof rentCardPayload.maxRent === "number") {
+        profileUpdates.maxRent = rentCardPayload.maxRent;
+      }
+
+      if (typeof rentCardPayload.creditScore === "number") {
+        profileUpdates.creditScore = rentCardPayload.creditScore;
+      }
+
+      profileUpdates.employmentInfo = {
+        employer: rentCardPayload.currentEmployer,
+        position: rentCardPayload.currentEmployer ? "Current role" : "Not specified",
+        monthlyIncome: rentCardPayload.monthlyIncome,
+        startDate: rentCardPayload.yearsEmployed || ""
+      };
+
+      if (rentCardPayload.currentAddress) {
+        profileUpdates.rentalHistory = {
+          previousAddresses: [
+            {
+              address: rentCardPayload.currentAddress,
+              startDate: rentCardPayload.moveInDate || "",
+              endDate: "Present",
+              landlordContact: ""
+            }
+          ]
+        };
+      }
+
+      const transactionResult = await db.transaction(async (tx) => {
+        let profileForUpdate = tenantProfile;
+        if (!profileForUpdate) {
+          const newProfileData: Omit<TenantProfile, "id"> = {
+            userId: normalizedUserId,
+            moveInDate: profileUpdates.moveInDate ?? null,
+            maxRent: profileUpdates.maxRent ?? null,
+            employmentInfo: profileUpdates.employmentInfo ?? null,
+            creditScore: profileUpdates.creditScore ?? null,
+            rentalHistory: profileUpdates.rentalHistory ?? { previousAddresses: [] }
+          };
+          profileForUpdate = await storage.createTenantProfile(newProfileData, tx);
+        }
+
+        const rentCard = await storage.createRentCard(rentCardData, tx);
+        const updatedProfile = await storage.updateTenantProfile(profileForUpdate.id, profileUpdates, tx);
+
+        return { rentCard, updatedProfile };
+      });
+
+      console.log(`Successfully created RentCard for user ID: ${normalizedUserId}`);
+      console.log(
+        `Updated tenant profile from RentCard creation for user ID: ${normalizedUserId}`,
+        transactionResult.updatedProfile
+      );
+
+      res.status(201).json(transactionResult.rentCard);
     } catch (error) {
       handleRouteError(error, res, '/api/tenant/rentcard POST endpoint');
     }
