@@ -4,14 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ComingSoonBadge, ComingSoonCard, ComingSoonWithMockData } from "@/components/ui/coming-soon";
+import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { MoreSection } from "@/components/ui/more-section";
 import { 
   FileText, 
   Star, 
   Clock, 
-  Building2, 
-  ArrowRight,
+  Building2,
   CheckCircle,
   LogOut,
   Loader2,
@@ -34,12 +33,62 @@ import { EnhancedShareModal } from '@/components/shared/EnhancedShareModal';
 import OneClickShareButton from '@/components/shared/OneClickShareButton';
 import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
 import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
-import { apiRequest } from '@/lib/queryClient';
 import type { TenantProfile } from '@shared/schema';
+import { TenantDashboardInterests, type DashboardInterest } from '@/components/tenant/DashboardInterests';
+import { ENV } from '@/constants/env';
 
 
-const generateRoute = {
-  application: (id: string) => `/tenant/applications/${id}`
+const parseCreatedAt = (value: string) => {
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const normalizeInterests = (data: unknown): DashboardInterest[] => {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  const normalized: DashboardInterest[] = [];
+
+  for (const item of data) {
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+
+    const record = item as Record<string, unknown>;
+    if (typeof record.id !== 'number') {
+      continue;
+    }
+
+    const propertySource = record.property;
+    let property: DashboardInterest['property'] = null;
+
+    if (propertySource && typeof propertySource === 'object') {
+      const propertyRecord = propertySource as Record<string, unknown>;
+      property = {
+        address:
+          typeof propertyRecord.address === 'string'
+            ? propertyRecord.address
+            : undefined,
+        rent:
+          typeof propertyRecord.rent === 'number'
+            ? propertyRecord.rent
+            : undefined,
+      };
+    }
+
+    normalized.push({
+      id: record.id,
+      status: typeof record.status === 'string' ? record.status : 'new',
+      createdAt: typeof record.createdAt === 'string' ? record.createdAt : '',
+      property,
+      isGeneral: Boolean(record.isGeneral),
+    });
+  }
+
+  return normalized.sort(
+    (a, b) => parseCreatedAt(b.createdAt) - parseCreatedAt(a.createdAt)
+  );
 };
 
 const TenantDashboard = () => {
@@ -48,22 +97,29 @@ const TenantDashboard = () => {
   const [, setLocation] = useLocation();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
+  const shouldFetchInterests = Boolean(user);
+  const {
+    data: interestsData = [],
+    isLoading: isInterestsLoading,
+    isFetching: isInterestsFetching,
+    error: interestsError,
+    refetch: refetchInterests,
+  } = useQuery<unknown, Error, DashboardInterest[]>({
+    queryKey: ['/api/interests'],
+    enabled: shouldFetchInterests,
+    select: normalizeInterests,
+  });
 
-  const applications = [
-    {
-      id: 1,
-      property: "123 Main Street Unit A",
-      landlord: "John Smith",
-      status: APPLICATION_STATUS.CONTACTED as ApplicationStatus,
-      submittedAt: "2025-02-18T10:30:00",
-      requirements: {
-        creditScore: "✓ Meets requirement",
-        income: "✓ 3.5x monthly rent",
-        employment: "✓ Verified",
-        references: "✓ 2 verified references"
-      }
-    }
-  ];
+  const tenantInterests = shouldFetchInterests ? interestsData : [];
+  const visibleInterests = tenantInterests.slice(0, 3);
+  const isInterestsInFlight =
+    (isInterestsLoading || isInterestsFetching) && tenantInterests.length === 0;
+  const interestsErrorToShow = !isInterestsInFlight ? interestsError ?? null : null;
+
+  const handleRetryInterests = () => {
+    if (!shouldFetchInterests) return;
+    void refetchInterests();
+  };
 
   const handleLogout = async () => {
     try {
@@ -396,83 +452,23 @@ const TenantDashboard = () => {
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-medium">Active Interests</h2>
-              <ComingSoonBadge type="feature" size="sm" title="Beta" />
+              {!ENV.IS_PRODUCTION && (
+                <ComingSoonBadge type="feature" size="sm" title="Beta" />
+              )}
             </div>
             <Link href={ROUTES.TENANT.INTERESTS}>
               <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs sm:text-sm">View All</Button>
             </Link>
           </div>
-          
-          {applications.length > 0 ? (
-            <ComingSoonWithMockData
-              type="feature"
-              title="Interest Tracking"
-              description="Real-time interest tracking with landlord communications is coming soon. Currently showing demo data."
-              overlay={false}
-              mockDataComponent={
-                <Card>
-                  <CardContent className="p-5 sm:p-6">
-                    {applications.map((application) => (
-                      <div key={application.id} className="border-b pb-4 mb-4 last:border-0 last:pb-0 last:mb-0">
-                        <div className="flex justify-between items-start mb-2 sm:mb-3">
-                          <div>
-                            <h3 className="font-medium text-sm sm:text-base">{application.property}</h3>
-                            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
-                              Landlord: {application.landlord}
-                            </p>
-                          </div>
-                          <Badge 
-                            className={`px-2 py-1 text-xs font-medium ${
-                              application.status === APPLICATION_STATUS.CONTACTED 
-                                ? 'bg-green-100 text-green-800' 
-                                : application.status === APPLICATION_STATUS.ARCHIVED
-                                ? 'bg-gray-100 text-gray-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {APPLICATION_LABELS.STATUS[application.status]}
-                          </Badge>
-                        </div>
-                        
-                        <div className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-                          <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            <span>Submitted {new Date(application.submittedAt).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                        
-                        <Link href={generateRoute.application(application.id.toString())}>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full text-xs sm:text-sm h-7 sm:h-8 flex items-center justify-center gap-1 sm:gap-2"
-                          >
-                            <span>View Details</span>
-                            <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          </Button>
-                        </Link>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              }
-            />
-          ) : (
-            <Card>
-              <CardContent className="p-5 sm:p-6 text-center">
-                <Building2 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                <p className="text-sm sm:text-base text-gray-500 mb-3 sm:mb-4">No active interests</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="text-xs sm:text-sm h-8 sm:h-9"
-                  onClick={() => setLocation(ROUTES.TENANT.INTERESTS)}
-                >
-                  Browse Properties
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+
+          <TenantDashboardInterests
+            interests={visibleInterests}
+            totalCount={tenantInterests.length}
+            isLoading={isInterestsInFlight}
+            error={interestsErrorToShow}
+            onBrowseProperties={() => setLocation(ROUTES.TENANT.INTERESTS)}
+            onRetry={handleRetryInterests}
+          />
         </section>
       </div>
       
