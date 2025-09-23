@@ -20,7 +20,6 @@ interface User {
     tenant: boolean;
     landlord: boolean;
   };
-  pendingRoleSelection?: 'tenant' | 'landlord' | null;
 }
 
 export function useAuth() {

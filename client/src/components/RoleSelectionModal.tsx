@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,60 +18,54 @@ import { ROUTES } from "@/constants/routes";
 interface RoleSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  storedRolePreference?: 'tenant' | 'landlord' | null;
 }
 
-const STORAGE_KEY = 'selectedRole';
-
-const isValidRole = (role: unknown): role is 'tenant' | 'landlord' =>
-  role === 'tenant' || role === 'landlord';
-
-export function RoleSelectionModal({ isOpen, onClose, storedRolePreference }: RoleSelectionModalProps) {
+export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps) {
   const [selectedRole, setSelectedRole] = useState<'tenant' | 'landlord' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { initialize } = useAuthStore();
   const [, setLocation] = useLocation();
-  const autoSubmitAttemptedRef = useRef(false);
 
   const handleRoleSelect = (role: 'tenant' | 'landlord') => {
     setSelectedRole(role);
   };
 
-  const submitRole = useCallback(async (roleToSubmit: 'tenant' | 'landlord') => {
+  const handleSubmit = async () => {
+    if (!selectedRole) {
+      toast({
+        title: "Please select a role",
+        description: "You must choose whether you're a tenant or landlord to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await apiRequest('PATCH', '/api/auth/user/role', {
-        userType: roleToSubmit
+        userType: selectedRole
       });
 
       if (response.ok) {
-        try {
-          if (typeof window !== 'undefined') {
-            window.localStorage.removeItem(STORAGE_KEY);
-          }
-        } catch (storageError) {
-          console.warn('Unable to clear stored role preference from localStorage', storageError);
-        }
-
         toast({
           title: "Role selected successfully",
-          description: `You're now set up as a ${roleToSubmit}.`,
+          description: `You're now set up as a ${selectedRole}.`,
         });
-
+        
         // Invalidate the auth query to force refresh
         await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-
+        
         // Refresh auth state to get updated user data
         await initialize();
-
+        
         // Navigate to the appropriate dashboard
-        if (roleToSubmit === 'tenant') {
+        if (selectedRole === 'tenant') {
           setLocation(ROUTES.TENANT.DASHBOARD);
-        } else if (roleToSubmit === 'landlord') {
+        } else if (selectedRole === 'landlord') {
           setLocation(ROUTES.LANDLORD.DASHBOARD);
         }
-
+        
         onClose();
       } else {
         throw new Error('Failed to update role');
@@ -86,56 +80,7 @@ export function RoleSelectionModal({ isOpen, onClose, storedRolePreference }: Ro
     } finally {
       setIsSubmitting(false);
     }
-  }, [initialize, onClose, setLocation, toast]);
-
-  const handleSubmit = useCallback(() => {
-    if (!selectedRole) {
-      toast({
-        title: "Please select a role",
-        description: "You must choose whether you're a tenant or landlord to continue.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    void submitRole(selectedRole);
-  }, [selectedRole, submitRole, toast]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      autoSubmitAttemptedRef.current = false;
-      return;
-    }
-
-    if (autoSubmitAttemptedRef.current) {
-      return;
-    }
-
-    let storedRole: 'tenant' | 'landlord' | null = null;
-
-    try {
-      if (typeof window !== 'undefined') {
-        const persistedRole = window.localStorage.getItem(STORAGE_KEY);
-        if (isValidRole(persistedRole)) {
-          storedRole = persistedRole;
-        } else if (persistedRole) {
-          window.localStorage.removeItem(STORAGE_KEY);
-        }
-      }
-    } catch (storageError) {
-      console.warn('Unable to access localStorage for stored role preference', storageError);
-    }
-
-    if (!storedRole && isValidRole(storedRolePreference)) {
-      storedRole = storedRolePreference;
-    }
-
-    if (storedRole) {
-      setSelectedRole(storedRole);
-      autoSubmitAttemptedRef.current = true;
-      void submitRole(storedRole);
-    }
-  }, [isOpen, storedRolePreference, submitRole]);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => !isSubmitting && onClose()}>

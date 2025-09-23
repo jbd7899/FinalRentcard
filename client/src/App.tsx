@@ -68,10 +68,9 @@ function Router() {
 
   return (
     <>
-      <RoleSelectionModal
+      <RoleSelectionModal 
         isOpen={showRoleSelection}
         onClose={() => setShowRoleSelection(false)}
-        storedRolePreference={user?.pendingRoleSelection ?? null}
       />
       <Switch>
       {/* Home page - always accessible */}
