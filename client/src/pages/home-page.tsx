@@ -361,7 +361,8 @@ export default function HomePage() {
               <button
                 onClick={() => {
                   localStorage.setItem('selectedRole', selectedRole);
-                  setLocation(content.primaryLink);
+                  const quickStartRoute = isLandlordSelected ? '/quickstart/landlord' : '/quickstart/tenant';
+                  setLocation(quickStartRoute);
                 }}
                 className={`w-full inline-flex items-center justify-center gap-3 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-all shadow-xl ${
                   isLandlordSelected
@@ -646,7 +647,8 @@ export default function HomePage() {
                 <button
                   onClick={() => {
                     localStorage.setItem('selectedRole', selectedRole);
-                    setLocation(content.primaryLink);
+                    const quickStartRoute = isLandlordSelected ? '/quickstart/landlord' : '/quickstart/tenant';
+                    setLocation(quickStartRoute);
                   }}
                   className="inline-flex items-center justify-center gap-3 rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 transition-all hover:bg-slate-100"
                 >

@@ -120,10 +120,6 @@ export default function Navbar() {
         )}
 
         <div className="flex items-center space-x-4">
-          {/* About Link - visible to all users */}
-          <Link href="/about" className="text-muted-foreground hover:text-foreground font-medium" data-testid="navbar-about-link">
-            About
-          </Link>
 
           {/* Role Switcher for Landing Pages */}
           {isOnLandingPage && !user && (
