@@ -1,80 +1,114 @@
 import type { TenantProfile } from '@shared/schema';
-
-export type EmploymentInfoDetails = {
-  employer?: string | null;
-  position?: string | null;
-  monthlyIncome?: number | string | null;
-  startDate?: string | null;
-};
+import {
+  EmploymentRequirementField,
+  ShareReadinessIssue,
+  ShareReadinessResult,
+  ShareReadinessSection,
+  evaluateShareReadiness,
+} from '@shared/share-validation';
 
 export const SHARE_PREREQUISITES_MESSAGE =
   'Add your employment info, credit score, and rent budget to unlock sharing.';
 
-const parseEmploymentInfo = (
-  employmentInfo: TenantProfile['employmentInfo'] | string | null | undefined
-): EmploymentInfoDetails | null => {
-  if (!employmentInfo) {
-    return null;
-  }
+export interface ShareChecklistItem {
+  id: string;
+  label: string;
+  href: string;
+  section: ShareReadinessSection;
+}
 
-  if (typeof employmentInfo === 'string') {
-    try {
-      return JSON.parse(employmentInfo) as EmploymentInfoDetails;
-    } catch (error) {
-      console.warn('Unable to parse employment info for share readiness check:', error);
-      return null;
+export interface ShareReadinessSummary extends ShareReadinessResult {
+  checklist: ShareChecklistItem[];
+}
+
+export const SHARE_SECTION_LINKS: Record<ShareReadinessSection, string> = {
+  employmentInfo: '/tenant/rentcard#employment',
+  creditScore: '/tenant/rentcard#credit',
+  maxRent: '/tenant/rentcard#rent-preferences',
+};
+
+const EMPLOYMENT_FIELD_LABELS: Record<EmploymentRequirementField, string> = {
+  employer: 'Add your employer name',
+  position: 'Add your job title',
+  monthlyIncome: 'Enter your monthly income',
+  startDate: 'Add your employment start date',
+};
+
+const createEmploymentChecklistItems = (
+  missingFields: EmploymentRequirementField[]
+): ShareChecklistItem[] => {
+  const uniqueFields = Array.from(new Set(missingFields));
+  const items: ShareChecklistItem[] = [];
+
+  uniqueFields.forEach((field) => {
+    const label = EMPLOYMENT_FIELD_LABELS[field];
+    if (!label) {
+      return;
     }
-  }
 
-  return employmentInfo as EmploymentInfoDetails;
+    items.push({
+      id: `employmentInfo.${field}`,
+      label,
+      href: SHARE_SECTION_LINKS.employmentInfo,
+      section: 'employmentInfo',
+    });
+  });
+
+  return items;
 };
 
-const toNumberValue = (value: unknown): number => {
-  if (typeof value === 'number') {
-    return value;
-  }
+export const buildShareChecklistFromIssues = (
+  issues: ShareReadinessIssue[]
+): ShareChecklistItem[] => {
+  const checklist: ShareChecklistItem[] = [];
 
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : NaN;
-  }
+  issues.forEach((issue) => {
+    if (issue.section === 'employmentInfo') {
+      checklist.push(...createEmploymentChecklistItems(issue.missingFields));
+      return;
+    }
 
-  return NaN;
+    if (issue.section === 'creditScore') {
+      checklist.push({
+        id: 'creditScore',
+        label: 'Add your current credit score',
+        href: SHARE_SECTION_LINKS.creditScore,
+        section: 'creditScore',
+      });
+      return;
+    }
+
+    if (issue.section === 'maxRent') {
+      checklist.push({
+        id: 'maxRent',
+        label: 'Set your maximum rent budget',
+        href: SHARE_SECTION_LINKS.maxRent,
+        section: 'maxRent',
+      });
+    }
+  });
+
+  return checklist;
 };
 
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0;
+export const getShareReadinessSummary = (
+  profile?: TenantProfile | null
+): ShareReadinessSummary => {
+  const evaluation = evaluateShareReadiness(profile);
+  const checklist = buildShareChecklistFromIssues(evaluation.issues);
 
-export const canShareRentCardProfile = (profile?: TenantProfile | null): boolean => {
-  if (!profile) {
-    return false;
-  }
-
-  const employmentDetails = parseEmploymentInfo(profile.employmentInfo);
-  if (!employmentDetails) {
-    return false;
-  }
-
-  const monthlyIncomeValue = toNumberValue(employmentDetails.monthlyIncome);
-  const hasEmploymentDetails =
-    isNonEmptyString(employmentDetails.employer) &&
-    isNonEmptyString(employmentDetails.position) &&
-    isNonEmptyString(employmentDetails.startDate) &&
-    Number.isFinite(monthlyIncomeValue) &&
-    monthlyIncomeValue > 0;
-
-  if (!hasEmploymentDetails) {
-    return false;
-  }
-
-  const creditScoreValue = toNumberValue((profile as TenantProfile).creditScore);
-  const maxRentValue = toNumberValue((profile as TenantProfile).maxRent);
-
-  const hasCreditScore = Number.isFinite(creditScoreValue) && creditScoreValue >= 300;
-  const hasMaxRent = Number.isFinite(maxRentValue) && maxRentValue > 0;
-
-  return hasCreditScore && hasMaxRent;
+  return {
+    ...evaluation,
+    checklist,
+  };
 };
 
-export const isShareReadinessMissing = (profile?: TenantProfile | null): boolean =>
-  Boolean(profile) && !canShareRentCardProfile(profile);
+export const canShareRentCardProfile = (
+  profile?: TenantProfile | null
+): boolean => getShareReadinessSummary(profile).isReady;
+
+export const isShareReadinessMissing = (
+  profile?: TenantProfile | null
+): boolean => !getShareReadinessSummary(profile).isReady;
+
+export type { ShareReadinessIssue, ShareReadinessSection };

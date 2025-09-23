@@ -17,7 +17,12 @@ import { createRentcardShortlinkRequest, generateShortlinkUrl, determineChannel 
 import type { ChannelType, ShortlinkResponse } from '@shared/url-helpers';
 import { EnhancedShareDialog } from '../sharing/EnhancedShareDialog';
 import { useLocation } from 'wouter';
-import { SHARE_PREREQUISITES_MESSAGE } from '@/lib/rentcardShareReadiness';
+import {
+  SHARE_PREREQUISITES_MESSAGE,
+  buildShareChecklistFromIssues,
+  type ShareChecklistItem,
+  type ShareReadinessIssue,
+} from '@/lib/rentcardShareReadiness';
 
 interface OneClickShareButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
@@ -28,10 +33,18 @@ interface OneClickShareButtonProps {
   showEnhancedOption?: boolean;
 }
 
+interface ShareTokenPrerequisiteErrorPayload {
+  message?: string;
+  issues?: ShareReadinessIssue[];
+}
+
 class ShareTokenPrerequisiteError extends Error {
-  constructor(message?: string) {
-    super(message);
+  issues: ShareReadinessIssue[];
+
+  constructor(payload: ShareTokenPrerequisiteErrorPayload = {}) {
+    super(payload.message ?? SHARE_PREREQUISITES_MESSAGE);
     this.name = 'ShareTokenPrerequisiteError';
+    this.issues = Array.isArray(payload.issues) ? payload.issues : [];
   }
 }
 
@@ -77,9 +90,16 @@ export function OneClickShareButton({
       const response = await apiRequest('POST', '/api/share-tokens', tokenData);
       if (!response.ok) {
         if (response.status === 400) {
-          const errorData = (await response.json().catch(() => ({}))) as { message?: string };
-          const message = typeof errorData?.message === 'string' ? errorData.message : undefined;
-          throw new ShareTokenPrerequisiteError(message ?? SHARE_PREREQUISITES_MESSAGE);
+          const errorData = (await response.json().catch(() => ({}))) as {
+            message?: string;
+            missingSections?: ShareReadinessIssue[];
+          };
+          throw new ShareTokenPrerequisiteError({
+            message: typeof errorData?.message === 'string' ? errorData.message : undefined,
+            issues: Array.isArray(errorData?.missingSections)
+              ? errorData.missingSections
+              : [],
+          });
         }
         throw new Error('Failed to create share token');
       }
@@ -246,18 +266,38 @@ export function OneClickShareButton({
       console.error('Share failed:', error);
 
       if (error instanceof ShareTokenPrerequisiteError) {
+        const checklist = buildShareChecklistFromIssues(error.issues);
+        const primaryDestination = checklist[0]?.href ?? '/tenant/rentcard';
+
         addToast({
           title: 'Complete your RentCard to share',
           description: (
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-gray-600">
-                {error.message || SHARE_PREREQUISITES_MESSAGE}
-              </p>
+            <div className="flex flex-col gap-3">
+              {checklist.length > 0 ? (
+                <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
+                  {checklist.map((item: ShareChecklistItem) => (
+                    <li key={item.id}>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0 h-auto justify-start font-normal text-blue-600 hover:text-blue-700"
+                        onClick={() => setLocation(item.href)}
+                      >
+                        {item.label}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-gray-600">
+                  {error.message || SHARE_PREREQUISITES_MESSAGE}
+                </p>
+              )}
               <Button
                 variant="link"
                 size="sm"
                 className="p-0 h-auto justify-start"
-                onClick={() => setLocation('/create-rentcard')}
+                onClick={() => setLocation(primaryDestination)}
               >
                 Open RentCard builder
               </Button>

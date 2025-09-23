@@ -35,7 +35,8 @@ import OneClickShareButton from '@/components/shared/OneClickShareButton';
 import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
 import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
 import { apiRequest } from '@/lib/queryClient';
-import type { TenantProfile } from '@shared/schema';
+import type { TenantProfile, TenantReference } from '@shared/schema';
+import { getShareReadinessSummary } from '@/lib/rentcardShareReadiness';
 
 
 const generateRoute = {
@@ -48,6 +49,133 @@ const TenantDashboard = () => {
   const [, setLocation] = useLocation();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
+  const {
+    data: tenantProfile,
+    isLoading: isTenantProfileLoading,
+    error: tenantProfileError,
+  } = useQuery<TenantProfile | null>({
+    queryKey: ['/api/tenant/profile'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/tenant/profile');
+      if (response.status === 404 || response.status === 401) {
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error('Failed to fetch tenant profile');
+      }
+      return response.json();
+    },
+  });
+
+  const shareReadiness = getShareReadinessSummary(tenantProfile);
+  const shareChecklistItems = shareReadiness.checklist;
+  const canShareRentCard = shareReadiness.isReady;
+  const shareRequirementsMissing = shareChecklistItems.length > 0;
+
+  const renderShareChecklist = ({
+    textSize = 'sm',
+    className = '',
+    buttonClassName = 'text-blue-600 hover:text-blue-700 underline',
+    listClassName = 'list-disc pl-5',
+  }: {
+    textSize?: 'xs' | 'sm';
+    className?: string;
+    buttonClassName?: string;
+    listClassName?: string;
+  } = {}) => {
+    if (shareChecklistItems.length === 0) {
+      return null;
+    }
+
+    const textClass = textSize === 'xs' ? 'text-xs' : 'text-sm';
+
+    return (
+      <ul className={`${listClassName} ${textClass} text-gray-600 space-y-0.5 ${className}`}>
+        {shareChecklistItems.map((item) => (
+          <li key={item.id}>
+            <button
+              type="button"
+              className={`text-left ${textClass} ${buttonClassName}`}
+              onClick={() => setLocation(item.href)}
+            >
+              {item.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const tenantReferences: TenantReference[] = [];
+  const tenantReferencesError = false;
+  const verifiedReferencesCount = 0;
+
+  const rentCardHasData = Boolean(
+    tenantProfile &&
+      (
+        tenantProfile.employmentInfo ||
+        tenantProfile.creditScore ||
+        tenantProfile.maxRent ||
+        tenantProfile.moveInDate ||
+        tenantProfile.rentalHistory?.previousAddresses?.length
+      )
+  );
+
+  const isRentCardLoading = isTenantProfileLoading;
+
+  const profileCompletion = React.useMemo(() => {
+    if (!tenantProfile) {
+      return 0;
+    }
+
+    const employmentInfoRaw = tenantProfile.employmentInfo;
+    let employmentInfo: Record<string, unknown> | null = null;
+
+    if (employmentInfoRaw) {
+      if (typeof employmentInfoRaw === 'string') {
+        try {
+          employmentInfo = JSON.parse(employmentInfoRaw) as Record<string, unknown>;
+        } catch (error) {
+          console.warn('Unable to parse employment info for profile completion check:', error);
+          employmentInfo = null;
+        }
+      } else {
+        employmentInfo = employmentInfoRaw as Record<string, unknown>;
+      }
+    }
+
+    let completedFields = 0;
+    const totalFields = 8;
+
+    if (employmentInfo?.employer) completedFields++;
+    if (employmentInfo?.position) completedFields++;
+    if (employmentInfo?.monthlyIncome) completedFields++;
+    if (employmentInfo?.startDate) completedFields++;
+    if (tenantProfile.creditScore) completedFields++;
+    if (tenantProfile.maxRent) completedFields++;
+    if (tenantProfile.moveInDate) completedFields++;
+    if (tenantProfile.rentalHistory?.previousAddresses?.length) completedFields++;
+
+    return Math.round((completedFields / totalFields) * 100);
+  }, [tenantProfile]);
+
+  const lastUpdated = React.useMemo(() => {
+    if (!tenantProfile || !('updatedAt' in tenantProfile)) {
+      return null;
+    }
+
+    const updatedAt = (tenantProfile as Record<string, unknown>).updatedAt;
+    if (!updatedAt) {
+      return null;
+    }
+
+    const date = new Date(updatedAt as string | number | Date);
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date.toLocaleDateString();
+  }, [tenantProfile]);
 
   const applications = [
     {
@@ -120,9 +248,12 @@ const TenantDashboard = () => {
                   {tenantProfile ? 'Finish RentCard to Share' : 'Create RentCard'}
                 </Button>
 
-                {shareRequirementsMissing && (
-                  <p className="text-xs text-gray-500">{SHARE_PREREQUISITES_MESSAGE}</p>
-                )}
+                {shareRequirementsMissing &&
+                  renderShareChecklist({
+                    textSize: 'xs',
+                    className: 'mt-1',
+                    buttonClassName: 'text-blue-600 hover:text-blue-700 underline',
+                  })}
               </div>
             )}
           </div>
@@ -141,11 +272,18 @@ const TenantDashboard = () => {
                 <h3 className="text-sm font-medium text-blue-900">
                   {shareRequirementsMissing ? 'Finish setting up your RentCard' : 'Want to optimize your RentCard?'}
                 </h3>
-                <p className="text-sm text-blue-700">
-                  {shareRequirementsMissing
-                    ? SHARE_PREREQUISITES_MESSAGE
-                    : 'Add references and details to get faster landlord responses'}
-                </p>
+                {shareRequirementsMissing ? (
+                  renderShareChecklist({
+                    textSize: 'sm',
+                    className:
+                      'text-blue-700 [&>li]:marker:text-blue-500 [&>li>button]:text-blue-700 [&>li>button:hover]:text-blue-800',
+                    buttonClassName: 'text-blue-700 hover:text-blue-800 underline',
+                  })
+                ) : (
+                  <p className="text-sm text-blue-700">
+                    Add references and details to get faster landlord responses
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -184,13 +322,18 @@ const TenantDashboard = () => {
                   ? 'One-click sharing available in header'
                   : 'Complete your RentCard to unlock one-click sharing'}
               </p>
-              <p
-                className={`text-xs font-medium ${canShareRentCard ? 'text-blue-600' : 'text-amber-600'}`}
-              >
-                {canShareRentCard
-                  ? 'Use "Share My RentCard" button above ↗'
-                  : SHARE_PREREQUISITES_MESSAGE}
-              </p>
+              {canShareRentCard ? (
+                <p className="text-xs font-medium text-blue-600">
+                  Use "Share My RentCard" button above ↗
+                </p>
+              ) : (
+                renderShareChecklist({
+                  textSize: 'xs',
+                  className:
+                    'font-medium text-amber-600 [&>li]:marker:text-amber-500 [&>li>button]:text-amber-600 [&>li>button:hover]:text-amber-700',
+                  buttonClassName: 'text-amber-600 hover:text-amber-700 underline',
+                })
+              )}
             </CardContent>
           </Card>
           

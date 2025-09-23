@@ -33,6 +33,7 @@ import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdF
 import { db } from "./db";
 import { sendReferenceVerificationEmail, verifyToken } from "./email";
 import { emailService, EmailType } from "./services/emailService";
+import { evaluateShareReadiness } from "@shared/share-validation";
 
 // Helper function to get database user ID consistently
 function getDbUserId(req: any): string | null {
@@ -1865,10 +1866,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Tenant profile not found" });
       }
 
-      // Check if tenant profile is complete enough to share (alternative to requiring a separate RentCard)
-      const hasBasicInfo = tenantProfile.employmentInfo && tenantProfile.creditScore && tenantProfile.maxRent;
-      if (!hasBasicInfo) {
-        return res.status(400).json({ message: "Please complete your profile before sharing" });
+      const readiness = evaluateShareReadiness(tenantProfile);
+      if (!readiness.isReady) {
+        return res.status(400).json({
+          message: "Please complete your profile before sharing",
+          missingSections: readiness.issues,
+        });
       }
 
       const validatedData = insertShareTokenSchema.parse(req.body);

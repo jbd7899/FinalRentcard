@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -263,10 +263,29 @@ const RentCard = () => {
     setShareModalOpen(true);
   };
 
-  const handleEditSection = (section: string) => {
+  const handleEditSection = useCallback((section: string) => {
     setEditingSection(section);
     setEditMode(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isPublicView) {
+      return;
+    }
+
+    const hash = window.location.hash.replace('#', '');
+    if (!hash) {
+      return;
+    }
+
+    if (hash === 'employment') {
+      handleEditSection('employment');
+    } else if (hash === 'credit') {
+      handleEditSection('credit');
+    } else if (hash === 'rent-preferences') {
+      handleEditSection('preferences');
+    }
+  }, [isPublicView, handleEditSection]);
 
   const handleCancelEdit = () => {
     setEditingSection(null);
@@ -697,7 +716,7 @@ const RentCard = () => {
           </div>
 
           {/* Employment Information Section */}
-          <div className="p-8 border-t border-gray-200">
+          <div id="employment" className="p-8 border-t border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-lg flex items-center text-gray-800">
                 Employment Information
@@ -869,7 +888,7 @@ const RentCard = () => {
           </div>
 
           {/* Rental Preferences Section */}
-          <div className="p-8 border-t border-gray-200">
+          <div id="rent-preferences" className="p-8 border-t border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-lg flex items-center text-gray-800">
                 Rental Preferences
@@ -1167,7 +1186,7 @@ const RentCard = () => {
           </div>
 
           {/* Credit Information Section */}
-          <div className="p-8 bg-gray-50 border-t border-gray-200">
+          <div id="credit" className="p-8 bg-gray-50 border-t border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-lg flex items-center text-gray-800">
                 Credit Information
