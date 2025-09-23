@@ -114,6 +114,7 @@ const TenantDashboard = () => {
   const lastUpdated = tenantProfile?.updatedAt ? new Date(tenantProfile.updatedAt).toLocaleDateString() : null;
   const verifiedReferencesCount = 0; // Default to 0 verified references
   const tenantReferences = []; // Default to empty array of references
+  const tenantReferencesError = null; // Default to no error
 
   const shouldFetchInterests = Boolean(user);
   const {
