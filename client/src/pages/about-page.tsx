@@ -1,274 +1,629 @@
+import { useState } from 'react';
+import {
+  Building2,
+  User,
+  ArrowRight,
+  CheckCircle,
+  Users,
+  Shield,
+  Clock,
+  QrCode,
+  Zap,
+  HelpCircle,
+  RefreshCw,
+  UserCheck,
+  Home,
+  Smartphone,
+  Eye,
+  Sparkles,
+  Layers,
+  Compass,
+  Handshake,
+  ListChecks
+} from 'lucide-react';
+import { Link } from 'wouter';
 import Navbar from '@/components/shared/navbar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Link } from 'wouter';
-import { Building2, User, ClipboardList, Inbox, Share2, ArrowRight, CheckCircle } from 'lucide-react';
 
-const HOW_IT_WORKS = {
+type UserRole = 'tenant' | 'landlord';
+
+type RoleNarrative = {
+  headline: string;
+  subheadline: string;
+  description: string;
+  promise: string;
+  highlightStats: { label: string; detail: string }[];
+  quote: { text: string; attribution: string };
+};
+
+const ROLE_NARRATIVE: Record<UserRole, RoleNarrative> = {
+  tenant: {
+    headline: 'Built for renters who want momentum',
+    subheadline:
+      'Stop rewriting your story for every landlord. Create one polished RentCard and put it everywhere you apply.',
+    description:
+      'MyRentCard standardizes the information private landlords need to say yes—income, references, documents, and your story. You look prepared before the first conversation.',
+    promise:
+      'Landlords get the full picture instantly so you spend time touring places that are actually a fit.',
+    highlightStats: [
+      { label: 'Reusable profile', detail: 'Share one link or QR code anywhere' },
+      { label: 'Direct relationships', detail: 'Start conversations with decision makers' },
+      { label: 'Faster feedback', detail: 'Know where you stand in hours, not days' }
+    ],
+    quote: {
+      text: 'I stopped filling out one-off forms. Now every landlord already knows I match their requirements before we talk.',
+      attribution: 'Celine, relocating renter'
+    }
+  },
+  landlord: {
+    headline: 'Created for independent landlords and small portfolios',
+    subheadline:
+      'Capture interest from serious renters without sacrificing the personal touch that sets you apart. MyRentCard handles the paperwork so you can focus on the conversation.',
+    description:
+      'Offer renters a professional experience with zero setup. Generate a QR code for your property, collect standardized prequalification, and review applications from anywhere.',
+    promise:
+      'You keep control of your process while renters deliver complete information right away.',
+    highlightStats: [
+      { label: 'Free QR codes', detail: 'Launch a property toolkit in under a minute' },
+      { label: 'Complete context', detail: 'Income, documents, and references upfront' },
+      { label: 'Personal follow-through', detail: 'Spend your time with the right renters' }
+    ],
+    quote: {
+      text: 'I post a QR code on my yard sign and only tour with qualified prospects. It feels personal and professional at once.',
+      attribution: 'Marco, owner of three rentals'
+    }
+  }
+};
+
+const howItWorksSteps: Record<
+  UserRole,
+  { icon: any; title: string; description: string; detail: string }[]
+> = {
   tenant: [
     {
-      title: 'Build once',
-      detail: 'Add employment, income, and reference details to your RentCard. You control what landlords can view.',
+      icon: UserCheck,
+      title: 'Create Your RentCard Once',
+      description:
+        'Complete your standardized rental profile with income, references, and documents.',
+      detail: 'Use the same professional prequalification format with every landlord.'
     },
     {
-      title: 'Share anywhere',
-      detail: 'Send a link, text a QR code, or embed it in listings. Landlords review before reaching out.',
+      icon: Eye,
+      title: 'Express Interest Instantly Anywhere',
+      description:
+        'Share your RentCard link or QR code. Landlords can review your qualifications before scheduling showings.',
+      detail: "Know if it's a match from the beginning - saves time for everyone."
     },
     {
-      title: 'Track responses',
-      detail: 'See when landlords open your RentCard and follow up directly with the right information.',
-    },
+      icon: Zap,
+      title: 'Get Faster Responses',
+      description:
+        "Get faster responses from landlords who can see you're qualified upfront.",
+      detail:
+        "Skip unnecessary showings when your profile doesn't match their requirements."
+    }
   ],
   landlord: [
     {
-      title: 'Publish interest pages',
-      detail: 'Create simple pages or QR codes for each property so prospects can share their RentCard or basic details.',
+      icon: QrCode,
+      title: 'Post Your Property (Free)',
+      description:
+        'Generate a free QR code for your property. No account required - just create and go.',
+      detail: 'Put the QR code on signs, listings, or share the link directly.'
     },
     {
-      title: 'Review consistently',
-      detail: 'Every RentCard arrives in the same structure, reducing time spent asking for missing documents.',
+      icon: Users,
+      title: 'Get Pre-Qualified Tenants',
+      description:
+        'Receive complete prequalification from tenants before first contact.',
+      detail:
+        'Review income, references, and documents upfront - no back-and-forth collection.'
     },
     {
-      title: 'Respond with clarity',
-      detail: 'Let tenants know quickly if they qualify or what else you need before scheduling a showing.',
-    },
-  ],
+      icon: Clock,
+      title: 'Make Decisions Faster',
+      description:
+        'Review complete prequalification in minutes, not days. Your personal touch with professional efficiency.',
+      detail: 'Make decisions quickly while maintaining personal service.'
+    }
+  ]
 };
 
-const PRIMARY_PROOF_POINTS = [
-  'Standardized prequalification tenants control and landlords trust.',
-  'Reusable RentCards and property interest pages keep details aligned.',
-  'Faster yes/no answers while preserving direct conversations.',
+const benefits: Record<
+  UserRole,
+  { icon: any; title: string; description: string; reality: string }[]
+> = {
+  tenant: [
+    {
+      icon: RefreshCw,
+      title: 'Standardized Prequalification Format',
+      description:
+        'Create your rental profile once, use it with any landlord. Consistent professional presentation every time.',
+      reality:
+        'Saves hours of time re-entering the same employment and income information.'
+    },
+    {
+      icon: Clock,
+      title: 'Faster Response Times',
+      description:
+        'Landlords can review your qualifications immediately and respond with specific feedback.',
+      reality:
+        'Know upfront if you meet requirements instead of waiting for form responses.'
+    },
+    {
+      icon: Shield,
+      title: 'Direct Communication',
+      description:
+        'Connect directly with property owners who can make immediate decisions.',
+      reality: 'Streamlined communication leads to faster rental decisions.'
+    }
+  ],
+  landlord: [
+    {
+      icon: Smartphone,
+      title: 'No Complex Setup Required',
+      description:
+        'Generate QR codes and collect prequalification without creating accounts or learning new systems.',
+      reality:
+        'Focus on finding qualified tenants with minimal administrative overhead.'
+    },
+    {
+      icon: UserCheck,
+      title: 'Complete Prequalification Upfront',
+      description:
+        'Tenants using MyRentCard provide income verification, references, and documents before contact.',
+      reality:
+        'Eliminate time spent collecting basic qualification information.'
+    },
+    {
+      icon: Zap,
+      title: 'Professional Tools',
+      description:
+        'Access efficient screening tools while maintaining your personal approach to tenant relationships.',
+      reality:
+        'Meet tenant expectations for professional service without sacrificing personal connections.'
+    }
+  ]
+};
+
+const missionPillars = [
+  {
+    icon: Sparkles,
+    title: 'Look prepared everywhere',
+    description:
+      'MyRentCard was born from the frustration of sending the same documents to landlord after landlord. We built one polished format that shows you mean business.'
+  },
+  {
+    icon: Layers,
+    title: 'Bridge every platform',
+    description:
+      'Whether the conversation starts on Craigslist, a yard sign, or text message, RentCards and QR codes connect the dots so no opportunity is missed.'
+  },
+  {
+    icon: Handshake,
+    title: 'Respect both sides',
+    description:
+      'Private landlords want efficiency without feeling corporate. Renters want transparency without endless portals. MyRentCard honors the relationship.'
+  }
 ];
 
-const ROLE_DETAILS = [
+const visionPoints = [
   {
-    id: 'tenant',
-    title: 'Renters',
-    icon: User,
-    summary:
-      'Create one RentCard that summarizes income, references, and history. Share it with private landlords in seconds.',
-    highlights: [
-      'Standardized prequalification format you control',
-      'Share links or QR codes with any landlord—even off-platform',
-      'Know sooner if a property is a match before scheduling showings',
-    ],
-    steps: HOW_IT_WORKS.tenant,
-    cta: {
-      label: 'Create my RentCard',
-      href: '/auth?mode=register&type=tenant',
-    },
-    resources: [{ label: 'Preview a RentCard', href: '/samples/rentcard' }],
+    icon: Compass,
+    title: 'A standard for private rentals',
+    description:
+      "We're building the shared language that helps independent landlords and renters move faster together."
   },
   {
-    id: 'landlord',
-    title: 'Private landlords',
-    icon: Building2,
-    summary:
-      'Collect consistent tenant information before you spend time coordinating tours. Keep the personal conversations that matter.',
-    highlights: [
-      'One link to gather interest for each property',
-      'Prequalification details arrive in a standard format',
-      'Decide faster while preserving your personal touch',
-    ],
-    steps: HOW_IT_WORKS.landlord,
-    cta: {
-      label: 'Set up landlord tools',
-      href: '/auth?mode=register&type=landlord',
-    },
-    resources: [{ label: 'Preview landlord tools', href: '/samples/screening-page' }],
+    icon: Home,
+    title: 'Access that travels with you',
+    description:
+      'Your RentCard is portable. Wherever you search, you bring a complete story and verifications along.'
   },
-] as const;
+  {
+    icon: ListChecks,
+    title: 'Confidence in every introduction',
+    description:
+      'When information is consistent and verified, everyone can make decisions with clarity.'
+  }
+];
 
-const STANDARDIZED_REASONS = [
+const faqs = [
   {
-    icon: ClipboardList,
-    title: 'No duplicate paperwork',
-    description:
-      'Tenants reuse the same RentCard while landlords receive the full story in a familiar structure.',
-  },
-  {
-    icon: Inbox,
-    title: 'Faster feedback',
-    description:
-      'Owners can decide quickly because standardized details answer questions before a tour is scheduled.',
-  },
-  {
-    icon: Share2,
-    title: 'Keep the personal touch',
-    description:
-      'Automation handles the prep, so conversations stay focused on whether a property is the right fit.',
-  },
-] as const;
-
-const FAQ_ITEMS = [
-  {
-    question: 'Is this a rental application?',
+    question: 'Do I have to create an account to use this?',
     answer:
-      'No. MyRentCard standardizes prequalification so both sides can decide if it is worth moving forward. Tenants keep ownership of their information and share it selectively.',
+      'Tenants create RentCards to express interest with landlords. Landlords can generate QR codes and collect prequalification without any account — you only sign up if you want to save your properties and view prequalification later.'
   },
   {
-    question: 'Do landlords need an account?',
+    question: "What if the landlord isn't on your platform?",
     answer:
-      'Landlords can generate QR codes or interest pages for free. Creating an account lets them save properties, track interest, and revisit shared RentCards.',
+      "That's totally fine! Your RentCard works anywhere. Share the link directly, send it in emails, or even print the QR code. The landlord just clicks and sees your complete rental information."
   },
   {
-    question: 'Can I use this with landlords who are not on MyRentCard?',
+    question: 'How is this different from other rental platforms?',
     answer:
-      'Yes. Your RentCard link works anywhere. Share it by email, text, or QR code and the landlord can review it securely in their browser.',
+      'Most platforms lock you into their ecosystem. We focus on private landlords and direct relationships. Your RentCard works everywhere, whether the landlord uses our tools or not.'
   },
+  {
+    question: 'Is my information secure?',
+    answer:
+      'Yes. Your information is encrypted and you control exactly what gets shared with each landlord. You can revoke access anytime, and landlords only see what you choose to share.'
+  },
+  {
+    question: 'What does it cost?',
+    answer:
+      'RentCards are free for tenants. Landlords can use basic QR code generation for free, and pay only if they want advanced tools for managing multiple properties.'
+  },
+  {
+    question: "Can I use this if I'm just looking at places online?",
+    answer:
+      "Absolutely! Whether you're responding to Craigslist ads, Facebook Marketplace, or driving around looking at signs — your RentCard makes you look professional and prepared from the first contact."
+  }
 ];
 
 export default function AboutPage() {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
-      <Navbar />
+  const [selectedRole, setSelectedRole] = useState<UserRole>('tenant');
+  const isLandlordSelected = selectedRole === 'landlord';
+  const narrative = ROLE_NARRATIVE[selectedRole];
 
-      <main className="mx-auto max-w-5xl space-y-16 px-4 py-16">
-        <section className="space-y-6 text-center">
-          <Badge variant="outline" className="mx-auto w-fit">
-            About MyRentCard
-          </Badge>
-          <h1 className="text-3xl font-bold text-slate-900 sm:text-5xl">
-            Standardized prequalification for private rentals
-          </h1>
-          <p className="mx-auto max-w-3xl text-slate-600">
-            MyRentCard helps tenants and private landlords decide faster with shared expectations. Tenants reuse one professional
-            RentCard. Landlords receive consistent information before they invest time in tours or paperwork.
-          </p>
-          <ul className="mx-auto max-w-3xl space-y-3 text-left text-sm text-slate-700 sm:text-base">
-            {PRIMARY_PROOF_POINTS.map((point) => (
-              <li key={point} className="flex items-start gap-3">
-                <CheckCircle className="mt-1 h-5 w-5 text-emerald-600" />
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="flex justify-center">
-            <Button asChild className="gap-2 bg-blue-600 text-white hover:bg-blue-700">
-              <Link href="/auth?mode=register&type=tenant">
-                Get started with MyRentCard
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+  return (
+    <div className="min-h-screen bg-slate-950/5">
+      <div className="absolute inset-0 overflow-hidden" aria-hidden>
+        <div className="absolute -top-32 left-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl" />
+        <div className="absolute top-24 right-0 h-80 w-80 rounded-full bg-emerald-200/40 blur-3xl" />
+      </div>
+
+      <div className="relative z-10">
+        <Navbar />
+      </div>
+
+      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 space-y-20">
+        <section className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/80 shadow-2xl backdrop-blur">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-white/40 to-emerald-500/10" aria-hidden />
+          <div className="relative grid gap-10 p-8 sm:p-12 lg:grid-cols-[1.05fr_minmax(0,0.9fr)]">
+            <div>
+              <Badge variant="outline" className="mb-6 text-blue-600 border-blue-200 bg-white/60" data-testid="about-badge">
+                About MyRentCard
+              </Badge>
+
+              <h1 className="text-3xl sm:text-5xl font-bold text-slate-900" data-testid="about-hero-title">
+                Standardized Prequalification for Private Rentals
+              </h1>
+              <p className="mt-4 text-lg text-slate-600 leading-relaxed">{narrative.subheadline}</p>
+
+              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setSelectedRole('tenant')}
+                  className={`flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
+                    !isLandlordSelected
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                      : 'bg-white/70 text-slate-600 hover:bg-white'
+                  }`}
+                  data-testid="about-toggle-tenant"
+                >
+                  <User className="h-4 w-4" /> I'm Looking for a Place
+                </button>
+                <button
+                  onClick={() => setSelectedRole('landlord')}
+                  className={`flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
+                    isLandlordSelected
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                      : 'bg-white/70 text-slate-600 hover:bg-white'
+                  }`}
+                  data-testid="about-toggle-landlord"
+                >
+                  <Building2 className="h-4 w-4" /> I Own/Manage Properties
+                </button>
+              </div>
+
+              <div className="mt-10 space-y-5 text-slate-600">
+                <p className="text-lg leading-relaxed">{narrative.description}</p>
+                <p className="text-base font-medium text-slate-700">{narrative.promise}</p>
+              </div>
+
+              <div className="mt-10 grid gap-4 sm:grid-cols-3">
+                {narrative.highlightStats.map((stat, index) => (
+                  <div key={index} className="rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{stat.label}</p>
+                    <p className="mt-2 text-sm font-medium text-slate-700">{stat.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div
+                className={`absolute -top-12 right-6 h-32 w-32 rounded-full blur-3xl ${
+                  isLandlordSelected ? 'bg-emerald-200/60' : 'bg-blue-200/60'
+                }`}
+              />
+              <Card className="relative h-full border-none bg-white/90 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-slate-900">{narrative.headline}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center gap-3 rounded-xl bg-slate-900 text-white px-4 py-3 text-sm font-medium">
+                    <Sparkles className="h-5 w-5" />
+                    Designed for private rentals
+                  </div>
+                  <p className="text-sm text-slate-600 leading-relaxed">{narrative.description}</p>
+                  <div className="rounded-xl bg-slate-100/80 p-5">
+                    <p className="text-sm text-slate-500 italic">“{narrative.quote.text}”</p>
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      — {narrative.quote.attribution}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-          <p className="text-sm text-slate-500">
-            Private landlord?{' '}
-            <Link href="/auth?mode=register&type=landlord" className="font-medium text-emerald-600 hover:text-emerald-700">
-              Set up landlord tools
-            </Link>
-          </p>
         </section>
 
-        <section className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-center text-2xl font-semibold text-slate-900">
-            Learn more about the MyRentCard network
-          </h2>
-          <p className="mt-2 text-center text-sm text-slate-600">
-            Open a topic to explore how standardized prequalification supports each role.
-          </p>
-          <Accordion type="multiple" className="mt-6 space-y-2">
-            {ROLE_DETAILS.map((role) => (
-              <AccordionItem key={role.id} value={role.id} className="rounded-2xl border border-slate-100 px-2">
-                <AccordionTrigger className="text-left text-base font-semibold text-slate-900">
-                  <span className="flex items-center gap-3">
-                    <role.icon className="h-5 w-5 text-slate-500" />
-                    {role.title}
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-2 text-sm text-slate-600">
-                  <div className="space-y-4">
-                    <p>{role.summary}</p>
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-900">Highlights</h3>
-                        <ul className="mt-2 space-y-2">
-                          {role.highlights.map((highlight) => (
-                            <li key={highlight} className="flex items-start gap-2">
-                              <CheckCircle className="mt-0.5 h-4 w-4 text-emerald-600" />
-                              <span>{highlight}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-slate-900">How it works</h3>
-                        <ul className="mt-2 space-y-3">
-                          {role.steps.map((step) => (
-                            <li key={step.title} className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-                              <p className="font-medium text-slate-900">{step.title}</p>
-                              <p>{step.detail}</p>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-3 pt-2">
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="inline-flex items-center gap-2 border-slate-200 text-slate-800"
-                      >
-                        <Link href={role.cta.href}>
-                          {role.cta.label}
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      {role.resources.map((resource) => (
-                        <Link
-                          key={resource.href}
-                          href={resource.href}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
-                        >
-                          {resource.label}
-                          <ArrowRight className="h-3 w-3" />
-                        </Link>
-                      ))}
+        <section className="space-y-10">
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+              <Layers className="h-4 w-4" /> Why we built MyRentCard
+            </span>
+            <h2 className="mt-4 text-3xl font-bold text-slate-900">
+              A better starting point for every rental conversation
+            </h2>
+            <p className="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">
+              Private rentals thrive on trust and speed. We help both sides show up prepared so decisions happen faster without losing the personal connection.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
+            {missionPillars.map((pillar, index) => (
+              <div key={index} className="rounded-2xl border border-slate-100 bg-white/90 p-6 shadow-lg">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                  <pillar.icon className="h-6 w-6" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900">{pillar.title}</h3>
+                <p className="mt-3 text-sm text-slate-600 leading-relaxed">{pillar.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <Card className="overflow-hidden border-none bg-white/80 shadow-xl">
+            <CardHeader className={`text-center ${isLandlordSelected ? 'bg-emerald-50' : 'bg-blue-50'}`}>
+              <CardTitle className={`text-2xl ${isLandlordSelected ? 'text-emerald-800' : 'text-blue-800'}`}>
+                {isLandlordSelected ? 'Get Information Upfront' : 'Different Formats, Different Requirements'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6 text-slate-700">
+              {isLandlordSelected ? (
+                <>
+                  <p className="text-lg leading-relaxed">
+                    <strong>Get complete tenant information before scheduling showings.</strong> Generate a QR code for your property — no account required for basic use.
+                  </p>
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
+                    <h4 className="font-semibold text-emerald-800 mb-2">What you get:</h4>
+                    <ul className="space-y-2 text-emerald-700">
+                      <li>• Pre-qualified tenants with income verification ready to view</li>
+                      <li>• Complete prequalification before first contact</li>
+                      <li>• Professional tools for efficient tenant screening</li>
+                      <li>• Time saved on applicants who aren't a good fit</li>
+                    </ul>
+                  </div>
+                  <p>
+                    MyRentCard provides standardized prequalification tools that save time for both landlords and tenants. Focus on qualified applicants who are ready to move forward.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg leading-relaxed">
+                    Different landlords require different prequalification formats and information. Standardized prequalification lets you maintain one complete profile that works everywhere.
+                  </p>
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-6">
+                    <h4 className="font-semibold text-blue-800 mb-2">Common challenges:</h4>
+                    <ul className="space-y-2 text-blue-700">
+                      <li>• Each property has different prequalification requirements and formats</li>
+                      <li>• Re-entering the same employment and income information repeatedly</li>
+                      <li>• Private landlords expect professional prequalification but may lack standardized systems</li>
+                      <li>• Difficulty showing qualification before viewing properties</li>
+                    </ul>
+                  </div>
+                  <p>
+                    MyRentCard provides a standardized format that works with any landlord. Present professional prequalification consistently while saving time on repeated data entry.
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="space-y-10">
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white">
+              <Compass className="h-4 w-4" /> How it comes together
+            </span>
+            <h2 className="mt-4 text-3xl font-bold text-slate-900">From first impression to confident decision</h2>
+            <p className="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">
+              MyRentCard guides every conversation through three simple stages so nobody wastes time guessing what comes next.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {howItWorksSteps[selectedRole].map((step, index) => (
+              <Card
+                key={index}
+                className="relative overflow-hidden border border-slate-100 bg-white/90 shadow-lg"
+                data-testid={`how-it-works-step-${index}`}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div
+                    className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
+                      isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+                    }`}
+                  >
+                    <step.icon className="h-8 w-8" />
+                  </div>
+                  <Badge
+                    className={`mb-3 ${
+                      isLandlordSelected ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                  >
+                    Step {index + 1}
+                  </Badge>
+                  <CardTitle className="text-lg">{step.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center space-y-3">
+                  <p className="text-sm text-slate-600 leading-relaxed">{step.description}</p>
+                  <p className="text-xs text-slate-500 italic">{step.detail}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-12">
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+              <ListChecks className="h-4 w-4" /> Practical benefits
+            </span>
+            <h2 className="mt-4 className text-3xl font-bold text-slate-900">
+              How standardized prequalification saves everyone time
+            </h2>
+          </div>
+          <div className="grid gap-6">
+            {benefits[selectedRole].map((benefit, index) => (
+              <Card key={index} className="border border-slate-100 bg-white/90 shadow-lg" data-testid={`benefit-${index}`}>
+                <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                      isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+                    }`}
+                  >
+                    <benefit.icon className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <h3 className="text-xl font-semibold text-slate-900">{benefit.title}</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">{benefit.description}</p>
+                    <div className="rounded-lg border-l-4 border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs text-slate-500 italic">{benefit.reality}</p>
                     </div>
                   </div>
-                </AccordionContent>
-              </AccordionItem>
+                </CardContent>
+              </Card>
             ))}
-            <AccordionItem value="standardized" className="rounded-2xl border border-slate-100 px-2">
-              <AccordionTrigger className="text-left text-base font-semibold text-slate-900">
-                Why standardized prequalification matters
-              </AccordionTrigger>
-              <AccordionContent className="px-2 text-sm text-slate-600">
-                <div className="grid gap-4 md:grid-cols-3">
-                  {STANDARDIZED_REASONS.map((reason) => (
-                    <div
-                      key={reason.title}
-                      className="rounded-xl border border-slate-100 bg-slate-50/60 p-5 text-left"
-                    >
-                      <reason.icon className="mb-3 h-6 w-6 text-emerald-600" />
-                      <p className="font-medium text-slate-900">{reason.title}</p>
-                      <p className="mt-2 text-sm">{reason.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          </div>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-center text-2xl font-semibold text-slate-900">
-            Frequently asked questions
-          </h2>
-          <Accordion type="single" collapsible className="rounded-2xl border border-slate-100 bg-white">
-            {FAQ_ITEMS.map((faq, index) => (
-              <AccordionItem value={`faq-${index}`} key={faq.question} className="border-slate-100">
-                <AccordionTrigger className="px-6 text-left text-base font-medium text-slate-900">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4 text-sm text-slate-600">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
+        <section className="space-y-8">
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white">
+              <Shield className="h-4 w-4" /> Our north star
+            </span>
+            <h2 className="mt-4 text-3xl font-bold text-slate-900">The future of private rental introductions</h2>
+            <p className="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">
+              Every improvement we ship keeps renters in control of their story and equips landlords with context before they drive across town.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
+            {visionPoints.map((point, index) => (
+              <div key={index} className="rounded-2xl border border-slate-100 bg-white/90 p-6 shadow-lg">
+                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                  <point.icon className="h-6 w-6" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900">{point.title}</h3>
+                <p className="mt-3 text-sm text-slate-600 leading-relaxed">{point.description}</p>
+              </div>
             ))}
-          </Accordion>
+          </div>
         </section>
+
+        <section className="space-y-10">
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+              <HelpCircle className="h-4 w-4" /> Common questions
+            </span>
+            <h2 className="mt-4 text-3xl font-bold text-slate-900">The stuff people actually want to know</h2>
+            <p className="mt-3 text-lg text-slate-600">
+              Transparency builds trust. Here are the answers renters and landlords ask before they dive in.
+            </p>
+          </div>
+          <Card className="border border-slate-100 bg-white/90 shadow-xl">
+            <CardContent className="p-0">
+              <Accordion type="single" collapsible>
+                {faqs.map((faq, index) => (
+                  <AccordionItem key={index} value={`item-${index}`} data-testid={`faq-${index}`}>
+                    <AccordionTrigger className="px-4 sm:px-6 py-4 text-left">
+                      <div className="flex items-center gap-3">
+                        <HelpCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                        <span className="font-medium text-slate-800">{faq.question}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 sm:px-6 pb-4">
+                      <p className="text-slate-600 leading-relaxed ml-8">{faq.answer}</p>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="overflow-hidden rounded-3xl border border-slate-100 bg-slate-900 text-white shadow-2xl">
+          <div className="absolute h-72 w-72 -right-24 top-10 rounded-full bg-blue-500/40 blur-3xl" aria-hidden />
+          <div className="relative grid gap-10 p-10 sm:p-14 lg:grid-cols-[1.05fr_minmax(0,0.9fr)]">
+            <div>
+              <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+                Ready when you are
+              </span>
+              <h2 className="mt-4 text-3xl sm:text-4xl font-bold">Bring confidence to your next rental conversation</h2>
+              <p className="mt-4 text-lg text-slate-200">
+                Whether you're prequalifying for your dream place or prepping your next vacancy, MyRentCard makes the introduction feel effortless.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <Link
+                  href={isLandlordSelected ? '/samples/screening-page' : '/api/login'}
+                  onClick={() => {
+                    if (!isLandlordSelected) {
+                      localStorage.setItem('selectedRole', selectedRole);
+                    }
+                  }}
+                  className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 transition-all hover:bg-slate-100"
+                  data-testid="about-cta-primary"
+                >
+                  {isLandlordSelected ? 'Try Free Demo Tools' : 'Create My RentCard'}
+                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href={isLandlordSelected ? '/samples/screening-page' : '/samples/rentcard'}
+                  className="group inline-flex items-center justify-center gap-3 rounded-2xl border border-white/40 px-7 py-4 text-base font-semibold text-white transition-all hover:bg-white/10"
+                  data-testid="about-cta-secondary"
+                >
+                  {isLandlordSelected ? 'See Sample Tools' : 'See Sample RentCard'}
+                  <Eye className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </div>
+            <div className="space-y-5">
+              <div className="rounded-2xl bg-white/10 p-6">
+                <p className="text-sm font-semibold text-white/70">Why it works:</p>
+                <p className="mt-3 text-lg text-white">
+                  “Every introduction starts with context, so every next step is faster. It feels like a head start for both sides.”
+                </p>
+                <p className="mt-4 text-sm font-medium text-white/70">— Feedback from private landlords in the MyRentCard network</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-6">
+                <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-blue-200">
+                  <CheckCircle className="h-4 w-4" /> Standardized • Secure • Portable
+                </div>
+                <p className="mt-4 text-sm text-slate-100">
+                  Keep control of your information. Share it intentionally. And take it with you wherever your next opportunity appears.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer className="pb-12 text-center text-xs font-medium uppercase tracking-[0.4em] text-slate-400">
+          © 2025 MyRentCard — Making rental connections better
+        </footer>
       </main>
     </div>
   );
