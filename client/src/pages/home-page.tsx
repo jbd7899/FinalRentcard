@@ -5,21 +5,16 @@ import {
   ArrowRight,
   CheckCircle,
   Users,
-  Shield,
   TrendingUp,
-  Star,
-  Zap,
   Eye,
   QrCode,
   Sparkles,
-  ClipboardCheck,
-  MessageCircle
+  ClipboardCheck
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/shared/navbar';
 import { DERIVED_MESSAGING } from '@shared/value-propositions';
-import { NETWORK_VALUE_PROPS } from '@shared/network-messaging';
 
 type UserRole = 'tenant' | 'landlord';
 
@@ -47,125 +42,124 @@ type RoleContent = {
     title: string;
     description: string;
   }[];
-  networkEffects: string[];
 };
 
 const ROLE_CONTENT: Record<UserRole, RoleContent> = {
   tenant: {
     hero: DERIVED_MESSAGING.TENANT.HERO,
     secondary: DERIVED_MESSAGING.TENANT.SECONDARY,
-    description: 'Create once. Share anywhere—even off-platform.',
+    description:
+      'Build your RentCard once, keep it updated in minutes, and hand private landlords the information they ask for—no extra forms.',
     primaryCTA: DERIVED_MESSAGING.TENANT.CALL_TO_ACTION,
     secondaryCTA: 'View Sample RentCard',
     primaryLink: '/api/login',
     secondaryLink: '/samples/rentcard',
     heroBullets: [
       'Reusable RentCard link and QR code for any property',
-      'Know if it is a fit before booking showings',
-      'Looks professional to every private landlord'
+      'Know if you are a fit before booking a showing',
+      'Looks polished to every private landlord'
     ],
     spotlight: {
       title: 'What landlords see instantly',
       points: [
-        'Income & employment verification',
-        'Rental history & references',
-        'Supporting documents in one place'
+        'Income and employment summary',
+        'Rental history and references',
+        'Supporting documents you choose to share'
       ],
-      footer: 'Share once. Update anytime.'
+      footer: 'Update once, share everywhere.'
     },
     benefits: [
       {
         icon: Users,
-        title: 'Standardized Network Access',
-        description: 'Join the network to create your standardized RentCard once',
-        badge: 'One profile, many landlords'
+        title: 'One profile, endless shares',
+        description: 'Send the same RentCard link or QR code to every private landlord.',
+        badge: 'Share once'
       },
       {
-        icon: Shield,
-        title: 'Direct Landlord Communication',
-        description: 'Connect directly with private property owners',
-        badge: 'Personal relationships'
+        icon: ClipboardCheck,
+        title: 'Clear renter details',
+        description: 'Present income, employment, and rental history exactly how landlords expect.',
+        badge: 'Context first'
       },
       {
-        icon: Zap,
-        title: 'Faster Response Times',
-        description: 'Private landlords provide faster, more personal responses',
-        badge: 'Same-day responses'
+        icon: Sparkles,
+        title: 'Update in minutes',
+        description: 'Edit your RentCard anytime before you share it again.',
+        badge: 'Stay ready'
       }
     ],
     journey: [
       {
         title: 'Create your RentCard',
-        description: 'Complete a polished profile with documents that travels with you.'
+        description: 'Add your renter details and supporting documents once.'
       },
       {
-        title: 'Share anywhere',
+        title: 'Share it anywhere',
         description: 'Send a link, show a QR code, or drop it into any listing conversation.'
       },
       {
-        title: 'Hear back faster',
-        description: 'Landlords already know you’re qualified before the first call.'
+        title: 'Hear back with context',
+        description: 'Landlords review your prequalification details upfront.'
       }
-    ],
-    networkEffects: NETWORK_VALUE_PROPS.NETWORK_EFFECTS.TENANT
+    ]
   },
   landlord: {
-    hero: 'Get qualified tenants for your Private Rentals.',
-    secondary: 'Free QR codes • One-click interest.',
-    description: 'Professional efficiency with personal service.',
+    hero: 'Spend your time with pre-qualified tenants.',
+    secondary: 'Easily collect and organize tenant interest.',
+    description:
+      'Create a RentCard landlord profile for each property. Tenants submit interest with one click, and you keep every lead organized.',
     primaryCTA: DERIVED_MESSAGING.LANDLORD.CALL_TO_ACTION,
     secondaryCTA: 'View Screening Tools',
     primaryLink: '/api/login',
     secondaryLink: '/samples/screening-page',
     heroBullets: [
-      'Collect complete applications without chasing documents',
-      'Instant QR code flyers for every vacancy',
-      'Keep the personal touch with professional tools'
+      'Create a RentCard landlord profile for each property',
+      'Tenants submit interest with one click',
+      'Generate QR codes for every listing'
     ],
     spotlight: {
-      title: 'Your property toolkit',
+      title: 'What you capture instantly',
       points: [
-        'Free branded QR codes & links',
-        'Pre-qualified applicants delivered',
-        'Track interest from one dashboard'
+        'Property QR codes ready for signs and listings',
+        'One-click interest submissions from tenants',
+        'RentCard context and contact details in one place'
       ],
-      footer: 'Built for independent landlords.'
+      footer: 'Keep leads organized without extra tools.'
     },
     benefits: [
       {
         icon: QrCode,
-        title: 'Free QR Code Generation',
-        description: 'Generate QR codes for signs and marketing materials',
-        badge: 'Direct property links'
+        title: 'Easy QR code generation',
+        description: 'Print or share property QR codes in seconds.',
+        badge: 'Instant flyers'
       },
       {
         icon: Users,
-        title: 'Quality Tenant Pool',
-        description: 'Attract tenants who prefer private landlords',
-        badge: 'Better tenant fit'
+        title: 'Organized tenant interest',
+        description: 'See every interested renter with their RentCard context.',
+        badge: 'One dashboard'
       },
       {
-        icon: TrendingUp,
-        title: 'Competitive Tools',
-        description: 'Professional screening with personal service',
-        badge: 'Professional efficiency'
+        icon: ClipboardCheck,
+        title: 'Focus on strong matches',
+        description: 'Spend time on renters who share the details you need upfront.',
+        badge: 'Pre-qualified focus'
       }
     ],
     journey: [
       {
-        title: 'Publish instantly',
-        description: 'Spin up a QR code and digital flyer for every property—free.'
+        title: 'Create a property profile',
+        description: 'Add property details and share your RentCard link or QR code.'
       },
       {
-        title: 'Review full context',
-        description: 'See income, references, and documents before you reply.'
+        title: 'Collect one-click interest',
+        description: 'Tenants submit their details without chasing extra paperwork.'
       },
       {
-        title: 'Choose confidently',
-        description: 'Spend time with the right applicants and fill units faster.'
+        title: 'Follow up with the best fit',
+        description: 'Review organized context and connect with the matches you prefer.'
       }
-    ],
-    networkEffects: NETWORK_VALUE_PROPS.NETWORK_EFFECTS.LANDLORD
+    ]
   }
 };
 
@@ -208,11 +202,59 @@ export default function HomePage() {
               <div className="flex flex-wrap items-center gap-3 mb-6">
                 <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Prequalification network
+                  Private rental prequalification
                 </span>
                 <span className="text-xs font-medium uppercase tracking-[0.3em] text-slate-500">
-                  Share once • Use everywhere
+                  Create once • Share everywhere
                 </span>
+              </div>
+
+              <div className="mb-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Choose who you are
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2" role="tablist" aria-label="Choose tenant or landlord view">
+                  <button
+                    onClick={() => setSelectedRole('tenant')}
+                    className={`group relative flex flex-col gap-2 rounded-2xl border-2 p-5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+                      !isLandlordSelected
+                        ? 'border-blue-600 bg-blue-50/70 shadow-lg shadow-blue-600/20'
+                        : 'border-transparent bg-white/70 hover:border-blue-200'
+                    }`}
+                    data-testid="toggle-tenant"
+                    role="tab"
+                    aria-selected={!isLandlordSelected}
+                    tabIndex={!isLandlordSelected ? 0 : -1}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                      <User className="h-4 w-4" /> Tenant
+                    </div>
+                    <p className="text-lg font-semibold text-slate-900">Create once, share easily.</p>
+                    <p className="text-sm text-slate-600">
+                      Keep a polished RentCard ready for the 68.7% of rentals owned by private landlords.
+                    </p>
+                  </button>
+                  <button
+                    onClick={() => setSelectedRole('landlord')}
+                    className={`group relative flex flex-col gap-2 rounded-2xl border-2 p-5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                      isLandlordSelected
+                        ? 'border-emerald-600 bg-emerald-50/70 shadow-lg shadow-emerald-600/20'
+                        : 'border-transparent bg-white/70 hover:border-emerald-200'
+                    }`}
+                    data-testid="toggle-landlord"
+                    role="tab"
+                    aria-selected={isLandlordSelected}
+                    tabIndex={isLandlordSelected ? 0 : -1}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+                      <Building2 className="h-4 w-4" /> Landlord
+                    </div>
+                    <p className="text-lg font-semibold text-slate-900">Spend your time with pre-qualified tenants.</p>
+                    <p className="text-sm text-slate-600">
+                      Collect organized interest and reuse QR codes across every property.
+                    </p>
+                  </button>
+                </div>
               </div>
 
               <div className="mb-8">
@@ -232,31 +274,6 @@ export default function HomePage() {
                   {content.secondary}
                 </p>
                 <p className="mt-6 text-lg text-slate-600 leading-relaxed">{content.description}</p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-10">
-                <button
-                  onClick={() => setSelectedRole('tenant')}
-                  className={`flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
-                    !isLandlordSelected
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                      : 'bg-white/70 text-slate-600 hover:bg-white'
-                  }`}
-                  data-testid="toggle-tenant"
-                >
-                  <User className="h-4 w-4" /> I'm Looking for a Place
-                </button>
-                <button
-                  onClick={() => setSelectedRole('landlord')}
-                  className={`flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
-                    isLandlordSelected
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                      : 'bg-white/70 text-slate-600 hover:bg-white'
-                  }`}
-                  data-testid="toggle-landlord"
-                >
-                  <Building2 className="h-4 w-4" /> I Own/Manage Properties
-                </button>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-5">
@@ -317,7 +334,7 @@ export default function HomePage() {
                     }`}
                   >
                     <ClipboardCheck className="h-4 w-4" />
-                    {isLandlordSelected ? 'Instant property toolkit' : 'Professional tenant preview'}
+                    {isLandlordSelected ? 'Property interest summary' : 'RentCard preview'}
                   </span>
                   <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Live preview</span>
                 </div>
@@ -331,7 +348,7 @@ export default function HomePage() {
                             isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
                           }`}
                         >
-                          <MessageCircle className="h-4 w-4" />
+                          <ClipboardCheck className="h-4 w-4" />
                         </div>
                         <span>{point}</span>
                       </li>
@@ -384,11 +401,11 @@ export default function HomePage() {
         <section className="mb-20 rounded-3xl border border-slate-100 bg-white/70 p-8 sm:p-12 shadow-xl">
           <div className="mb-10 text-center sm:text-left">
             <span className="inline-flex items-center rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-              Built for momentum
+              How it works
             </span>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">Your path through MyRentCard</h2>
+            <h2 className="mt-4 text-3xl sm:text-4xl font-bold text-slate-900">Your steps in minutes</h2>
             <p className="mt-3 text-lg text-slate-600 max-w-2xl">
-              Follow a clear journey designed to respect everyone’s time and get qualified renters and landlords working together faster.
+              Every step keeps the focus on sharing clear information quickly.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
@@ -408,48 +425,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mb-20">
-          <div className="rounded-3xl border border-slate-100 bg-gradient-to-br from-white via-white to-blue-50/80 p-8 sm:p-12 shadow-xl">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-                The Network Gets Stronger with Every Connection
-              </h2>
-            <p className="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">
-                Join a growing community of private landlords and quality tenants building faster, more personal rental relationships.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
-              {content.networkEffects.slice(0, 4).map((effect, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-white/80 p-6 shadow-sm"
-                  data-testid={`network-effect-${index}`}
-                >
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
-                    }`}
-                  >
-                    <Star className="h-5 w-5" />
-                  </div>
-                  <p className="text-sm sm:text-base font-medium text-slate-700">{effect}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-10 flex flex-wrap justify-center gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white">
-                <TrendingUp className="h-4 w-4" /> Growing Network
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white">
-                <Shield className="h-4 w-4" /> Verified Connections
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white">
-                <Zap className="h-4 w-4" /> Faster Response Times
-              </span>
-            </div>
-          </div>
-        </section>
-
         <section className="mb-20 text-center">
           <p className="text-sm font-semibold uppercase tracking-[0.4em] text-slate-400">Standardizing private rentals</p>
           <div className="mt-4 flex flex-wrap justify-center gap-5 text-sm text-slate-600" data-testid="social-proof-list">
@@ -457,7 +432,7 @@ export default function HomePage() {
               <CheckCircle className="h-4 w-4 text-emerald-500" /> No prequalification fees
             </span>
             <span className="inline-flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-emerald-500" /> Personal relationships preserved
+              <CheckCircle className="h-4 w-4 text-emerald-500" /> Keep your personal approach
             </span>
             <span className="inline-flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-emerald-500" /> Responses in hours, not days
@@ -472,9 +447,9 @@ export default function HomePage() {
               <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
                 Ready when you are
               </span>
-              <h2 className="mt-4 text-3xl sm:text-4xl font-bold">Be the first conversation that feels prepared</h2>
+              <h2 className="mt-4 text-3xl sm:text-4xl font-bold">Look prepared before the first conversation</h2>
               <p className="mt-4 text-lg text-slate-200">
-                Whether you’re walking properties this weekend or prepping a new vacancy, MyRentCard makes you look buttoned-up before the first call.
+                Whether you’re searching for a rental or filling one, MyRentCard keeps the focus on real details instead of extra forms.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:gap-5">
                 <button
@@ -502,7 +477,7 @@ export default function HomePage() {
                   <Sparkles className="h-5 w-5" /> Private rental advantage
                 </div>
                 <p className="mt-4 text-base text-slate-100">
-                  Build trust instantly. Share a professional profile or property toolkit that keeps conversations moving forward.
+                  Share a clean RentCard or property profile that keeps conversations moving forward.
                 </p>
               </div>
               <div className="rounded-2xl bg-white/10 p-6">
