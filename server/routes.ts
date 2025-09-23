@@ -9,8 +9,7 @@ import {
   // Import referral schemas
   insertReferralSchema, insertReferralRewardSchema,
   // Import RentCard request and prospect list schemas
-  insertRentCardRequestSchema, insertProspectListSchema,
-  insertRentCardSchema
+  insertRentCardRequestSchema, insertProspectListSchema
 } from "@shared/schema";
 import { 
   properties, interests, propertyImages, propertyAmenities, Interest, shareTokens, ShareToken, PropertyQRCode,
@@ -822,23 +821,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
-
+      
       console.log(`Creating RentCard for user ID: ${userId}`);
-
+      
       // Validate the request body against the RentCard schema
-      const rentCardPayload = insertRentCardSchema.parse(req.body);
-
-      const { rentCard, tenantProfile } = await storage.createRentCardWithProfileSync(
-        String(userId),
-        rentCardPayload
-      );
-
+      const validatedData = {
+        ...req.body,
+        userId: userId
+      };
+      
+      // Create the RentCard
+      const rentCard = await storage.createRentCard(validatedData);
+      
       console.log(`Successfully created RentCard for user ID: ${userId}`);
-      console.log(
-        `Updated tenant profile from RentCard creation for user ID: ${userId}`,
-        tenantProfile
-      );
-
       res.status(201).json(rentCard);
     } catch (error) {
       handleRouteError(error, res, '/api/tenant/rentcard POST endpoint');
