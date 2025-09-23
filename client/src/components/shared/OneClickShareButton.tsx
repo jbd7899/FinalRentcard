@@ -17,6 +17,7 @@ import { createRentcardShortlinkRequest, generateShortlinkUrl, determineChannel 
 import type { ChannelType, ShortlinkResponse } from '@shared/url-helpers';
 import { EnhancedShareDialog } from '../sharing/EnhancedShareDialog';
 import { useLocation } from 'wouter';
+import { SHARE_PREREQUISITES_MESSAGE } from '@/lib/rentcardShareReadiness';
 
 interface OneClickShareButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
@@ -78,7 +79,7 @@ export function OneClickShareButton({
         if (response.status === 400) {
           const errorData = (await response.json().catch(() => ({}))) as { message?: string };
           const message = typeof errorData?.message === 'string' ? errorData.message : undefined;
-          throw new ShareTokenPrerequisiteError(message ?? 'Please complete your profile before sharing.');
+          throw new ShareTokenPrerequisiteError(message ?? SHARE_PREREQUISITES_MESSAGE);
         }
         throw new Error('Failed to create share token');
       }
@@ -250,7 +251,7 @@ export function OneClickShareButton({
           description: (
             <div className="flex flex-col gap-2">
               <p className="text-sm text-gray-600">
-                {error.message || 'Add your employment info, credit score, and rent budget to unlock sharing.'}
+                {error.message || SHARE_PREREQUISITES_MESSAGE}
               </p>
               <Button
                 variant="link"

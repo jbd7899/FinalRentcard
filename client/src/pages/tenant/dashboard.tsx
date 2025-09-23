@@ -36,79 +36,11 @@ import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
 import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
 import { apiRequest } from '@/lib/queryClient';
 import type { TenantProfile } from '@shared/schema';
-
-type EmploymentInfoDetails = {
-  employer?: string | null;
-  position?: string | null;
-  monthlyIncome?: number | string | null;
-  startDate?: string | null;
-};
-
-const parseEmploymentInfo = (
-  employmentInfo: TenantProfile['employmentInfo'] | string | null | undefined
-): EmploymentInfoDetails | null => {
-  if (!employmentInfo) {
-    return null;
-  }
-
-  if (typeof employmentInfo === 'string') {
-    try {
-      return JSON.parse(employmentInfo) as EmploymentInfoDetails;
-    } catch (error) {
-      console.warn('Unable to parse employment info for share readiness check:', error);
-      return null;
-    }
-  }
-
-  return employmentInfo as EmploymentInfoDetails;
-};
-
-const toNumberValue = (value: unknown): number => {
-  if (typeof value === 'number') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : NaN;
-  }
-
-  return NaN;
-};
-
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0;
-
-const canShareRentCardProfile = (profile?: TenantProfile | null): boolean => {
-  if (!profile) {
-    return false;
-  }
-
-  const employmentDetails = parseEmploymentInfo(profile.employmentInfo);
-  if (!employmentDetails) {
-    return false;
-  }
-
-  const monthlyIncomeValue = toNumberValue(employmentDetails.monthlyIncome);
-  const hasEmploymentDetails =
-    isNonEmptyString(employmentDetails.employer) &&
-    isNonEmptyString(employmentDetails.position) &&
-    isNonEmptyString(employmentDetails.startDate) &&
-    Number.isFinite(monthlyIncomeValue) &&
-    monthlyIncomeValue > 0;
-
-  if (!hasEmploymentDetails) {
-    return false;
-  }
-
-  const creditScoreValue = toNumberValue(profile.creditScore);
-  const maxRentValue = toNumberValue(profile.maxRent);
-
-  const hasCreditScore = Number.isFinite(creditScoreValue) && creditScoreValue >= 300;
-  const hasMaxRent = Number.isFinite(maxRentValue) && maxRentValue > 0;
-
-  return hasCreditScore && hasMaxRent;
-};
+import {
+  canShareRentCardProfile,
+  isShareReadinessMissing,
+  SHARE_PREREQUISITES_MESSAGE,
+} from '@/lib/rentcardShareReadiness';
 
 const generateRoute = {
   application: (id: string) => `/tenant/applications/${id}`
@@ -141,7 +73,7 @@ const TenantDashboard = () => {
   });
 
   const canShareRentCard = canShareRentCardProfile(tenantProfile);
-  const shareRequirementsMissing = Boolean(tenantProfile) && !canShareRentCard;
+  const shareRequirementsMissing = isShareReadinessMissing(tenantProfile);
 
   // Demo data
   const rentCardStatus = {
@@ -223,9 +155,7 @@ const TenantDashboard = () => {
                 </Button>
 
                 {shareRequirementsMissing && (
-                  <p className="text-xs text-gray-500">
-                    Add your employment info, credit score, and rent budget to unlock sharing.
-                  </p>
+                  <p className="text-xs text-gray-500">{SHARE_PREREQUISITES_MESSAGE}</p>
                 )}
               </div>
             )}
@@ -247,7 +177,7 @@ const TenantDashboard = () => {
                 </h3>
                 <p className="text-sm text-blue-700">
                   {shareRequirementsMissing
-                    ? 'Complete your employment details, credit score, and rent budget to unlock sharing.'
+                    ? SHARE_PREREQUISITES_MESSAGE
                     : 'Add references and details to get faster landlord responses'}
                 </p>
               </div>
@@ -293,7 +223,7 @@ const TenantDashboard = () => {
               >
                 {canShareRentCard
                   ? 'Use "Share My RentCard" button above ↗'
-                  : 'Add employment details, credit score, and rent budget to enable sharing.'}
+                  : SHARE_PREREQUISITES_MESSAGE}
               </p>
             </CardContent>
           </Card>
@@ -426,19 +356,31 @@ const TenantDashboard = () => {
             </div>
             
             <div className="mt-4 sm:mt-6 flex gap-2">
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                 onClick={() => setLocation(ROUTES.TENANT.REFERENCES)}
               >
                 Manage References
               </Button>
-              <OneClickShareButton 
-                variant="outline" 
-                size="sm"
-                className="text-xs sm:text-sm h-8 sm:h-9 px-3"
-                showText={false}
-              />
+              {canShareRentCard ? (
+                <OneClickShareButton
+                  variant="outline"
+                  size="sm"
+                  className="text-xs sm:text-sm h-8 sm:h-9 px-3"
+                  showText={false}
+                />
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs sm:text-sm h-8 sm:h-9 px-3 text-amber-600 border-amber-200 hover:bg-amber-50"
+                  onClick={() => setLocation('/create-rentcard')}
+                  data-testid="button-complete-rentcard-inline"
+                >
+                  Finish Setup
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
