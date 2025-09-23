@@ -63,7 +63,7 @@ const ROLE_NARRATIVE: Record<UserRole, RoleNarrative> = {
     subheadline:
       'Capture interest from serious renters without sacrificing the personal touch that sets you apart. MyRentCard handles the paperwork so you can focus on the conversation.',
     description:
-      'Offer renters a professional experience with zero setup. Generate a QR code for your property, collect standardized prequalification, and review applications from anywhere.',
+      'Offer renters a professional experience with zero setup. Generate a QR code for your property, collect standardized prequalification, and review tenant interest from anywhere.',
     promise:
       'You keep control of your process while renters deliver complete information right away.',
     highlightStats: [

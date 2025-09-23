@@ -299,7 +299,7 @@ export default function HomePage() {
             {/* Clear Explanation */}
             <div className="max-w-3xl mx-auto mb-10">
               <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-                A standardized rental application that works everywhere. Tenants create one profile and share it with any private landlord. Landlords get organized interest without chasing paperwork.
+A standardized pre-qualification profile that works everywhere. Tenants create one profile and share it with any private landlord. Landlords get organized interest without chasing paperwork.
               </p>
               <div className="grid gap-4 sm:grid-cols-3 text-center">
                 <div className="flex flex-col items-center">
@@ -381,7 +381,7 @@ export default function HomePage() {
                     Create your RentCard in 2 minutes
                   </h3>
                   <p className="text-sm text-blue-700 mb-4">
-                    Build your rental profile once and share it with any private landlord. No more filling out forms for every application.
+                    Build your rental profile once and share it with any private landlord. No more filling out forms for every pre-qualification.
                   </p>
                   <div className="flex items-center justify-center gap-1 text-xs text-blue-600">
                     <CheckCircle className="h-3 w-3" />
@@ -560,7 +560,7 @@ export default function HomePage() {
                       <strong>{isLandlordSelected ? 'For landlords:' : 'For tenants:'}</strong>{' '}
                       {isLandlordSelected 
                         ? 'Get complete tenant information before scheduling showings. No more back-and-forth collecting documents.'
-                        : 'Stop re-entering the same information for every application. Present yourself professionally from the first contact.'
+                        : 'Stop re-entering the same information for every pre-qualification. Present yourself professionally from the first contact.'
                       }
                     </p>
                     <p className="italic text-slate-500">

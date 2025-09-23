@@ -98,7 +98,7 @@ const LandlordQuickStart = () => {
     {
       id: 3,
       title: "Collect Interest",
-      description: "Enable tenant applications",
+      description: "Collect tenant interest",
       icon: <Users className="w-5 h-5" />,
       completed: !!interestCollectionData
     },

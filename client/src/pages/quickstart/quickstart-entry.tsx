@@ -51,7 +51,7 @@ export default function QuickStartEntry() {
                     I'm looking for a place to rent
                   </h2>
                   <p className="text-slate-600 mb-4">
-                    Create your RentCard once and share it with any private landlord. No more filling out forms for every application.
+                    Create your RentCard once and share it with any private landlord. No more filling out forms for every pre-qualification.
                   </p>
                   <div className="flex items-center text-sm font-medium text-blue-600">
                     Create your RentCard
