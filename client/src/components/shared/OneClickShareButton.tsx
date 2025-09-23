@@ -16,6 +16,8 @@ import type { ShareToken, InsertShareToken } from '@shared/schema';
 import { createRentcardShortlinkRequest, generateShortlinkUrl, determineChannel } from '@shared/url-helpers';
 import type { ChannelType, ShortlinkResponse } from '@shared/url-helpers';
 import { EnhancedShareDialog } from '../sharing/EnhancedShareDialog';
+import { useLocation } from 'wouter';
+import { SHARE_PREREQUISITES_MESSAGE } from '@/lib/rentcardShareReadiness';
 
 interface OneClickShareButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
@@ -24,6 +26,13 @@ interface OneClickShareButtonProps {
   showText?: boolean;
   mode?: 'simple' | 'enhanced' | 'dropdown';
   showEnhancedOption?: boolean;
+}
+
+class ShareTokenPrerequisiteError extends Error {
+  constructor(message?: string) {
+    super(message);
+    this.name = 'ShareTokenPrerequisiteError';
+  }
 }
 
 // Platform detection utilities
@@ -54,6 +63,7 @@ export function OneClickShareButton({
   const queryClient = useQueryClient();
   const platform = detectPlatform();
   const hasWebShare = supportsWebShare();
+  const [, setLocation] = useLocation();
 
   // Fetch existing share tokens to find active one
   const { data: shareTokens, isLoading: tokensLoading } = useQuery<ShareToken[]>({
@@ -66,6 +76,11 @@ export function OneClickShareButton({
     mutationFn: async (tokenData) => {
       const response = await apiRequest('POST', '/api/share-tokens', tokenData);
       if (!response.ok) {
+        if (response.status === 400) {
+          const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+          const message = typeof errorData?.message === 'string' ? errorData.message : undefined;
+          throw new ShareTokenPrerequisiteError(message ?? SHARE_PREREQUISITES_MESSAGE);
+        }
         throw new Error('Failed to create share token');
       }
       return response.json();
@@ -229,8 +244,33 @@ export function OneClickShareButton({
 
     } catch (error) {
       console.error('Share failed:', error);
+
+      if (error instanceof ShareTokenPrerequisiteError) {
+        addToast({
+          title: 'Complete your RentCard to share',
+          description: (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-gray-600">
+                {error.message || SHARE_PREREQUISITES_MESSAGE}
+              </p>
+              <Button
+                variant="link"
+                size="sm"
+                className="p-0 h-auto justify-start"
+                onClick={() => setLocation('/create-rentcard')}
+              >
+                Open RentCard builder
+              </Button>
+            </div>
+          ),
+          type: 'warning',
+          duration: 8000,
+        });
+        return;
+      }
+
       let errorMessage = 'Unable to share RentCard';
-      
+
       if (error instanceof Error) {
         if (error.message.includes('Invalid shortlink data')) {
           errorMessage = 'Failed to create share link - invalid data format';

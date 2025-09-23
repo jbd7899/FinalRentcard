@@ -37,55 +37,6 @@ import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
 import { apiRequest } from '@/lib/queryClient';
 import type { TenantProfile } from '@shared/schema';
 
-type TenantProfileWithMeta = TenantProfile & {
-  updatedAt?: string | null;
-  createdAt?: string | null;
-};
-
-interface TenantReference {
-  id: number;
-  isVerified: boolean;
-}
-
-const calculateProfileCompleteness = (profile?: TenantProfileWithMeta | null) => {
-  if (!profile) return 0;
-
-  let completedFields = 0;
-  const totalFields = 8;
-
-  if (profile.employmentInfo?.employer) completedFields++;
-  if (profile.employmentInfo?.position) completedFields++;
-  if (profile.employmentInfo?.monthlyIncome) completedFields++;
-  if (profile.employmentInfo?.startDate) completedFields++;
-  if (profile.creditScore) completedFields++;
-  if (profile.maxRent) completedFields++;
-  if (profile.moveInDate) completedFields++;
-  if (profile.rentalHistory?.previousAddresses?.length) completedFields++;
-
-  return Math.round((completedFields / totalFields) * 100);
-};
-
-const formatDate = (value?: string | Date | null) => {
-  if (!value) return null;
-
-  const date = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return null;
-
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-};
-
-const hasRentCardData = (profile?: TenantProfileWithMeta | null, verifiedReferences = 0) => {
-  if (!profile) return false;
-
-  const hasCreditScore = typeof profile.creditScore === 'number' && profile.creditScore > 0;
-  const completion = calculateProfileCompleteness(profile);
-
-  return hasCreditScore || verifiedReferences > 0 || completion > 0;
-};
 
 const generateRoute = {
   application: (id: string) => `/tenant/applications/${id}`
@@ -97,44 +48,11 @@ const TenantDashboard = () => {
   const [, setLocation] = useLocation();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
-  // Fetch the authenticated user's tenant profile
-  const { data: tenantProfile, isLoading: isTenantProfileLoading, error: tenantProfileError } = useQuery<TenantProfileWithMeta | null>({
-    queryKey: ['tenant-profile'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/tenant/profile');
-      return response.json() as Promise<TenantProfileWithMeta>;
+ 
     },
     enabled: !!user // Only fetch if user is authenticated
   });
 
-  const { data: tenantReferences = [], isLoading: isReferencesLoading, error: tenantReferencesError } = useQuery<TenantReference[]>({
-    queryKey: ['tenant-references', tenantProfile?.id],
-    queryFn: async ({ queryKey }) => {
-      const [, profileId] = queryKey;
-      const id = typeof profileId === 'number' ? profileId : Number(profileId);
-      if (!id) return [];
-
-      const response = await apiRequest('GET', `/api/tenant/references/${id}`);
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return [];
-        }
-
-        const message = await response.text();
-        throw new Error(message || 'Failed to load references');
-      }
-
-      return response.json() as Promise<TenantReference[]>;
-    },
-    enabled: !!tenantProfile?.id
-  });
-
-  const verifiedReferencesCount = tenantReferences.filter((reference) => reference.isVerified).length;
-  const profileCompletion = calculateProfileCompleteness(tenantProfile);
-  const rentCardHasData = hasRentCardData(tenantProfile, verifiedReferencesCount);
-  const lastUpdated = formatDate(tenantProfile?.updatedAt ?? tenantProfile?.moveInDate ?? tenantProfile?.createdAt ?? null);
-  const isRentCardLoading = isTenantProfileLoading || (tenantProfile?.id ? isReferencesLoading : false);
 
   const applications = [
     {
@@ -187,24 +105,30 @@ const TenantDashboard = () => {
           
           {/* Simplified Header - Primary CTA only */}
           <div className="flex gap-2">
-            {tenantProfile ? (
-              <OneClickShareButton 
-                variant="default" 
+            {canShareRentCard ? (
+              <OneClickShareButton
+                variant="default"
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white"
                 showText={true}
                 data-testid="button-share-rentcard-header"
               />
             ) : (
-              <Button
-                variant="default"
-                size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => setLocation("/create-rentcard")}
-                data-testid="button-create-rentcard-header"
-              >
-                Create RentCard
-              </Button>
+              <div className="flex flex-col items-start gap-1">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className={`${tenantProfile ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-600 hover:bg-green-700'} text-white`}
+                  onClick={() => setLocation('/create-rentcard')}
+                  data-testid={tenantProfile ? 'button-complete-rentcard-share' : 'button-create-rentcard-header'}
+                >
+                  {tenantProfile ? 'Finish RentCard to Share' : 'Create RentCard'}
+                </Button>
+
+                {shareRequirementsMissing && (
+                  <p className="text-xs text-gray-500">{SHARE_PREREQUISITES_MESSAGE}</p>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -220,22 +144,24 @@ const TenantDashboard = () => {
               </div>
               <div>
                 <h3 className="text-sm font-medium text-blue-900">
-                  Want to optimize your RentCard?
+                  {shareRequirementsMissing ? 'Finish setting up your RentCard' : 'Want to optimize your RentCard?'}
                 </h3>
                 <p className="text-sm text-blue-700">
-                  Add references and details to get faster landlord responses
+                  {shareRequirementsMissing
+                    ? SHARE_PREREQUISITES_MESSAGE
+                    : 'Add references and details to get faster landlord responses'}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                onClick={() => setLocation(tenantProfile ? ROUTES.TENANT.RENTCARD : "/create-rentcard")}
+                onClick={() => setLocation(shareRequirementsMissing ? '/create-rentcard' : ROUTES.TENANT.RENTCARD)}
                 className="text-blue-600 border-blue-300 hover:bg-blue-100"
                 data-testid="button-optimize-rentcard"
               >
-                {tenantProfile ? "Optimize" : "Create RentCard"}
+                {shareRequirementsMissing ? 'Finish Setup' : 'Optimize'}
               </Button>
               <Button 
                 variant="ghost" 
@@ -258,8 +184,18 @@ const TenantDashboard = () => {
             <CardContent className="p-6 text-center">
               <Share2 className="h-10 w-10 text-blue-500 mb-3 mx-auto" />
               <h3 className="font-semibold text-lg mb-2">Share RentCard</h3>
-              <p className="text-sm text-gray-600 mb-4">One-click sharing available in header</p>
-              <p className="text-xs text-blue-600 font-medium">Use "Share My RentCard" button above ↗</p>
+              <p className="text-sm text-gray-600 mb-4">
+                {canShareRentCard
+                  ? 'One-click sharing available in header'
+                  : 'Complete your RentCard to unlock one-click sharing'}
+              </p>
+              <p
+                className={`text-xs font-medium ${canShareRentCard ? 'text-blue-600' : 'text-amber-600'}`}
+              >
+                {canShareRentCard
+                  ? 'Use "Share My RentCard" button above ↗'
+                  : SHARE_PREREQUISITES_MESSAGE}
+              </p>
             </CardContent>
           </Card>
           
@@ -456,8 +392,7 @@ const TenantDashboard = () => {
                     showText={false}
                   />
                 </div>
-              </>
-            )}
+
           </CardContent>
         </Card>
         
