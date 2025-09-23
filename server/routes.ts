@@ -31,8 +31,7 @@ import {
 import { eq } from "drizzle-orm";
 import { documentUpload, propertyImageUpload, deleteCloudinaryFile, getPublicIdFromUrl } from "./cloudinary";
 import { db } from "./db";
-import { sendReferenceVerificationEmail, verifyToken } from "./email";
-import { emailService, EmailType } from "./services/emailService";
+import { emailService, EmailType, verifyToken } from "./services/emailService";
 
 // Helper function to get database user ID consistently
 function getDbUserId(req: any): string | null {
@@ -2471,7 +2470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantName = user.email;
       
       // Send the verification email
-      const { success, info, error } = await sendReferenceVerificationEmail(
+      const { success, info, error } = await emailService.sendReferenceVerificationEmail(
         reference,
         tenantName,
         baseUrl
