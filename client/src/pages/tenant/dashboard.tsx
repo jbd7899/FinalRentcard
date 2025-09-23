@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import { ROUTES, CONFIG, MESSAGES, APPLICATION_STATUS, type ApplicationStatus, APPLICATION_LABELS } from "@/constants";
+import { ROUTES, API_ENDPOINTS, APPLICATION_STATUS, type ApplicationStatus, APPLICATION_LABELS } from "@/constants";
 import { NETWORK_VALUE_PROPS, PRIVATE_LANDLORD_STATS, SOCIAL_PROOF_STATS } from '@shared/network-messaging';
 import { Link, useLocation } from "wouter";
 import TenantLayout from '@/components/layouts/TenantLayout';
@@ -35,7 +35,14 @@ import OneClickShareButton from '@/components/shared/OneClickShareButton';
 import TenantAnalyticsDashboard from '@/components/tenant/AnalyticsDashboard';
 import OnboardingChecklist from '@/components/tenant/OnboardingChecklist';
 import { apiRequest } from '@/lib/queryClient';
+import {
+  SHARE_PREREQUISITES_MESSAGE,
+  canShareRentCardProfile,
+  isShareReadinessMissing,
+  type EmploymentInfoDetails,
+} from '@/lib/rentcardShareReadiness';
 import type { TenantProfile } from '@shared/schema';
+import type { TenantReference } from '@shared/schema-enhancements';
 
 
 const generateRoute = {
@@ -44,9 +51,179 @@ const generateRoute = {
 
 const TenantDashboard = () => {
   const { logout, user } = useAuthStore();
-  const { setLoading, loadingStates, addToast } = useUIStore();
+  const { setLoading, addToast } = useUIStore();
   const [, setLocation] = useLocation();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+
+  const {
+    data: tenantProfile,
+    isLoading: isTenantProfileLoading,
+    error: tenantProfileError,
+  } = useQuery<TenantProfile | null, Error>({
+    queryKey: ['/api/tenant/profile'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/tenant/profile');
+
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (!response.ok) {
+        const message = await response.text().catch(() => null);
+        throw new Error(message || 'Failed to fetch tenant profile');
+      }
+
+      return response.json() as Promise<TenantProfile>;
+    },
+    enabled: Boolean(user),
+    staleTime: 30_000,
+  });
+
+  const tenantId = tenantProfile?.id;
+
+  const {
+    data: tenantReferences = [],
+    isLoading: tenantReferencesLoading,
+    error: tenantReferencesError,
+  } = useQuery<TenantReference[], Error>({
+    queryKey: ['/api/tenant/references', tenantId],
+    queryFn: async () => {
+      const response = await apiRequest('GET', API_ENDPOINTS.TENANT_REFERENCES.LIST(tenantId!));
+
+      if (!response.ok) {
+        const message = await response.text().catch(() => null);
+        throw new Error(message || 'Failed to fetch tenant references');
+      }
+
+      return response.json() as Promise<TenantReference[]>;
+    },
+    enabled: Boolean(tenantId),
+    staleTime: 30_000,
+  });
+
+  const parsedEmploymentInfo = useMemo<EmploymentInfoDetails | null>(() => {
+    if (!tenantProfile?.employmentInfo) {
+      return null;
+    }
+
+    if (typeof tenantProfile.employmentInfo === 'string') {
+      try {
+        return JSON.parse(tenantProfile.employmentInfo) as EmploymentInfoDetails;
+      } catch (error) {
+        console.warn('Unable to parse employment info for dashboard:', error);
+        return null;
+      }
+    }
+
+    return tenantProfile.employmentInfo as EmploymentInfoDetails;
+  }, [tenantProfile]);
+
+  const parsedRentalHistory = useMemo<TenantProfile['rentalHistory'] | null>(() => {
+    if (!tenantProfile?.rentalHistory) {
+      return null;
+    }
+
+    if (typeof tenantProfile.rentalHistory === 'string') {
+      try {
+        return JSON.parse(tenantProfile.rentalHistory) as TenantProfile['rentalHistory'];
+      } catch (error) {
+        console.warn('Unable to parse rental history for dashboard:', error);
+        return null;
+      }
+    }
+
+    return tenantProfile.rentalHistory;
+  }, [tenantProfile]);
+
+  const profileCompletion = useMemo(() => {
+    if (!tenantProfile) {
+      return 0;
+    }
+
+    let completedFields = 0;
+    const totalFields = 8;
+
+    if (parsedEmploymentInfo?.employer) completedFields++;
+    if (parsedEmploymentInfo?.position) completedFields++;
+    if (parsedEmploymentInfo?.monthlyIncome) completedFields++;
+    if (parsedEmploymentInfo?.startDate) completedFields++;
+
+    if (typeof tenantProfile.creditScore === 'number' && tenantProfile.creditScore > 0) {
+      completedFields++;
+    }
+
+    if (typeof tenantProfile.maxRent === 'number' && tenantProfile.maxRent > 0) {
+      completedFields++;
+    }
+
+    if (tenantProfile.moveInDate) {
+      completedFields++;
+    }
+
+    const previousAddresses = parsedRentalHistory?.previousAddresses;
+    if (Array.isArray(previousAddresses) && previousAddresses.length > 0) {
+      completedFields++;
+    }
+
+    return Math.round((completedFields / totalFields) * 100);
+  }, [tenantProfile, parsedEmploymentInfo, parsedRentalHistory]);
+
+  const verifiedReferencesCount = useMemo(
+    () => tenantReferences.filter((reference) => reference.isVerified).length,
+    [tenantReferences]
+  );
+
+  const rentCardHasData = useMemo(() => {
+    if (!tenantProfile) {
+      return false;
+    }
+
+    const hasEmploymentInfo = Boolean(
+      parsedEmploymentInfo?.employer ||
+        parsedEmploymentInfo?.position ||
+        parsedEmploymentInfo?.monthlyIncome ||
+        parsedEmploymentInfo?.startDate
+    );
+
+    const hasOtherDetails = Boolean(
+      (typeof tenantProfile.creditScore === 'number' && tenantProfile.creditScore > 0) ||
+        (typeof tenantProfile.maxRent === 'number' && tenantProfile.maxRent > 0) ||
+        tenantProfile.moveInDate ||
+        (Array.isArray(parsedRentalHistory?.previousAddresses) &&
+          (parsedRentalHistory?.previousAddresses?.length ?? 0) > 0)
+    );
+
+    return hasEmploymentInfo || hasOtherDetails;
+  }, [tenantProfile, parsedEmploymentInfo, parsedRentalHistory]);
+
+  const lastUpdated = useMemo(() => {
+    if (!tenantProfile) {
+      return null;
+    }
+
+    const { updatedAt, createdAt } = tenantProfile as TenantProfile & {
+      createdAt?: string | Date | null;
+      updatedAt?: string | Date | null;
+    };
+
+    const timestamp = updatedAt ?? createdAt;
+
+    if (!timestamp) {
+      return null;
+    }
+
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date.toLocaleDateString();
+  }, [tenantProfile]);
+
+  const canShareRentCard = canShareRentCardProfile(tenantProfile ?? undefined);
+  const shareRequirementsMissing = isShareReadinessMissing(tenantProfile ?? undefined);
+  const isRentCardLoading = isTenantProfileLoading || tenantReferencesLoading;
 
 
   const applications = [
