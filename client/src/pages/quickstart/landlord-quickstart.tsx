@@ -1,723 +1,655 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { z } from 'zod';
+import { 
+  Building2,
+  ArrowRight, 
+  CheckCircle, 
+  Sparkles, 
+  Star, 
+  ShoppingBag,
+  QrCode,
+  Link as LinkIcon
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore } from '@/stores/uiStore';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Confetti } from "@/components/ui/confetti";
-import { MobileStickyActionBar } from "@/components/ui/mobile-sticky-action-bar";
-import { QRCodeSVG as QRCode } from 'qrcode.react';
-import { 
-  Building2, 
-  Share2, 
-  CheckCircle, 
-  ArrowRight, 
-  ArrowLeft,
-  Star,
-  QrCode,
-  Download,
-  Link as LinkIcon,
-  Users,
-  User
-} from 'lucide-react';
-import { useLocation } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useMutation } from '@tanstack/react-query';
-import { ROUTES } from '@/constants';
 
-// Step 1: Property Basics Schema
-const propertyBasicsSchema = z.object({
-  address: z.string().min(5, "Address is required"),
+// Complete form schema for all property data
+const propertySchema = z.object({
+  // Contact information
+  email: z.string().email("Please enter a valid email address"),
+  
+  // Property details
+  address: z.string().min(5, "Property address is required"),
   rent: z.number().min(100, "Rent must be at least $100"),
   bedrooms: z.number().min(0, "Bedrooms must be 0 or more"),
   bathrooms: z.number().min(0.5, "Bathrooms must be 0.5 or more"),
-  propertyType: z.string().min(1, "Property type is required")
-});
-
-// Step 2: Share Setup Schema
-const shareSetupSchema = z.object({
+  propertyType: z.string().min(1, "Property type is required"),
+  description: z.string().optional(),
+  availableFrom: z.string().optional(),
+  
+  // Share & promote settings
   enablePublicLink: z.boolean().default(true),
   enableQRCode: z.boolean().default(true),
-  customMessage: z.string().optional()
-});
-
-// Step 3: Interest Collection Schema
-const interestCollectionSchema = z.object({
+  customMessage: z.string().optional(),
+  
+  // Interest collection preferences
   enableGeneralScreening: z.boolean().default(true),
-  requireRentCard: z.boolean().default(false)
+  requireRentCard: z.boolean().default(false),
+  
+  // Account preferences
+  saveAccount: z.boolean().default(true),
+  agreeToTerms: z.boolean().refine(val => val, "You must agree to the terms of service")
 });
 
-type PropertyBasicsForm = z.infer<typeof propertyBasicsSchema>;
-type ShareSetupForm = z.infer<typeof shareSetupSchema>;
-type InterestCollectionForm = z.infer<typeof interestCollectionSchema>;
+type PropertyForm = z.infer<typeof propertySchema>;
 
-interface QuickStartStep {
-  id: number;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  completed: boolean;
-}
+// Property type options
+const PROPERTY_TYPES = [
+  { value: "apartment", label: "Apartment" },
+  { value: "house", label: "House" },
+  { value: "condo", label: "Condo/Townhome" },
+  { value: "studio", label: "Studio" },
+  { value: "room", label: "Room/Shared" },
+  { value: "other", label: "Other" }
+];
 
 const LandlordQuickStart = () => {
-  const { user } = useAuth();
+  const { user, isLoading: userLoading } = useAuth();
   const { addToast } = useUIStore();
   const [, setLocation] = useLocation();
-  const [currentStep, setCurrentStep] = useState(1);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [propertyData, setPropertyData] = useState<any>(null);
-  const [shareData, setShareData] = useState<any>(null);
+  const [isExpressSignupMode, setIsExpressSignupMode] = useState(false);
 
-  // Form data storage
-  const [propertyBasicsData, setPropertyBasicsData] = useState<PropertyBasicsForm | null>(null);
-  const [shareSetupData, setShareSetupData] = useState<ShareSetupForm | null>(null);
-  const [interestCollectionData, setInterestCollectionData] = useState<InterestCollectionForm | null>(null);
+  // Single form for all property data
+  const form = useForm<PropertyForm>({
+    resolver: zodResolver(propertySchema),
+    defaultValues: {
+      email: user?.email || '',
+      address: '',
+      rent: 1500,
+      bedrooms: 2,
+      bathrooms: 1,
+      propertyType: '',
+      description: '',
+      availableFrom: '',
+      enablePublicLink: true,
+      enableQRCode: true,
+      customMessage: '',
+      enableGeneralScreening: true,
+      requireRentCard: false,
+      saveAccount: !user, // Default to true if not logged in
+      agreeToTerms: false
+    }
+  });
 
-  const steps: QuickStartStep[] = [
-    {
-      id: 1,
-      title: "Property Details",
-      description: "Address, rent, and basic info",
-      icon: <Building2 className="w-5 h-5" />,
-      completed: !!propertyBasicsData
-    },
-    {
-      id: 2,
-      title: "Share & Promote",
-      description: "QR codes and sharing tools",
-      icon: <Share2 className="w-5 h-5" />,
-      completed: !!shareSetupData
-    },
-    {
-      id: 3,
-      title: "Collect Interest",
-      description: "Collect tenant interest",
-      icon: <Users className="w-5 h-5" />,
-      completed: !!interestCollectionData
-    },
-    ...(user ? [] : [{
-      id: 4,
-      title: "Create Account",
-      description: "Save your property",
-      icon: <User className="w-5 h-5" />,
-      completed: false
-    }])
-  ];
+  // Watch form values for live preview
+  const watchedValues = form.watch();
 
   // Create property mutation
   const createPropertyMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: PropertyForm) => {
       const response = await apiRequest('POST', '/api/landlord/property/quickstart', {
         body: JSON.stringify(data)
       });
       return response.json();
     },
     onSuccess: (data) => {
-      setPropertyData(data);
       queryClient.invalidateQueries({ queryKey: ['landlord-properties'] });
       addToast({
-        title: "🏠 Property Created!",
+        title: "🏠 Property Listed!",
         description: "Your property is ready to share with tenants",
         type: "success"
       });
-    }
-  });
-
-  // Generate share tools mutation
-  const generateShareToolsMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', '/api/landlord/property/share-tools', {
-        body: JSON.stringify(data)
-      });
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setShareData(data);
-      addToast({
-        title: "🔗 Share Tools Ready!",
-        description: "QR code and sharing links generated",
-        type: "success"
-      });
-    }
-  });
-
-  // Forms
-  const propertyBasicsForm = useForm<PropertyBasicsForm>({
-    resolver: zodResolver(propertyBasicsSchema),
-    defaultValues: propertyBasicsData || {
-      address: '',
-      rent: 1500,
-      bedrooms: 2,
-      bathrooms: 1,
-      propertyType: ''
-    }
-  });
-
-  const shareSetupForm = useForm<ShareSetupForm>({
-    resolver: zodResolver(shareSetupSchema),
-    defaultValues: shareSetupData || {
-      enablePublicLink: true,
-      enableQRCode: true,
-      customMessage: ''
-    }
-  });
-
-  const interestCollectionForm = useForm<InterestCollectionForm>({
-    resolver: zodResolver(interestCollectionSchema),
-    defaultValues: interestCollectionData || {
-      enableGeneralScreening: true,
-      requireRentCard: false
-    }
-  });
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    const draftData = {
-      propertyBasics: propertyBasicsData,
-      shareSetup: shareSetupData,
-      interestCollection: interestCollectionData,
-      currentStep,
-      timestamp: Date.now()
-    };
-    localStorage.setItem('landlordQuickStartDraft', JSON.stringify(draftData));
-  }, [propertyBasicsData, shareSetupData, interestCollectionData, currentStep]);
-
-  // Load draft on mount
-  useEffect(() => {
-    const draft = localStorage.getItem('landlordQuickStartDraft');
-    if (draft) {
-      try {
-        const parsed = JSON.parse(draft);
-        if (parsed.propertyBasics) setPropertyBasicsData(parsed.propertyBasics);
-        if (parsed.shareSetup) setShareSetupData(parsed.shareSetup);
-        if (parsed.interestCollection) setInterestCollectionData(parsed.interestCollection);
-        if (parsed.currentStep && parsed.currentStep > 1) setCurrentStep(parsed.currentStep);
-      } catch (e) {
-        console.error('Failed to load draft:', e);
-      }
-    }
-  }, []);
-
-  const handlePropertyBasicsSubmit = async (data: PropertyBasicsForm) => {
-    setPropertyBasicsData(data);
-    
-    // IMMEDIATE VALUE: Create local property and share tools instantly - no backend dependency!
-    const tempSlug = `property-${Date.now()}`;
-    const localProperty = {
-      id: 'preview',
-      slug: tempSlug,
-      address: data.address,
-      rent: data.rent,
-      bedrooms: data.bedrooms,
-      bathrooms: data.bathrooms,
-      propertyType: data.propertyType,
-      created: new Date().toISOString()
-    };
-    setPropertyData(localProperty);
-    
-    // Immediate share tools
-    const localShareUrl = `${window.location.origin}/property/${tempSlug}`;
-    setShareData({
-      shareUrl: localShareUrl,
-      qrGenerated: true
-    });
-    
-    setShowCelebration(true);
-    setTimeout(() => setShowCelebration(false), 3000);
-    setCurrentStep(2);
-    
-    // Background: Try to persist to backend (non-blocking)
-    createPropertyMutation.mutate({
-      ...data,
-      step: 'basics'
-    });
-  };
-
-  const handleShareSetupSubmit = async (data: ShareSetupForm) => {
-    setShareSetupData(data);
-    
-    // Share tools already generated in step 1 - just proceed
-    addToast({
-      title: "🔗 Sharing Ready!",
-      description: "Your property QR code and link are ready to share",
-      type: "success"
-    });
-    
-    setCurrentStep(3);
-    
-    // Background: Try to persist share settings (non-blocking)
-    if (user) {
-      generateShareToolsMutation.mutate({
-        propertyId: propertyData?.id,
-        ...data,
-        step: 'share'
-      });
-    }
-  };
-
-  const handleInterestCollectionSubmit = (data: InterestCollectionForm) => {
-    setInterestCollectionData(data);
-    
-    addToast({
-      title: "🎉 Property Created!",
-      description: user ? "Your property is saved and ready to attract tenants" : "Create an account to save and manage your property",
-      type: "success"
-    });
-    
-    // Show account creation prompt if not authenticated
-    if (!user) {
-      setCurrentStep(4); // New step for account creation
-    } else {
-      // Redirect to dashboard if already authenticated
+      setShowCelebration(true);
       setTimeout(() => {
         setLocation(ROUTES.LANDLORD.DASHBOARD + '?welcome=true');
       }, 2000);
     }
+  });
+
+  // Handle express signup
+  const handleExpressSignup = () => {
+    localStorage.setItem('selectedRole', 'landlord');
+    window.location.href = '/api/login';
   };
 
-  const progressPercentage = (currentStep / steps.length) * 100;
+  // Auto-populate fields when user logs in
+  useEffect(() => {
+    if (user && !isExpressSignupMode) {
+      form.setValue('email', user.email || '');
+      setIsExpressSignupMode(true);
+    }
+  }, [user, form, isExpressSignupMode]);
 
-  // Property URL available immediately after step 1
-  const propertyUrl = propertyData ? `${window.location.origin}/property/${propertyData.slug}` : '';
+  // Handle form submission
+  const onSubmit = async (data: PropertyForm) => {
+    console.log('Submitting property data:', data);
+    
+    if (!user && data.saveAccount) {
+      // Redirect to auth with form data stored
+      localStorage.setItem('quickstartData', JSON.stringify(data));
+      localStorage.setItem('selectedRole', 'landlord');
+      window.location.href = '/api/login';
+      return;
+    }
+    
+    createPropertyMutation.mutate(data);
+  };
+
+  // Generate mock property URL for preview
+  const getPropertyPreviewUrl = () => {
+    if (watchedValues.address) {
+      const slug = watchedValues.address.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return `${window.location.origin}/property/${slug}`;
+    }
+    return `${window.location.origin}/property/your-property`;
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 p-4">
-      {showCelebration && <Confetti />}
+    <div className="min-h-screen bg-slate-50">
+      {showCelebration && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <CheckCircle className="w-5 h-5" />
+            <span>Property listed successfully!</span>
+          </div>
+        </div>
+      )}
       
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-7xl mx-auto p-4 lg:p-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create Your Property Listing
+        <div className="text-center mb-8 lg:mb-12">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+            List your property
           </h1>
-          <p className="text-gray-600">
-            Get your property ready to attract tenants in under 3 minutes
+          <p className="text-slate-600">
+            Create your rental listing and start collecting tenant interest
           </p>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Step {currentStep} of {steps.length}
-            </span>
-            <span className="text-sm text-gray-500">
-              {Math.round(progressPercentage)}% complete
-            </span>
-          </div>
-          <Progress value={progressPercentage} className="h-2" />
-          
-          {/* Step indicators */}
-          <div className="flex justify-between mt-4">
-            {steps.map((step) => (
-              <div 
-                key={step.id} 
-                className={`flex flex-col items-center ${step.id <= currentStep ? 'text-emerald-600' : 'text-gray-400'}`}
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                  step.completed ? 'bg-green-500 border-green-500 text-white' :
-                  step.id === currentStep ? 'bg-emerald-600 border-emerald-600 text-white' :
-                  'border-gray-300'
-                }`}>
-                  {step.completed ? <CheckCircle className="w-5 h-5" /> : step.icon}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            {/* Left Column - Form */}
+            <div className="space-y-8">
+              {/* Express Signup Section */}
+              {!user && (
+                <div className="space-y-4">
+                  <div className="text-sm text-slate-600 text-center">Express signup</div>
+                  <Button
+                    type="button"
+                    onClick={handleExpressSignup}
+                    className="w-full h-14 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-3"
+                    data-testid="express-signup-button"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Express Sign Up
+                  </Button>
+                  <div className="relative">
+                    <Separator />
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-slate-50 px-3 text-sm text-slate-500">
+                      OR
+                    </div>
+                  </div>
                 </div>
-                <span className="text-xs mt-1 text-center max-w-20">
-                  {step.title}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+              )}
 
-        {/* Step Content */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {steps[currentStep - 1].icon}
-              {steps[currentStep - 1].title}
-            </CardTitle>
-            <p className="text-gray-600">{steps[currentStep - 1].description}</p>
-          </CardHeader>
-          <CardContent>
-            {/* Step 1: Property Basics */}
-            {currentStep === 1 && (
-              <Form {...propertyBasicsForm}>
-                <form onSubmit={propertyBasicsForm.handleSubmit(handlePropertyBasicsSubmit)} className="space-y-4">
+              {user && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-green-900">Signed in as {user.email}</p>
+                      <p className="text-sm text-green-700">Your property will be saved automatically</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Contact</h2>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="your.email@example.com" 
+                          {...field} 
+                          disabled={!!user}
+                          data-testid="input-email" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {!user && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Checkbox 
+                      id="newsletter" 
+                      checked={form.watch('saveAccount')}
+                      onCheckedChange={(checked) => form.setValue('saveAccount', !!checked)}
+                    />
+                    <label htmlFor="newsletter" className="text-slate-600">
+                      Save my information to create an account
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Property Details Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Property details</h2>
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Property address</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="123 Main Street, Austin, TX 78701" 
+                          {...field} 
+                          data-testid="input-address" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    control={propertyBasicsForm.control}
-                    name="address"
+                    control={form.control}
+                    name="rent"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Property Address</FormLabel>
+                        <FormLabel>Monthly rent ($)</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="123 Main St, Austin, TX 78701" 
-                            {...field} 
-                            data-testid="input-address"
+                            type="number" 
+                            placeholder="1500" 
+                            {...field}
+                            onChange={e => field.onChange(Number(e.target.value) || 0)}
+                            data-testid="input-rent"
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={propertyBasicsForm.control}
-                      name="rent"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Monthly Rent ($)</FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="propertyType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Property type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="1500" 
-                              {...field}
-                              onChange={e => field.onChange(Number(e.target.value) || 0)}
-                              data-testid="input-rent"
-                            />
+                            <SelectTrigger data-testid="select-property-type">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={propertyBasicsForm.control}
-                      name="propertyType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Property Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-property-type">
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="apartment">Apartment</SelectItem>
-                              <SelectItem value="house">House</SelectItem>
-                              <SelectItem value="condo">Condo</SelectItem>
-                              <SelectItem value="townhouse">Townhouse</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                          <SelectContent>
+                            {PROPERTY_TYPES.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="bedrooms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bedrooms</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min="0"
+                            placeholder="2" 
+                            {...field}
+                            onChange={e => field.onChange(Number(e.target.value) || 0)}
+                            data-testid="input-bedrooms"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="bathrooms"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bathrooms</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.5"
+                            min="0.5"
+                            placeholder="1" 
+                            {...field}
+                            onChange={e => field.onChange(Number(e.target.value) || 0.5)}
+                            data-testid="input-bathrooms"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={propertyBasicsForm.control}
-                      name="bedrooms"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bedrooms</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="2" 
-                              {...field}
-                              onChange={e => field.onChange(Number(e.target.value) || 0)}
-                              data-testid="input-bedrooms"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={propertyBasicsForm.control}
-                      name="bathrooms"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bathrooms</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              step="0.5"
-                              placeholder="1" 
-                              {...field}
-                              onChange={e => field.onChange(Number(e.target.value) || 0)}
-                              data-testid="input-bathrooms"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="bg-emerald-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 text-emerald-700 mb-2">
-                      <Star className="w-5 h-5" />
-                      <span className="font-medium">What happens next?</span>
-                    </div>
-                    <p className="text-emerald-600 text-sm">
-                      Your property will get an instant shareable link and QR code for marketing!
-                    </p>
-                  </div>
-                </form>
-              </Form>
-            )}
-
-            {/* Step 2: Share Setup */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                {/* Property Created Success */}
-                {propertyData && (
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 text-green-700 mb-2">
-                      <CheckCircle className="w-5 h-5" />
-                      <span className="font-medium">Property Created!</span>
-                    </div>
-                    <p className="text-green-600 text-sm mb-3">
-                      Your property is live and ready to share with tenants.
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">
-                        {propertyBasicsData?.address}
-                      </Badge>
-                      <Badge variant="outline">
-                        ${propertyBasicsData?.rent}/month
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-
-                {/* QR Code Display */}
-                {propertyUrl && (
-                  <div className="bg-white p-6 rounded-lg border text-center">
-                    <h3 className="font-semibold mb-4">Your Property QR Code</h3>
-                    <div className="flex justify-center mb-4">
-                      <QRCode 
-                        value={propertyUrl} 
-                        size={150}
-                        level="H"
-                        data-testid="qr-code"
-                      />
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Scan to view property details and submit interest
-                    </p>
-                    <div className="flex gap-2 justify-center">
-                      <Button variant="outline" size="sm" data-testid="button-download-qr">
-                        <Download className="w-4 h-4 mr-2" />
-                        Download QR
-                      </Button>
-                      <Button variant="outline" size="sm" data-testid="button-copy-link">
-                        <LinkIcon className="w-4 h-4 mr-2" />
-                        Copy Link
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                <Form {...shareSetupForm}>
-                  <form onSubmit={shareSetupForm.handleSubmit(handleShareSetupSubmit)} className="space-y-4">
-                    <FormField
-                      control={shareSetupForm.control}
-                      name="customMessage"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Custom Message for Tenants (Optional)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Great location, pet-friendly, available immediately!"
-                              {...field}
-                              data-testid="input-custom-message"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </form>
-                </Form>
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description (optional)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe your property's best features, amenities, and neighborhood highlights..."
+                          rows={3}
+                          {...field} 
+                          data-testid="textarea-description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            )}
 
-            {/* Step 3: Interest Collection */}
-            {currentStep === 3 && (
-              <Form {...interestCollectionForm}>
-                <form onSubmit={interestCollectionForm.handleSubmit(handleInterestCollectionSubmit)} className="space-y-4">
-                  <div className="text-center mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Almost Done! 🎉
-                    </h3>
-                    <p className="text-gray-600">
-                      Set up how tenants can show interest in your property.
-                    </p>
-                  </div>
+              {/* Share & Promote Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Share & promote</h2>
+                <p className="text-sm text-slate-600">
+                  Generate tools to share your property with potential tenants
+                </p>
+                
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="enablePublicLink"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-enable-public-link"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-normal">
+                            Create public listing link
+                          </FormLabel>
+                          <p className="text-xs text-slate-500">
+                            Generate a shareable URL for your property
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="enableQRCode"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-enable-qr-code"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-normal">
+                            Generate QR code
+                          </FormLabel>
+                          <p className="text-xs text-slate-500">
+                            Create QR code for signs and marketing materials
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-                  <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-3">Your property is ready!</h4>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <p>✅ Property details complete</p>
-                      <p>✅ QR code generated</p>
-                      <p>✅ Shareable link created</p>
-                      <p>✅ Ready to collect tenant interest</p>
+              {/* Interest Collection Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Interest collection</h2>
+                <p className="text-sm text-slate-600">
+                  Set preferences for how tenants can express interest
+                </p>
+                
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="enableGeneralScreening"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-enable-general-screening"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-normal">
+                            Enable general screening
+                          </FormLabel>
+                          <p className="text-xs text-slate-500">
+                            Allow tenants to submit basic qualification information
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="requireRentCard"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-require-rentcard"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-normal">
+                            Require RentCard for applications
+                          </FormLabel>
+                          <p className="text-xs text-slate-500">
+                            Only accept applications from tenants with completed RentCards
+                          </p>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="agreeToTerms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-agree-terms"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm">
+                          I agree to the{' '}
+                          <a href="/terms" className="text-blue-600 hover:underline">
+                            Terms of Service
+                          </a>{' '}
+                          and{' '}
+                          <a href="/privacy" className="text-blue-600 hover:underline">
+                            Privacy Policy
+                          </a>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={createPropertyMutation.isPending}
+                className="w-full h-14 text-base font-semibold bg-blue-600 hover:bg-blue-700"
+                data-testid="button-create-property"
+              >
+                {createPropertyMutation.isPending ? (
+                  "Creating property..."
+                ) : user ? (
+                  <>
+                    List my property
+                    <ShoppingBag className="w-5 h-5 ml-2" />
+                  </>
+                ) : (
+                  <>
+                    Create account & list property
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Right Column - Live Preview */}
+            <div className="lg:sticky lg:top-8 lg:self-start">
+              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-200 p-4">
+                  <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-500" />
+                    Property Preview
+                  </h3>
+                  <p className="text-sm text-slate-600 mt-1">
+                    This is how tenants will see your listing
+                  </p>
+                </div>
+                <div className="p-6">
+                  {/* Property Preview Card */}
+                  <div className="space-y-4">
+                    {/* Property Image Placeholder */}
+                    <div className="aspect-video bg-gradient-to-br from-blue-100 to-slate-100 rounded-lg flex items-center justify-center">
+                      <Building2 className="w-12 h-12 text-slate-400" />
                     </div>
                     
-                    <div className="flex gap-3 mt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => window.open(propertyUrl, '_blank')}
-                        data-testid="button-preview-property"
-                      >
-                        <Building2 className="w-4 h-4 mr-2" />
-                        Preview Property
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setLocation(ROUTES.LANDLORD.DASHBOARD)}
-                        data-testid="button-view-dashboard"
-                      >
-                        <Users className="w-4 h-4 mr-2" />
-                        View Dashboard
-                      </Button>
+                    {/* Property Details */}
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <h4 className="font-semibold text-slate-900">
+                          {watchedValues.address || "Your Property Address"}
+                        </h4>
+                        <p className="text-2xl font-bold text-green-600">
+                          ${watchedValues.rent?.toLocaleString() || "1,500"}/month
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-slate-600">
+                        <span>{watchedValues.bedrooms || 2} bed</span>
+                        <span>•</span>
+                        <span>{watchedValues.bathrooms || 1} bath</span>
+                        <span>•</span>
+                        <span className="capitalize">
+                          {PROPERTY_TYPES.find(t => t.value === watchedValues.propertyType)?.label || "Property Type"}
+                        </span>
+                      </div>
+                      
+                      {watchedValues.description && (
+                        <p className="text-sm text-slate-600 line-clamp-2">
+                          {watchedValues.description}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Share Tools Preview */}
+                    {(watchedValues.enablePublicLink || watchedValues.enableQRCode) && (
+                      <div className="border-t pt-4 space-y-3">
+                        <h5 className="font-medium text-slate-900">Share tools</h5>
+                        
+                        {watchedValues.enablePublicLink && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <LinkIcon className="w-4 h-4 text-blue-600" />
+                            <span className="text-slate-600">Public listing link</span>
+                          </div>
+                        )}
+                        
+                        {watchedValues.enableQRCode && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <QrCode className="w-4 h-4 text-blue-600" />
+                            <span className="text-slate-600">QR code for marketing</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Interest Collection Preview */}
+                    <div className="border-t pt-4 space-y-2">
+                      <h5 className="font-medium text-slate-900">Interest collection</h5>
+                      <div className="space-y-1 text-sm text-slate-600">
+                        {watchedValues.enableGeneralScreening && (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-3 h-3 text-green-600" />
+                            <span>General screening enabled</span>
+                          </div>
+                        )}
+                        {watchedValues.requireRentCard && (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-3 h-3 text-blue-600" />
+                            <span>RentCard required</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </form>
-              </Form>
-            )}
-
-            {/* Step 4: Account Creation (for anonymous users) */}
-            {currentStep === 4 && !user && (
-              <div className="space-y-4">
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Save Your Property! 🎉
-                  </h3>
-                  <p className="text-gray-600">
-                    Create a free account to save your property and start attracting tenants.
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-4">Your property is ready!</h4>
-                  <div className="space-y-2 text-sm text-gray-600 mb-6">
-                    <p>✅ Property: {propertyBasicsData?.address}</p>
-                    <p>✅ Rent: ${propertyBasicsData?.rent}/month</p>
-                    <p>✅ QR Code: Generated and ready to share</p>
-                    <p>✅ Public Link: Available for marketing</p>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => setLocation('/auth?action=register')}
-                      className="flex-1"
-                      data-testid="button-create-account"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Create Free Account
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setLocation('/auth?action=login')}
-                      data-testid="button-sign-in"
-                    >
-                      Sign In
-                    </Button>
-                  </div>
-                  
-                  <p className="text-xs text-gray-500 mt-3 text-center">
-                    No credit card required • Create account in 30 seconds
-                  </p>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Mobile Sticky Action Bar */}
-        <MobileStickyActionBar className="md:hidden">
-          <div className="flex gap-3 w-full">
-            {currentStep > 1 && (
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setCurrentStep(currentStep - 1)}
-                className="flex-1"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
-            <Button
-              size="lg"
-              onClick={() => {
-                if (currentStep === 1) propertyBasicsForm.handleSubmit(handlePropertyBasicsSubmit)();
-                else if (currentStep === 2) shareSetupForm.handleSubmit(handleShareSetupSubmit)();
-                else interestCollectionForm.handleSubmit(handleInterestCollectionSubmit)();
-              }}
-              disabled={createPropertyMutation.isPending || generateShareToolsMutation.isPending}
-              className="flex-1"
-              data-testid="button-continue"
-            >
-              {(createPropertyMutation.isPending || generateShareToolsMutation.isPending) ? (
-                "Saving..."
-              ) : currentStep === 3 ? (
-                <>
-                  Complete Setup
-                  <CheckCircle className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                <>
-                  Continue
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </div>
-        </MobileStickyActionBar>
-
-        {/* Desktop Action Buttons */}
-        <div className="hidden md:flex justify-between">
-          {currentStep > 1 && (
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep(currentStep - 1)}
-              data-testid="button-back-desktop"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          )}
-          <Button
-            onClick={() => {
-              if (currentStep === 1) propertyBasicsForm.handleSubmit(handlePropertyBasicsSubmit)();
-              else if (currentStep === 2) shareSetupForm.handleSubmit(handleShareSetupSubmit)();
-              else interestCollectionForm.handleSubmit(handleInterestCollectionSubmit)();
-            }}
-            disabled={createPropertyMutation.isPending || generateShareToolsMutation.isPending}
-            className="ml-auto"
-            data-testid="button-continue-desktop"
-          >
-            {(createPropertyMutation.isPending || generateShareToolsMutation.isPending) ? (
-              "Saving..."
-            ) : currentStep === 3 ? (
-              <>
-                Complete Setup
-                <CheckCircle className="w-4 h-4 ml-2" />
-              </>
-            ) : (
-              <>
-                Continue
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
-        </div>
+            </div>
+          </form>
+        </Form>
       </div>
     </div>
   );

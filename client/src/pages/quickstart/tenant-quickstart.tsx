@@ -193,7 +193,7 @@ const TenantQuickStart = () => {
                     data-testid="express-signup-button"
                   >
                     <Sparkles className="w-5 h-5" />
-                    Continue with Replit
+                    Express Sign Up
                   </Button>
                   <div className="relative">
                     <Separator />
@@ -245,7 +245,7 @@ const TenantQuickStart = () => {
                       onCheckedChange={(checked) => form.setValue('saveAccount', !!checked)}
                     />
                     <label htmlFor="newsletter" className="text-slate-600">
-                      Save my information for a faster checkout
+                      Save my information to create an account
                     </label>
                   </div>
                 )}
