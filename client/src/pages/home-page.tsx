@@ -299,7 +299,7 @@ export default function HomePage() {
             {/* Clear Explanation */}
             <div className="max-w-3xl mx-auto mb-10">
               <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-A standardized pre-qualification profile that works everywhere. Tenants create one profile and share it with any private landlord. Landlords get organized interest without chasing paperwork.
+A standardized pre-qualification profile that saves time for everyone. Tenants create one profile and share it with any private landlord. landlords get organized property interest in one place.
               </p>
               <div className="grid gap-4 sm:grid-cols-3 text-center">
                 <div className="flex flex-col items-center">
@@ -307,21 +307,21 @@ A standardized pre-qualification profile that works everywhere. Tenants create o
                     <UserCheck className="h-6 w-6 text-blue-600" />
                   </div>
                   <p className="text-sm font-medium text-slate-700">One profile</p>
-                  <p className="text-xs text-slate-500">Create once, share everywhere</p>
+                  <p className="text-xs text-slate-500">Create once, share with anyone (even if they don't have an account)</p>
                 </div>
                 <div className="flex flex-col items-center">
                   <div className="bg-emerald-100 p-3 rounded-xl mb-2">
                     <QrCode className="h-6 w-6 text-emerald-600" />
                   </div>
-                  <p className="text-sm font-medium text-slate-700">Easy sharing</p>
+                  <p className="text-sm font-medium text-slate-700">One-Click Sharing</p>
                   <p className="text-xs text-slate-500">Links, QR codes, any platform</p>
                 </div>
                 <div className="flex flex-col items-center">
                   <div className="bg-slate-100 p-3 rounded-xl mb-2">
                     <Handshake className="h-6 w-6 text-slate-600" />
                   </div>
-                  <p className="text-sm font-medium text-slate-700">Private focus</p>
-                  <p className="text-xs text-slate-500">Built for individual landlords</p>
+                  <p className="text-sm font-medium text-slate-700">Set Expectations</p>
+                  <p className="text-xs text-slate-500">Know there is a potential match before investing time in a call/showing</p>
                 </div>
               </div>
             </div>
@@ -671,13 +671,13 @@ A standardized pre-qualification profile that works everywhere. Tenants create o
             <p className="text-sm font-semibold uppercase tracking-wide text-slate-400 mb-4">Standardizing private rentals</p>
             <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-600" data-testid="social-proof-list">
               <span className="inline-flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500" /> No prequalification fees
+                <CheckCircle className="h-4 w-4 text-emerald-500" /> Works without requiring tenant accounts
               </span>
               <span className="inline-flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500" /> Keep your personal approach
+                <CheckCircle className="h-4 w-4 text-emerald-500" /> Saves time on unqualified leads
               </span>
               <span className="inline-flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500" /> Responses in hours, not days
+                <CheckCircle className="h-4 w-4 text-emerald-500" /> One organized place for all interest
               </span>
             </div>
           </div>
