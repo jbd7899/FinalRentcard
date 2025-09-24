@@ -615,10 +615,27 @@ const TenantQuickStart = () => {
                 </div>
                 <div className="p-6">
                   <LiveRentCardPreview 
-                    essentialsData={watchedValues}
-                    employmentData={watchedValues}
-                    documentsData={watchedValues}
-                    currentStep={1}
+                    essentialsData={{
+                      firstName: watchedValues.firstName,
+                      lastName: watchedValues.lastName,
+                      email: watchedValues.email,
+                      phone: watchedValues.phone,
+                      city: watchedValues.city,
+                      state: watchedValues.state,
+                      maxRent: watchedValues.maxRent
+                    }}
+                    employmentData={{
+                      employmentStatus: watchedValues.employmentStatus,
+                      employer: watchedValues.employer,
+                      jobTitle: watchedValues.jobTitle,
+                      monthlyIncome: watchedValues.monthlyIncome,
+                      employmentDuration: watchedValues.employmentDuration
+                    }}
+                    documentsData={{
+                      hasDocuments: false,
+                      documentTypes: []
+                    }}
+                    currentStep={3}
                   />
                 </div>
               </div>
