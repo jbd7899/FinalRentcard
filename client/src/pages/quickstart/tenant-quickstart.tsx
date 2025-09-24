@@ -172,6 +172,11 @@ const TenantQuickStart = () => {
     }
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: referencesForm.control,
+    name: "references"
+  });
+
   // Auto-save to localStorage (only after initial load)
   useEffect(() => {
     if (!hasLoadedFromLocalStorage) return; // Don't save until we've loaded first
@@ -559,41 +564,129 @@ const TenantQuickStart = () => {
               </Form>
             )}
 
-            {/* Step 3: Documents */}
+            {/* Step 3: References */}
             {currentStep === 3 && (
               <Form {...referencesForm}>
-                <form onSubmit={referencesForm.handleSubmit(handleReferencesSubmit)} className="space-y-4">
+                <form onSubmit={referencesForm.handleSubmit(handleReferencesSubmit)} className="space-y-6">
                   <div className="text-center mb-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Almost Done! 🎉
+                      Add Your References
                     </h3>
                     <p className="text-gray-600">
-                      Documents and references can be added later. Your RentCard is already shareable!
+                      Add professional or personal references to strengthen your RentCard (optional)
                     </p>
                   </div>
 
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-3">Ready to share your RentCard?</h4>
+                  {/* References List */}
+                  <div className="space-y-4">
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="border border-gray-200 rounded-lg p-4 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-medium text-gray-900">Reference {index + 1}</h4>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => remove(index)}
+                            data-testid={`button-remove-reference-${index}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={referencesForm.control}
+                            name={`references.${index}.name`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="John Smith" {...field} data-testid={`input-reference-name-${index}`} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={referencesForm.control}
+                            name={`references.${index}.relationship`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Relationship</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger data-testid={`select-reference-relationship-${index}`}>
+                                      <SelectValue placeholder="Select relationship" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="employer">Employer/Manager</SelectItem>
+                                    <SelectItem value="coworker">Coworker</SelectItem>
+                                    <SelectItem value="previous-landlord">Previous Landlord</SelectItem>
+                                    <SelectItem value="personal">Personal Reference</SelectItem>
+                                    <SelectItem value="professional">Professional Contact</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={referencesForm.control}
+                            name={`references.${index}.phoneNumber`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                  <Input type="tel" placeholder="(555) 123-4567" {...field} data-testid={`input-reference-phone-${index}`} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={referencesForm.control}
+                            name={`references.${index}.email`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input type="email" placeholder="john@company.com" {...field} data-testid={`input-reference-email-${index}`} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Add Reference Button */}
+                  <div className="text-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => append({ name: '', relationship: '', phoneNumber: '', email: '' })}
+                      data-testid="button-add-reference"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Reference
+                    </Button>
+                  </div>
+
+                  {/* Completion Message */}
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-3">Almost Done! 🎉</h4>
                     <div className="space-y-2 text-sm text-gray-600">
                       <p>✅ Basic information complete</p>
                       <p>✅ Employment details added</p>
-                      <p>✅ Shareable link generated</p>
-                    </div>
-                    
-                    <div className="flex gap-3 mt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          // Create a preview URL using local data
-                          const previewUrl = `${window.location.origin}/rentcard/preview?name=${encodeURIComponent(`${essentialsData?.firstName} ${essentialsData?.lastName}`)}&city=${encodeURIComponent(essentialsData?.city || '')}`;
-                          window.open(previewUrl, '_blank');
-                        }}
-                        data-testid="button-preview-final"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Preview RentCard
-                      </Button>
+                      <p>✅ References added: {fields.length}</p>
                     </div>
                   </div>
                 </form>
