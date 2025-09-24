@@ -1,128 +1,111 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { z } from 'zod';
-import { useAuth } from '@/hooks/useAuth';
-import { useUIStore } from '@/stores/uiStore';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Confetti } from "@/components/ui/confetti";
-import { MobileStickyActionBar } from "@/components/ui/mobile-sticky-action-bar";
 import { 
   User, 
-  Home, 
-  FileText, 
-  CheckCircle, 
   ArrowRight, 
-  ArrowLeft,
-  Star,
-  Share2,
-  Eye,
+  CheckCircle, 
+  Sparkles, 
+  Star, 
+  ShoppingBag,
   Plus,
   Trash2
 } from 'lucide-react';
-import { useLocation } from 'wouter';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useMutation } from '@tanstack/react-query';
-import { ROUTES } from '@/constants';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
 import { US_STATES } from '@/constants/states';
+import { ROUTES } from '@/constants/routes';
+import { useAuth } from '@/hooks/useAuth';
+import { useUIStore } from '@/stores/uiStore';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import LiveRentCardPreview from '@/components/LiveRentCardPreview';
 
-// Step 1: Essentials Schema
-const essentialsSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+// Complete form schema for all RentCard data
+const rentCardSchema = z.object({
+  // Contact information
   email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
-  city: z.string().min(2, "City is required"),
-  state: z.string().min(2, "State is required"),
-  maxRent: z.number().min(100, "Maximum rent must be at least $100")
-});
-
-// Step 2: Employment Schema 
-const employmentSchema = z.object({
+  
+  // Personal details
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  
+  // Location preferences
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "Please select a state"),
+  maxRent: z.number().min(0, "Maximum rent must be a positive number"),
+  
+  // Employment information
   employmentStatus: z.string().min(1, "Employment status is required"),
   employer: z.string().optional(),
   jobTitle: z.string().optional(),
-  monthlyIncome: z.number().min(0, "Income must be a positive number").optional(),
-  employmentDuration: z.string().optional()
-});
-
-// Step 3: References Schema (optional)
-const referencesSchema = z.object({
+  monthlyIncome: z.number().optional(),
+  employmentDuration: z.string().optional(),
+  
+  // References (optional)
   references: z.array(z.object({
     name: z.string().min(1, "Reference name is required"),
     relationship: z.string().min(1, "Relationship is required"), 
     phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
     email: z.string().email("Please enter a valid email address").optional()
-  })).default([])
+  })).default([]),
+  
+  // Account preferences
+  saveAccount: z.boolean().default(true),
+  agreeToTerms: z.boolean().refine(val => val, "You must agree to the terms of service")
 });
 
-type EssentialsForm = z.infer<typeof essentialsSchema>;
-type EmploymentForm = z.infer<typeof employmentSchema>;
-type ReferencesForm = z.infer<typeof referencesSchema>;
-
-interface QuickStartStep {
-  id: number;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  completed: boolean;
-}
+type RentCardForm = z.infer<typeof rentCardSchema>;
 
 const TenantQuickStart = () => {
-  const { user } = useAuth();
+  const { user, isLoading: userLoading } = useAuth();
   const { addToast } = useUIStore();
   const [, setLocation] = useLocation();
-  const [currentStep, setCurrentStep] = useState(1);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [hasLoadedFromLocalStorage, setHasLoadedFromLocalStorage] = useState(false);
+  const [isExpressSignupMode, setIsExpressSignupMode] = useState(false);
 
-  // Form data storage
-  const [essentialsData, setEssentialsData] = useState<EssentialsForm | null>(null);
-  const [employmentData, setEmploymentData] = useState<EmploymentForm | null>(null);
-  const [referencesData, setReferencesData] = useState<ReferencesForm | null>(null);
+  // Single form for all RentCard data
+  const form = useForm<RentCardForm>({
+    resolver: zodResolver(rentCardSchema),
+    defaultValues: {
+      email: user?.email || '',
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      phone: '',
+      city: '',
+      state: '',
+      maxRent: 1500,
+      employmentStatus: '',
+      employer: '',
+      jobTitle: '',
+      monthlyIncome: undefined,
+      employmentDuration: '',
+      references: [],
+      saveAccount: !user, // Default to true if not logged in
+      agreeToTerms: false
+    }
+  });
 
-  const steps: QuickStartStep[] = [
-    {
-      id: 1,
-      title: "Basic Information",
-      description: "Your name and location preferences",
-      icon: <User className="w-5 h-5" />,
-      completed: !!essentialsData
-    },
-    {
-      id: 2,
-      title: "Employment Details",
-      description: "Income and work information",
-      icon: <Home className="w-5 h-5" />,
-      completed: !!employmentData
-    },
-    {
-      id: 3,
-      title: "References",
-      description: "Add your references (optional)",
-      icon: <FileText className="w-5 h-5" />,
-      completed: !!referencesData
-    },
-    ...(user ? [] : [{
-      id: 4,
-      title: "Create Account",
-      description: "Save your RentCard",
-      icon: <User className="w-5 h-5" />,
-      completed: false
-    }])
-  ];
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "references"
+  });
+
+  // Watch form values for live preview
+  const watchedValues = form.watch();
 
   // Create RentCard mutation
   const createRentCardMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: RentCardForm) => {
       const response = await apiRequest('POST', '/api/tenant/profile/quickstart', {
         body: JSON.stringify(data)
       });
@@ -132,708 +115,516 @@ const TenantQuickStart = () => {
       queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
       addToast({
         title: "🎉 RentCard Created!",
-        description: "Your RentCard data has been saved",
+        description: "Your RentCard is ready to share with landlords",
         type: "success"
       });
-    }
-  });
-
-  // Step 1 Form
-  const essentialsForm = useForm<EssentialsForm>({
-    resolver: zodResolver(essentialsSchema),
-    defaultValues: essentialsData || {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      city: '',
-      state: '',
-      maxRent: 1500
-    }
-  });
-
-  // Step 2 Form
-  const employmentForm = useForm<EmploymentForm>({
-    resolver: zodResolver(employmentSchema),
-    defaultValues: employmentData || {
-      employmentStatus: '',
-      employer: '',
-      jobTitle: '',
-      monthlyIncome: undefined,
-      employmentDuration: ''
-    }
-  });
-
-  // Step 3 Form
-  const referencesForm = useForm<ReferencesForm>({
-    resolver: zodResolver(referencesSchema),
-    defaultValues: referencesData || {
-      references: []
-    }
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control: referencesForm.control,
-    name: "references"
-  });
-
-  // Auto-save to localStorage (only after initial load)
-  useEffect(() => {
-    if (!hasLoadedFromLocalStorage) return; // Don't save until we've loaded first
-    
-    const draftData = {
-      essentials: essentialsData,
-      employment: employmentData,
-      references: referencesData,
-      currentStep,
-      timestamp: Date.now()
-    };
-    console.log('Saving draft to localStorage:', draftData);
-    localStorage.setItem('tenantQuickStartDraft', JSON.stringify(draftData));
-  }, [essentialsData, employmentData, referencesData, currentStep, hasLoadedFromLocalStorage]);
-
-  // Load draft on mount
-  useEffect(() => {
-    const draft = localStorage.getItem('tenantQuickStartDraft');
-    if (draft) {
-      try {
-        const parsed = JSON.parse(draft);
-        console.log('Loading draft from localStorage:', parsed);
-        if (parsed.essentials) {
-          setEssentialsData(parsed.essentials);
-          essentialsForm.reset(parsed.essentials);
-        }
-        if (parsed.employment) {
-          setEmploymentData(parsed.employment);
-          employmentForm.reset(parsed.employment);
-        }
-        if (parsed.references) {
-          setReferencesData(parsed.references);
-          referencesForm.reset(parsed.references);
-        }
-        if (parsed.currentStep && parsed.currentStep > 1) setCurrentStep(parsed.currentStep);
-      } catch (e) {
-        console.error('Failed to load draft:', e);
-      }
-    }
-    // Always set this flag to enable auto-saving after load attempt
-    setHasLoadedFromLocalStorage(true);
-  }, []);
-
-  const handleEssentialsSubmit = async (data: EssentialsForm) => {
-    setEssentialsData(data);
-    
-    // Data is automatically available via state for live preview
-    
-    setShowCelebration(true);
-    setTimeout(() => setShowCelebration(false), 3000);
-    setCurrentStep(2);
-    
-    // Background: Try to persist to backend (non-blocking)
-    createRentCardMutation.mutate({
-      ...data,
-      step: 'essentials'
-    });
-  };
-
-  const handleEmploymentSubmit = (data: EmploymentForm) => {
-    setEmploymentData(data);
-    setCurrentStep(3);
-    
-    // Background: Update RentCard with employment data (non-blocking)
-    if (user) {
-      createRentCardMutation.mutate({
-        ...essentialsData,
-        ...data,
-        step: 'employment'
-      });
-    }
-  };
-
-  const handleReferencesSubmit = (data: ReferencesForm) => {
-    setReferencesData(data);
-    
-    // Final RentCard update (if authenticated)
-    if (user) {
-      createRentCardMutation.mutate({
-        ...essentialsData,
-        ...employmentData,
-        ...data,
-        step: 'complete'
-      });
-    }
-    
-    addToast({
-      title: "🎉 RentCard Created!",
-      description: user ? "Your RentCard is saved and ready to share" : "Create an account to save and share your RentCard",
-      type: "success"
-    });
-    
-    // Show account creation prompt if not authenticated
-    if (!user) {
-      setCurrentStep(4); // New step for account creation
-    } else {
-      // Redirect to dashboard if already authenticated
+      setShowCelebration(true);
       setTimeout(() => {
         setLocation(ROUTES.TENANT.DASHBOARD + '?welcome=true');
       }, 2000);
     }
+  });
+
+  // Handle express signup
+  const handleExpressSignup = () => {
+    localStorage.setItem('selectedRole', 'tenant');
+    window.location.href = '/api/login';
   };
 
-  const progressPercentage = (currentStep / steps.length) * 100;
+  // Auto-populate fields when user logs in
+  useEffect(() => {
+    if (user && !isExpressSignupMode) {
+      form.setValue('email', user.email || '');
+      form.setValue('firstName', user.firstName || '');
+      form.setValue('lastName', user.lastName || '');
+      setIsExpressSignupMode(true);
+    }
+  }, [user, form, isExpressSignupMode]);
+
+  // Handle form submission
+  const onSubmit = async (data: RentCardForm) => {
+    console.log('Submitting RentCard data:', data);
+    
+    if (!user && data.saveAccount) {
+      // Redirect to auth with form data stored
+      localStorage.setItem('quickstartData', JSON.stringify(data));
+      localStorage.setItem('selectedRole', 'tenant');
+      window.location.href = '/api/login';
+      return;
+    }
+    
+    createRentCardMutation.mutate(data);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      {showCelebration && <Confetti />}
+    <div className="min-h-screen bg-slate-50">
+      {showCelebration && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+            <CheckCircle className="w-5 h-5" />
+            <span>RentCard created successfully!</span>
+          </div>
+        </div>
+      )}
       
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto p-4 lg:p-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create Your RentCard
+        <div className="text-center mb-8 lg:mb-12">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
+            Create your RentCard
           </h1>
-          <p className="text-gray-600">
-            Get your profile ready in under 3 minutes
+          <p className="text-slate-600">
+            Your standardized rental profile for private landlords
           </p>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Step {currentStep} of {steps.length}
-            </span>
-            <span className="text-sm text-gray-500">
-              {Math.round(progressPercentage)}% complete
-            </span>
-          </div>
-          <Progress value={progressPercentage} className="h-2" />
-          
-          {/* Step indicators */}
-          <div className="flex justify-between mt-4">
-            {steps.map((step) => (
-              <div 
-                key={step.id} 
-                className={`flex flex-col items-center ${step.id <= currentStep ? 'text-blue-600' : 'text-gray-400'}`}
-              >
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                  step.completed ? 'bg-green-500 border-green-500 text-white' :
-                  step.id === currentStep ? 'bg-blue-600 border-blue-600 text-white' :
-                  'border-gray-300'
-                }`}>
-                  {step.completed ? <CheckCircle className="w-5 h-5" /> : step.icon}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+            {/* Left Column - Form */}
+            <div className="space-y-8">
+              {/* Express Signup Section */}
+              {!user && (
+                <div className="space-y-4">
+                  <div className="text-sm text-slate-600 text-center">Express signup</div>
+                  <Button
+                    type="button"
+                    onClick={handleExpressSignup}
+                    className="w-full h-14 text-base font-semibold bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-3"
+                    data-testid="express-signup-button"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Continue with Replit
+                  </Button>
+                  <div className="relative">
+                    <Separator />
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-slate-50 px-3 text-sm text-slate-500">
+                      OR
+                    </div>
+                  </div>
                 </div>
-                <span className="text-xs mt-1 text-center max-w-20">
-                  {step.title}
-                </span>
+              )}
+
+              {user && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-green-900">Signed in as {user.email}</p>
+                      <p className="text-sm text-green-700">Your information will be saved automatically</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Contact</h2>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="your.email@example.com" 
+                          {...field} 
+                          disabled={!!user}
+                          data-testid="input-email" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {!user && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Checkbox 
+                      id="newsletter" 
+                      checked={form.watch('saveAccount')}
+                      onCheckedChange={(checked) => form.setValue('saveAccount', !!checked)}
+                    />
+                    <label htmlFor="newsletter" className="text-slate-600">
+                      Save my information for a faster checkout
+                    </label>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-6">
-          {/* Form Column */}
-          <Card className="order-2 lg:order-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {steps[currentStep - 1].icon}
-                {steps[currentStep - 1].title}
-              </CardTitle>
-              <p className="text-gray-600">{steps[currentStep - 1].description}</p>
-            </CardHeader>
-            <CardContent>
-            {/* Step 1: Essentials */}
-            {currentStep === 1 && (
-              <Form {...essentialsForm}>
-                <form onSubmit={essentialsForm.handleSubmit(handleEssentialsSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={essentialsForm.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John" {...field} data-testid="input-first-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={essentialsForm.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Doe" {...field} data-testid="input-last-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={essentialsForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="john@example.com" {...field} data-testid="input-email" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={essentialsForm.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input type="tel" placeholder="(555) 123-4567" {...field} data-testid="input-phone" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={essentialsForm.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Austin" {...field} data-testid="input-city" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={essentialsForm.control}
-                      name="state"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>State</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-state">
-                                <SelectValue placeholder="Select state" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {US_STATES.map((state) => (
-                                <SelectItem key={state.value} value={state.value}>
-                                  {state.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+              {/* Personal Details Section */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Personal details</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    control={essentialsForm.control}
-                    name="maxRent"
+                    control={form.control}
+                    name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Maximum Monthly Rent</FormLabel>
+                        <FormLabel>First name</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="1500" 
-                            {...field}
-                            onChange={e => field.onChange(Number(e.target.value) || 0)}
-                            data-testid="input-max-rent"
-                          />
+                          <Input placeholder="John" {...field} data-testid="input-first-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 text-blue-700 mb-2">
-                      <Star className="w-5 h-5" />
-                      <span className="font-medium">What happens next?</span>
-                    </div>
-                    <p className="text-blue-600 text-sm">
-                      After this step, you'll get an instant RentCard preview that you can share with landlords!
-                    </p>
-                  </div>
-                </form>
-              </Form>
-            )}
-
-            {/* Step 2: Employment */}
-            {currentStep === 2 && (
-              <Form {...employmentForm}>
-                <form onSubmit={employmentForm.handleSubmit(handleEmploymentSubmit)} className="space-y-4">
                   <FormField
-                    control={employmentForm.control}
-                    name="employmentStatus"
+                    control={form.control}
+                    name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Employment Status</FormLabel>
+                        <FormLabel>Last name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Doe" {...field} data-testid="input-last-name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone number</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="(555) 123-4567" 
+                          {...field} 
+                          data-testid="input-phone" 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Location Preferences */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Location preferences</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Austin" {...field} data-testid="input-city" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger data-testid="select-employment-status">
-                              <SelectValue placeholder="Select employment status" />
+                            <SelectTrigger data-testid="select-state">
+                              <SelectValue placeholder="Select state" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="employed">Employed</SelectItem>
-                            <SelectItem value="self-employed">Self-Employed</SelectItem>
-                            <SelectItem value="student">Student</SelectItem>
-                            <SelectItem value="unemployed">Unemployed</SelectItem>
-                            <SelectItem value="retired">Retired</SelectItem>
+                            {US_STATES.map((state) => (
+                              <SelectItem key={state.value} value={state.value}>
+                                {state.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="maxRent"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum monthly rent</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="1500" 
+                          {...field}
+                          onChange={e => field.onChange(Number(e.target.value) || 0)}
+                          data-testid="input-max-rent"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={employmentForm.control}
-                      name="employer"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Employer (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Company name" {...field} data-testid="input-employer" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={employmentForm.control}
-                      name="jobTitle"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Job Title (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Software Engineer" {...field} data-testid="input-job-title" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+              {/* Employment Information */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-slate-900">Employment</h2>
+                <FormField
+                  control={form.control}
+                  name="employmentStatus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Employment status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-employment-status">
+                            <SelectValue placeholder="Select employment status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="employed">Employed</SelectItem>
+                          <SelectItem value="self-employed">Self-Employed</SelectItem>
+                          <SelectItem value="student">Student</SelectItem>
+                          <SelectItem value="unemployed">Unemployed</SelectItem>
+                          <SelectItem value="retired">Retired</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    control={employmentForm.control}
-                    name="monthlyIncome"
+                    control={form.control}
+                    name="employer"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Monthly Income (Optional)</FormLabel>
+                        <FormLabel>Employer (optional)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="5000" 
-                            {...field}
-                            onChange={e => {
-                              const val = e.target.value;
-                              field.onChange(val === '' ? undefined : Number(val));
-                            }}
-                            data-testid="input-monthly-income"
-                          />
+                          <Input placeholder="Company name" {...field} data-testid="input-employer" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="jobTitle"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Job title (optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Software Engineer" {...field} data-testid="input-job-title" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="monthlyIncome"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Monthly income (optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="5000" 
+                          {...field}
+                          onChange={e => {
+                            const val = e.target.value;
+                            field.onChange(val === '' ? undefined : Number(val));
+                          }}
+                          data-testid="input-monthly-income"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                  {/* Live preview shows in sidebar on desktop */}
-                </form>
-              </Form>
-            )}
-
-            {/* Step 3: References */}
-            {currentStep === 3 && (
-              <Form {...referencesForm}>
-                <form onSubmit={referencesForm.handleSubmit(handleReferencesSubmit)} className="space-y-6">
-                  <div className="text-center mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Add Your References
-                    </h3>
-                    <p className="text-gray-600">
-                      Add professional or personal references to strengthen your RentCard (optional)
-                    </p>
-                  </div>
-
-                  {/* References List */}
-                  <div className="space-y-4">
-                    {fields.map((field, index) => (
-                      <div key={field.id} className="border border-gray-200 rounded-lg p-4 space-y-4">
-                        <div className="flex justify-between items-center">
-                          <h4 className="font-medium text-gray-900">Reference {index + 1}</h4>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => remove(index)}
-                            data-testid={`button-remove-reference-${index}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={referencesForm.control}
-                            name={`references.${index}.name`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Full Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="John Smith" {...field} data-testid={`input-reference-name-${index}`} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={referencesForm.control}
-                            name={`references.${index}.relationship`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Relationship</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger data-testid={`select-reference-relationship-${index}`}>
-                                      <SelectValue placeholder="Select relationship" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="employer">Employer/Manager</SelectItem>
-                                    <SelectItem value="coworker">Coworker</SelectItem>
-                                    <SelectItem value="previous-landlord">Previous Landlord</SelectItem>
-                                    <SelectItem value="personal">Personal Reference</SelectItem>
-                                    <SelectItem value="professional">Professional Contact</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={referencesForm.control}
-                            name={`references.${index}.phoneNumber`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Phone Number</FormLabel>
-                                <FormControl>
-                                  <Input type="tel" placeholder="(555) 123-4567" {...field} data-testid={`input-reference-phone-${index}`} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={referencesForm.control}
-                            name={`references.${index}.email`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email (Optional)</FormLabel>
-                                <FormControl>
-                                  <Input type="email" placeholder="john@company.com" {...field} data-testid={`input-reference-email-${index}`} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Add Reference Button */}
-                  <div className="text-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => append({ name: '', relationship: '', phoneNumber: '', email: '' })}
-                      data-testid="button-add-reference"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Reference
-                    </Button>
-                  </div>
-
-                  {/* Completion Message */}
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-3">Almost Done! 🎉</h4>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <p>✅ Basic information complete</p>
-                      <p>✅ Employment details added</p>
-                      <p>✅ References added: {fields.length}</p>
-                    </div>
-                  </div>
-                </form>
-              </Form>
-            )}
-
-            {/* Step 4: Account Creation (for anonymous users) */}
-            {currentStep === 4 && !user && (
+              {/* References Section */}
               <div className="space-y-4">
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Save Your RentCard! 🎉
+                <h2 className="text-lg font-semibold text-slate-900">References (optional)</h2>
+                <p className="text-sm text-slate-600">
+                  Add professional or personal references to strengthen your RentCard
+                </p>
+                
+                {fields.map((field, index) => (
+                  <Card key={field.id} className="p-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-medium text-slate-900">Reference {index + 1}</h4>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => remove(index)}
+                        data-testid={`button-remove-reference-${index}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name={`references.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="John Smith" {...field} data-testid={`input-reference-name-${index}`} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`references.${index}.relationship`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Relationship</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid={`select-reference-relationship-${index}`}>
+                                  <SelectValue placeholder="Select relationship" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="employer">Employer/Manager</SelectItem>
+                                <SelectItem value="coworker">Coworker</SelectItem>
+                                <SelectItem value="previous-landlord">Previous Landlord</SelectItem>
+                                <SelectItem value="personal">Personal Reference</SelectItem>
+                                <SelectItem value="professional">Professional Contact</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`references.${index}.phoneNumber`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone number</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="(555) 123-4567" {...field} data-testid={`input-reference-phone-${index}`} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`references.${index}.email`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email (optional)</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="john@company.com" {...field} data-testid={`input-reference-email-${index}`} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </Card>
+                ))}
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => append({ name: '', relationship: '', phoneNumber: '', email: '' })}
+                  className="w-full"
+                  data-testid="button-add-reference"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add reference
+                </Button>
+              </div>
+
+              {/* Terms Agreement */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="agreeToTerms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-agree-terms"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm">
+                          I agree to the{' '}
+                          <a href="/terms" className="text-blue-600 hover:underline">
+                            Terms of Service
+                          </a>{' '}
+                          and{' '}
+                          <a href="/privacy" className="text-blue-600 hover:underline">
+                            Privacy Policy
+                          </a>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={createRentCardMutation.isPending}
+                className="w-full h-14 text-base font-semibold bg-blue-600 hover:bg-blue-700"
+                data-testid="button-create-rentcard"
+              >
+                {createRentCardMutation.isPending ? (
+                  "Creating RentCard..."
+                ) : user ? (
+                  <>
+                    Create my RentCard
+                    <ShoppingBag className="w-5 h-5 ml-2" />
+                  </>
+                ) : (
+                  <>
+                    Create account & RentCard
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Right Column - Live Preview */}
+            <div className="lg:sticky lg:top-8 lg:self-start">
+              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-slate-50 border-b border-slate-200 p-4">
+                  <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-500" />
+                    RentCard Preview
                   </h3>
-                  <p className="text-gray-600">
-                    Create a free account to save your RentCard and start sharing it with landlords.
+                  <p className="text-sm text-slate-600 mt-1">
+                    This is how landlords will see your profile
                   </p>
                 </div>
-
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-4">Your RentCard is ready!</h4>
-                  <div className="space-y-2 text-sm text-gray-600 mb-6">
-                    <p>✅ Profile: {essentialsData?.firstName} {essentialsData?.lastName}</p>
-                    <p>✅ Location: {essentialsData?.city}, {essentialsData?.state}</p>
-                    <p>✅ Budget: Up to ${essentialsData?.maxRent}/month</p>
-                    <p>✅ Employment: {employmentData?.employmentStatus}</p>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => setLocation('/auth?action=register')}
-                      className="flex-1"
-                      data-testid="button-create-account"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Create Free Account
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setLocation('/auth?action=login')}
-                      data-testid="button-sign-in"
-                    >
-                      Sign In
-                    </Button>
-                  </div>
-                  
-                  <p className="text-xs text-gray-500 mt-3 text-center">
-                    No credit card required • Create account in 30 seconds
-                  </p>
+                <div className="p-6">
+                  <LiveRentCardPreview 
+                    essentialsData={watchedValues}
+                    employmentData={watchedValues}
+                    documentsData={watchedValues}
+                    currentStep={1}
+                  />
                 </div>
               </div>
-            )}
-            </CardContent>
-          </Card>
-
-          {/* Live Preview Column */}
-          <div className="order-1 lg:order-2">
-            <div className="sticky top-4">
-              <LiveRentCardPreview 
-                essentialsData={essentialsData || undefined}
-                employmentData={employmentData || undefined}
-                documentsData={undefined}
-                currentStep={currentStep}
-              />
             </div>
-          </div>
-        </div>
-
-        {/* Mobile Sticky Action Bar */}
-        <MobileStickyActionBar className="md:hidden">
-          <div className="flex gap-3 w-full">
-            {currentStep > 1 && (
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setCurrentStep(currentStep - 1)}
-                className="flex-1"
-                data-testid="button-back"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
-            <Button
-              size="lg"
-              onClick={() => {
-                if (currentStep === 1) essentialsForm.handleSubmit(handleEssentialsSubmit)();
-                else if (currentStep === 2) employmentForm.handleSubmit(handleEmploymentSubmit)();
-                else referencesForm.handleSubmit(handleReferencesSubmit)();
-              }}
-              disabled={createRentCardMutation.isPending}
-              className="flex-1"
-              data-testid="button-continue"
-            >
-              {createRentCardMutation.isPending ? (
-                "Saving..."
-              ) : currentStep === 3 ? (
-                <>
-                  Complete Setup
-                  <CheckCircle className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                <>
-                  Continue
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </div>
-        </MobileStickyActionBar>
-
-        {/* Desktop Action Buttons */}
-        <div className="hidden md:flex justify-between">
-          {currentStep > 1 && (
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep(currentStep - 1)}
-              data-testid="button-back-desktop"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          )}
-          <Button
-            onClick={() => {
-              if (currentStep === 1) essentialsForm.handleSubmit(handleEssentialsSubmit)();
-              else if (currentStep === 2) employmentForm.handleSubmit(handleEmploymentSubmit)();
-              else referencesForm.handleSubmit(handleReferencesSubmit)();
-            }}
-            disabled={createRentCardMutation.isPending}
-            className="ml-auto"
-            data-testid="button-continue-desktop"
-          >
-            {createRentCardMutation.isPending ? (
-              "Saving..."
-            ) : currentStep === 3 ? (
-              <>
-                Complete Setup
-                <CheckCircle className="w-4 h-4 ml-2" />
-              </>
-            ) : (
-              <>
-                Continue
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
-        </div>
+          </form>
+        </Form>
       </div>
     </div>
   );
