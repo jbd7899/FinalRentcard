@@ -571,7 +571,7 @@ const TenantQuickStart = () => {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => setLocation(ROUTES.TENANT.RENTCARD)}
+                          onClick={() => setLocation('/samples/rentcard')}
                           data-testid="button-preview-rentcard"
                         >
                           <Eye className="w-4 h-4 mr-2" />
