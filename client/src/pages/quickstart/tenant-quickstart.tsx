@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,7 +23,9 @@ import {
   ArrowLeft,
   Star,
   Share2,
-  Eye
+  Eye,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -52,15 +54,19 @@ const employmentSchema = z.object({
   employmentDuration: z.string().optional()
 });
 
-// Step 3: Documents Schema (optional)
-const documentsSchema = z.object({
-  hasDocuments: z.boolean().default(false),
-  documentTypes: z.array(z.string()).optional()
+// Step 3: References Schema (optional)
+const referencesSchema = z.object({
+  references: z.array(z.object({
+    name: z.string().min(1, "Reference name is required"),
+    relationship: z.string().min(1, "Relationship is required"), 
+    phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+    email: z.string().email("Please enter a valid email address").optional()
+  })).default([])
 });
 
 type EssentialsForm = z.infer<typeof essentialsSchema>;
 type EmploymentForm = z.infer<typeof employmentSchema>;
-type DocumentsForm = z.infer<typeof documentsSchema>;
+type ReferencesForm = z.infer<typeof referencesSchema>;
 
 interface QuickStartStep {
   id: number;
@@ -81,7 +87,7 @@ const TenantQuickStart = () => {
   // Form data storage
   const [essentialsData, setEssentialsData] = useState<EssentialsForm | null>(null);
   const [employmentData, setEmploymentData] = useState<EmploymentForm | null>(null);
-  const [documentsData, setDocumentsData] = useState<DocumentsForm | null>(null);
+  const [referencesData, setReferencesData] = useState<ReferencesForm | null>(null);
 
   const steps: QuickStartStep[] = [
     {
@@ -100,10 +106,10 @@ const TenantQuickStart = () => {
     },
     {
       id: 3,
-      title: "Documents & References",
-      description: "Supporting materials (optional)",
+      title: "References",
+      description: "Add your references (optional)",
       icon: <FileText className="w-5 h-5" />,
-      completed: !!documentsData
+      completed: !!referencesData
     },
     ...(user ? [] : [{
       id: 4,
@@ -159,11 +165,10 @@ const TenantQuickStart = () => {
   });
 
   // Step 3 Form
-  const documentsForm = useForm<DocumentsForm>({
-    resolver: zodResolver(documentsSchema),
-    defaultValues: documentsData || {
-      hasDocuments: false,
-      documentTypes: []
+  const referencesForm = useForm<ReferencesForm>({
+    resolver: zodResolver(referencesSchema),
+    defaultValues: referencesData || {
+      references: []
     }
   });
 
@@ -174,13 +179,13 @@ const TenantQuickStart = () => {
     const draftData = {
       essentials: essentialsData,
       employment: employmentData,
-      documents: documentsData,
+      references: referencesData,
       currentStep,
       timestamp: Date.now()
     };
     console.log('Saving draft to localStorage:', draftData);
     localStorage.setItem('tenantQuickStartDraft', JSON.stringify(draftData));
-  }, [essentialsData, employmentData, documentsData, currentStep, hasLoadedFromLocalStorage]);
+  }, [essentialsData, employmentData, referencesData, currentStep, hasLoadedFromLocalStorage]);
 
   // Load draft on mount
   useEffect(() => {
@@ -197,9 +202,9 @@ const TenantQuickStart = () => {
           setEmploymentData(parsed.employment);
           employmentForm.reset(parsed.employment);
         }
-        if (parsed.documents) {
-          setDocumentsData(parsed.documents);
-          documentsForm.reset(parsed.documents);
+        if (parsed.references) {
+          setReferencesData(parsed.references);
+          referencesForm.reset(parsed.references);
         }
         if (parsed.currentStep && parsed.currentStep > 1) setCurrentStep(parsed.currentStep);
       } catch (e) {
@@ -240,8 +245,8 @@ const TenantQuickStart = () => {
     }
   };
 
-  const handleDocumentsSubmit = (data: DocumentsForm) => {
-    setDocumentsData(data);
+  const handleReferencesSubmit = (data: ReferencesForm) => {
+    setReferencesData(data);
     
     // Final RentCard update (if authenticated)
     if (user) {
@@ -556,8 +561,8 @@ const TenantQuickStart = () => {
 
             {/* Step 3: Documents */}
             {currentStep === 3 && (
-              <Form {...documentsForm}>
-                <form onSubmit={documentsForm.handleSubmit(handleDocumentsSubmit)} className="space-y-4">
+              <Form {...referencesForm}>
+                <form onSubmit={referencesForm.handleSubmit(handleReferencesSubmit)} className="space-y-4">
                   <div className="text-center mb-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       Almost Done! 🎉
@@ -649,7 +654,7 @@ const TenantQuickStart = () => {
               <LiveRentCardPreview 
                 essentialsData={essentialsData || undefined}
                 employmentData={employmentData || undefined}
-                documentsData={documentsData || undefined}
+                documentsData={undefined}
                 currentStep={currentStep}
               />
             </div>
@@ -676,7 +681,7 @@ const TenantQuickStart = () => {
               onClick={() => {
                 if (currentStep === 1) essentialsForm.handleSubmit(handleEssentialsSubmit)();
                 else if (currentStep === 2) employmentForm.handleSubmit(handleEmploymentSubmit)();
-                else documentsForm.handleSubmit(handleDocumentsSubmit)();
+                else referencesForm.handleSubmit(handleReferencesSubmit)();
               }}
               disabled={createRentCardMutation.isPending}
               className="flex-1"
@@ -715,7 +720,7 @@ const TenantQuickStart = () => {
             onClick={() => {
               if (currentStep === 1) essentialsForm.handleSubmit(handleEssentialsSubmit)();
               else if (currentStep === 2) employmentForm.handleSubmit(handleEmploymentSubmit)();
-              else documentsForm.handleSubmit(handleDocumentsSubmit)();
+              else referencesForm.handleSubmit(handleReferencesSubmit)();
             }}
             disabled={createRentCardMutation.isPending}
             className="ml-auto"
