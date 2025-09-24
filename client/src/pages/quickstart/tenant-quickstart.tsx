@@ -30,6 +30,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useMutation } from '@tanstack/react-query';
 import { ROUTES } from '@/constants';
 import { US_STATES } from '@/constants/states';
+import LiveRentCardPreview from '@/components/LiveRentCardPreview';
 
 // Step 1: Essentials Schema
 const essentialsSchema = z.object({
@@ -75,7 +76,6 @@ const TenantQuickStart = () => {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [rentCardPreview, setRentCardPreview] = useState<any>(null);
   const [hasLoadedFromLocalStorage, setHasLoadedFromLocalStorage] = useState(false);
 
   // Form data storage
@@ -123,11 +123,10 @@ const TenantQuickStart = () => {
       return response.json();
     },
     onSuccess: (data) => {
-      setRentCardPreview(data);
       queryClient.invalidateQueries({ queryKey: ['tenant-profile'] });
       addToast({
         title: "🎉 RentCard Created!",
-        description: "You can now preview and share your RentCard",
+        description: "Your RentCard data has been saved",
         type: "success"
       });
     }
@@ -214,18 +213,7 @@ const TenantQuickStart = () => {
   const handleEssentialsSubmit = async (data: EssentialsForm) => {
     setEssentialsData(data);
     
-    // IMMEDIATE VALUE: Create local RentCard preview instantly - no backend dependency!
-    const localPreview = {
-      id: 'preview',
-      name: `${data.firstName} ${data.lastName}`,
-      email: data.email,
-      phone: data.phone,
-      location: `${data.city}, ${data.state}`,
-      maxRent: data.maxRent,
-      shareUrl: `${window.location.origin}/rentcard/preview-${Date.now()}`,
-      created: new Date().toISOString()
-    };
-    setRentCardPreview(localPreview);
+    // Data is automatically available via state for live preview
     
     setShowCelebration(true);
     setTimeout(() => setShowCelebration(false), 3000);
@@ -288,7 +276,7 @@ const TenantQuickStart = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       {showCelebration && <Confetti />}
       
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -333,16 +321,18 @@ const TenantQuickStart = () => {
           </div>
         </div>
 
-        {/* Step Content */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {steps[currentStep - 1].icon}
-              {steps[currentStep - 1].title}
-            </CardTitle>
-            <p className="text-gray-600">{steps[currentStep - 1].description}</p>
-          </CardHeader>
-          <CardContent>
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-6">
+          {/* Form Column */}
+          <Card className="order-2 lg:order-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {steps[currentStep - 1].icon}
+                {steps[currentStep - 1].title}
+              </CardTitle>
+              <p className="text-gray-600">{steps[currentStep - 1].description}</p>
+            </CardHeader>
+            <CardContent>
             {/* Step 1: Essentials */}
             {currentStep === 1 && (
               <Form {...essentialsForm}>
@@ -559,27 +549,7 @@ const TenantQuickStart = () => {
                     )}
                   />
 
-                  {/* Preview Button */}
-                  {rentCardPreview && (
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-green-700">
-                          <Eye className="w-5 h-5" />
-                          <span className="font-medium">Your RentCard is ready!</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setLocation('/samples/rentcard')}
-                          data-testid="button-preview-rentcard"
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Preview
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  {/* Live preview shows in sidebar on desktop */}
                 </form>
               </Form>
             )}
@@ -670,8 +640,21 @@ const TenantQuickStart = () => {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Live Preview Column */}
+          <div className="order-1 lg:order-2">
+            <div className="sticky top-4">
+              <LiveRentCardPreview 
+                essentialsData={essentialsData || undefined}
+                employmentData={employmentData || undefined}
+                documentsData={documentsData || undefined}
+                currentStep={currentStep}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Mobile Sticky Action Bar */}
         <MobileStickyActionBar className="md:hidden">
