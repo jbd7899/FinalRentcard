@@ -13,11 +13,13 @@ import GeneralScreeningPage from "@/pages/general-screening-page";
 import ArchivedPropertyPage from "@/pages/archived-property";
 import DebugAuthPage from "@/components/AuthDebugTools";
 import AuthPage from "@/pages/auth-page";
+import RoleSelectionPage from "@/pages/role-selection";
+import LandlordPropertiesPage from "@/pages/landlord/properties";
 import { ProtectedRoute } from "./lib/protected-route";
 import { StoreProvider } from "@/providers/StoreProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { RoleSelectionModal } from "@/components/RoleSelectionModal";
-import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 // Sample Pages
 import SampleRentCard from "@/pages/samples/rentcard";
@@ -60,23 +62,17 @@ import LandlordQuickStart from "@/pages/quickstart/landlord-quickstart";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [showRoleSelection, setShowRoleSelection] = useState(false);
+  const [location, setLocation] = useLocation();
 
   // Check if user needs role selection after auth is loaded
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user?.requiresSetup) {
-      setShowRoleSelection(true);
-    } else {
-      setShowRoleSelection(false);
+    if (!isLoading && isAuthenticated && user?.requiresSetup && location !== '/role-selection') {
+      setLocation('/role-selection');
     }
-  }, [isLoading, isAuthenticated, user?.requiresSetup]);
+  }, [isLoading, isAuthenticated, user?.requiresSetup, location, setLocation]);
 
   return (
     <>
-      <RoleSelectionModal 
-        isOpen={showRoleSelection}
-        onClose={() => setShowRoleSelection(false)}
-      />
       <Switch>
       {/* Home page - always accessible */}
       <Route path="/" component={HomePage} />
@@ -87,6 +83,9 @@ function Router() {
 
       {/* Authentication explainer */}
       <Route path="/auth" component={AuthPage} />
+      
+      {/* Role selection page */}
+      <Route path="/role-selection" component={RoleSelectionPage} />
       
       {/* QuickStart flows - public access for immediate value */}
       <Route path="/quickstart" component={QuickStartEntry} />
@@ -102,6 +101,7 @@ function Router() {
 
       {/* Landlord Routes */}
       <ProtectedRoute path={ROUTES.LANDLORD.DASHBOARD} component={LandlordDashboard} />
+      <ProtectedRoute path={ROUTES.LANDLORD.PROPERTIES} component={LandlordPropertiesPage} />
       <ProtectedRoute path={ROUTES.LANDLORD.INTERESTS} component={LandlordApplications} />
       <ProtectedRoute path={ROUTES.LANDLORD.ADD_PROPERTY} component={LandlordQuickStart} />
       <ProtectedRoute path="/landlord/properties/:id/edit" component={AddProperty} />

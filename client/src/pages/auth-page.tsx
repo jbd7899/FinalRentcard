@@ -28,8 +28,6 @@ const DEV_ACCOUNTS = [
 export default function AuthPage() {
   const searchParams = new URLSearchParams(useSearch());
   const mode = searchParams.get('mode') === 'register' ? 'register' : 'login';
-  const roleParam = searchParams.get('type');
-  const role = roleParam === 'landlord' ? 'landlord' : 'tenant';
 
   const [email, setEmail] = useState(DEV_ACCOUNTS[0].email);
   const [password, setPassword] = useState('test123');
@@ -38,15 +36,11 @@ export default function AuthPage() {
 
   const heading =
     mode === 'register'
-      ? `Create your ${role === 'tenant' ? 'tenant' : 'landlord'} access`
-      : `Sign in to continue`;
-  const description =
-    role === 'tenant'
-      ? 'Use MyRentCard to share a standardized prequalification profile with private landlords. '
-      : 'Review standardized tenant information before scheduling showings or collecting interest.';
+      ? 'Create your MyRentCard account'
+      : 'Sign in to continue';
+  const description = 'Access MyRentCard to manage your rental network - whether you\'re sharing your rental profile or reviewing tenant information.';
 
   const handleReplitRedirect = () => {
-    localStorage.setItem('selectedRole', role);
     window.location.href = '/api/login';
   };
 
@@ -68,11 +62,12 @@ export default function AuthPage() {
         throw new Error(data?.message || 'Login failed');
       }
 
-      const targetRole = data.user?.userType || role;
-
       setStatus({ type: 'success', message: 'Signed in. Redirecting…' });
       setTimeout(() => {
-        window.location.href = targetRole === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+        // Let the auth system handle the redirection based on user state
+        window.location.href = data.user?.userType ? 
+          (data.user.userType === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard') : 
+          '/role-selection';
       }, 300);
     } catch (error) {
       setStatus({

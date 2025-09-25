@@ -224,43 +224,15 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  className="px-6 cursor-pointer flex items-center gap-2"
-                  variant="default"
-                  type="button"
-                  data-testid="button-login-dropdown"
-                >
-                  Login
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem
-                  className="gap-2 cursor-pointer text-blue-600"
-                  onClick={() => {
-                    localStorage.setItem("selectedRole", "tenant");
-                    setLocation("/auth?mode=login&type=tenant");
-                  }}
-                  data-testid="button-login-tenant"
-                >
-                  <User className="h-4 w-4" />
-                  <span>🏠 Login as Tenant</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="gap-2 cursor-pointer text-green-600"
-                  onClick={() => {
-                    localStorage.setItem("selectedRole", "landlord");
-                    setLocation("/auth?mode=login&type=landlord");
-                  }}
-                  data-testid="button-login-landlord"
-                >
-                  <Building2 className="h-4 w-4" />
-                  <span>🏢 Login as Landlord</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button 
+              className="px-6 cursor-pointer flex items-center gap-2"
+              variant="default"
+              type="button"
+              data-testid="button-login"
+              onClick={() => setLocation("/auth")}
+            >
+              Login
+            </Button>
           )}
         </div>
       </div>
