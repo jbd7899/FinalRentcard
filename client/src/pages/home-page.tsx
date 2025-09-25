@@ -435,23 +435,6 @@ A standardized pre-qualification profile that saves time for everyone. Tenants c
                 <ArrowRight className="h-5 w-5" />
               </button>
               
-              {/* Secondary CTA */}
-              <Link
-                href={isLandlordSelected ? '/samples/screening-page' : '/samples/rentcard'}
-                className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
-                  isLandlordSelected
-                    ? 'border-emerald-600 text-emerald-700 hover:bg-emerald-50'
-                    : 'border-blue-600 text-blue-700 hover:bg-blue-50'
-                }`}
-                data-testid="button-sample-cta"
-              >
-                {isLandlordSelected ? (
-                  <><QrCode className="h-4 w-4" />See sample QR code & tools</>
-                ) : (
-                  <><User className="h-4 w-4" />See sample RentCard</>
-                )}
-              </Link>
-
               {/* Interactive Demo CTA */}
               <Link
                 href={isLandlordSelected ? '/landlord-demo' : '/demo'}
