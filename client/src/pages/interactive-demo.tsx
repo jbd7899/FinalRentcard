@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Building2, DollarSign, Briefcase, MapPin, Mail, Phone, Star, Smartphone, QrCode, Send, ArrowRight, Clock, CheckCircle } from 'lucide-react';
+import { User, Building2, DollarSign, Briefcase, MapPin, Mail, Phone, Star, Smartphone, QrCode, Send, ArrowRight, Clock, CheckCircle, ArrowLeft, Eye, Copy, ExternalLink, MessageSquare, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -168,6 +168,598 @@ export default function InteractiveDemo() {
       </CardContent>
     </Card>
   );
+
+  const SimulationView = () => {
+    const [simulationStep, setSimulationStep] = useState<'tenant' | 'landlord'>('tenant');
+    
+    const TextSimulation = () => (
+      <div className="space-y-8">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Text Message Scenario</h2>
+          <p className="text-slate-600">See how sharing your RentCard via text works</p>
+        </div>
+
+        <div className="flex justify-center mb-6">
+          <div className="flex bg-slate-100 rounded-lg p-1">
+            <button
+              onClick={() => setSimulationStep('tenant')}
+              className={`px-4 py-2 rounded-md transition-all ${
+                simulationStep === 'tenant' 
+                  ? 'bg-blue-600 text-white shadow' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <User className="h-4 w-4 mr-2 inline" />
+              Your View
+            </button>
+            <button
+              onClick={() => setSimulationStep('landlord')}
+              className={`px-4 py-2 rounded-md transition-all ${
+                simulationStep === 'landlord' 
+                  ? 'bg-emerald-600 text-white shadow' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Building2 className="h-4 w-4 mr-2 inline" />
+              Landlord's View
+            </button>
+          </div>
+        </div>
+
+        {simulationStep === 'tenant' ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Phone Mockup */}
+            <Card className="max-w-sm mx-auto">
+              <CardContent className="p-0">
+                {/* Phone Header */}
+                <div className="bg-slate-900 text-white px-4 py-2 rounded-t-lg">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>9:41 AM</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-2 bg-white rounded-sm"></div>
+                      <span>100%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Messages Interface */}
+                <div className="bg-slate-50 p-4 h-96 overflow-y-auto">
+                  <div className="space-y-3">
+                    <div className="flex justify-start">
+                      <div className="bg-white p-3 rounded-2xl rounded-tl-md shadow-sm max-w-xs">
+                        <p className="text-sm">Hi! I'm interested in your rental at 123 Oak Street. When would be a good time to schedule a viewing?</p>
+                        <p className="text-xs text-slate-500 mt-1">2:14 PM</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <div className="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-md shadow-sm max-w-xs">
+                        <p className="text-sm">Sure! Can you tell me a bit about yourself first? Income, employment, etc?</p>
+                        <p className="text-xs text-blue-100 mt-1">2:16 PM</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-start">
+                      <div className="bg-white p-3 rounded-2xl rounded-tl-md shadow-sm max-w-xs">
+                        <p className="text-sm">I have a RentCard with all my details! Check it out:</p>
+                        <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <QrCode className="h-4 w-4 text-blue-600" />
+                            <span className="text-xs text-blue-600 font-medium">myrentcard.com/r/{formData.firstName?.toLowerCase()}</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">2:18 PM</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Input Area */}
+                <div className="border-t bg-white p-3 rounded-b-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-slate-100 rounded-full px-3 py-2">
+                      <span className="text-sm text-slate-500">Type a message...</span>
+                    </div>
+                    <div className="bg-blue-600 p-2 rounded-full">
+                      <Send className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Instructions */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-slate-900">Your Experience</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <MessageSquare className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Quick Response</h4>
+                    <p className="text-sm text-slate-600">Instead of typing out your details, just share your RentCard link</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-green-100 p-2 rounded-full">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Professional Impression</h4>
+                    <p className="text-sm text-slate-600">Shows you're organized and serious about renting</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-purple-100 p-2 rounded-full">
+                    <Copy className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Reusable</h4>
+                    <p className="text-sm text-slate-600">Same link works for every landlord you contact</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Landlord Phone View */}
+            <Card className="max-w-sm mx-auto">
+              <CardContent className="p-0">
+                {/* Phone Header */}
+                <div className="bg-slate-900 text-white px-4 py-2 rounded-t-lg">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>9:43 AM</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-2 bg-white rounded-sm"></div>
+                      <span>98%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Browser View */}
+                <div className="bg-white">
+                  <div className="bg-slate-100 px-3 py-2 border-b text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="text-slate-600">myrentcard.com/r/{formData.firstName?.toLowerCase()}</span>
+                    </div>
+                  </div>
+                  <div className="p-3 h-80 overflow-y-auto">
+                    <div className="min-h-full">
+                      <RentCardPreview />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Landlord Benefits */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-slate-900">Landlord's Experience</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="bg-emerald-100 p-2 rounded-full">
+                    <Eye className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Instant Information</h4>
+                    <p className="text-sm text-slate-600">All rental qualifications visible in one organized view</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Time Saver</h4>
+                    <p className="text-sm text-slate-600">No back-and-forth requesting income docs, references, etc.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-yellow-100 p-2 rounded-full">
+                    <Star className="h-4 w-4 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Pre-Qualified</h4>
+                    <p className="text-sm text-slate-600">Know if they meet your criteria before scheduling tours</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+    const EmailSimulation = () => (
+      <div className="space-y-8">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Email Scenario</h2>
+          <p className="text-slate-600">Professional email approach to sharing your RentCard</p>
+        </div>
+
+        <div className="flex justify-center mb-6">
+          <div className="flex bg-slate-100 rounded-lg p-1">
+            <button
+              onClick={() => setSimulationStep('tenant')}
+              className={`px-4 py-2 rounded-md transition-all ${
+                simulationStep === 'tenant' 
+                  ? 'bg-emerald-600 text-white shadow' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <User className="h-4 w-4 mr-2 inline" />
+              Your Email
+            </button>
+            <button
+              onClick={() => setSimulationStep('landlord')}
+              className={`px-4 py-2 rounded-md transition-all ${
+                simulationStep === 'landlord' 
+                  ? 'bg-blue-600 text-white shadow' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Mail className="h-4 w-4 mr-2 inline" />
+              What They Receive
+            </button>
+          </div>
+        </div>
+
+        {simulationStep === 'tenant' ? (
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b">
+                  <div className="bg-emerald-100 p-2 rounded-lg">
+                    <Mail className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900">Compose Email</h3>
+                    <p className="text-sm text-slate-600">to: landlord@property.com</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium">Subject</Label>
+                    <div className="mt-1 p-2 bg-slate-50 rounded border text-sm">
+                      Rental Interest - 123 Oak Street Apartment
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">Message</Label>
+                    <div className="mt-1 p-3 bg-slate-50 rounded border text-sm leading-relaxed">
+                      <p>Dear Property Owner,</p>
+                      <br />
+                      <p>I'm very interested in renting your property at 123 Oak Street. I'm a working professional with steady income and excellent references.</p>
+                      <br />
+                      <p>I've attached my complete rental profile below with all the information you typically need:</p>
+                      <br />
+                      <div className="bg-white border-l-4 border-emerald-500 p-3 my-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Building2 className="h-4 w-4 text-emerald-600" />
+                          <span className="font-medium text-emerald-800">MyRentCard Profile</span>
+                        </div>
+                        <p className="text-xs text-slate-600 mb-2">Complete rental qualification details</p>
+                        <a href="#" className="text-emerald-600 text-sm font-medium hover:underline flex items-center gap-1">
+                          <ExternalLink className="h-3 w-3" />
+                          View {displayName}'s RentCard
+                        </a>
+                      </div>
+                      <p>I'm available for a viewing at your convenience. Please let me know what works best for your schedule.</p>
+                      <br />
+                      <p>Best regards,<br />{displayName}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-blue-600" />
+                  Landlord's Inbox
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-slate-900">{displayName}</span>
+                      <span className="text-xs text-slate-500">2 min ago</span>
+                    </div>
+                    <p className="text-sm text-slate-700 mb-2">Rental Interest - 123 Oak Street Apartment</p>
+                    <div className="flex items-center gap-2">
+                      <QrCode className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs text-blue-600">Contains RentCard link</span>
+                    </div>
+                  </div>
+                  <div className="text-center py-4">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Full Profile
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-slate-900">Why This Works</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <CheckCircle className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Professional First Impression</h4>
+                    <p className="text-sm text-slate-600">Email shows you're serious and organized</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-emerald-100 p-2 rounded-full">
+                    <ExternalLink className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Easy Access</h4>
+                    <p className="text-sm text-slate-600">Landlord clicks once to see all your qualifications</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-yellow-100 p-2 rounded-full">
+                    <Star className="h-4 w-4 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Stands Out</h4>
+                    <p className="text-sm text-slate-600">Most applicants send messy document attachments</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+    const QRSimulation = () => (
+      <div className="space-y-8">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">QR Code Scenario</h2>
+          <p className="text-slate-600">Scan a "For Rent" sign and share your interest instantly</p>
+        </div>
+
+        <div className="flex justify-center mb-6">
+          <div className="flex bg-slate-100 rounded-lg p-1">
+            <button
+              onClick={() => setSimulationStep('tenant')}
+              className={`px-4 py-2 rounded-md transition-all ${
+                simulationStep === 'tenant' 
+                  ? 'bg-purple-600 text-white shadow' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Smartphone className="h-4 w-4 mr-2 inline" />
+              Scanning Experience
+            </button>
+            <button
+              onClick={() => setSimulationStep('landlord')}
+              className={`px-4 py-2 rounded-md transition-all ${
+                simulationStep === 'landlord' 
+                  ? 'bg-emerald-600 text-white shadow' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Building2 className="h-4 w-4 mr-2 inline" />
+              Landlord Gets Notified
+            </button>
+          </div>
+        </div>
+
+        {simulationStep === 'tenant' ? (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* QR Code and Sign Mockup */}
+            <Card className="max-w-md mx-auto">
+              <CardContent className="p-6 text-center">
+                <div className="bg-yellow-100 border-2 border-yellow-400 p-4 rounded-lg mb-4">
+                  <h3 className="font-bold text-slate-900 mb-2">FOR RENT</h3>
+                  <p className="text-sm text-slate-700 mb-3">2BR/2BA Apartment<br />$2,400/month</p>
+                  <div className="bg-white p-3 rounded border">
+                    <div className="w-24 h-24 mx-auto mb-2 bg-black" style={{
+                      backgroundImage: `url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100' height='100' fill='%23000'/%3e%3crect x='10' y='10' width='80' height='80' fill='%23fff'/%3e%3crect x='20' y='20' width='60' height='60' fill='%23000'/%3e%3crect x='30' y='30' width='40' height='40' fill='%23fff'/%3e%3c/svg%3e")`,
+                      backgroundSize: 'cover'
+                    }}></div>
+                    <p className="text-xs text-slate-600">Scan to express interest</p>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-2">Call (555) 123-4567</p>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center gap-2 text-purple-600">
+                    <Smartphone className="h-5 w-5" />
+                    <span className="font-medium">Point camera at QR code</span>
+                  </div>
+                  <ArrowRight className="h-5 w-5 mx-auto text-slate-400" />
+                  <div className="bg-purple-50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-purple-900">Page opens in browser</p>
+                    <p className="text-xs text-purple-700">Submit interest with your RentCard</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Process Steps */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-slate-900">Your Experience</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-purple-100 p-2 rounded-full">
+                    <span className="text-purple-600 font-bold text-sm">1</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Scan QR Code</h4>
+                    <p className="text-sm text-slate-600">Use your phone camera to scan the code on the sign</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-purple-100 p-2 rounded-full">
+                    <span className="text-purple-600 font-bold text-sm">2</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Property Page Opens</h4>
+                    <p className="text-sm text-slate-600">See property details and express interest button</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-purple-100 p-2 rounded-full">
+                    <span className="text-purple-600 font-bold text-sm">3</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Share Your RentCard</h4>
+                    <p className="text-sm text-slate-600">One-click to send your complete profile to the landlord</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-green-100 p-2 rounded-full">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Done!</h4>
+                    <p className="text-sm text-slate-600">Landlord receives your interest with full qualifications</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Landlord Dashboard Mockup */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-emerald-600" />
+                  Property Interest Dashboard
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span className="font-medium text-slate-900">New Interest</span>
+                      </div>
+                      <span className="text-xs text-slate-500">Just now</span>
+                    </div>
+                    <p className="font-medium text-slate-900">{displayName}</p>
+                    <p className="text-sm text-slate-600">123 Oak Street Apartment</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className="bg-green-100 text-green-700 text-xs">
+                        <DollarSign className="h-3 w-3 mr-1" />
+                        Income: {displayIncome}
+                      </Badge>
+                      <Badge className="bg-blue-100 text-blue-700 text-xs">
+                        <Star className="h-3 w-3 mr-1" />
+                        Credit: {formData.creditScore || 'Good'}
+                      </Badge>
+                    </div>
+                    <Button size="sm" className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Full Profile
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Benefits for Landlord */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-slate-900">Landlord Benefits</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="bg-emerald-100 p-2 rounded-full">
+                    <QrCode className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Passive Lead Collection</h4>
+                    <p className="text-sm text-slate-600">QR codes work 24/7 without you being present</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <Eye className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Instant Qualification</h4>
+                    <p className="text-sm text-slate-600">See income, employment, and credit details immediately</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-yellow-100 p-2 rounded-full">
+                    <MessageSquare className="h-4 w-4 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">Organized Follow-up</h4>
+                    <p className="text-sm text-slate-600">All interested tenants in one dashboard with context</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+    return (
+      <div className="space-y-8">
+        {/* Back Button */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            onClick={() => setCurrentStep('scenarios')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Scenarios
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+            <span className="text-sm text-slate-600">Live simulation</span>
+          </div>
+        </div>
+
+        {/* Render appropriate simulation */}
+        {selectedScenario === 'text' && <TextSimulation />}
+        {selectedScenario === 'email' && <EmailSimulation />}
+        {selectedScenario === 'qr' && <QRSimulation />}
+
+        {/* Final CTA */}
+        <div className="text-center pt-8 border-t">
+          <h3 className="text-xl font-semibold text-slate-900 mb-4">Ready to create your own RentCard?</h3>
+          <div className="flex gap-4 justify-center">
+            <Button 
+              onClick={() => window.location.href = '/quickstart/tenant'}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
+            >
+              Create Your RentCard
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setCurrentStep('form')}
+            >
+              Try Demo Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const ScenarioSelection = () => (
     <div className="space-y-6">
@@ -462,21 +1054,7 @@ export default function InteractiveDemo() {
 
         {currentStep === 'simulation' && selectedScenario && (
           <div className="max-w-6xl mx-auto">
-            {/* Simulation will be implemented in the next task */}
-            <div className="text-center py-20">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                Simulation Coming Soon
-              </h2>
-              <p className="text-slate-600 mb-8">
-                This will show the {selectedScenario} sharing experience from both perspectives
-              </p>
-              <Button 
-                onClick={() => setCurrentStep('scenarios')}
-                variant="outline"
-              >
-                Back to Scenarios
-              </Button>
-            </div>
+            <SimulationView />
           </div>
         )}
       </main>
