@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 // Sample Pages
 import SampleRentCard from "@/pages/samples/rentcard";
 import SampleScreeningPage from "@/pages/samples/screening-page";
+import InteractiveDemo from "@/pages/interactive-demo";
 
 // Landing Pages
 import TenantLanding from "@/pages/tenant-landing";
@@ -121,6 +122,9 @@ function Router() {
       {/* Sample Pages */}
       <Route path="/samples/rentcard" component={SampleRentCard} />
       <Route path="/samples/screening-page" component={SampleScreeningPage} />
+      
+      {/* Interactive Demo */}
+      <Route path="/demo" component={InteractiveDemo} />
 
       {/* Tenant Routes */}
       <ProtectedRoute path={ROUTES.TENANT.DASHBOARD} component={TenantDashboard} />
