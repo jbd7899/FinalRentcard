@@ -284,7 +284,7 @@ export default function HomePage() {
       </div>
 
       <main className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Mobile-First Hero Section */}
+        {/* Demo-First Hero Section */}
         <section className="mb-12 sm:mb-16">
           <div className="text-center mb-8">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6" data-testid="homepage-title">
@@ -292,43 +292,19 @@ export default function HomePage() {
                 MyRentCard
               </span>
               <span className="text-xl sm:text-2xl lg:text-3xl text-slate-700">
-                The pre-qualification form for private landlords
+                The pre-qualification standard for private landlords
               </span>
             </h1>
             
-            {/* Clear Explanation */}
-            <div className="max-w-3xl mx-auto mb-10">
-              <p className="text-lg text-slate-600 mb-6 leading-relaxed">
-A standardized pre-qualification profile that saves time for everyone. Tenants create one profile and share it with any private landlord. landlords get organized property interest in one place.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-3 text-center">
-                <div className="flex flex-col items-center">
-                  <div className="bg-blue-100 p-3 rounded-xl mb-2">
-                    <UserCheck className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-700">One profile</p>
-                  <p className="text-xs text-slate-500">Create once, share with anyone (even if they don't have an account)</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="bg-emerald-100 p-3 rounded-xl mb-2">
-                    <QrCode className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-700">One-Click Sharing</p>
-                  <p className="text-xs text-slate-500">Links, QR codes, any platform</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="bg-slate-100 p-3 rounded-xl mb-2">
-                    <Handshake className="h-6 w-6 text-slate-600" />
-                  </div>
-                  <p className="text-sm font-medium text-slate-700">Set Expectations</p>
-                  <p className="text-xs text-slate-500">Know there is a potential match before investing time in a call/showing</p>
-                </div>
-              </div>
-            </div>
+            {/* Simple Value Prop */}
+            <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
+              One rental profile that works everywhere. Tenants build it once, landlords get organized leads. 
+              <strong className="text-slate-800"> See it in action →</strong>
+            </p>
 
-            {/* Clear Role Choice */}
+            {/* Role Selection */}
             <div className="mb-8">
-              <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-6 text-center">
+              <h2 className="text-xl font-semibold text-slate-900 mb-6">
                 Are you renting or do you own property?
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
@@ -366,286 +342,153 @@ A standardized pre-qualification profile that saves time for everyone. Tenants c
                     </div>
                     <div>
                       <p className="text-lg font-semibold text-slate-900">I own rental property</p>
-                      <p className="text-sm text-slate-600">Collect tenant interest efficiently</p>
+                      <p className="text-sm text-slate-600">Get organized tenant leads</p>
                     </div>
                   </div>
                 </button>
               </div>
             </div>
 
-            {/* Role-Specific Next Steps */}
-            <div className="mb-8">
-              {selectedRole === 'tenant' ? (
-                <div className="text-center p-6 bg-blue-50/70 rounded-2xl border border-blue-200">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                    Create your RentCard in 2 minutes
-                  </h3>
-                  <p className="text-sm text-blue-700 mb-4">
-                    Build your rental profile once and share it with any private landlord. No more filling out forms for every pre-qualification.
-                  </p>
-                  <div className="flex items-center justify-center gap-1 text-xs text-blue-600">
-                    <CheckCircle className="h-3 w-3" />
-                    <span>Free forever</span>
-                    <span className="mx-2">•</span>
-                    <CheckCircle className="h-3 w-3" />
-                    <span>Works everywhere</span>
-                    <span className="mx-2">•</span>
-                    <CheckCircle className="h-3 w-3" />
-                    <span>2 minute setup</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center p-6 bg-emerald-50/70 rounded-2xl border border-emerald-200">
-                  <h3 className="text-lg font-semibold text-emerald-900 mb-2">
-                    Create property profiles and QR codes
-                  </h3>
-                  <p className="text-sm text-emerald-700 mb-4">
-                    Generate QR codes for your properties. Tenants submit interest with one click, and you keep every lead organized.
-                  </p>
-                  <div className="flex items-center justify-center gap-1 text-xs text-emerald-600">
-                    <CheckCircle className="h-3 w-3" />
-                    <span>Free QR codes</span>
-                    <span className="mx-2">•</span>
-                    <CheckCircle className="h-3 w-3" />
-                    <span>Organized leads</span>
-                    <span className="mx-2">•</span>
-                    <CheckCircle className="h-3 w-3" />
-                    <span>2 minute setup</span>
-                  </div>
-                </div>
-              )}
+            {/* Primary Demo CTA */}
+            <div className="mb-6">
+              <Link
+                href={isLandlordSelected ? '/landlord-demo' : '/demo'}
+                className={`w-full inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-5 text-xl font-bold text-white transition-all shadow-2xl transform hover:scale-105 ${
+                  isLandlordSelected
+                    ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-emerald-600/40'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-600/40'
+                }`}
+                data-testid="button-demo-cta"
+              >
+                <Sparkles className="h-6 w-6" />
+                {isLandlordSelected ? 'See How Landlords Get Better Leads' : 'See How Tenants Look Professional'}
+                <ArrowRight className="h-6 w-6" />
+              </Link>
+              <p className="text-sm text-slate-500 mt-3">
+                ✨ Interactive demo • No signup required • 2 minutes
+              </p>
             </div>
 
-            {/* Role-Specific CTAs */}
-            <div className="flex flex-col gap-4 mb-8">
+            {/* Secondary Signup CTA */}
+            <div className="mb-8">
               <button
                 onClick={() => {
                   localStorage.setItem('selectedRole', selectedRole);
                   const quickStartRoute = isLandlordSelected ? '/quickstart/landlord' : '/quickstart/tenant';
                   setLocation(quickStartRoute);
                 }}
-                className={`w-full inline-flex items-center justify-center gap-3 rounded-2xl px-6 py-4 text-base font-semibold text-white transition-all shadow-xl ${
+                className={`w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 px-6 py-3 text-base font-semibold transition-all ${
                   isLandlordSelected
-                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/40'
-                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/40'
+                    ? 'border-emerald-600 text-emerald-700 hover:bg-emerald-50'
+                    : 'border-blue-600 text-blue-700 hover:bg-blue-50'
                 }`}
                 data-testid="button-proceed-cta"
               >
-                {isLandlordSelected ? 'Add your property' : 'Create your RentCard'}
+                {isLandlordSelected ? 'Add Your Property' : 'Create Your RentCard'}
                 <ArrowRight className="h-5 w-5" />
               </button>
-              
-              {/* Interactive Demo CTA */}
-              <Link
-                href={isLandlordSelected ? '/landlord-demo' : '/demo'}
-                className={`w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r px-4 py-3 text-sm font-semibold transition-all shadow-lg text-white ${
-                  isLandlordSelected
-                    ? 'from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
-                    : 'from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
-                }`}
-                data-testid="button-demo-cta"
-              >
-                <Sparkles className="h-4 w-4" />
-                {isLandlordSelected ? 'Try Landlord Demo' : 'Try Tenant Demo'}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
 
+            {/* Key Benefits - Simplified */}
+            <div className={`text-center p-6 rounded-2xl border ${
+              isLandlordSelected 
+                ? 'bg-emerald-50/70 border-emerald-200' 
+                : 'bg-blue-50/70 border-blue-200'
+            }`}>
+              <div className={`flex items-center justify-center gap-6 text-sm font-medium ${
+                isLandlordSelected ? 'text-emerald-800' : 'text-blue-800'
+              }`}>
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4" />
+                  {isLandlordSelected ? 'Free QR codes' : 'Free forever'}
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4" />
+                  {isLandlordSelected ? 'Organized leads' : 'Works anywhere'}
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4" />
+                  {isLandlordSelected ? 'Better tenants' : 'Look prepared'}
+                </span>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Spotlight Preview - Mobile Optimized */}
+        {/* Demo Explainer */}
         <section className="mb-12 sm:mb-16">
-          <Card className="border shadow-xl bg-white/90">
-            <CardContent className="p-6 sm:p-8">
-              <div className="flex items-center justify-between mb-6">
-                <Badge
-                  className={`text-xs font-semibold ${
-                    isLandlordSelected ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
-                  }`}
-                >
-                  <ClipboardCheck className="h-3 w-3 mr-1" />
-                  {isLandlordSelected ? 'Property interest summary' : 'RentCard preview'}
-                </Badge>
-                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Live preview</span>
-              </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-4">{content.spotlight.title}</h3>
-              <ul className="space-y-3 mb-6">
-                {content.spotlight.points.map((point, index) => (
-                  <li key={index} className="flex items-center gap-3 text-sm text-slate-600">
-                    <div
-                      className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                        isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
-                      }`}
-                    >
-                      <ClipboardCheck className="h-3 w-3" />
-                    </div>
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-              <div
-                className={`rounded-xl px-4 py-3 text-sm font-medium ${
-                  isLandlordSelected ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
-                }`}
-              >
-                {content.spotlight.footer}
+          <Card className="border border-slate-200 bg-white/95 shadow-lg">
+            <CardContent className="p-8 text-center">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">
+                Why the demo is worth 2 minutes of your time
+              </h2>
+              <p className="text-lg text-slate-600 mb-6 max-w-2xl mx-auto">
+                Instead of explaining how MyRentCard works, we'll show you the exact experience. Build a real {isLandlordSelected ? 'property listing' : 'rental profile'}, 
+                see how {isLandlordSelected ? 'tenants discover and respond to it' : 'you share it with landlords'}, and watch both sides of the conversation.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-3 text-center">
+                <div className="p-4">
+                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${
+                    isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+                  }`}>
+                    <span className="text-xl font-bold">1</span>
+                  </div>
+                  <h3 className="font-semibold text-slate-900 mb-2">
+                    {isLandlordSelected ? 'Build your property' : 'Build your profile'}
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    {isLandlordSelected 
+                      ? 'See how easy it is to create professional property listings'
+                      : 'Experience building a complete rental profile that looks professional'
+                    }
+                  </p>
+                </div>
+                <div className="p-4">
+                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${
+                    isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+                  }`}>
+                    <span className="text-xl font-bold">2</span>
+                  </div>
+                  <h3 className="font-semibold text-slate-900 mb-2">
+                    {isLandlordSelected ? 'Choose your strategy' : 'Pick your approach'}
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    {isLandlordSelected 
+                      ? 'QR codes, online listings, or direct sharing - see all your options'
+                      : 'Text messages, emails, or QR codes - see how each works'
+                    }
+                  </p>
+                </div>
+                <div className="p-4">
+                  <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${
+                    isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
+                  }`}>
+                    <span className="text-xl font-bold">3</span>
+                  </div>
+                  <h3 className="font-semibold text-slate-900 mb-2">See both perspectives</h3>
+                  <p className="text-sm text-slate-600">
+                    {isLandlordSelected 
+                      ? 'Watch how tenants respond and what you receive in your dashboard'
+                      : 'See what landlords get and how they view your information'
+                    }
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </section>
 
-        {/* Quick Benefits Cards - Mobile Stacked */}
-        <section className="mb-12 sm:mb-16">
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
-            {content.benefits.map((benefit, index) => (
-              <Card
-                key={index}
-                className="border border-slate-100 bg-white/90 shadow-lg hover:shadow-xl transition-all"
-                data-testid={`benefit-card-${index}`}
-              >
-                <CardContent className="p-6">
-                  <div className="absolute inset-x-4 top-0 h-1 rounded-b-full bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400" />
-                  <div
-                    className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${
-                      isLandlordSelected ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'
-                    }`}
-                  >
-                    <benefit.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{benefit.title}</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed mb-4">{benefit.description}</p>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs font-semibold ${
-                      isLandlordSelected ? 'border-emerald-500 text-emerald-600' : 'border-blue-500 text-blue-600'
-                    }`}
-                  >
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    {benefit.badge}
-                  </Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Progressive Disclosure for More Details */}
-          <div className="mt-8 text-center">
-            <Button
-              variant="ghost"
-              onClick={() => setShowDetailedBenefits(!showDetailedBenefits)}
-              className="text-slate-600 hover:text-slate-900"
-            >
-              {showDetailedBenefits ? (
-                <>
-                  Show Less Details <ChevronUp className="h-4 w-4 ml-1" />
-                </>
-              ) : (
-                <>
-                  See More Details <ChevronDown className="h-4 w-4 ml-1" />
-                </>
-              )}
-            </Button>
-          </div>
-
-          {showDetailedBenefits && (
-            <div className="mt-8 space-y-4 animate-in slide-in-from-top duration-300">
-              <Card className="border border-slate-100 bg-white/90">
-                <CardContent className="p-6">
-                  <h4 className="font-semibold text-slate-900 mb-4">Why standardized prequalification matters:</h4>
-                  <div className="space-y-3 text-sm text-slate-600">
-                    <p>
-                      <strong>{isLandlordSelected ? 'For landlords:' : 'For tenants:'}</strong>{' '}
-                      {isLandlordSelected 
-                        ? 'Get complete tenant information before scheduling showings. No more back-and-forth collecting documents.'
-                        : 'Stop re-entering the same information for every pre-qualification. Present yourself professionally from the first contact.'
-                      }
-                    </p>
-                    <p className="italic text-slate-500">
-                      "{content.testimonial.text}"
-                    </p>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      — {content.testimonial.attribution}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </section>
-
-        {/* Trust Building Section */}
+        {/* Essential FAQ Section */}
         <section className="mb-12 sm:mb-16">
           <div className="text-center mb-8">
-            <Badge className="mb-4 bg-blue-100 text-blue-700 hover:bg-blue-100">
-              <Layers className="h-4 w-4 mr-1" /> Why we built MyRentCard
-            </Badge>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-              A better starting point for every rental conversation
-            </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Private rentals thrive on trust and speed. We help both sides show up prepared so decisions happen faster without losing the personal connection.
-            </p>
-          </div>
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
-            {missionPillars.map((pillar, index) => (
-              <Card key={index} className="border border-slate-100 bg-white/90 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                    <pillar.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-3">{pillar.title}</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">{pillar.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section className="mb-12 sm:mb-16">
-          <div className="text-center mb-8">
-            <Badge className="mb-4 bg-slate-900 text-white hover:bg-slate-900">
-              How it works
-            </Badge>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Your steps in minutes</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Every step keeps the focus on sharing clear information quickly.
-            </p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {content.journey.map((step, index) => (
-              <Card key={index} className="relative border border-slate-200 bg-white/90 shadow-sm">
-                <CardContent className="p-6">
-                  <div
-                    className={`absolute -top-4 left-6 inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white ${
-                      isLandlordSelected ? 'bg-emerald-500' : 'bg-blue-500'
-                    }`}
-                  >
-                    {index + 1}
-                  </div>
-                  <h3 className="mt-6 text-lg font-semibold text-slate-900 mb-3">{step.title}</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">{step.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* FAQ Section - Critical for Conversion */}
-        <section className="mb-12 sm:mb-16">
-          <div className="text-center mb-8">
-            <Badge className="mb-4 bg-slate-100 text-slate-700 hover:bg-slate-100">
-              <HelpCircle className="h-4 w-4 mr-1" /> Frequently Asked Questions
-            </Badge>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">Common questions</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Quick answers to help you get started with confidence.
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Quick questions</h2>
+            <p className="text-lg text-slate-600">
+              The demo shows how it works. Here are the practical details.
             </p>
           </div>
           <div className="max-w-2xl mx-auto">
             <Accordion type="single" collapsible className="space-y-4">
-              {faqs.map((faq, index) => (
+              {faqs.slice(0, 4).map((faq, index) => (
                 <AccordionItem
                   key={index}
                   value={`item-${index}`}
@@ -663,35 +506,19 @@ A standardized pre-qualification profile that saves time for everyone. Tenants c
           </div>
         </section>
 
-        {/* Social Proof */}
-        <section className="mb-12 sm:mb-16">
-          <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-wide text-slate-400 mb-4">Standardizing private rentals</p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-600" data-testid="social-proof-list">
-              <span className="inline-flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500" /> Works without requiring tenant accounts
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500" /> Saves time on unqualified leads
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500" /> One organized place for all interest
-              </span>
-            </div>
-          </div>
-        </section>
-
         {/* Final CTA Section */}
         <section className="mb-12">
           <Card className="overflow-hidden border border-slate-100 bg-slate-900 text-white shadow-2xl">
             <div className="absolute h-80 w-80 -right-32 top-10 rounded-full bg-blue-500/40 blur-3xl" aria-hidden />
             <CardContent className="relative p-8 sm:p-12 text-center">
-              <Badge className="mb-4 bg-white/10 text-white hover:bg-white/10">
-                Ready when you are
-              </Badge>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-4">Look prepared before the first conversation</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+                Ready to {isLandlordSelected ? 'get better tenant leads' : 'look professional everywhere'}?
+              </h2>
               <p className="text-lg text-slate-200 mb-8 max-w-2xl mx-auto">
-                Whether you're searching for a rental or filling one, MyRentCard keeps the focus on real details instead of extra forms.
+                {isLandlordSelected 
+                  ? 'Join landlords who save hours per application with organized, complete tenant information upfront.'
+                  : 'Join tenants who never fill out the same pre-qualification form twice and always look prepared.'
+                }
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
@@ -702,15 +529,15 @@ A standardized pre-qualification profile that saves time for everyone. Tenants c
                   }}
                   className="inline-flex items-center justify-center gap-3 rounded-2xl bg-white px-7 py-4 text-base font-semibold text-slate-900 transition-all hover:bg-slate-100"
                 >
-                  {content.primaryCTA}
+                  {isLandlordSelected ? 'Add Your Property' : 'Create Your RentCard'}
                   <ArrowRight className="h-5 w-5" />
                 </button>
                 <Link
-                  href={content.secondaryLink}
+                  href={isLandlordSelected ? '/landlord-demo' : '/demo'}
                   className="inline-flex items-center justify-center gap-3 rounded-2xl border border-white/40 px-7 py-4 text-base font-semibold text-white transition-all hover:bg-white/10"
                 >
-                  {content.secondaryCTA}
-                  <Eye className="h-5 w-5" />
+                  <Sparkles className="h-5 w-5" />
+                  Try the Demo First
                 </Link>
               </div>
             </CardContent>
