@@ -451,6 +451,17 @@ A standardized pre-qualification profile that saves time for everyone. Tenants c
                   <><User className="h-4 w-4" />See sample RentCard</>
                 )}
               </Link>
+
+              {/* Interactive Demo CTA */}
+              <Link
+                href="/demo"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-3 text-sm font-semibold transition-all shadow-lg"
+                data-testid="button-demo-cta"
+              >
+                <Sparkles className="h-4 w-4" />
+                Try Interactive Demo
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
 
           </div>
