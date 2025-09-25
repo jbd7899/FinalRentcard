@@ -131,12 +131,18 @@ export default function HomePage() {
           </div>
 
           {/* Main headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6" data-testid="homepage-title">
-            The rental profile that works everywhere
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6" data-testid="homepage-title">
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              The rental profile
+            </span>
+            <br />
+            <span className="text-gray-900">
+              that works everywhere
+            </span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed font-medium">
             {isLandlord 
               ? 'Get organized tenant leads with QR codes and streamlined applications. No more chasing paperwork.'
               : 'Create your RentCard once and share it with any landlord. Skip the endless forms and look professional everywhere.'
@@ -147,7 +153,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Link
               href={isLandlord ? '/landlord-demo' : '/demo'}
-              className="inline-flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+              className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform"
               data-testid="button-see-demo"
             >
               <Play className="h-5 w-5" />
@@ -160,7 +166,7 @@ export default function HomePage() {
               }}
               variant="outline"
               size="lg"
-              className="text-lg px-8 py-4 h-auto"
+              className="text-lg px-8 py-4 h-auto border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 hover:shadow-md"
               data-testid="button-get-started"
             >
               {isLandlord ? 'Add your property' : 'Create your RentCard'}
@@ -203,14 +209,14 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {steps.map((step) => (
-              <div key={step.number} className="text-center">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+              <div key={step.number} className="text-center bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-6 shadow-lg">
                   {step.number}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
                   {step.title}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 leading-relaxed">
                   {step.description}
                 </p>
               </div>
@@ -234,12 +240,12 @@ export default function HomePage() {
           </div>
 
           {testimonial && (
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-8 text-center">
-                <blockquote className="text-xl text-gray-700 mb-6">
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
+              <CardContent className="p-10 text-center">
+                <blockquote className="text-xl text-gray-700 mb-8 leading-relaxed font-medium italic">
                   "{testimonial.text}"
                 </blockquote>
-                <cite className="text-gray-600 font-medium">
+                <cite className="text-gray-600 font-semibold">
                   — {testimonial.author}
                 </cite>
               </CardContent>
@@ -247,18 +253,18 @@ export default function HomePage() {
           )}
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 mt-12 text-center">
-            <div>
-              <div className="text-3xl font-bold text-blue-600">2M+</div>
-              <div className="text-gray-600">Applications sent</div>
+          <div className="grid grid-cols-3 gap-6 mt-12 text-center">
+            <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">2M+</div>
+              <div className="text-gray-600 font-medium mt-2">Applications sent</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-blue-600">95%</div>
-              <div className="text-gray-600">Faster approvals</div>
+            <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">95%</div>
+              <div className="text-gray-600 font-medium mt-2">Faster approvals</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-blue-600">50K+</div>
-              <div className="text-gray-600">Happy users</div>
+            <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">50K+</div>
+              <div className="text-gray-600 font-medium mt-2">Happy users</div>
             </div>
           </div>
         </div>
@@ -286,7 +292,7 @@ export default function HomePage() {
                 setLocation('/auth');
               }}
               size="lg"
-              className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4 h-auto"
+              className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4 h-auto font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 transform"
               data-testid="button-final-cta"
             >
               {isLandlord ? 'Add your property' : 'Create your RentCard'}
@@ -294,7 +300,8 @@ export default function HomePage() {
             </Button>
             <Link
               href={isLandlord ? '/landlord-demo' : '/demo'}
-              className="inline-flex items-center justify-center gap-3 border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold transition-all"
+              className="inline-flex items-center justify-center gap-3 border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300 hover:scale-105 transform"
+              data-testid="button-watch-demo"
             >
               <Play className="h-5 w-5" />
               Watch demo first
