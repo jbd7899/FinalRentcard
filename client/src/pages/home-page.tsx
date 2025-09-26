@@ -9,7 +9,13 @@ import {
   Sparkles,
   ClipboardCheck,
   Star,
-  Play
+  Play,
+  DollarSign,
+  MapPin,
+  Calendar,
+  UserCheck,
+  FileText,
+  Home
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,12 +25,42 @@ import { Card, CardContent } from '@/components/ui/card';
 
 type UserRole = 'tenant' | 'landlord';
 
+// Sample data for interactive previews
+const sampleTenantData = {
+  name: 'Sarah Johnson',
+  email: 'sarah.johnson@email.com',
+  phone: '(555) 123-4567',
+  monthlyIncome: '$6,500',
+  employment: 'Marketing Manager at TechCorp',
+  currentAddress: '123 Main St, Austin, TX',
+  moveInDate: 'March 2024',
+  rentBudget: '$2,000 - $2,500',
+  creditScore: '750+',
+  pets: 'No pets',
+  references: '3 verified references'
+};
+
+const samplePropertyData = {
+  address: '456 Oak Avenue, Austin, TX 78701',
+  rent: '$2,200/month',
+  bedrooms: 2,
+  bathrooms: 2,
+  sqft: '1,100 sq ft',
+  type: 'Apartment',
+  amenities: ['In-unit laundry', 'Parking included', 'Pet-friendly'],
+  availableDate: 'January 15, 2024',
+  minIncome: '$6,600/month',
+  creditScore: '700+',
+  deposit: '$2,200'
+};
+
 // How it works steps
 const tenantSteps = [
   {
     number: 1,
-    title: 'Build your profile',
-    description: 'Create your rental profile once with all your documents and details'
+    title: 'Try it yourself',
+    description: 'See how easy it is to create a professional rental profile',
+    interactive: true
   },
   {
     number: 2,
@@ -41,8 +77,9 @@ const tenantSteps = [
 const landlordSteps = [
   {
     number: 1,
-    title: 'Add your property',
-    description: 'Create your property listing with screening criteria'
+    title: 'Try it yourself',
+    description: 'See how quick it is to create a property listing with QR codes',
+    interactive: true
   },
   {
     number: 2,
@@ -70,9 +107,133 @@ const testimonials = [
   }
 ];
 
+// Preview Components
+const RentCardPreview = () => (
+  <div className="text-left space-y-4">
+    <div className="flex items-center gap-3 mb-4">
+      <User className="h-6 w-6 text-blue-600" />
+      <h4 className="text-lg font-bold text-gray-900">Sample RentCard</h4>
+    </div>
+    
+    <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <UserCheck className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Name:</span>
+          <span className="text-gray-600">{sampleTenantData.name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Income:</span>
+          <span className="text-gray-600">{sampleTenantData.monthlyIncome}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Job:</span>
+          <span className="text-gray-600">{sampleTenantData.employment}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Budget:</span>
+          <span className="text-gray-600">{sampleTenantData.rentBudget}</span>
+        </div>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Move-in:</span>
+          <span className="text-gray-600">{sampleTenantData.moveInDate}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Star className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Credit:</span>
+          <span className="text-gray-600">{sampleTenantData.creditScore}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">References:</span>
+          <span className="text-gray-600">{sampleTenantData.references}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Home className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Pets:</span>
+          <span className="text-gray-600">{sampleTenantData.pets}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div className="mt-4 pt-4 border-t border-blue-200">
+      <p className="text-xs text-blue-600 font-medium">✨ This RentCard link can be shared with any landlord!</p>
+    </div>
+  </div>
+);
+
+const PropertyPreview = () => (
+  <div className="text-left space-y-4">
+    <div className="flex items-center gap-3 mb-4">
+      <Building2 className="h-6 w-6 text-blue-600" />
+      <h4 className="text-lg font-bold text-gray-900">Sample Property Listing</h4>
+    </div>
+    
+    <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Address:</span>
+          <span className="text-gray-600">{samplePropertyData.address}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Rent:</span>
+          <span className="text-gray-600">{samplePropertyData.rent}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Home className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Size:</span>
+          <span className="text-gray-600">{samplePropertyData.bedrooms} bed, {samplePropertyData.bathrooms} bath</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Available:</span>
+          <span className="text-gray-600">{samplePropertyData.availableDate}</span>
+        </div>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <UserCheck className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Min Income:</span>
+          <span className="text-gray-600">{samplePropertyData.minIncome}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Star className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Credit:</span>
+          <span className="text-gray-600">{samplePropertyData.creditScore}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">Deposit:</span>
+          <span className="text-gray-600">{samplePropertyData.deposit}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <QrCode className="h-4 w-4 text-green-500" />
+          <span className="font-medium text-gray-700">QR Code:</span>
+          <span className="text-gray-600">Generated ✓</span>
+        </div>
+      </div>
+    </div>
+    
+    <div className="mt-4 pt-4 border-t border-blue-200">
+      <p className="text-xs text-blue-600 font-medium">🎯 QR code ready for signs and listings!</p>
+    </div>
+  </div>
+);
+
 export default function HomePage() {
   const { user } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole>('tenant');
+  const [showPreview, setShowPreview] = useState<string | null>(null);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -216,9 +377,34 @@ export default function HomePage() {
                 <h3 className="text-xl font-bold text-gray-900 mb-4">
                   {step.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 leading-relaxed mb-6">
                   {step.description}
                 </p>
+                
+                {/* Interactive preview for first step */}
+                {step.number === 1 && (
+                  <div className="mt-6">
+                    <Button
+                      onClick={() => setShowPreview(showPreview === `step-${selectedRole}-1` ? null : `step-${selectedRole}-1`)}
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                      data-testid={`button-try-${selectedRole}`}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {showPreview === `step-${selectedRole}-1` ? 'Hide Preview' : isLandlord ? 'Create Sample Property' : 'Build Sample RentCard'}
+                    </Button>
+                    
+                    {/* Animated preview */}
+                    {showPreview === `step-${selectedRole}-1` && (
+                      <div className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 animate-in slide-in-from-bottom-4 duration-500">
+                        {isLandlord ? (
+                          <PropertyPreview />
+                        ) : (
+                          <RentCardPreview />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
